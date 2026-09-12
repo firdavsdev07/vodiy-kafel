@@ -1,0 +1,185 @@
+import { Link } from 'react-router-dom'
+
+import PageHeader from '@/components/ui/PageHeader'
+import SmartImage from '@/components/ui/SmartImage'
+import { company } from '@/data/company'
+import { INTERIOR, MARBLE, TRAVERTINE } from '@/data/images'
+import { useParallax } from '@/hooks/useParallax'
+import { useReveal } from '@/hooks/useReveal'
+
+export default function About() {
+  const oneRef = useReveal({ start: 'top 82%' })
+  const twoRef = useReveal({ start: 'top 82%' })
+  const threeRef = useReveal({ start: 'top 82%' })
+  const fourRef = useReveal({ start: 'top 82%' })
+  const plateRef = useParallax(140)
+
+  return (
+    <>
+      <PageHeader
+        index="04"
+        eyebrow="Biz haqimizda"
+        title={['Biz', 'haqimizda']}
+        meta={`${company.markets.import.join(' / ')} → O‘zbekiston`}
+        lede={company.intro}
+      />
+
+      {/* statement + first number */}
+      <section ref={oneRef} data-reveal="" className="relative z-10 edge">
+        <div className="hairline grid gap-8 pt-8 text-charcoal md:grid-cols-12">
+          <p className="type-editorial md:col-span-7">{company.story[0]}</p>
+          <div className="md:col-span-4 md:col-start-9">
+            <div className="line-mask">
+              <span className="r-line type-display block">20+</span>
+            </div>
+            <div className="r-fade mt-3 type-label text-clay">Yil tajriba</div>
+          </div>
+        </div>
+
+        {/* large plate with a slow parallax — the "texture transition" */}
+        <div className="mt-[clamp(4rem,10vw,9rem)] overflow-hidden">
+          <div ref={plateRef} className="-my-[8%]">
+            <SmartImage
+              id={INTERIOR[4]}
+              alt="Zamonaviy interyerda keramik yuzalar"
+              ratio="21 / 9"
+              sizes="92vw"
+              width={2400}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* story + second number */}
+      <section
+        ref={twoRef}
+        data-reveal=""
+        className="relative z-10 edge py-[clamp(5rem,12vw,10rem)]"
+      >
+        <div className="grid gap-y-12 md:grid-cols-12 md:gap-x-8">
+          <div className="md:col-span-4">
+            <div className="line-mask">
+              <span className="r-line type-display block">50K+</span>
+            </div>
+            <div className="r-fade mt-3 type-label text-clay">Mijozlar</div>
+          </div>
+
+          <div className="md:col-span-6 md:col-start-7">
+            <p className="r-fade">{company.story[1]}</p>
+            <p className="r-fade mt-6 text-clay">{company.story[2]}</p>
+          </div>
+        </div>
+
+        {/* material pair */}
+        <div className="mt-[clamp(4rem,10vw,9rem)] grid gap-6 md:grid-cols-12 md:gap-8">
+          <div className="md:col-span-5">
+            <SmartImage
+              id={MARBLE[3]}
+              alt="Marmar effekt yuzasi"
+              ratio="3 / 4"
+              sizes="(max-width: 767px) 92vw, 40vw"
+              className="w-full"
+            />
+            <div className="mt-3 type-label text-clay">01 — Marmar effekt</div>
+          </div>
+          <div className="md:col-span-6 md:col-start-7 md:mt-[8vw]">
+            <SmartImage
+              id={TRAVERTINE[0]}
+              alt="Travertin yuzasi"
+              ratio="4 / 3"
+              sizes="(max-width: 767px) 92vw, 48vw"
+              className="w-full"
+            />
+            <div className="mt-3 type-label text-clay">02 — Tosh effekt</div>
+          </div>
+        </div>
+      </section>
+
+      {/* markets */}
+      <section ref={threeRef} data-reveal="" className="relative z-10 bg-ink text-bone">
+        <div className="edge py-[clamp(5rem,12vw,10rem)]">
+          <span className="r-fade type-label text-clay">Geografiya</span>
+
+          <h2 className="mt-8 type-head">
+            <span className="line-mask">
+              <span className="r-line">Zavoddan</span>
+            </span>
+            <span className="line-mask">
+              <span className="r-line">vodiygacha.</span>
+            </span>
+          </h2>
+
+          <div className="mt-[clamp(3rem,8vw,6rem)] grid gap-10 md:grid-cols-3">
+            {[
+              { label: 'Import', items: company.markets.import },
+              { label: 'Baza', items: ["O‘zbekiston", "Farg‘ona vodiysi"] },
+              { label: 'Eksport', items: company.markets.export },
+            ].map((block) => (
+              <div key={block.label} className="r-fade border-t border-bone/15 pt-5">
+                <div className="type-label text-clay">{block.label}</div>
+                <ul className="mt-4 flex flex-col gap-2">
+                  {block.items.map((item) => (
+                    <li key={item} className="text-[clamp(1.05rem,1.8vw,1.5rem)]">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="r-fade mt-[clamp(3rem,8vw,6rem)] grid gap-8 border-t border-bone/15 pt-8 md:grid-cols-12">
+            <div className="type-label text-clay md:col-span-3">
+              {company.guarantee.title}
+            </div>
+            <p className="type-editorial md:col-span-8">{company.guarantee.body}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* showroom + CTA */}
+      <section
+        ref={fourRef}
+        data-reveal=""
+        className="relative z-10 edge py-[clamp(5rem,12vw,10rem)]"
+      >
+        <div className="grid gap-10 md:grid-cols-12">
+          <div className="md:col-span-6">
+            <SmartImage
+              id={company.showroom.texture}
+              alt={company.showroom.label}
+              ratio="4 / 3"
+              sizes="(max-width: 767px) 92vw, 48vw"
+              className="w-full"
+            />
+          </div>
+
+          <div className="md:col-span-5 md:col-start-8 md:self-end">
+            <span className="r-fade type-label text-clay">{company.showroom.label}</span>
+            <h2 className="mt-6 type-sub">
+              <span className="line-mask">
+                <span className="r-line">Kelib ko‘ring.</span>
+              </span>
+            </h2>
+            <address className="r-fade mt-6 not-italic leading-relaxed text-clay">
+              {company.showroom.region}, {company.showroom.city} shahri
+              <br />
+              {company.showroom.street}
+              <br />
+              {company.showroom.hours} · {company.showroom.days}
+            </address>
+            <Link
+              to="/contact"
+              data-cursor="Ochish"
+              className="group mt-8 inline-flex items-center gap-3 type-label"
+            >
+              Aloqa sahifasi
+              <span className="h-px w-10 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
+            </Link>
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
