@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ScrollTrigger, gsap, prefersReducedMotion } from '@/animations/gsap'
@@ -20,6 +20,7 @@ export default function CategoriesSection() {
   const trackRef = useRef(null)
   const progressRef = useRef(null)
   const counterRef = useRef(null)
+  const ctxRef = useRef(null)
   const isMobile = useIsMobile()
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function CategoriesSection() {
     const ctx = gsap.context(() => {
       const distance = () => Math.max(0, track.scrollWidth - window.innerWidth)
 
-      const tween = gsap.to(track, {
+      gsap.to(track, {
         x: () => -distance(),
         ease: 'none',
         scrollTrigger: {
@@ -55,13 +56,19 @@ export default function CategoriesSection() {
           },
         },
       })
-
-      return () => tween.kill()
     }, section)
 
+    ctxRef.current = ctx
     ScrollTrigger.refresh()
-    return () => ctx.revert()
   }, [isMobile])
+
+  // Revert in useLayoutEffect so pin-spacer is removed BEFORE React unmounts
+  useLayoutEffect(() => {
+    return () => {
+      ctxRef.current?.revert()
+      ctxRef.current = null
+    }
+  }, [])
 
   return (
     <section

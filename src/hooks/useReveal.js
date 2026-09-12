@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { EASE, ScrollTrigger, gsap, prefersReducedMotion } from '@/animations/gsap'
 
@@ -15,6 +15,7 @@ import { EASE, ScrollTrigger, gsap, prefersReducedMotion } from '@/animations/gs
  */
 export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}) {
   const ref = useRef(null)
+  const ctxRef = useRef(null)
 
   useEffect(() => {
     const el = ref.current
@@ -30,13 +31,18 @@ export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}
     const clips = el.querySelectorAll('.r-clip')
     const zooms = el.querySelectorAll('.r-zoom')
 
+    // Bail out if there's nothing to animate
+    if (!lines.length && !fades.length && !clips.length && !zooms.length) {
+      el.setAttribute('data-reveal', 'in')
+      return
+    }
+
     const ctx = gsap.context(() => {
-      // CSS's initial percentage transform is read by GSAP as a pixel y.
-      // Reset that component or the completed line stays below its mask.
-      gsap.set(lines, { y: 0, yPercent: 110 })
-      gsap.set(fades, { autoAlpha: 0, y: 20 })
-      gsap.set(clips, { clipPath: 'inset(0% 0% 100% 0%)' })
-      gsap.set(zooms, { scale: 1.14 })
+      // Only set initial state on non-empty collections
+      if (lines.length) gsap.set(lines, { y: 0, yPercent: 110 })
+      if (fades.length) gsap.set(fades, { autoAlpha: 0, y: 20 })
+      if (clips.length) gsap.set(clips, { clipPath: 'inset(0% 0% 100% 0%)' })
+      if (zooms.length) gsap.set(zooms, { scale: 1.14 })
 
       const tl = gsap.timeline({
         defaults: { ease: EASE },
@@ -63,9 +69,17 @@ export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}
       }
     }, el)
 
+    ctxRef.current = ctx
     ScrollTrigger.refresh()
-    return () => ctx.revert()
   }, [start, stagger, delay])
+
+  // Cleanup in useLayoutEffect so GSAP reverts BEFORE React removes DOM nodes
+  useLayoutEffect(() => {
+    return () => {
+      ctxRef.current?.revert()
+      ctxRef.current = null
+    }
+  }, [])
 
   return ref
 }

@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { ScrollTrigger, gsap, prefersReducedMotion } from '@/animations/gsap'
 
 /** Scroll-linked vertical drift. `amount` is in pixels across the section. */
 export function useParallax(amount = 90) {
   const ref = useRef(null)
+  const ctxRef = useRef(null)
 
   useEffect(() => {
     const el = ref.current
@@ -27,9 +28,17 @@ export function useParallax(amount = 90) {
       )
     }, el)
 
+    ctxRef.current = ctx
     ScrollTrigger.refresh()
-    return () => ctx.revert()
   }, [amount])
+
+  // Cleanup in useLayoutEffect so GSAP reverts before React removes DOM
+  useLayoutEffect(() => {
+    return () => {
+      ctxRef.current?.revert()
+      ctxRef.current = null
+    }
+  }, [])
 
   return ref
 }
