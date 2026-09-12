@@ -69,7 +69,7 @@ export default function CategoriesSection() {
       className="relative z-10 overflow-hidden bg-ink text-bone"
     >
       {/* fixed rail header */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-baseline justify-between edge pt-8 md:pt-10">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-baseline justify-between edge pt-16 md:pt-20">
         <span className="type-label text-clay">02 — Kolleksiyalar</span>
         <span className="type-label text-clay">
           <span ref={counterRef}>01</span> / {String(categories.length).padStart(2, '0')}
@@ -78,7 +78,7 @@ export default function CategoriesSection() {
 
       <div
         ref={trackRef}
-        className="flex flex-col gap-16 py-24 md:h-[100svh] md:flex-row md:items-center md:gap-0 md:py-0 md:will-change-transform"
+        className="flex flex-col gap-16 py-32 md:h-[100svh] md:flex-row md:items-center md:gap-0 md:py-0 md:pt-10 md:will-change-transform"
       >
         {/* opening panel */}
         <div className="shrink-0 edge md:flex md:h-full md:w-[52vw] md:flex-col md:justify-center">
@@ -114,7 +114,7 @@ export default function CategoriesSection() {
                 <SmartImage
                   id={cat.cover}
                   alt={cat.name}
-                  ratio="4 / 5"
+                  ratio="3 / 4"
                   sizes="(max-width: 767px) 92vw, 46vw"
                   reveal={false}
                   className="w-full"

@@ -1,52 +1,41 @@
 /**
- * Soft interface tones, synthesised at runtime — no audio files (ASSETS.md §7).
- * The AudioContext is only created once the user opts in at the entry gate.
- *
- * Design: warm, muted textures — filtered noise pops, soft pads and gentle
- * glides. Nothing that sounds like a clinical beep or alarm signal.
+ * Sound system:
+ *  - Ambient background: loops /audio.mp3 via HTML5 Audio.
+ *    Controlled by the sound toggle (enabled flag).
+ *  - Interface tones (hover, click, open, close, enter): synthesised
+ *    noise-burst voices via Web Audio API — always active once the user
+ *    has entered the site, regardless of the sound toggle.
  */
 
 let ctx = null
 let master = null
 let enabled = false
-let ambient = null
+let tonesReady = false
+let noiseBuffer = null
+let bgAudio = null
 const listeners = new Set()
 
 /* ------------------------------------------------------------------ *
- * Ambient pad — soft, evolving chord that breathes in the background
+ * Background music — HTML5 Audio, loops /audio.mp3
  * ------------------------------------------------------------------ */
-function startAmbient(audio) {
-  if (ambient || !enabled) return
+function ensureBgAudio() {
+  if (bgAudio) return bgAudio
+  bgAudio = new Audio('/audio.mp3')
+  bgAudio.loop = true
+  bgAudio.volume = 0.3
+  return bgAudio
+}
 
-  const wet = audio.createGain()
-  wet.gain.setValueAtTime(0, audio.currentTime)
-  wet.gain.linearRampToValueAtTime(0.06, audio.currentTime + 2.5)
+function startBgAudio() {
+  ensureBgAudio().play().catch(() => {})
+}
 
-  // Low-pass to keep it pillowy
-  const lp = audio.createBiquadFilter()
-  lp.type = 'lowpass'
-  lp.frequency.value = 420
-  lp.Q.value = 0.7
-  lp.connect(wet)
-  wet.connect(master)
-
-  // Slow detuned chord — F3, A3, C4 (gentle Fmaj)
-  const notes = [174.61, 220.0, 261.63]
-  const voices = notes.map((freq, i) => {
-    const osc = audio.createOscillator()
-    osc.type = 'sine'
-    osc.frequency.value = freq
-    osc.detune.value = (i - 1) * 4 // subtle shimmer
-    osc.connect(lp)
-    osc.start()
-    return osc
-  })
-
-  ambient = { gain: wet, voices, filter: lp }
+function stopBgAudio() {
+  if (bgAudio) bgAudio.pause()
 }
 
 /* ------------------------------------------------------------------ *
- * AudioContext bootstrap
+ * Web Audio bootstrap (for interface tones)
  * ------------------------------------------------------------------ */
 function ensureContext() {
   if (ctx) return ctx
@@ -54,29 +43,75 @@ function ensureContext() {
   if (!AudioCtx) return null
   try { ctx = new AudioCtx() } catch { return null }
   master = ctx.createGain()
-  master.gain.value = 0.18
+  master.gain.value = 0.35
   master.connect(ctx.destination)
   return ctx
 }
 
-/* ------------------------------------------------------------------ *
- * Voice definitions — soft, warm, never harsh
- * ------------------------------------------------------------------ */
-const VOICES = {
-  // Tiny filtered pop — like a soft tap on fabric
-  hover: { freq: 2200, type: 'sine', dur: 0.06, gain: 0.08, lpFreq: 800 },
-  // Warm knock — rounded triangle through a filter
-  click: { freq: 340, type: 'triangle', dur: 0.09, gain: 0.14, lpFreq: 600 },
-  // Gentle rising whisper
-  open: { freq: 180, type: 'sine', dur: 0.38, gain: 0.12, glide: 260, lpFreq: 500 },
-  // Settling sigh
-  close: { freq: 260, type: 'sine', dur: 0.32, gain: 0.10, glide: 160, lpFreq: 440 },
-  // Slow warm bloom on entrance
-  enter: { freq: 130, type: 'sine', dur: 1.1, gain: 0.13, glide: 220, lpFreq: 380 },
+/** Call once after a user gesture to unlock Web Audio for tones. */
+function bootstrapTones() {
+  if (tonesReady) return
+  const audio = ensureContext()
+  if (audio && audio.state !== 'running') {
+    audio.resume().catch(() => {})
+  }
+  tonesReady = true
 }
 
+/* ------------------------------------------------------------------ *
+ * White noise buffer (1 s, reused by all voices)
+ * ------------------------------------------------------------------ */
+function getNoiseBuffer(audio) {
+  if (noiseBuffer) return noiseBuffer
+  const length = audio.sampleRate
+  noiseBuffer = audio.createBuffer(1, length, audio.sampleRate)
+  const data = noiseBuffer.getChannelData(0)
+  for (let i = 0; i < length; i++) {
+    data[i] = Math.random() * 2 - 1
+  }
+  return noiseBuffer
+}
+
+/* ------------------------------------------------------------------ *
+ * Voice definitions — shaped bursts of filtered noise
+ * ------------------------------------------------------------------ */
+const VOICES = {
+  // Tiny airy pop — like a soft breath on hover
+  hover: {
+    filterType: 'bandpass', freq: 2800, Q: 1.2,
+    dur: 0.04, attack: 0.003, gain: 0.18,
+  },
+  // Slightly fuller tap — still breathy
+  click: {
+    filterType: 'bandpass', freq: 1200, Q: 0.8,
+    dur: 0.07, attack: 0.004, gain: 0.22,
+  },
+  // Upward swoosh — opening gesture
+  open: {
+    filterType: 'highpass', freq: 400, Q: 0.3,
+    dur: 0.25, attack: 0.02, gain: 0.15,
+    sweep: 3200,
+  },
+  // Downward settle — closing gesture
+  close: {
+    filterType: 'highpass', freq: 2400, Q: 0.3,
+    dur: 0.2, attack: 0.01, gain: 0.12,
+    sweep: 300,
+  },
+  // Slow wide wash — entrance bloom
+  enter: {
+    filterType: 'bandpass', freq: 600, Q: 0.25,
+    dur: 0.7, attack: 0.08, gain: 0.14,
+    sweep: 1800,
+  },
+}
+
+/**
+ * Play an interface tone. Works regardless of the background-music
+ * toggle — tones are always on once Web Audio has been bootstrapped.
+ */
 export async function playTone(name) {
-  if (!enabled) return
+  if (!tonesReady) return
   const voice = VOICES[name]
   if (!voice) return
   const audio = ensureContext()
@@ -84,58 +119,49 @@ export async function playTone(name) {
   try {
     if (audio.state !== 'running') await audio.resume()
   } catch {
-    setSoundEnabled(false)
     return
   }
-  if (!enabled || audio.state !== 'running') return
+  if (audio.state !== 'running') return
 
   const now = audio.currentTime
-  const osc = audio.createOscillator()
-  const gain = audio.createGain()
+  const buf = getNoiseBuffer(audio)
 
-  // Low-pass filter — takes the digital edge off every tone
-  const lp = audio.createBiquadFilter()
-  lp.type = 'lowpass'
-  lp.frequency.value = voice.lpFreq
-  lp.Q.value = 0.5
+  const src = audio.createBufferSource()
+  src.buffer = buf
+  const offset = Math.random() * (buf.duration - voice.dur - 0.05)
 
-  osc.type = voice.type
-  osc.frequency.setValueAtTime(voice.freq, now)
-  if (voice.glide) {
-    osc.frequency.exponentialRampToValueAtTime(voice.glide, now + voice.dur)
+  const filter = audio.createBiquadFilter()
+  filter.type = voice.filterType
+  filter.frequency.setValueAtTime(voice.freq, now)
+  filter.Q.value = voice.Q
+  if (voice.sweep) {
+    filter.frequency.exponentialRampToValueAtTime(voice.sweep, now + voice.dur)
   }
 
-  // Soft attack and release — no harsh transients
+  const gain = audio.createGain()
   gain.gain.setValueAtTime(0.0001, now)
-  gain.gain.linearRampToValueAtTime(voice.gain, now + 0.035)
+  gain.gain.linearRampToValueAtTime(voice.gain, now + voice.attack)
   gain.gain.exponentialRampToValueAtTime(0.0001, now + voice.dur)
 
-  osc.connect(lp)
-  lp.connect(gain)
+  src.connect(filter)
+  filter.connect(gain)
   gain.connect(master)
-  osc.start(now)
-  osc.stop(now + voice.dur + 0.05)
-  osc.onended = () => { osc.disconnect(); lp.disconnect(); gain.disconnect() }
+  src.start(now, offset, voice.dur + 0.05)
+
+  src.onended = () => { src.disconnect(); filter.disconnect(); gain.disconnect() }
 }
 
 /* ------------------------------------------------------------------ *
- * Enable / disable / toggle
+ * Enable / disable / toggle  (controls background music only)
  * ------------------------------------------------------------------ */
 export function setSoundEnabled(next) {
   enabled = next
+  // Always bootstrap tones on first enable (user gesture)
+  bootstrapTones()
   if (next) {
-    const audio = ensureContext()
-    if (!audio) { enabled = false }
-    else audio.resume().then(() => { if (enabled) startAmbient(audio) }).catch(() => setSoundEnabled(false))
-  } else if (ambient) {
-    const ending = ambient
-    ambient = null
-    ending.gain.gain.cancelScheduledValues(ctx.currentTime)
-    ending.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.08)
-    ending.voices.forEach((voice) => {
-      voice.onended = () => { voice.disconnect(); ending.filter.disconnect(); ending.gain.disconnect() }
-      voice.stop(ctx.currentTime + 0.4)
-    })
+    startBgAudio()
+  } else {
+    stopBgAudio()
   }
   listeners.forEach((fn) => fn(enabled))
 }
@@ -144,7 +170,7 @@ export const isSoundEnabled = () => enabled
 
 export function toggleSound() {
   setSoundEnabled(!enabled)
-  if (enabled) playTone('click')
+  playTone('click')
   return enabled
 }
 
@@ -152,3 +178,4 @@ export function subscribeSound(fn) {
   listeners.add(fn)
   return () => listeners.delete(fn)
 }
+

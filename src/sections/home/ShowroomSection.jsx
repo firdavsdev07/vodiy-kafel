@@ -28,7 +28,7 @@ export default function ShowroomSection() {
 
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 to-ink/55" />
 
-        <div className="relative flex h-full flex-col justify-between edge py-10">
+        <div className="relative flex h-full flex-col justify-between edge py-16">
           <div className="flex items-baseline justify-between">
             <span className="r-fade type-label text-clay">06 — Showroom</span>
             <span className="r-fade type-label text-clay">40.3864 / 71.7864</span>
