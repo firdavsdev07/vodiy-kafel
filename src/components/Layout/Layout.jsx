@@ -7,7 +7,7 @@ import Footer from '@/components/Footer/Footer'
 import Menu from '@/components/Menu/Menu'
 import Nav from '@/components/Nav/Nav'
 import Preloader from '@/components/Preloader/Preloader'
-import { destroyLenis, initLenis, scrollToTop } from '@/lib/lenis'
+import { destroyLenis, initLenis, scrollToTop, startScroll, stopScroll } from '@/lib/lenis'
 import { EntryContext } from '@/lib/entryContext'
 import { hasEnteredThisSession } from '@/lib/session'
 
@@ -22,6 +22,12 @@ export default function Layout() {
     initLenis()
     return () => destroyLenis()
   }, [])
+
+  // Own the final lock after child effects and Lenis initialization.
+  useEffect(() => {
+    if (gateOpen || menuOpen) stopScroll()
+    else startScroll()
+  }, [gateOpen, menuOpen])
 
   useEffect(() => {
     scrollToTop(true)
@@ -53,4 +59,3 @@ export default function Layout() {
     </EntryContext.Provider>
   )
 }
-

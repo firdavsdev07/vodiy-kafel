@@ -1,28 +1,45 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { gsap, prefersReducedMotion } from '@/animations/gsap'
-import { company } from '@/data/company'
+import { MARBLE, TRAVERTINE, img } from '@/data/images'
 import { startScroll, stopScroll } from '@/lib/lenis'
 import { markEntered } from '@/lib/session'
 import { playTone, setSoundEnabled } from '@/lib/sound'
 
+const samples = [
+  { source: MARBLE[8], angle: -28, x: -105, y: 35 },
+  { source: TRAVERTINE[2], angle: -14, x: -54, y: 9 },
+  { source: MARBLE[0], angle: 0, x: 0, y: 0 },
+  { source: MARBLE[4], angle: 14, x: 54, y: 9 },
+  { source: TRAVERTINE[0], angle: 28, x: 105, y: 35 },
+]
+
+/** A finite material study, with no simulated network progress or WebGL. */
 export default function Preloader({ onDone }) {
   const root = useRef(null)
   const leaving = useRef(false)
+  const intro = useRef(null)
+  const exit = useRef(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     stopScroll()
     const previous = document.activeElement
-    root.current?.querySelector('button')?.focus({ preventScroll: true })
+    root.current.focus({ preventScroll: true })
     const context = gsap.context(() => {
-      if (!prefersReducedMotion()) {
-        const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
-        tl.from('.entry-top', { opacity: 0, y: -15, duration: 0.8, delay: 0.2 })
-        tl.from('.entry-brand', { opacity: 0, y: 50, duration: 1.1, stagger: 0.1 }, 0.4)
-        tl.from('.entry-enter', { opacity: 0, y: 20, duration: 0.8 }, 0.8)
-        tl.from('.entry-bottom', { opacity: 0, y: 15, duration: 0.8 }, 1.0)
-      }
+      if (prefersReducedMotion()) return
+      intro.current = gsap.timeline({ defaults: { ease: 'power3.out' } })
+        .fromTo('.entry-sample', { x: 0, y: 0, xPercent: 0, yPercent: 45, rotation: 0, opacity: 0 },
+          { xPercent: i => samples[i].x, yPercent: i => samples[i].y, rotation: i => samples[i].angle, opacity: 1, duration: 1.65, stagger: { each: .06, from: 'center' } }, .1)
+        .fromTo('.entry-word', { yPercent: 110 }, { yPercent: 0, duration: 1.2, stagger: .12 }, .35)
+        .fromTo('.entry-detail', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7, stagger: .05 }, .55)
+        .fromTo('.entry-rule', { scaleX: 0 }, { scaleX: 1, duration: 1.3 }, .3)
     }, root)
-    return () => { context.revert(); startScroll(); previous?.focus?.({ preventScroll: true }) }
+    return () => {
+      intro.current?.kill()
+      exit.current?.kill()
+      context.revert()
+      startScroll()
+      previous?.focus?.({ preventScroll: true })
+    }
   }, [])
 
   const enter = () => {
@@ -30,75 +47,53 @@ export default function Preloader({ onDone }) {
     leaving.current = true
     setSoundEnabled(true)
     playTone('enter')
-    markEntered()
-    const finish = () => { startScroll(); onDone() }
-    if (prefersReducedMotion()) finish()
-    else {
-      const tl = gsap.timeline({ onComplete: finish })
-      tl.to('.entry-brand, .entry-enter, .entry-top, .entry-bottom', {
-        opacity: 0, y: -30, duration: 0.5, stagger: 0.04, ease: 'power3.in',
-      })
-      tl.to(root.current, {
-        clipPath: 'inset(0 0 100% 0)', duration: 0.8, ease: 'power3.inOut',
-      }, 0.3)
-    }
+    const finish = () => { markEntered(); startScroll(); onDone() }
+    if (prefersReducedMotion()) { finish(); return }
+    intro.current?.kill()
+    const el = root.current
+    exit.current = gsap.timeline({ onComplete: finish })
+      .to(el.querySelectorAll('.entry-detail, .entry-enter'), { opacity: 0, duration: .2 }, 0)
+      .to(el.querySelectorAll('.entry-sample'), { xPercent: 0, yPercent: 8, rotation: 0, duration: .5, ease: 'power3.inOut' }, 0)
+      .to(el.querySelector('.entry-study'), { yPercent: -35, opacity: 0, duration: .45, ease: 'power2.in' }, .3)
+      .to(el.querySelectorAll('.entry-word'), { yPercent: -110, duration: .6, stagger: .05, ease: 'power3.in' }, .15)
+      .to(el, { yPercent: -100, duration: .85, ease: 'power3.inOut' }, .45)
   }
 
-  const year = new Date().getFullYear()
-
   return (
-    <div
-      ref={root}
-      className="entry-screen fixed inset-0 z-[200] flex flex-col justify-between overflow-hidden bg-ink text-bone edge pb-10 pt-10 md:pt-14 select-none"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Vodiy Kafel"
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === 'Escape') enter()
-      }}
-    >
-      {/* Top bar — identical to Footer top status */}
-      <div className="entry-top flex items-baseline justify-between">
-        <span className="type-label text-clay">00 — Kirish</span>
-        <span className="type-label text-clay">{company.location}</span>
+    <div ref={root} className="entry-screen" role="dialog" aria-modal="true"
+      aria-label="Vodiy Kafel — kirish" tabIndex={-1}
+      onKeyDown={event => {
+        if (event.key === 'Escape' || (event.key === 'Enter' && event.target === root.current)) { event.preventDefault(); enter() }
+        if (event.key === 'Tab') { event.preventDefault(); root.current.querySelector('button').focus() }
+      }}>
+      <header className="entry-top entry-detail">
+        <span className="entry-monogram">V/K<sup>®</sup></span>
+        <span>FARG‘ONA, UZBEKISTAN<br /><span className="entry-muted">EST. 2006</span></span>
+      </header>
+      <div className="entry-study" aria-hidden="true">
+        <div className="entry-study-axis" />
+        {samples.map((sample, i) => (
+          <div key={i} className="entry-sample" style={{
+            '--sample-x': sample.x + '%', '--sample-y': sample.y + '%',
+            '--sample-angle': sample.angle + 'deg', zIndex: 5 - Math.abs(i - 2),
+          }}>
+            <img src={img(sample.source)} alt="" decoding="async" fetchPriority={i === 2 ? 'high' : 'auto'} />
+            <span className="entry-sample-edge" />
+          </div>
+        ))}
       </div>
-
-      {/* Main heading and simple CTA — minimal, bold, clean, centered & larger */}
-      <div className="entry-center my-auto flex flex-col items-center justify-center text-center w-full">
-        <h1 className="type-display text-bone flex flex-wrap items-center justify-center gap-x-[0.28em] text-[clamp(2.5rem,9.5vw,11.5rem)] tracking-tight">
-          <span className="line-mask inline-block">
-            <span className="entry-brand block">Vodiy</span>
-          </span>
-          <span className="line-mask inline-block">
-            <span className="entry-brand block">
-              Kafel<sup className="text-clay text-[0.35em] font-normal ml-2 tracking-normal">®</sup>
-            </span>
-          </span>
-        </h1>
-
-        <div className="mt-[clamp(2rem,5vw,4.5rem)]">
-          <button
-            type="button"
-            onClick={enter}
-            data-cursor=""
-            className="entry-enter group inline-block border-b border-bone/25 pb-1 text-[clamp(1.25rem,2.5vw,2rem)] transition-colors hover:border-bone/70 hover:text-clay cursor-pointer"
-          >
-            <span className="type-sub inline-flex items-center gap-3">
-              <span>Kirish</span>
-              <span className="text-clay transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1">↗</span>
-            </span>
-          </button>
-        </div>
+      <div className="entry-caption entry-detail"><span>01 — MATERIAL STUDY</span><span>Tabiatdan ilhomlangan.<br />Makon uchun yaratilgan.</span></div>
+      <div className="entry-heading">
+        <p className="entry-eyebrow entry-detail">SHAKL. YUZA. XARAKTER.</p>
+        <h1 aria-label="Vodiy Kafel"><span className="entry-word-mask"><span className="entry-word">Vodiy</span></span><span className="entry-word-mask"><span className="entry-word">Kafel<span className="entry-period">.</span></span></span></h1>
       </div>
-
-      {/* Bottom info bar — identical to Footer bottom row */}
-      <div className="entry-bottom flex flex-col gap-4 border-t border-bone/15 pt-6 md:flex-row md:items-center md:justify-between">
-        <span className="type-label text-clay">
-          © {year} {company.legalName}
-        </span>
-        <span className="type-label text-clay">{company.tagline}</span>
-        <span className="type-label text-clay">{company.contact.handle}</span>
-      </div>
+      <footer className="entry-bottom">
+        <div className="entry-rule" />
+        <p className="entry-detail">PREMIUM KERAMIK YUZALAR<br /><span className="entry-muted">Kolleksiya — 2026</span></p>
+        <button type="button" className="entry-enter" onClick={enter} data-cursor="">
+          <span><span>Kashf eting</span><small>Ovoz bilan saytga kirish</small></span><span className="entry-arrow" aria-hidden="true">↗</span>
+        </button>
+      </footer>
     </div>
   )
 }

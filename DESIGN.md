@@ -5,7 +5,7 @@
 The public frontend is a curated architectural material gallery. It uses local mock data, without backend, API, authentication, admin or payment integration.
 
 - Palette: warm paper #EEECE5, stone #D8D3C8, charcoal #232321, near-black #0B0B0A.
-- Entry: muted olive #242720 with warm white typography. Entrance choices are immediately usable; there is no simulated loading percentage or timer.
+- Entry: warm-paper material study using the same Manrope and stone/olive palette as Home. Five local marble/travertine swatches form an architectural fan with rounded arch tops. A finite GSAP transform sequence opens the samples and reveals the wordmark; entry gathers the samples and lifts the curtain. No simulated loading percentage, mandatory wait, looping animation, new font, or entry WebGL. The entry button is usable immediately; Enter/Escape skip the sequence, and reduced motion shows the finished layout without animation. Research references: Floema (2026 CCP Digital Gold) and House of Honey (CSSDA WOTD, 21 June 2026); original composition, not a recreation of their loaders.
 - Typography: locally served Manrope; generous line heights, legible labels, large but mobile-safe display text.
 - Secondary text: #71685E on light surfaces; #C2B9AC on dark surfaces. Floating controls have their own solid surface.
 - Hero: left-aligned editorial copy, a real CC0 ceramic GLB to the right, a material swatch and collection CTA. On small screens the sculpture sits below the copy.

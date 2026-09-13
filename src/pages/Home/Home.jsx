@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 import SceneBoundary, { SceneFallback } from '@/components/ui/SceneBoundary'
 
 import { useReducedMotion } from '@/hooks/useMediaQuery'
+import { useEntered } from '@/lib/entryContext'
 import CategoriesSection from '@/sections/home/CategoriesSection'
 import CollectionsSection from '@/sections/home/CollectionsSection'
 import CompanySection from '@/sections/home/CompanySection'
@@ -15,10 +16,11 @@ const Stage = lazy(() => import('@/three/Stage'))
 
 export default function Home() {
   const reduced = useReducedMotion()
+  const entered = useEntered()
 
   return (
     <>
-      {!reduced ? (
+      {!reduced && entered ? (
         <SceneBoundary><Suspense fallback={<SceneFallback />}>
           <Stage />
         </Suspense></SceneBoundary>
