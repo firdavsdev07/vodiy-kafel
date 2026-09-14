@@ -16,8 +16,10 @@ import {
   ProductDetailResponseDto,
   ProductListItemResponseDto,
   ProductQueryDto,
+  SimilarProductsQueryDto,
 } from './dto';
 import { ProductsService } from './products.service';
+import { SimilarProductsService } from './similar-products.service';
 
 /** Swagger uchun sahifalangan javob klassi. */
 const PaginatedProducts = PaginatedResponseDto(ProductListItemResponseDto);
@@ -33,7 +35,10 @@ const PaginatedProducts = PaginatedResponseDto(ProductListItemResponseDto);
 @ApiTags(SwaggerTag.Catalog)
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly similarProducts: SimilarProductsService,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -78,5 +83,33 @@ export class ProductsController {
   })
   findOne(@Param('slug') slug: string): Promise<ProductDetailResponseDto> {
     return this.productsService.findOneBySlug(slug);
+  }
+
+  @Get(':slug/similar')
+  @ApiOperation({
+    summary: 'Shunga o‘xshash mahsulotlar',
+    description:
+      'Mahsulot kartochkasi ostidagi blok (TZ 3.1).\n\n' +
+      '1. Admin qo‘lda bog‘lagan mahsulotlar — doim birinchi.\n' +
+      '2. Mahsulotning o‘zi kam qolgan yoki tugagan bo‘lsa — qolgan joy ' +
+      'avtomatik to‘ldiriladi: bir xil o‘lcham va sirt, omborda yetarli; ' +
+      'bir xil rangdagilar oldinda.\n\n' +
+      'Omborda yo‘q va o‘chirilgan mahsulotlar chiqmaydi.\n\n' +
+      '🔒 Narx va zaxira aniq soni yo‘q — oddiy katalog kartasi.',
+  })
+  @ApiParam({ name: 'slug', description: 'Mahsulot URL nomi' })
+  @ApiDataResponse(ProductListItemResponseDto, {
+    isArray: true,
+    description: 'O‘xshash mahsulotlar (bo‘sh bo‘lishi mumkin)',
+  })
+  @ApiNotFoundResponse({
+    description: 'Mahsulot topilmadi yoki o‘chirilgan',
+    type: ApiErrorDto,
+  })
+  findSimilar(
+    @Param('slug') slug: string,
+    @Query() query: SimilarProductsQueryDto,
+  ): Promise<ProductListItemResponseDto[]> {
+    return this.similarProducts.findPublic(slug, query.limit);
   }
 }

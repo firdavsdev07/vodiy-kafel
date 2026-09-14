@@ -356,6 +356,168 @@
         ]
       }
     },
+    "/api/v1/settings/public": {
+      "get": {
+        "description": "Faqat ochiq deb belgilangan kalitlar (masalan bank rekvizitlari). Chegirma chegarasi kabi ichki sozlamalar bu yerda yo‘q.",
+        "operationId": "SettingsController_findPublic",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Kalit–qiymat ro‘yxati",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SettingPublicDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Ochiq sozlamalar",
+        "tags": [
+          "Settings"
+        ]
+      }
+    },
+    "/api/v1/admin/settings": {
+      "get": {
+        "description": "Tizim taniydigan barcha kalitlar. Bazada hali saqlanmaganlari standart qiymat bilan (`isDefault: true`).",
+        "operationId": "SettingsAdminController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Sozlamalar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SettingAdminDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Barcha sozlamalar",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "description": "Qiymat kalitning qoidasi bo‘yicha tekshiriladi — noto‘g‘ri tur yoki chegaradan tashqari qiymat 400. Yangi kalit yaratib bo‘lmaydi.\n\nO‘zgarish darhol kuchga kiradi.",
+        "operationId": "SettingsAdminController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saqlangan sozlama",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SettingAdminDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Noma’lum kalit yoki qiymat noto‘g‘ri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sozlamani o‘zgartirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/admin/customers/{id}/reset-password": {
       "post": {
         "description": "Mijoz parolni unutganda yoki hisob birinchi marta topshirilayotganda ishlatiladi.\n\n⚠ Yangi parol javobda FAQAT BIR MARTA ko‘rinadi — bazada hash saqlanadi. Uni mijozga telefon yoki Telegram orqali yetkazing.\n\nMijoz keyingi kirishida parolni almashtirishga majbur bo‘ladi.\n\n🔒 Filial admini/menejeri faqat O‘Z filiali mijoziga parol bera oladi; begona filial mijozi uchun 404 qaytadi.\n\n⚠ Eski tokenlar darhol o‘chmaydi: mijozning qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi. Refresh esa holatni bazadan o‘qigani uchun darhol to‘siladi.",
@@ -1275,6 +1437,3223 @@
           "Catalog"
         ]
       }
+    },
+    "/api/v1/products/{slug}/similar": {
+      "get": {
+        "description": "Mahsulot kartochkasi ostidagi blok (TZ 3.1).\n\n1. Admin qo‘lda bog‘lagan mahsulotlar — doim birinchi.\n2. Mahsulotning o‘zi kam qolgan yoki tugagan bo‘lsa — qolgan joy avtomatik to‘ldiriladi: bir xil o‘lcham va sirt, omborda yetarli; bir xil rangdagilar oldinda.\n\nOmborda yo‘q va o‘chirilgan mahsulotlar chiqmaydi.\n\n🔒 Narx va zaxira aniq soni yo‘q — oddiy katalog kartasi.",
+        "operationId": "ProductsController_findSimilar",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot URL nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 20,
+              "default": 8,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘xshash mahsulotlar (bo‘sh bo‘lishi mumkin)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductListItemResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi yoki o‘chirilgan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Shunga o‘xshash mahsulotlar",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/products": {
+      "get": {
+        "description": "Ochiq katalogdagi filtrlar + `isActive`.\n\nJavobda markaziy ombor zaxirasining ANIQ soni va uch rangli holati (`stock`) bor — bu ichki ko‘rinish.\n\n⚠ Narx bu yerda yo‘q — filial narxlari `GET /admin/branch-products`.",
+        "operationId": "ProductsAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralash maydoni. Ro‘yxatdagidan boshqasi qabul qilinmaydi.\n\nNarx bo‘yicha saralash YO‘Q — ochiq katalogda narx ko‘rinmaydi.",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "name",
+                "createdAt",
+                "viewCount"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "factoryId",
+            "required": false,
+            "in": "query",
+            "description": "Zavod bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sizeId",
+            "required": false,
+            "in": "query",
+            "description": "O‘lcham bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "surface",
+            "required": false,
+            "in": "query",
+            "description": "Sirt turi: pol yoki devor",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "POL",
+                "DEVOR"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi)",
+            "schema": {
+              "maxLength": 100,
+              "example": "yongxin",
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Faqat faol (`true`) yoki faqat o‘chirilgan (`false`)",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan mahsulotlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedProductAdminResponseDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mahsulotlar (o‘chirilganlari bilan)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "Faqat umumiy tavsif. Narx har filial uchun alohida (`PUT /admin/branch-products`), zaxira — `PUT /admin/product-stocks`.\n\n`slug` nom va o‘lchamdan avtomatik yasaladi (`lyuks-keramogranit-60x60`) va keyin o‘zgarmaydi.",
+        "operationId": "ProductsAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mahsulot yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydonlar noto‘g‘ri, zavod yoki o‘lcham topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Shu nom va o‘lchamdagi mahsulot allaqachon bor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yangi mahsulot",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/products/{id}": {
+      "get": {
+        "operationId": "ProductsAdminController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mahsulot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bitta mahsulot",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "description": "Faqat yuborilgan maydonlar o‘zgaradi. `slug` o‘zgarmaydi.\n\n⚠ `sqmPerPallet` / `weightPerPallet` o‘zgarishi ESKI buyurtmalarga ta’sir qilmaydi — ular buyurtma paytidagi qiymatni saqlaydi.",
+        "operationId": "ProductsAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan mahsulot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydonlar noto‘g‘ri, zavod yoki o‘lcham topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mahsulotni tahrirlash",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "description": "Yozuv bazadan o‘chirilmaydi — `isActive: false`, ochiq katalogdan yo‘qoladi. Buyurtma tarixi saqlanib qolishi uchun.\n\nQaytarish: `PATCH { \"isActive\": true }`.",
+        "operationId": "ProductsAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirilgan mahsulot (isActive: false)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mahsulotni o‘chirish (soft delete)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/products/{id}/similar": {
+      "get": {
+        "description": "Faqat admin bog‘laganlari (avtomatik tanlov bu yerda yo‘q). O‘chirilgan mahsulotlar ham ko‘rinadi — ochiq sahifada ular chiqmaydi.",
+        "operationId": "ProductsAdminController_findSimilar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bog‘lanishlar tartib bilan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SimilarProductLinkDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Qo‘lda bog‘langan o‘xshash mahsulotlar",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "Ro‘yxat TO‘LIQ almashtiriladi (qo‘shilmaydi). Bo‘sh massiv — hammasini olib tashlash. Tartib — massiv tartibi.\n\nBog‘lanish bir tomonlama: A → B qo‘yilsa, B sahifasida A o‘zi chiqmaydi.",
+        "operationId": "ProductsAdminController_setSimilar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSimilarProductsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi bog‘lanishlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SimilarProductLinkDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "O‘ziga bog‘lash, topilmagan ID yoki dublikat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "O‘xshash mahsulotlarni belgilash",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/branch-products": {
+      "get": {
+        "description": "Filialning BAZAVIY narxlari. Mijozga individual narx qoidalari bu yerda ko‘rinmaydi.\n\n🔒 Filial izolyatsiyasi: filial admini, menejer va moderator faqat O‘Z filialini ko‘radi. Boshqa filial so‘ralsa — 404 (403 emas).\n\nSUPER_ADMIN `branchId` bermasa — barcha filiallar.",
+        "operationId": "BranchProductsAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filial bo‘yicha filtr. Cheklangan rol uchun faqat o‘z filiali mumkin (boshqasi — 404).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Mahsulot bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Shu filialda sotiladiganlar (`true`) yoki yo‘q (`false`)",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan filial narxlari",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedBranchProductAdminResponseDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Boshqa filial so‘raldi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Filial narxlari ro‘yxati",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "put": {
+        "description": "(filial, mahsulot) juftligi bo‘yicha: yozuv bo‘lmasa yaratiladi.\n\n🔒 Filial admini uchun `branchId` e’tiborga olinmaydi — narx har doim o‘z filialiga yoziladi; boshqa filial ko‘rsatilsa 404. SUPER_ADMIN uchun `branchId` majburiy (bermasa 400).\n\n⚠ Narx o‘zgarishi eski buyurtmalarga ta’sir qilmaydi — ular narx suratini saqlaydi.",
+        "operationId": "BranchProductsAdminController_upsert",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertBranchProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saqlangan filial narxi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BranchProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Narx noto‘g‘ri yoki SUPER_ADMIN `branchId` bermadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Filial yoki mahsulot topilmadi (yoki begona filial)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Filial narxini o‘rnatish (bor bo‘lsa yangilanadi)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/branch-products/{id}/price": {
+      "patch": {
+        "description": "🔒 Filial izolyatsiyasi: filial admini, menejer va moderator faqat O‘Z filialini ko‘radi. Boshqa filial so‘ralsa — 404 (403 emas).",
+        "operationId": "BranchProductsAdminController_updatePrice",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Filial narxi (BranchProduct) ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBranchProductPriceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan filial narxi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BranchProductAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Narx noto‘g‘ri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Filial narxini o‘zgartirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/product-stocks": {
+      "get": {
+        "description": "Har bir mahsulot uchun bitta qator — zaxira filialga bog‘lanmagan, hamma bir xil sonni ko‘radi.\n\nZaxira hali kiritilmagan mahsulot ham ro‘yxatda bor: `stockPallets: 0`, `updatedAt: null`.",
+        "operationId": "ProductStocksAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Mahsulot bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan zaxira ro‘yxati",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedProductStockAdminResponseDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Markaziy ombor zaxirasi",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "put": {
+        "description": "`stockPallets` — ombordagi YANGI son (farq emas).\n\n`lowStockThreshold`: yuborilmasa — o‘zgarmaydi, `null` — global sozlamaga qaytadi.",
+        "operationId": "ProductStocksAdminController_upsert",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertProductStockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saqlangan zaxira",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductStockAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Son manfiy yoki butun emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Zaxirani o‘rnatish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/products/{id}/media": {
+      "get": {
+        "description": "Tartiblangan. O‘chirilgan mahsulot uchun ham ishlaydi (ochiq `GET /products/:slug` dan farqli).",
+        "operationId": "ProductMediaAdminController_findAll",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media fayllar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductMediaAdminResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mahsulot media ro‘yxati",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "`multipart/form-data`: `file` + ixtiyoriy `type`.\n\n• `IMAGE`, `IMAGE_360` — JPG, PNG, WEBP\n• `VIDEO_360` — MP4\n\nMaksimal hajm — 10 MB. Tur fayl MAZMUNIDAN aniqlanadi: kengaytmani o‘zgartirish (`rasm.svg` → `rasm.jpg`) yordam bermaydi.\n\nYangi fayl ro‘yxat oxiriga qo‘shiladi.",
+        "operationId": "ProductMediaAdminController_upload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadProductMediaBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Yuklandi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductMediaAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fayl yo‘q yoki turi mos emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Fayl 10 MB dan katta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Media yuklash",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/products/{id}/media/order": {
+      "patch": {
+        "description": "`mediaIds` — mahsulotning BARCHA media ID lari yangi tartibda. Qisman ro‘yxat yoki begona ID — 400.",
+        "operationId": "ProductMediaAdminController_reorder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderProductMediaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi tartibdagi media",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductMediaAdminResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ro‘yxat to‘liq emas yoki begona ID bor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Media tartibini o‘zgartirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/media/{id}": {
+      "delete": {
+        "description": "Bazadagi yozuv va diskdagi fayl o‘chiriladi.",
+        "operationId": "ProductMediaAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Media ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirilgan media",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductMediaAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Media topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Media o‘chirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/gallery": {
+      "get": {
+        "description": "Bajarilgan ishlar suratlari. Suratda mahsulot bog‘langan bo‘lsa — `product` (mahsulot sahifasiga havola uchun), aks holda `null`.\n\n`sortBy`/`sortOrder` bu yerda ishlatilmaydi — tartibni admin belgilaydi.",
+        "operationId": "GalleryController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan galereya",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedGalleryPublicItemDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Loyiha galereyasi",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/gallery": {
+      "get": {
+        "description": "Mahsulot yoki holat bo‘yicha filtr.",
+        "operationId": "GalleryAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "description": "Shu mahsulotga bog‘langan rasmlar",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Faol (`true`) yoki yashirilgan (`false`)",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedGalleryAdminItemDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galereya (yashirilganlari bilan)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "`multipart/form-data`: `file` (JPG/PNG/WEBP, 10 MB gacha) + ixtiyoriy `title`, `productId`, `sortOrder`.\n\nTur fayl MAZMUNIDAN aniqlanadi.",
+        "operationId": "GalleryAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGalleryItemBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Qo‘shildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GalleryAdminItemDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fayl yo‘q, turi mos emas yoki mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Fayl 10 MB dan katta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galereyaga rasm qo‘shish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/gallery/{id}": {
+      "patch": {
+        "description": "Sarlavha, mahsulot bog‘lanishi (`null` — uzish), tartib, holat. Rasmning o‘zi almashtirilmaydi — yangi rasm uchun yangi yozuv.",
+        "operationId": "GalleryAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Galereya rasmi ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGalleryItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilandi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GalleryAdminItemDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydonlar noto‘g‘ri yoki mahsulot topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galereya rasmini tahrirlash",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "description": "Yozuv va fayl butunlay o‘chiriladi. Vaqtincha yashirish uchun — `PATCH { \"isActive\": false }`.",
+        "operationId": "GalleryAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Galereya rasmi ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/GalleryAdminItemDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Galereya rasmini o‘chirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/transport-types": {
+      "get": {
+        "description": "Faol transport turlari va sig‘imi. Narx yo‘q.",
+        "operationId": "DeliveryController_findTransportTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Transport turlari",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TransportTypePublicDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Transport turlari",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/regions": {
+      "get": {
+        "description": "Yetkazib berish manzili uchun faol viloyatlar.",
+        "operationId": "DeliveryController_findRegions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Viloyatlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RegionPublicDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Viloyatlar",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/calculator/quote": {
+      "post": {
+        "description": "Paddon soni bo‘yicha m², og‘irlik, summa; `regionId` + `transportTypeId` berilsa — nechta transport va yo‘l kira.\n\n🔒 Narx va filial so‘rovdan OLINMAYDI: narx — mijoz filialining narxi, shaxsiy chegirmasi bilan; filial — tokendan.\n\nBuyurtma berilganda summa AYNAN shu yo‘l bilan qayta hisoblanadi.",
+        "operationId": "CalculatorController_quote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hisob natijasi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/QuoteResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Paddon soni noto‘g‘ri, mahsulot takrorlangan, viloyat/transport faqat bittasi berilgan yoki summa juda katta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot filialda sotilmaydi yoki bu yo‘nalishga tarif yo‘q",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "To‘liq hisob: mahsulotlar + yo‘l kira",
+        "tags": [
+          "Calculator"
+        ]
+      }
+    },
+    "/api/v1/calculator/delivery": {
+      "post": {
+        "description": "\"Yo‘l kira hisoblash\" tugmasi uchun (TZ 3.3): jami paddon, viloyat va transport turi bo‘yicha nechta mashina va qancha turadi.",
+        "operationId": "CalculatorController_delivery",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yo‘l kira",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeliveryResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bu yo‘nalishga tarif yo‘q",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Faqat yo‘l kira",
+        "tags": [
+          "Calculator"
+        ]
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "description": "Mahsulotlar (paddon bilan), ixtiyoriy yetkazib berish (viloyat + transport), to‘lov usuli.\n\n🔒 Summa backendda QAYTA hisoblanadi — `POST /calculator/quote` bilan aynan bir xil yo‘l. Frontend yuborgan narx/summa e’tiborga olinmaydi.\n\nOmborda yetarli bo‘lmasa — 409 (qancha borligi aytilmaydi).\n\nNatija: `NEW` holatdagi buyurtma va `PENDING` to‘lov yozuvi.",
+        "operationId": "OrdersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Buyurtma yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OrderCustomerResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Paddon/mahsulot noto‘g‘ri, viloyat va transport birga emas, koordinatalar noto‘liq yoki olib ketishda berilgan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot filialda sotilmaydi yoki tarif yo‘q",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Omborda yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtma berish",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/orders/{orderNumber}/track": {
+      "get": {
+        "description": "Buyurtma raqami + egasining telefoni. Telefon mos kelmasa javob \"topilmadi\" bilan bir xil.\n\n🔒 Faqat holat va vaqtlar — summa, mahsulotlar, izohlar yo‘q.",
+        "operationId": "OrderTrackingController_track",
+        "parameters": [
+          {
+            "name": "orderNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "VK-2026-000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "required": true,
+            "in": "query",
+            "description": "Buyurtma egasining telefoni. Bo‘sh joy, qavs va tire farq qilmaydi.",
+            "schema": {
+              "example": "+998 90 123 45 67",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Holat va tarix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TrackOrderResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Buyurtma topilmadi yoki telefon mos kelmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Buyurtma holatini kuzatish (token siz)",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/v1/admin/orders": {
+      "get": {
+        "description": "Filtrlar: holat, manba, tezkor, to‘lov holati, filial, menejer, sana oralig‘i, qidiruv (raqam / kompaniya / ism / telefon).\n\n🔒 Xodim faqat o‘z filialini ko‘radi; SUPER_ADMIN `branchId` bilan filtrlaydi.",
+        "operationId": "OrdersAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "SEARCHING_TRANSPORT",
+                "LOADING",
+                "DELIVERING",
+                "DELIVERED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "source",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WEBSITE",
+                "TELEGRAM",
+                "PHONE",
+                "ADMIN"
+              ]
+            }
+          },
+          {
+            "name": "isUrgent",
+            "required": false,
+            "in": "query",
+            "description": "Faqat tezkor (`true`) yoki oddiy",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "required": false,
+            "in": "query",
+            "description": "Shu holatdagi to‘lovi bor buyurtmalar",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PAID",
+                "FAILED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filial filtri — SUPER_ADMIN uchun. Boshqa rol o‘zinikidan boshqasini bersa — 404.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "managerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "required": false,
+            "in": "query",
+            "description": "Yaratilgan sana (UTC) — shu kundan boshlab, kiritiladi",
+            "schema": {
+              "example": "2026-09-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "required": false,
+            "in": "query",
+            "description": "Yaratilgan sana (UTC) — shu kungacha, KIRITILMAYDI",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Buyurtma raqami, kompaniya nomi, telefon yoki mijoz ismi",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedAdminOrderListItemDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtr noto‘g‘ri (masalan dateFrom ≥ dateTo)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Boshqa filial so‘raldi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtmalar ro‘yxati",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "Xaridor: `customerId` (hisobi bor mijoz) YOKI `guestName` + `guestPhone`.\n\n🔒 Narx backendda: mijozda — uning filiali narxi va shaxsiy qoidalari; hisobsiz xaridorda — filial bazaviy narxi. Zaxira tekshiruvi mijoz buyurtmasi bilan bir xil.\n\nMenejer kiritsa — buyurtma unga biriktiriladi.",
+        "operationId": "OrdersAdminController_createManual",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateManualOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Buyurtma yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOrderDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Xaridor noto‘g‘ri ko‘rsatilgan yoki buyurtma tarkibi xato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mijoz/filial/mahsulot topilmadi yoki boshqa filialniki",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Omborda yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtmani qo‘lda kiritish (telefon / Telegram)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{id}": {
+      "get": {
+        "description": "Tarkib, holatlar tarixi (kim o‘zgartirgani bilan), to‘lovlar.",
+        "operationId": "OrdersAdminController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buyurtma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOrderDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtma tafsiloti",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{id}/urgent": {
+      "patch": {
+        "operationId": "OrdersAdminController_setUrgent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOrderUrgentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan buyurtma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOrderDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tezkor belgisini qo‘yish / olib tashlash",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{id}/assign": {
+      "patch": {
+        "description": "Xodim buyurtma filialining faol xodimi (MANAGER, BRANCH_ADMIN yoki MODERATOR) bo‘lishi shart. `managerId: null` — biriktirishni olib tashlash.",
+        "operationId": "OrdersAdminController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOrderManagerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan buyurtma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOrderDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Xodim topilmadi, faol emas yoki boshqa filialda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtmaga xodim biriktirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{id}/status": {
+      "patch": {
+        "description": "Yetkazib berish: `NEW → SEARCHING_TRANSPORT → LOADING → DELIVERING → DELIVERED`.\n\nOlib ketish: `NEW → LOADING → DELIVERED`.\n\n`CANCELLED` — yuk yo‘lga chiqquncha (NEW, SEARCHING_TRANSPORT, LOADING). `DELIVERED` va `CANCELLED` — yakuniy.\n\nHar o‘zgarish tarixga yoziladi (kim, qachon, izoh). Javobdagi `allowedNextStatuses` — keyingi tugmalar uchun.\n\n🔒 Faqat o‘z filiali buyurtmasi (SUPER_ADMIN — hammasi).",
+        "operationId": "OrdersAdminController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeOrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi holat va tarix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OrderStatusChangeResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ruxsat etilmagan o‘tish yoki o‘sha holat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Holat bir vaqtda boshqa xodim tomonidan o‘zgartirildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtma holatini o‘zgartirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/me/orders": {
+      "get": {
+        "description": "Yangilari birinchi. Holat bo‘yicha filtr.",
+        "operationId": "MeOrdersController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "SEARCHING_TRANSPORT",
+                "LOADING",
+                "DELIVERING",
+                "DELIVERED",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedCustomerOrderListItemDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mening buyurtmalarim",
+        "tags": [
+          "Customers"
+        ]
+      }
+    },
+    "/api/v1/me/orders/{id}": {
+      "get": {
+        "description": "Tarkib (buyurtma paytidagi narx bilan), to‘lovlar, holatlar tarixi vaqt belgisi bilan.\n\n🔒 Faqat o‘z buyurtmasi — begonasi 404.",
+        "operationId": "MeOrdersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buyurtma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OrderCustomerResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buyurtma tafsiloti",
+        "tags": [
+          "Customers"
+        ]
+      }
     }
   },
   "info": {
@@ -1593,6 +4972,107 @@
           "phone",
           "fullName",
           "role"
+        ]
+      },
+      "SettingPublicDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "stock.lowThresholdPallets",
+              "payment.requisites",
+              "pricing.branchAdminMaxDiscountPercent"
+            ],
+            "example": "payment.requisites"
+          },
+          "value": {
+            "type": "object",
+            "description": "Kalitga qarab turi har xil:\n• `stock.lowThresholdPallets` — butun son ≥ 0\n• `payment.requisites` — `{ bank, mfo (5 raqam), account (20 raqam), inn (9 raqam), name }` yoki `null`\n• `pricing.branchAdminMaxDiscountPercent` — 0…100",
+            "example": {
+              "bank": "Hamkorbank",
+              "mfo": "00873",
+              "account": "20208000900123456789",
+              "inn": "301234567",
+              "name": "Vodiy Kafel Savdo MChJ"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ]
+      },
+      "SettingAdminDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "stock.lowThresholdPallets",
+              "payment.requisites",
+              "pricing.branchAdminMaxDiscountPercent"
+            ],
+            "example": "payment.requisites"
+          },
+          "value": {
+            "type": "object",
+            "description": "Kalitga qarab turi har xil:\n• `stock.lowThresholdPallets` — butun son ≥ 0\n• `payment.requisites` — `{ bank, mfo (5 raqam), account (20 raqam), inn (9 raqam), name }` yoki `null`\n• `pricing.branchAdminMaxDiscountPercent` — 0…100",
+            "example": {
+              "bank": "Hamkorbank",
+              "mfo": "00873",
+              "account": "20208000900123456789",
+              "inn": "301234567",
+              "name": "Vodiy Kafel Savdo MChJ"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "`GET /settings/public` da ko‘rinadimi",
+            "example": true
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "`true` — bazada yozuv yo‘q, `value` tizimning standart qiymati. Birinchi saqlashda yozuv yaratiladi.",
+            "example": false
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "isPublic",
+          "isDefault"
+        ]
+      },
+      "UpdateSettingDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "stock.lowThresholdPallets",
+              "payment.requisites",
+              "pricing.branchAdminMaxDiscountPercent"
+            ]
+          },
+          "value": {
+            "type": "object",
+            "description": "Kalitga qarab turi har xil:\n• `stock.lowThresholdPallets` — butun son ≥ 0\n• `payment.requisites` — `{ bank, mfo (5 raqam), account (20 raqam), inn (9 raqam), name }` yoki `null`\n• `pricing.branchAdminMaxDiscountPercent` — 0…100",
+            "example": 25
+          }
+        },
+        "required": [
+          "key",
+          "value"
         ]
       },
       "ResetPasswordResponseDto": {
@@ -2200,6 +5680,2276 @@
           "weightPerPallet",
           "availability",
           "media"
+        ]
+      },
+      "ProductStockSummaryDto": {
+        "type": "object",
+        "properties": {
+          "stockPallets": {
+            "type": "number",
+            "description": "Markaziy ombordagi paddonlar soni. Zaxira yozuvi hali yo‘q bo‘lsa — 0.",
+            "example": 120
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "description": "Mahsulotning o‘z «kam qoldi» chegarasi. `null` — global sozlama ishlaydi.",
+            "example": null,
+            "nullable": true
+          },
+          "effectiveThreshold": {
+            "type": "number",
+            "description": "Amalda qo‘llangan chegara (o‘ziniki yoki `stock.lowThresholdPallets`).",
+            "example": 20
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "LOW",
+              "OUT_OF_STOCK"
+            ],
+            "example": "IN_STOCK"
+          }
+        },
+        "required": [
+          "stockPallets",
+          "effectiveThreshold",
+          "stockStatus"
+        ]
+      },
+      "ProductAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/ProductFactoryRefDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "string",
+            "example": "Bej",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "example": "32.5"
+          },
+          "viewCount": {
+            "type": "number",
+            "example": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "`false` — o‘chirilgan (soft delete), ochiq katalogda yo‘q",
+            "example": true
+          },
+          "stock": {
+            "$ref": "#/components/schemas/ProductStockSummaryDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "factory",
+          "size",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet",
+          "viewCount",
+          "isActive",
+          "stock",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedProductAdminResponseDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductAdminResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit",
+            "maxLength": 150
+          },
+          "factoryId": {
+            "type": "string",
+            "description": "Zavod ID"
+          },
+          "sizeId": {
+            "type": "string",
+            "description": "O‘lcham ID"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "string",
+            "example": "Bej",
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m² — kalkulyator uchun MAJBURIY. Satr ko‘rinishida (float xatosi bo‘lmasligi uchun), verguldan keyin 4 tagacha raqam.",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg) — transport soni shu asosda hisoblanadi. Satr ko‘rinishida, verguldan keyin 3 tagacha raqam.",
+            "example": "1250.5"
+          }
+        },
+        "required": [
+          "name",
+          "factoryId",
+          "sizeId",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit",
+            "maxLength": 150
+          },
+          "factoryId": {
+            "type": "string",
+            "description": "Zavod ID"
+          },
+          "sizeId": {
+            "type": "string",
+            "description": "O‘lcham ID"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "string",
+            "example": "Bej",
+            "maxLength": 60
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m² — kalkulyator uchun MAJBURIY. Satr ko‘rinishida (float xatosi bo‘lmasligi uchun), verguldan keyin 4 tagacha raqam.",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg) — transport soni shu asosda hisoblanadi. Satr ko‘rinishida, verguldan keyin 3 tagacha raqam.",
+            "example": "1250.5"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "O‘chirilgan mahsulotni qaytarish: `true`. `DELETE` ham shu maydonni `false` qiladi."
+          }
+        }
+      },
+      "ProductAdminRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "isActive"
+        ]
+      },
+      "SimilarProductLinkDto": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductAdminRefDto"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "product",
+          "sortOrder"
+        ]
+      },
+      "SetSimilarProductsDto": {
+        "type": "object",
+        "properties": {
+          "similarProductIds": {
+            "maxItems": 20,
+            "description": "O‘xshash mahsulot ID lari — ko‘rsatish tartibida. Oldingi ro‘yxat butunlay almashtiriladi.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "similarProductIds"
+        ]
+      },
+      "BranchRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Vodiy Kafel — Farg‘ona"
+          },
+          "city": {
+            "type": "string",
+            "example": "Farg‘ona"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city"
+        ]
+      },
+      "BranchProductAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/BranchRefDto"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductAdminRefDto"
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "description": "So‘m / m², satr ko‘rinishida",
+            "example": "85000"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Shu filialda sotiladimi",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "branch",
+          "product",
+          "pricePerSqm",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedBranchProductAdminResponseDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BranchProductAdminResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "UpsertBranchProductDto": {
+        "type": "object",
+        "properties": {
+          "branchId": {
+            "type": "string",
+            "description": "SUPER_ADMIN uchun majburiy. Filial admini yubormasa ham bo‘ladi — narx o‘z filialiga yoziladi."
+          },
+          "productId": {
+            "type": "string",
+            "description": "Mahsulot ID"
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "description": "Narx, so‘m / m². Satr ko‘rinishida (float emas).",
+            "example": "85000"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Shu filialda sotiladimi. Yangi yozuvda berilmasa — `true`, mavjudida berilmasa — o‘zgarmaydi."
+          }
+        },
+        "required": [
+          "productId",
+          "pricePerSqm"
+        ]
+      },
+      "UpdateBranchProductPriceDto": {
+        "type": "object",
+        "properties": {
+          "pricePerSqm": {
+            "type": "string",
+            "description": "Yangi narx, so‘m / m²",
+            "example": "92000"
+          }
+        },
+        "required": [
+          "pricePerSqm"
+        ]
+      },
+      "ProductStockAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "stockPallets": {
+            "type": "number",
+            "description": "Markaziy ombordagi paddonlar soni. Zaxira yozuvi hali yo‘q bo‘lsa — 0.",
+            "example": 120
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "description": "Mahsulotning o‘z «kam qoldi» chegarasi. `null` — global sozlama ishlaydi.",
+            "example": null,
+            "nullable": true
+          },
+          "effectiveThreshold": {
+            "type": "number",
+            "description": "Amalda qo‘llangan chegara (o‘ziniki yoki `stock.lowThresholdPallets`).",
+            "example": 20
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "LOW",
+              "OUT_OF_STOCK"
+            ],
+            "example": "IN_STOCK"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductAdminRefDto"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Zaxira oxirgi marta qachon o‘zgargan. `null` — hali hech qachon kiritilmagan.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "stockPallets",
+          "effectiveThreshold",
+          "stockStatus",
+          "product"
+        ]
+      },
+      "PaginatedProductStockAdminResponseDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductStockAdminResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "UpsertProductStockDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "Mahsulot ID"
+          },
+          "stockPallets": {
+            "type": "number",
+            "description": "Ombordagi paddonlar soni",
+            "example": 120
+          },
+          "lowStockThreshold": {
+            "type": "number",
+            "description": "«Kam qoldi» chegarasi. `null` — global sozlamaga qaytarish; yuborilmasa — o‘zgarmaydi.",
+            "nullable": true,
+            "example": 15
+          }
+        },
+        "required": [
+          "productId",
+          "stockPallets"
+        ]
+      },
+      "ProductMediaAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "productId": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "url": {
+            "type": "string",
+            "example": "/uploads/products/0b6f1c1e-6a4f-4a57-9a3b-2f7c1d9e8a11.jpg"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "IMAGE",
+              "IMAGE_360",
+              "VIDEO_360"
+            ],
+            "example": "IMAGE"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Ko‘rsatish tartibi (0 — birinchi)",
+            "example": 0
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "url",
+          "type",
+          "sortOrder",
+          "createdAt"
+        ]
+      },
+      "UploadProductMediaBodyDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "IMAGE",
+              "IMAGE_360",
+              "VIDEO_360"
+            ],
+            "default": "IMAGE",
+            "description": "`IMAGE` va `IMAGE_360` — JPG/PNG/WEBP surat, `VIDEO_360` — MP4 video."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Fayl: JPG, PNG, WEBP yoki MP4, 10 MB gacha"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "ReorderProductMediaDto": {
+        "type": "object",
+        "properties": {
+          "mediaIds": {
+            "description": "Mahsulotning BARCHA media ID lari — yangi tartibda. Birinchisi kartada ko‘rinadi (agar u `IMAGE` bo‘lsa).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "mediaIds"
+        ]
+      },
+      "GalleryProductRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Granit Bej"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Mahsulot sahifasiga havola uchun — `/products/:slug`",
+            "example": "lyuks-granit-bej"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "GalleryPublicItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": "/uploads/gallery/0b6f1c1e.jpg"
+          },
+          "title": {
+            "type": "string",
+            "example": "Farg‘ona, xususiy uy — oshxona",
+            "nullable": true
+          },
+          "product": {
+            "nullable": true,
+            "description": "Rasmdagi mahsulot (TZ 3.1). Bog‘lanmagan yoki mahsulot vitrinadan olib tashlangan bo‘lsa — `null`.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GalleryProductRefDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "imageUrl"
+        ]
+      },
+      "PaginatedGalleryPublicItemDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GalleryPublicItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "GalleryAdminItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": "/uploads/gallery/0b6f1c1e.jpg"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "product": {
+            "nullable": true,
+            "description": "Bog‘langan mahsulot — o‘chirilgan bo‘lsa ham ko‘rinadi.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductAdminRefDto"
+              }
+            ]
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "imageUrl",
+          "sortOrder",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedGalleryAdminItemDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GalleryAdminItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "CreateGalleryItemBodyDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "productId": {
+            "type": "string",
+            "description": "Rasmdagi mahsulot ID"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Ko‘rsatish tartibi (kichik — oldinroq)",
+            "default": 0,
+            "minimum": 0
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Rasm: JPG, PNG yoki WEBP, 10 MB gacha"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "UpdateGalleryItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true,
+            "description": "`null` — sarlavhani olib tashlash"
+          },
+          "productId": {
+            "type": "string",
+            "nullable": true,
+            "description": "`null` — mahsulot bilan bog‘lanishni uzish"
+          },
+          "sortOrder": {
+            "type": "number",
+            "minimum": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "`false` — ochiq galereyadan yashirish"
+          }
+        }
+      },
+      "TransportTypePublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fura"
+          },
+          "capacityPallets": {
+            "type": "number",
+            "description": "Bitta transportga sig‘adigan paddonlar soni",
+            "example": 20
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "capacityPallets"
+        ]
+      },
+      "RegionPublicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Toshkent shahri"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "QuoteItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Granit Bej"
+          },
+          "pallets": {
+            "type": "number",
+            "example": 10
+          },
+          "sqm": {
+            "type": "string",
+            "example": "14.4",
+            "description": "Jami m²"
+          },
+          "weightKg": {
+            "type": "string",
+            "example": "325",
+            "description": "Jami kg"
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "example": "76500",
+            "description": "Shu mijoz uchun YAKUNIY narx (so‘m/m²). Chegirma bo‘lsa — allaqachon qo‘llangan; qanday hisoblangani ko‘rsatilmaydi."
+          },
+          "lineTotal": {
+            "type": "string",
+            "example": "1101600"
+          }
+        },
+        "required": [
+          "productId",
+          "name",
+          "pallets",
+          "sqm",
+          "weightKg",
+          "pricePerSqm",
+          "lineTotal"
+        ]
+      },
+      "DeliveryResponseDto": {
+        "type": "object",
+        "properties": {
+          "transportTypeId": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "transportTypeName": {
+            "type": "string",
+            "example": "Fura"
+          },
+          "regionName": {
+            "type": "string",
+            "example": "Toshkent shahri"
+          },
+          "capacityPallets": {
+            "type": "number",
+            "example": 20
+          },
+          "vehicleCount": {
+            "type": "number",
+            "description": "Nechta transport kerak",
+            "example": 2
+          },
+          "unitPrice": {
+            "type": "string",
+            "example": "12000000",
+            "description": "Bitta transport uchun yakuniy yo‘l kira"
+          },
+          "total": {
+            "type": "string",
+            "example": "24000000"
+          }
+        },
+        "required": [
+          "transportTypeId",
+          "transportTypeName",
+          "regionName",
+          "capacityPallets",
+          "vehicleCount",
+          "unitPrice",
+          "total"
+        ]
+      },
+      "QuoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteItemResponseDto"
+            }
+          },
+          "totalPallets": {
+            "type": "number",
+            "example": 15
+          },
+          "totalSqm": {
+            "type": "string",
+            "example": "19.8"
+          },
+          "totalWeightKg": {
+            "type": "string",
+            "example": "445"
+          },
+          "itemsTotal": {
+            "type": "string",
+            "example": "1558800"
+          },
+          "transport": {
+            "nullable": true,
+            "description": "Yetkazib berishsiz hisobda — `null`",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryResponseDto"
+              }
+            ]
+          },
+          "deliveryTotal": {
+            "type": "string",
+            "example": "12000000"
+          },
+          "grandTotal": {
+            "type": "string",
+            "example": "13558800"
+          }
+        },
+        "required": [
+          "items",
+          "totalPallets",
+          "totalSqm",
+          "totalWeightKg",
+          "itemsTotal",
+          "deliveryTotal",
+          "grandTotal"
+        ]
+      },
+      "QuoteItemDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "description": "Mahsulot ID"
+          },
+          "pallets": {
+            "type": "number",
+            "description": "Paddon soni (kv² emas — TZ 3.3)",
+            "minimum": 1,
+            "maximum": 100000,
+            "example": 10
+          }
+        },
+        "required": [
+          "productId",
+          "pallets"
+        ]
+      },
+      "QuoteRequestDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteItemDto"
+            }
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Yetkazib berish viloyati. `transportTypeId` bilan BIRGA."
+          },
+          "transportTypeId": {
+            "type": "string",
+            "description": "Transport turi. `regionId` bilan BIRGA. Ikkalasi ham berilmasa — yetkazib berishsiz hisob."
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "DeliveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "totalPallets": {
+            "type": "number",
+            "minimum": 1,
+            "example": 25
+          },
+          "regionId": {
+            "type": "string"
+          },
+          "transportTypeId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "totalPallets",
+          "regionId",
+          "transportTypeId"
+        ]
+      },
+      "OrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Lyuks Granit Bej"
+          },
+          "productSlug": {
+            "type": "string",
+            "example": "lyuks-granit-bej"
+          },
+          "pallets": {
+            "type": "number",
+            "example": 10
+          },
+          "sqm": {
+            "type": "string",
+            "example": "14.4"
+          },
+          "weightKg": {
+            "type": "string",
+            "example": "325"
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "example": "78000",
+            "description": "Buyurtma paytidagi narx (surat). Keyin narx o‘zgarsa ham bu qiymat o‘zgarmaydi."
+          },
+          "lineTotal": {
+            "type": "string",
+            "example": "1123200"
+          }
+        },
+        "required": [
+          "productId",
+          "productName",
+          "productSlug",
+          "pallets",
+          "sqm",
+          "weightKg",
+          "pricePerSqm",
+          "lineTotal"
+        ]
+      },
+      "OrderDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "regionName": {
+            "type": "string",
+            "example": "Toshkent shahri"
+          },
+          "transportTypeName": {
+            "type": "string",
+            "example": "Fura"
+          },
+          "vehicleCount": {
+            "type": "number",
+            "example": 2
+          },
+          "exactLat": {
+            "type": "number",
+            "nullable": true,
+            "example": 41.311081
+          },
+          "exactLng": {
+            "type": "number",
+            "nullable": true,
+            "example": 69.240562
+          }
+        },
+        "required": [
+          "regionName",
+          "transportTypeName",
+          "vehicleCount"
+        ]
+      },
+      "OrderPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "example": "PENDING"
+          },
+          "amount": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "status",
+          "amount"
+        ]
+      },
+      "OrderStatusEntryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ],
+            "example": "NEW"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "createdAt"
+        ]
+      },
+      "OrderCustomerResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ],
+            "example": "NEW"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "WEBSITE",
+              "TELEGRAM",
+              "PHONE",
+              "ADMIN"
+            ],
+            "example": "WEBSITE"
+          },
+          "branchName": {
+            "type": "string",
+            "example": "Vodiy Kafel — Farg‘ona"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponseDto"
+            }
+          },
+          "totalPallets": {
+            "type": "number",
+            "example": 10
+          },
+          "totalSqm": {
+            "type": "string",
+            "example": "14.4"
+          },
+          "totalWeightKg": {
+            "type": "string",
+            "example": "325"
+          },
+          "itemsTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "deliveryTotal": {
+            "type": "string",
+            "example": "0"
+          },
+          "grandTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "delivery": {
+            "nullable": true,
+            "description": "Olib ketishda — `null`",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderDeliveryDto"
+              }
+            ]
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderPaymentDto"
+            }
+          },
+          "statusHistory": {
+            "description": "Holatlar tarixi — vaqt belgisi bilan (TZ 3.4)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusEntryDto"
+            }
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "source",
+          "branchName",
+          "items",
+          "totalPallets",
+          "totalSqm",
+          "totalWeightKg",
+          "itemsTotal",
+          "deliveryTotal",
+          "grandTotal",
+          "payments",
+          "statusHistory",
+          "createdAt"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteItemDto"
+            }
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Yetkazib berish viloyati — `transportTypeId` bilan BIRGA. Ikkalasi ham berilmasa — olib ketish (yo‘l kira 0)."
+          },
+          "transportTypeId": {
+            "type": "string",
+            "description": "Transport turi — `regionId` bilan BIRGA"
+          },
+          "exactLat": {
+            "type": "number",
+            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda. ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
+            "minimum": -90,
+            "maximum": 90,
+            "example": 41.311081
+          },
+          "exactLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "example": 69.240562
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER"
+            ],
+            "description": "`CASH` — naqd, `CARD` — karta orqali onlayn, `BANK_TRANSFER` — shartnoma bo‘yicha o‘tkazma"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "items",
+          "paymentMethod"
+        ]
+      },
+      "TrackStatusEntryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "createdAt"
+        ]
+      },
+      "TrackOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackStatusEntryDto"
+            }
+          },
+          "regionName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Toshkent shahri",
+            "description": "Olib ketishda — null"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "orderNumber",
+          "status",
+          "statusHistory",
+          "createdAt"
+        ]
+      },
+      "BranchNameRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Vodiy Kafel — Andijon"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "OrderBuyerDto": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hisobi bor mijoz. Hisobsiz xaridorda — null"
+          },
+          "name": {
+            "type": "string",
+            "example": "Andijon Qurilish MChJ"
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+998901234567"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "StaffRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Farg‘ona menejeri"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "AdminOrderListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "WEBSITE",
+              "TELEGRAM",
+              "PHONE",
+              "ADMIN"
+            ]
+          },
+          "orderingType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "BRANCH",
+              "AGENT"
+            ]
+          },
+          "isUrgent": {
+            "type": "boolean",
+            "example": false
+          },
+          "branch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchNameRefDto"
+              }
+            ]
+          },
+          "buyer": {
+            "nullable": true,
+            "description": "Filial ta’minot buyurtmasida — null",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderBuyerDto"
+              }
+            ]
+          },
+          "manager": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefDto"
+              }
+            ]
+          },
+          "totalPallets": {
+            "type": "number",
+            "example": 10
+          },
+          "grandTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "nullable": true,
+            "description": "Oxirgi to‘lov holati"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "source",
+          "orderingType",
+          "isUrgent",
+          "totalPallets",
+          "grandTotal",
+          "createdAt"
+        ]
+      },
+      "PaginatedAdminOrderListItemDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "AdminOrderPaymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "example": "PENDING"
+          },
+          "amount": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "providerRef": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "status",
+          "amount"
+        ]
+      },
+      "OrderStatusAdminEntryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedBy": {
+            "nullable": true,
+            "description": "Kim o‘zgartirgan (tizim/mijoz — null)",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "createdAt"
+        ]
+      },
+      "AdminOrderDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ],
+            "example": "NEW"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "WEBSITE",
+              "TELEGRAM",
+              "PHONE",
+              "ADMIN"
+            ],
+            "example": "WEBSITE"
+          },
+          "branchName": {
+            "type": "string",
+            "example": "Vodiy Kafel — Farg‘ona"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponseDto"
+            }
+          },
+          "totalPallets": {
+            "type": "number",
+            "example": 10
+          },
+          "totalSqm": {
+            "type": "string",
+            "example": "14.4"
+          },
+          "totalWeightKg": {
+            "type": "string",
+            "example": "325"
+          },
+          "itemsTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "deliveryTotal": {
+            "type": "string",
+            "example": "0"
+          },
+          "grandTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "delivery": {
+            "nullable": true,
+            "description": "Olib ketishda — `null`",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderDeliveryDto"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          },
+          "orderingType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "BRANCH",
+              "AGENT"
+            ]
+          },
+          "isUrgent": {
+            "type": "boolean",
+            "example": false
+          },
+          "branch": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchNameRefDto"
+              }
+            ]
+          },
+          "buyer": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderBuyerDto"
+              }
+            ]
+          },
+          "manager": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StaffRefDto"
+              }
+            ]
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderPaymentDto"
+            }
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusAdminEntryDto"
+            }
+          },
+          "allowedNextStatuses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "SEARCHING_TRANSPORT",
+                "LOADING",
+                "DELIVERING",
+                "DELIVERED",
+                "CANCELLED"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "source",
+          "branchName",
+          "items",
+          "totalPallets",
+          "totalSqm",
+          "totalWeightKg",
+          "itemsTotal",
+          "deliveryTotal",
+          "grandTotal",
+          "createdAt",
+          "orderingType",
+          "isUrgent",
+          "payments",
+          "statusHistory",
+          "allowedNextStatuses"
+        ]
+      },
+      "CreateManualOrderDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteItemDto"
+            }
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Yetkazib berish viloyati — `transportTypeId` bilan BIRGA. Ikkalasi ham berilmasa — olib ketish (yo‘l kira 0)."
+          },
+          "transportTypeId": {
+            "type": "string",
+            "description": "Transport turi — `regionId` bilan BIRGA"
+          },
+          "exactLat": {
+            "type": "number",
+            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda. ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
+            "minimum": -90,
+            "maximum": 90,
+            "example": 41.311081
+          },
+          "exactLng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "example": 69.240562
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER"
+            ],
+            "description": "`CASH` — naqd, `CARD` — karta orqali onlayn, `BANK_TRANSFER` — shartnoma bo‘yicha o‘tkazma"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "PHONE",
+              "TELEGRAM",
+              "ADMIN"
+            ],
+            "example": "PHONE"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Hisobi bor optom mijoz. Berilsa — guestName/guestPhone yo‘q."
+          },
+          "guestName": {
+            "type": "string",
+            "maxLength": 150,
+            "example": "Aziz aka"
+          },
+          "guestPhone": {
+            "type": "string",
+            "example": "+998901234567"
+          },
+          "branchId": {
+            "type": "string",
+            "description": "Hisobsiz xaridor uchun filial — faqat SUPER_ADMIN beradi. Xodim uchun har doim o‘z filiali; mijozda — mijozning filiali."
+          },
+          "isUrgent": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "items",
+          "paymentMethod",
+          "source"
+        ]
+      },
+      "SetOrderUrgentDto": {
+        "type": "object",
+        "properties": {
+          "isUrgent": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "isUrgent"
+        ]
+      },
+      "AssignOrderManagerDto": {
+        "type": "object",
+        "properties": {
+          "managerId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Shu buyurtma filialining faol xodimi. `null` — biriktirishni olib tashlash."
+          }
+        },
+        "required": [
+          "managerId"
+        ]
+      },
+      "OrderStatusChangeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "allowedNextStatuses": {
+            "type": "array",
+            "description": "Shu holatdan keyin ruxsat etilgan holatlar (tugmalar uchun)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "SEARCHING_TRANSPORT",
+                "LOADING",
+                "DELIVERING",
+                "DELIVERED",
+                "CANCELLED"
+              ]
+            }
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusAdminEntryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "allowedNextStatuses",
+          "statusHistory"
+        ]
+      },
+      "ChangeOrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ],
+            "example": "SEARCHING_TRANSPORT"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Izoh — mijoz holatlar tarixida ko‘radi"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CustomerOrderListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "orderNumber": {
+            "type": "string",
+            "example": "VK-2026-000001"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "SEARCHING_TRANSPORT",
+              "LOADING",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "itemCount": {
+            "type": "number",
+            "example": 2,
+            "description": "Mahsulot qatorlari soni"
+          },
+          "totalPallets": {
+            "type": "number",
+            "example": 10
+          },
+          "grandTotal": {
+            "type": "string",
+            "example": "1123200"
+          },
+          "regionName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Toshkent shahri",
+            "description": "Olib ketishda — null"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PAID",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "nullable": true,
+            "description": "Oxirgi to‘lov holati"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-14T12:00:00.000Z",
+            "description": "Oxirgi o‘zgarish — holat yangilanganini bilish uchun"
+          }
+        },
+        "required": [
+          "id",
+          "orderNumber",
+          "status",
+          "itemCount",
+          "totalPallets",
+          "grandTotal",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedCustomerOrderListItemDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerOrderListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
         ]
       }
     }

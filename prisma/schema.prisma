@@ -642,6 +642,21 @@ model Order {
   @@map("orders")
 }
 
+/// Buyurtma raqami hisoblagichi — yil bo'yicha (B-028): "VK-2026-000001".
+///
+/// ⚠ Nega alohida jadval, `MAX(order_number) + 1` emas: ikki mijoz bir
+///   vaqtda buyurtma bersa, ikkalasi bir xil MAX ni o'qib, bir xil raqam
+///   olardi. `INSERT ... ON CONFLICT DO UPDATE SET last_value + 1` esa
+///   qatorni qulflaydi va har chaqiruvga yangi son beradi.
+///   Postgres SEQUENCE ham yaramadi — u yil boshida noldan boshlanmaydi.
+model OrderNumberCounter {
+  year      Int
+  lastValue Int @map("last_value")
+
+  @@id([year])
+  @@map("order_number_counters")
+}
+
 /// Buyurtma qatori. ⚠ Narx SNAPSHOT sifatida saqlanadi (CLAUDE.md qoida 8):
 /// katalog narxi keyin o'zgarsa ham, eski buyurtma summasi o'zgarmaydi.
 model OrderItem {

@@ -578,6 +578,11 @@ async function main() {
   const deliveryTotal = tarif.price.mul(mashina).toDecimalPlaces(2);
   const grandTotal = itemsTotal.add(deliveryTotal);
 
+  // ⚠ Buyurtma raqami hisoblagich bilan MOS bo'lishi shart (B-028): aks
+  // holda keyingi buyurtma yana 000001 ni olib, unique xato beradi.
+  await prisma.orderNumberCounter.create({
+    data: { year: 2026, lastValue: 1 },
+  });
   const buyurtma = await prisma.order.create({
     data: {
       orderNumber: 'VK-2026-000001',

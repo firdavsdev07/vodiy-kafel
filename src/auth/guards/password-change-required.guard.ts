@@ -24,9 +24,8 @@ import type { TokenPayload } from '../../common/types/token-payload';
  * 403 (401 emas): token YAROQLI, shunchaki bu hisob hozircha faqat bitta
  * amalga haqli. 401 bo'lsa frontend "qayta kir" deb aylanma hosil qilardi.
  *
- * 📌 B-018 dan boshlab mijoz kabineti endpointlari shu guard bilan
- *    qulflanadi. Hozir uni ishlatadigan endpoint yo'q — mijoz uchun
- *    boshqa endpoint hali yozilmagan.
+ * 📌 Mijoz endpointlari (kalkulyator B-027 dan boshlab) shu guard bilan
+ *    qulflanadi.
  */
 @Injectable()
 export class PasswordChangeRequiredGuard implements CanActivate {

@@ -62,6 +62,11 @@ export const envSchema = z.object({
   // — CORS —
   // Vergul bilan ajratilgan ro'yxat yoki '*'
   CORS_ORIGINS: z.string().default('*'),
+
+  // — Fayl saqlash (B-022) —
+  // Yuklangan fayllar papkasi (loyiha ildiziga nisbatan yoki absolyut yo'l).
+  // `/uploads/...` manzili orqali beriladi.
+  UPLOAD_DIR: z.string().min(1).default('uploads'),
 });
 
 export type Env = z.infer<typeof envSchema>;

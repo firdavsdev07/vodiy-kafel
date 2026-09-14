@@ -279,4 +279,25 @@ describe('ProductsService (B-020)', () => {
       });
     });
   });
+
+  describe('findListItemsByIds (B-023)', () => {
+    it('berilgan TARTIBda qaytaradi, ko‘rinmaydiganlar tushib qoladi', async () => {
+      findMany.mockResolvedValue([row({ id: 'a' }), row({ id: 'c' })]);
+
+      const result = await service.findListItemsByIds(['c', 'b', 'a']);
+
+      expect(result.map((item) => item.id)).toEqual(['c', 'a']);
+      expect(lastWhere()).toMatchObject({
+        id: { in: ['c', 'b', 'a'] },
+        isActive: true,
+        factory: { isActive: true },
+      });
+      expect(lastSelect().branchProducts).toBeUndefined();
+    });
+
+    it('bo‘sh ro‘yxat — bazaga bormaydi', async () => {
+      expect(await service.findListItemsByIds([])).toEqual([]);
+      expect(findMany).not.toHaveBeenCalled();
+    });
+  });
 });

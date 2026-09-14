@@ -121,6 +121,30 @@ export class ProductsService {
   }
 
   /**
+   * Berilgan ID lar bo'yicha ochiq kartalar — AYNAN shu tartibda.
+   *
+   * Ko'rinmaydigan (o'chirilgan yoki zavodi o'chirilgan) mahsulotlar jimgina
+   * tushib qoladi: tanlovni boshqa servis qilgan bo'lsa ham, vitrina qoidasi
+   * shu yerda qayta qo'llanadi.
+   */
+  async findListItemsByIds(
+    ids: string[],
+  ): Promise<ProductListItemResponseDto[]> {
+    if (ids.length === 0) return [];
+
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: ids }, ...this.visibilityWhere() },
+      select: { ...LIST_SELECT, media: PRIMARY_IMAGE },
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+
+    return ids.flatMap((id) => {
+      const row = byId.get(id);
+      return row ? [this.toListItem(row)] : [];
+    });
+  }
+
+  /**
    * Ochiq katalogda nima ko'rinadi.
    *
    * Mahsulotning o'zi faol bo'lishi YETARLI EMAS — zavodi ham faol bo'lishi

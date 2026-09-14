@@ -73,6 +73,11 @@ export class AppConfigService {
     return this.get('SWAGGER_ENABLED');
   }
 
+  // — Fayl saqlash —
+  get uploadDir(): string {
+    return this.get('UPLOAD_DIR');
+  }
+
   // — CORS —
   /** '*' bo'lsa true (hamma ruxsat), aks holda domenlar ro'yxati */
   get corsOrigins(): string[] | true {

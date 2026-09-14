@@ -223,6 +223,10 @@ src/modules/<nom>/
   `@ApiOkResponse` `{ data: ... }` o'ramini ko'rsatmaydi va frontendga
   **yolg'on kontrakt** beradi
 - Barcha DTO'larda `class-validator` dekoratorlari
+- Query'dagi boolean — faqat `@Transform(toOptionalBoolean)` bilan.
+  Global `enableImplicitConversion` `"false"` ni `true` ga aylantiradi
+- Pul va pulga ko'paytiriladigan o'nlik son — satr,
+  `@IsPositiveDecimalString(butun, o'nlik)` bilan (`common/validators`)
 - Controller ichida biznes-mantiq **yozilmaydi** — faqat service chaqiriladi
 - Prisma raw query ishlatilmaydi (kerak bo'lsa — parametrli)
 - Ko'p yozuvli operatsiyalar `$transaction` ichida
@@ -266,6 +270,11 @@ MODERATOR `+998900000002`, optom mijoz `fargona-optom`.
 ⚠ `pnpm db:seed` bazani to'liq tozalaydi va `NODE_ENV=production` da
 ishga tushmaydi. `account_transactions` da audit trigger bo'lgani uchun
 tozalash `TRUNCATE ... CASCADE` orqali (oddiy DELETE ishlamaydi).
+
+Yuklangan fayllar `UPLOAD_DIR` (standart `uploads/`, git'da yo'q) papkasida,
+`/uploads/...` orqali beriladi. Fayl yuklaydigan har bir endpoint
+`StorageService` (`src/storage`) orqali ishlaydi va turni
+`detectFileKind` bilan fayl mazmunidan aniqlaydi.
 
 `/dev/*` endpointlar (mock to'lovni simulyatsiya qilish) faqat
 `NODE_ENV=development` da ro'yxatdan o'tadi.
