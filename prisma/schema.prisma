@@ -1,0 +1,1014 @@
+// Vodiy Kafel — ma'lumotlar bazasi sxemasi
+//
+// Modellar EPIC 1 (B-006 ... B-012) da bosqichma-bosqich qo'shiladi.
+// Hozircha faqat generator va datasource provider.
+//
+// ⚠ Prisma 7: ulanish manzili (url) BU YERDA EMAS —
+//   migratsiyalar uchun  prisma.config.ts  da,
+//   ishlash vaqtida esa   PrismaService  dagi adapter orqali beriladi.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-009 · Filiallar va hamkorlar
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Filial turi. Branch shunchaki kontakt ma'lumoti emas — u IZOLYATSIYA
+/// chegarasi: narx, zaxira, mijoz, buyurtma, xodim — hammasi filialga bog'lanadi.
+enum BranchType {
+  /// Farg'ona, Andijon, Namangan, Qo'qon. Faqat NARX saqlaydi
+  /// (BranchProduct.pricePerSqm), o'z zaxirasi YO'Q.
+  RETAIL
+  /// 1-2 dona. Haqiqiy ZAXIRA shu yerda. Xodimi — MODERATOR (BRANCH_ADMIN emas).
+  CENTRAL
+
+  @@map("branch_type")
+}
+
+model Branch {
+  id   String     @id @default(cuid())
+  type BranchType
+
+  name         String
+  city         String
+  address      String
+  /// Xarita koordinatasi. Decimal EMAS — koordinata pul emas, o'nlik
+  /// arifmetika muammosi yo'q. Float64 ~1 sm aniqlik beradi va frontendga
+  /// satr emas, son bo'lib boradi (CLAUDE.md qoida 7 faqat pulga taalluqli).
+  latitude     Float
+  longitude    Float
+  workingHours String   @map("working_hours")
+  phones       String[]
+
+  buildingImageUrl String? @map("building_image_url")
+  telegramUrl      String? @map("telegram_url")
+  instagramUrl     String? @map("instagram_url")
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users               User[]
+  customers           Customer[]
+  branchProducts      BranchProduct[]
+  branchRegionTariffs BranchRegionTariff[]
+
+  orders       Order[] @relation("BranchOrders")
+  placedOrders Order[] @relation("BranchPlacedOrders")
+
+  @@index([type, isActive])
+  @@index([isActive, sortOrder])
+  @@map("branches")
+}
+
+model Partner {
+  id         String   @id @default(cuid())
+  name       String
+  logoUrl    String   @map("logo_url")
+  websiteUrl String?  @map("website_url")
+  sortOrder  Int      @default(0) @map("sort_order")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("partners")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-006 · Foydalanuvchilar, rollar va filial
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Xodim rollari. ⚠ Mijoz (Customer) bu yerda EMAS — optom mijozning
+/// o'z modeli bor (B-007), chakana mijozda esa hisob umuman yo'q.
+enum UserRole {
+  /// branchId = null — BARCHA filiallarni ko'radi.
+  SUPER_ADMIN
+  /// branchId majburiy (RETAIL) — faqat o'z filialini ko'radi.
+  BRANCH_ADMIN
+  /// branchId majburiy (RETAIL) — BRANCH_ADMIN bilan bir xil doira.
+  MANAGER
+  /// branchId majburiy (CENTRAL) — markaziy ombor xodimi, filial va
+  /// agent buyurtmalarini qabul qiladi (B-058).
+  MODERATOR
+
+  @@map("user_role")
+}
+
+model User {
+  id String @id @default(cuid())
+
+  phone        String   @unique
+  email        String?  @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  role         UserRole
+
+  /// Filial izolyatsiyasining kaliti. SUPER_ADMIN da null, qolganlarda
+  /// majburiy — buni baza darajasidagi CHECK cheklovi ushlab turadi
+  /// (migratsiyaga qo'lda qo'shilgan). MODERATOR uchun bu filial CENTRAL
+  /// turida bo'lishi shart — bu qoida dastur darajasida (B-057).
+  branchId String? @map("branch_id")
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  telegramUsername String?  @map("telegram_username")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  /// Menejer sifatida biriktirilgan mijozlar (B-007).
+  managedCustomers Customer[] @relation("CustomerManager")
+  /// Shu xodim yaratgan mijozlar — audit izi.
+  createdCustomers Customer[] @relation("CustomerCreatedBy")
+
+  managedOrders Order[]              @relation("ManagerOrders")
+  statusChanges OrderStatusHistory[] @relation("StatusChanges")
+
+  accountTransactions AccountTransaction[] @relation("AccountTransactions")
+
+  notifications Notification[]
+
+  pricingRules PricingRule[] @relation("PricingRules")
+
+  @@index([branchId, role])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-007 · Mijozlar (optom / B2B)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ⚠ Customer = FAQAT optom (B2B) mijoz. Chakana mijozda hisob YO'Q
+/// (CLAUDE.md qoida 4) — u saytni token'siz ko'radi, xolos.
+///
+/// 🔒 Hisobni faqat admin/menejer yaratadi, self-registration yo'q.
+model Customer {
+  id String @id @default(cuid())
+
+  /// Admin bergan login. Kichik harfda saqlanadi (servis darajasida
+  /// normalizatsiya) — "Ali" va "ali" ikki xil hisob bo'lib qolmasligi uchun.
+  login              String  @unique
+  passwordHash       String  @map("password_hash")
+  /// Birinchi kirishda parolni almashtirish majburiyligi.
+  mustChangePassword Boolean @default(true) @map("must_change_password")
+
+  companyName String  @map("company_name")
+  /// Soliq to'lovchi raqami — Didox.uz shartnomalari shu asosda (B-044).
+  inn         String?
+  contactName String  @map("contact_name")
+  phone       String
+
+  /// MAJBURIY: mijoz shu filialning narxini ko'radi va buyurtmani unga beradi
+  /// (CLAUDE.md qoida 5). Odatda RETAIL, lekin markazga biriktirilgan
+  /// agent uchun CENTRAL ham bo'lishi mumkin (B-058).
+  branchId String @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  /// Biriktirilgan menejer. O'chirilsa mijoz yo'qolmaydi — bog'lanish uziladi.
+  managerId String? @map("manager_id")
+  manager   User?   @relation("CustomerManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  /// Kim yaratgani — audit uchun, hech qachon yo'qolmaydi.
+  createdByUserId String @map("created_by_user_id")
+  createdBy       User   @relation("CustomerCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  account      CustomerAccount?
+  transactions AccountTransaction[]
+
+  notifications Notification[]
+
+  pricingRules PricingRule[]
+
+  @@index([branchId, isActive])
+  @@index([managerId])
+  @@index([phone])
+  @@map("customers")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-008 · Katalog va filial narxlari
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Kafel qayerga yotqiziladi.
+enum ProductSurface {
+  /// Pol (yer) uchun
+  POL
+  /// Devor uchun
+  DEVOR
+
+  @@map("product_surface")
+}
+
+enum MediaType {
+  IMAGE
+  /// 360° aylanuvchi surat to'plami
+  IMAGE_360
+  /// 360° video
+  VIDEO_360
+
+  @@map("media_type")
+}
+
+model Factory {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  logoUrl     String  @map("logo_url")
+  description String?
+  websiteUrl  String? @map("website_url")
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  pricingRules PricingRule[]
+
+  @@index([isActive, sortOrder])
+  @@map("factories")
+}
+
+model ProductSize {
+  id       String @id @default(cuid())
+  /// Ko'rinadigan yozuv: "60x60"
+  label    String @unique
+  widthCm  Int    @map("width_cm")
+  heightCm Int    @map("height_cm")
+
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([sortOrder])
+  @@map("product_sizes")
+}
+
+/// Mahsulotning UMUMIY tavsifi — hamma filialda bir xil.
+/// ⚠ Bu yerda NARX HAM, ZAXIRA HAM YO'Q — ular filialga bog'liq
+/// (BranchProduct). CLAUDE.md qoida 5.
+model Product {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique
+
+  factoryId String  @map("factory_id")
+  factory   Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict)
+
+  sizeId String      @map("size_id")
+  size   ProductSize @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+
+  surface     ProductSurface
+  color       String?
+  description String?
+
+  /// 1 paddondagi m². Float EMAS: bu son narxga ko'paytiriladi
+  /// (paddon × sqmPerPallet × pricePerSqm), ya'ni pul hisobiga kiradi.
+  sqmPerPallet    Decimal @map("sqm_per_pallet") @db.Decimal(10, 4)
+  /// 1 paddon og'irligi (kg) — transport soni shu asosda hisoblanadi.
+  weightPerPallet Decimal @map("weight_per_pallet") @db.Decimal(10, 3)
+
+  viewCount Int      @default(0) @map("view_count")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  branchProducts BranchProduct[]
+  media          ProductMedia[]
+  galleryItems   GalleryItem[]
+  /// "Shunga o'xshash" — bu mahsulotdan boshqalarga
+  similarTo      ProductSimilar[] @relation("SimilarFrom")
+  /// Teskari yo'nalish — kim buni o'xshash deb ko'rsatgan
+  similarFrom    ProductSimilar[] @relation("SimilarTo")
+  stock          ProductStock?
+
+  orderItems OrderItem[]
+
+  pricingRules PricingRule[]
+
+  @@index([factoryId, isActive])
+  @@index([sizeId, isActive])
+  @@index([surface, isActive])
+  @@map("products")
+}
+
+/// Shu filialdagi TIJORAT SHARTI — FAQAT NARX.
+///
+/// ⚠ Bu yerda ZAXIRA YO'Q va bo'lmaydi ham (TZ 3.7.1: «Zaxira bu jadvalda
+///   yo'q»). Zaxira — `ProductStock` da, butun tizim uchun bitta umumiy son.
+///   Agar zaxira shu jadvalda bo'lganida, RETAIL filial qatoriga ham zaxira
+///   yozib qo'yish mumkin bo'lardi va «zaxira faqat markazda» qoidasi
+///   jimgina buzilardi. Endi u tuzilma darajasida imkonsiz.
+model BranchProduct {
+  id String @id @default(cuid())
+
+  branchId String @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// 🔒 Filialga xos narx (so'm / m²). Public javobga CHIQMAYDI —
+  ///    narx faqat kirgan optom mijozga ko'rinadi (CLAUDE.md qoida 2).
+  pricePerSqm Decimal @map("price_per_sqm") @db.Decimal(14, 2)
+
+  /// Shu filialda sotiladimi.
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([branchId, productId])
+  @@index([branchId, isActive])
+  @@index([productId])
+  @@map("branch_products")
+}
+
+/// Markaziy ombor zaxirasi — butun tizim uchun MAHSULOTGA BITTA qator
+/// (TZ 3.2, 3.7.1: «Zaxira esa hammasi uchun bitta — markaziy ombordagi
+/// umumiy son»).
+///
+/// Nega alohida jadval va nega `branchId` YO'Q: filial ustuni bo'lmagach,
+/// RETAIL filialga zaxira yozib qo'yishning iloji yo'q — qoida tuzilma
+/// darajasida bajariladi, tekshiruvga muhtoj emas (CLAUDE.md qoida 12).
+///
+/// 🔮 Filial-darajasidagi alohida zaxira — kelajakdagi funksiya (TZ 8.2),
+///    hozir ataylab qurilmaydi.
+model ProductStock {
+  id String @id @default(cuid())
+
+  productId String  @unique @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// 🔒 Aniq son public javobga HECH QACHON chiqmaydi — faqat holat
+  ///    hisoblanadi (CLAUDE.md qoida 2).
+  stockPallets      Int  @default(0) @map("stock_pallets")
+  /// «Kam qoldi» chegarasi. null = global sozlamadagi chegara (B-025).
+  lowStockThreshold Int? @map("low_stock_threshold")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("product_stocks")
+}
+
+model ProductMedia {
+  id String @id @default(cuid())
+
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  url       String
+  type      MediaType @default(IMAGE)
+  sortOrder Int       @default(0) @map("sort_order")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([productId, sortOrder])
+  @@map("product_media")
+}
+
+/// "Shunga o'xshash mahsulotlar". Yo'nalishli: A → B qo'yilsa,
+/// B → A avtomatik kelib chiqmaydi (admin o'zi belgilaydi).
+model ProductSimilar {
+  productId String  @map("product_id")
+  product   Product @relation("SimilarFrom", fields: [productId], references: [id], onDelete: Cascade)
+
+  similarProductId String  @map("similar_product_id")
+  similarProduct   Product @relation("SimilarTo", fields: [similarProductId], references: [id], onDelete: Cascade)
+
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([productId, similarProductId])
+  @@index([similarProductId])
+  @@map("product_similars")
+}
+
+/// Bosh sahifadagi "ishlarimiz" galereyasi. Mahsulotga bog'lash ixtiyoriy.
+model GalleryItem {
+  id       String  @id @default(cuid())
+  imageUrl String  @map("image_url")
+  title    String?
+
+  productId String?  @map("product_id")
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@index([productId])
+  @@map("gallery_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-053 · Transport turlari va yetkazib berish tariflari (TZ 3.13, 3.14)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Transport turi — "Fura", "Vagon" va boshqalar.
+/// ⚠ Bu QATTIQ RO'YXAT (enum) EMAS: SUPER_ADMIN yangi turini qo'sha oladi,
+///   shuning uchun jadval. Eski «fura | vagon» enum qarori bekor qilingan.
+model TransportType {
+  id   String @id @default(cuid())
+  name String @unique
+
+  /// Bitta transport vositasiga sig'adigan paddon soni — kalkulyator
+  /// nechta mashina kerakligini shu asosda hisoblaydi (B-026).
+  capacityPallets Int @map("capacity_pallets")
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tariffs BranchRegionTariff[]
+
+  orders Order[]
+
+  @@index([isActive, sortOrder])
+  @@map("transport_types")
+}
+
+/// Viloyat — yetkazib berish manzili.
+/// ❓ Ro'yxat qat'iymi yoki admin kengaytiradimi — TZ ochiq savoli.
+///   Hozircha CRUD qilib qo'yilgan: javob kelganda faqat endpoint yopiladi.
+model Region {
+  id   String @id @default(cuid())
+  name String @unique
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tariffs BranchRegionTariff[]
+
+  orders Order[]
+
+  @@index([isActive, sortOrder])
+  @@map("regions")
+}
+
+/// Yo'l kira narxi: `filial × viloyat × transport turi` matritsasi.
+///
+/// ⚠ Bu jadval «yetkazib berish tarifi umumiy» degan eski qarorni BEKOR
+///   qiladi (CLAUDE.md qoida 5): Farg'onadan Navoiyga fura bilan narx,
+///   Andijondan Navoiyga fura bilan narxdan boshqa bo'lishi mumkin.
+///
+/// 🔒 Filialga xos — BranchProduct bilan bir xil naqsh, B-051 orqali
+///    izolyatsiya qilinadi.
+///
+/// ❓ OCHIQ SAVOL: CENTRAL filial uchun ham kerakmi — hozircha cheklov
+///   qo'yilmadi, har qanday filial uchun tarif kiritilishi mumkin.
+model BranchRegionTariff {
+  id String @id @default(cuid())
+
+  branchId String @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  regionId String @map("region_id")
+  region   Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  transportTypeId String        @map("transport_type_id")
+  transportType   TransportType @relation(fields: [transportTypeId], references: [id], onDelete: Restrict)
+
+  /// Bitta transport vositasi uchun yo'l kira (so'm).
+  price Decimal @db.Decimal(14, 2)
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pricingRules PricingRule[]
+
+  @@unique([branchId, regionId, transportTypeId])
+  @@index([branchId, isActive])
+  @@index([regionId])
+  @@index([transportTypeId])
+  @@map("branch_region_tariffs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-010 · Buyurtmalar (TZ 3.4, 3.7.2, 3.13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Buyurtma bosqichlari (TZ 3.4 — "vaqt belgisi bilan").
+///
+/// ❓ OCHIQ SAVOL №1: TZ'da IKKI xil status ro'yxati bor va TZ'ning o'zi
+///    "ikkitasi bir vaqtda yashamasligi kerak" deydi. Hozircha TZ
+///    jadvalidagi variant olindi; mijoz tasdiqlagach — bitta migratsiya.
+enum OrderStatus {
+  /// Buyurtma qabul qilindi
+  NEW
+  /// Mashina qidirilmoqda
+  SEARCHING_TRANSPORT
+  /// Yuklash jarayonida
+  LOADING
+  /// Yetkazib berilmoqda
+  DELIVERING
+  /// Yetkazildi
+  DELIVERED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+/// Buyurtma QAYSI KANAL orqali kelgani (TZ 3.4).
+enum OrderSource {
+  /// Optom mijoz saytdan o'zi bergan
+  WEBSITE
+  /// Telegram orqali — menejer qo'lda kiritgan
+  TELEGRAM
+  /// Qo'ng'iroq orqali — menejer qo'lda kiritgan
+  PHONE
+  /// Admin panelidan to'g'ridan-to'g'ri
+  ADMIN
+
+  @@map("order_source")
+}
+
+/// KIM buyurtma bermoqda (TZ 3.7.2). `OrderSource` dan farqli o'lcham.
+///
+/// Filial markaziy ombordan XUDDI MIJOZ KABI buyurtma beradi — shuning
+/// uchun alohida jadval emas, shu `Order` ning bir turi (B-058).
+enum OrderingType {
+  /// Filialga biriktirilgan optom mijoz
+  CUSTOMER
+  /// RETAIL filial → markaziy ombordan ta'minot buyurtmasi
+  BRANCH
+  /// Markaziy omborga bevosita biriktirilgan B2B agent
+  AGENT
+
+  @@map("ordering_type")
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  /// Mijozga ko'rinadigan raqam (masalan "VK-2026-000123").
+  orderNumber String @unique @map("order_number")
+
+  orderingType OrderingType @default(CUSTOMER) @map("ordering_type")
+
+  /// CUSTOMER va AGENT uchun to'ldiriladi.
+  customerId String?   @map("customer_id")
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  /// Hisobi yo'q xaridor (menejer telefon/Telegram orqali kiritgan yoki
+  /// filialdagi joyida sotuv). ⚠ Bu MEHMON CHECKOUT emas — mijoz o'zi
+  /// bunday buyurtma yarata olmaydi (TZ 3.4: "Mehmon checkout yo'q").
+  guestName  String? @map("guest_name")
+  guestPhone String? @map("guest_phone")
+
+  /// orderingType = BRANCH bo'lganda — buyurtma berayotgan RETAIL filial.
+  orderingBranchId String? @map("ordering_branch_id")
+  orderingBranch   Branch? @relation("BranchPlacedOrders", fields: [orderingBranchId], references: [id], onDelete: Restrict)
+
+  source OrderSource
+  status OrderStatus @default(NEW)
+
+  isUrgent Boolean @default(false) @map("is_urgent")
+
+  /// Buyurtmani BAJARAYOTGAN filial (mijoznikida — customer.branchId,
+  /// ta'minot buyurtmasida — markaziy ombor). Tokendan olinadi, body dan EMAS.
+  branchId String? @map("branch_id")
+  branch   Branch? @relation("BranchOrders", fields: [branchId], references: [id], onDelete: Restrict)
+
+  managerId String? @map("manager_id")
+  manager   User?   @relation("ManagerOrders", fields: [managerId], references: [id], onDelete: SetNull)
+
+  /// ⚠ Uchala summa ham buyurtma paytidagi "surat" — keyin narx o'zgarsa
+  ///   bu yerdagi qiymatlar o'zgarmaydi (CLAUDE.md qoida 8).
+  ///   `grandTotal = itemsTotal + deliveryTotal` — baza darajasida qulflangan.
+  itemsTotal    Decimal @map("items_total") @db.Decimal(14, 2)
+  deliveryTotal Decimal @default(0) @map("delivery_total") @db.Decimal(14, 2)
+  grandTotal    Decimal @map("grand_total") @db.Decimal(14, 2)
+
+  /// Yetkazib berish (TZ 3.13). Olib ketish bo'lsa — uchchalasi ham null.
+  regionId String? @map("region_id")
+  region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  transportTypeId String?        @map("transport_type_id")
+  transportType   TransportType? @relation(fields: [transportTypeId], references: [id], onDelete: Restrict)
+
+  /// Nechta transport vositasi kerak (kalkulyator hisoblaydi, B-026).
+  transportCount Int? @map("transport_count")
+
+  /// Mijoz xaritada belgilagan aniq nuqta. ⚠ NARXGA TA'SIR QILMAYDI —
+  /// narx viloyat darajasida (TZ 3.13). Faqat logistika uchun: buyurtma
+  /// tasdiqlangach menejerga `sendLocation` orqali yuboriladi.
+  exactLat Float? @map("exact_lat")
+  exactLng Float? @map("exact_lng")
+
+  totalSqm      Decimal @map("total_sqm") @db.Decimal(12, 4)
+  totalWeightKg Decimal @map("total_weight_kg") @db.Decimal(12, 3)
+  totalPallets  Int     @map("total_pallets")
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+
+  payments     Payment[]
+  transactions AccountTransaction[]
+
+  @@index([branchId, status])
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@index([orderingType, orderingBranchId])
+  @@index([managerId])
+  @@index([isUrgent, status])
+  @@map("orders")
+}
+
+/// Buyurtma qatori. ⚠ Narx SNAPSHOT sifatida saqlanadi (CLAUDE.md qoida 8):
+/// katalog narxi keyin o'zgarsa ham, eski buyurtma summasi o'zgarmaydi.
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String @map("order_id")
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Restrict: buyurtma tarixi bor mahsulot o'chirilmaydi (isActive=false qilinadi).
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  pallets  Int
+  sqm      Decimal @db.Decimal(12, 4)
+  weightKg Decimal @map("weight_kg") @db.Decimal(12, 3)
+
+  /// Narx surati — PricingResolverService (B-054) qaytargan YAKUNIY narx.
+  /// ⚠ Chegirma SABABI bu yerda saqlanmaydi: u mijozga ham, menejerga ham
+  ///   ko'rinmasligi kerak (TZ 3.3.1 maxfiylik talabi).
+  pricePerSqmSnapshot Decimal @map("price_per_sqm_snapshot") @db.Decimal(14, 2)
+  lineTotal           Decimal @map("line_total") @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+/// Status o'zgarishlari tarixi — TZ 3.4 "vaqt belgisi bilan ko'rsatiladi".
+model OrderStatusHistory {
+  id String @id @default(cuid())
+
+  orderId String @map("order_id")
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  status OrderStatus
+
+  /// Kim o'zgartirgani. Mijoz o'zi bekor qilsa — null.
+  changedByUserId String? @map("changed_by_user_id")
+  changedBy       User?   @relation("StatusChanges", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-011 · To'lov va moliya (TZ 3.4, 3.11)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// To'lov usuli (TZ 3.4). ⚠ Provayder nomi (Click/Payme) BU YERDA EMAS —
+/// CARD toifasining ichida, to'lov moduli tanlaydi (CLAUDE.md qoida 3).
+enum PaymentMethod {
+  /// Naqd pul
+  CASH
+  /// Karta orqali avtomatik
+  CARD
+  /// Shartnoma asosida hisob raqamga o'tkazma (perechislenie)
+  BANK_TRANSFER
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+
+  @@map("payment_status")
+}
+
+/// Hisob harakati turi (TZ 3.11).
+enum AccountTransactionType {
+  /// Yangi qarz — buyurtma berilganda
+  DEBT
+  /// To'lov tushdi
+  PAYMENT
+  /// Tuzatish. ⚠ Xato yozuv O'CHIRILMAYDI — teskari ADJUSTMENT qo'shiladi
+  ///   (CLAUDE.md qoida 9)
+  ADJUSTMENT
+
+  @@map("account_transaction_type")
+}
+
+model Payment {
+  id String @id @default(cuid())
+
+  /// Restrict: to'lovi bor buyurtma o'chirilmaydi — moliyaviy yozuv yetim
+  /// qolmasligi kerak.
+  orderId String @map("order_id")
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  method PaymentMethod
+  amount Decimal       @db.Decimal(14, 2)
+  status PaymentStatus @default(PENDING)
+
+  /// Tashqi provayderdagi tranzaksiya identifikatori (mock'da ham to'ldiriladi).
+  providerRef String? @map("provider_ref")
+  /// QR / to'lov havolasi uchun payload.
+  qrPayload   String? @map("qr_payload")
+
+  /// Takroriy webhook/so'rov ikki marta to'lov yozmasligi uchun.
+  idempotencyKey String @unique @map("idempotency_key")
+
+  /// ⚠ status=PAID bo'lsa — to'ldirilishi SHART (baza darajasida qulflangan).
+  paidAt DateTime? @map("paid_at")
+
+  /// Provayderdan kelgan xom javob — tekshiruv/debug uchun.
+  rawPayload Json? @map("raw_payload")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transactions AccountTransaction[]
+
+  @@index([orderId])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+/// Mijoz hisobining KESHLANGAN yig'indisi (TZ 3.11).
+///
+/// ⚠ HAQIQAT MANBAI — `AccountTransaction` jadvali. Bu jadval faqat tezlik
+///   uchun: har safar butun tarixni yig'maslik uchun. Shuning uchun u
+///   tranzaksiya yozilgan `$transaction` ICHIDA yangilanadi.
+///
+/// `balance` ustuni ATAYLAB YO'Q: u hisoblanadi — `totalPurchased − totalPaid`
+/// (CLAUDE.md qoida 9: "balans hech qachon to'g'ridan-to'g'ri yozilmaydi").
+model CustomerAccount {
+  id String @id @default(cuid())
+
+  customerId String   @unique @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// Σ (musbat harakatlar) — jami qarzga yozilgan summa
+  totalPurchased Decimal @default(0) @map("total_purchased") @db.Decimal(16, 2)
+  /// Σ |manfiy harakatlar| — jami to'langan summa
+  totalPaid      Decimal @default(0) @map("total_paid") @db.Decimal(16, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("customer_accounts")
+}
+
+/// Har bir pul harakati — ALOHIDA yozuv (TZ 3.11 audit trail).
+///
+/// ⚠ `amount` ISHORALI (signed): balansga ta'sirini bildiradi.
+///     DEBT       → musbat (mijoz qarzi oshadi)
+///     PAYMENT    → manfiy (qarz kamayadi)
+///     ADJUSTMENT → ikki tomonga ham
+///   Shu tufayli balans BITTA formula: `balance = Σ amount`.
+///   Ishora/tur mosligi baza darajasida qulflangan.
+///
+/// ⚠ Bu jadval O'ZGARTIRILMAYDI va O'CHIRILMAYDI — migratsiyada trigger
+///   bilan qulflangan (CLAUDE.md qoida 9). Xato yozuv teskari ADJUSTMENT
+///   bilan tuzatiladi.
+model AccountTransaction {
+  id String @id @default(cuid())
+
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  type   AccountTransactionType
+  amount Decimal                @db.Decimal(14, 2)
+
+  /// Qaysi buyurtma uchun (DEBT uchun odatda to'ldiriladi).
+  orderId String? @map("order_id")
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  /// Qaysi to'lov natijasida (PAYMENT uchun).
+  paymentId String?  @map("payment_id")
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  /// Qo'lda kiritilgan bo'lsa — kim kiritgani (TZ 3.11 ochiq savoli:
+  /// balans qo'lda ham, avtomatik ham yangilanadi).
+  createdByUserId String? @map("created_by_user_id")
+  createdBy       User?   @relation("AccountTransactions", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([customerId, createdAt])
+  @@index([orderId])
+  @@index([paymentId])
+  @@map("account_transactions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-012 · Bildirishnoma va sozlamalar (TZ 3.6, 4-bo'lim)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Bildirishnoma turi (TZ 3.4, 3.6).
+enum NotificationType {
+  /// Buyurtma qabul qilindi
+  ORDER_CREATED
+  /// Buyurtma holati o'zgardi
+  ORDER_STATUS_CHANGED
+  /// "To'landi" xabarnomasi
+  PAYMENT_RECEIVED
+  /// Yangi mahsulot qo'shildi
+  NEW_PRODUCT
+  /// Izoh/javob keldi
+  COMMENT_REPLY
+
+  @@map("notification_type")
+}
+
+/// Bildirishnoma yozuvi.
+///
+/// ⚠ Bu — KANAL EMAS, saqlash joyi: sayt/kabinet header'idagi hisoblagich
+///   va ro'yxat shu jadvaldan o'qiladi (TZ 3.6). Telegram/SMS kanallari
+///   alohida, NotificationService orqali (CLAUDE.md qoida 10).
+///
+/// ⚠ Qabul qiluvchi IKKI xil bo'lishi mumkin: optom mijoz (kabinet) yoki
+///   xodim (admin panel). Ikkalasidan ANIQ BITTASI to'ldiriladi — baza
+///   darajasida qulflangan. Chakana mijozda hisob yo'q, unga bildirishnoma
+///   ham yuborilmaydi (TZ 3.5).
+model Notification {
+  id String @id @default(cuid())
+
+  customerId String?   @map("customer_id")
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type  NotificationType
+  title String
+  body  String
+
+  /// Bosilganda qayerga o'tish kerakligi: { orderId } yoki { productId }.
+  payload Json?
+
+  isRead Boolean   @default(false) @map("is_read")
+  readAt DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([customerId, isRead, createdAt])
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}
+
+/// Admin paneldan tahrirlanadigan sozlamalar (TZ 4-bo'lim).
+/// Kodda hech narsa "hardcode" qilinmaydi.
+///
+/// Kalitlar (B-025):
+///   stock.lowThresholdPallets             — "kam qoldi" chegarasi
+///   payment.requisites                    — bank rekvizitlari
+///   pricing.branchAdminMaxDiscountPercent — filial admini bera oladigan
+///                                           maksimal chegirma (B-052/B-055)
+///
+/// ⚠ Yetkazib berish tariflari BU YERDA EMAS — ular `BranchRegionTariff`
+///   jadvalida (filial × viloyat × transport turi, B-053).
+model Setting {
+  key         String  @id
+  value       Json
+  description String?
+
+  /// Public API (`GET /settings/public`) shu belgiga qarab filtrlaydi —
+  /// bank rekvizitlari ochiq, chegirma chegarasi esa yopiq.
+  isPublic Boolean @default(false) @map("is_public")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-052 · Individual narx qoidalari (TZ 3.3.1 va 3.14)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Qoida qaysi sohaga tegishli. Mahsulot narxi ham, transport narxi ham
+/// AYNI BIR mexanizmdan o'tadi — ikkinchi marta yozilmaydi (TZ 3.14).
+enum PricingDomain {
+  PRODUCT
+  TRANSPORT
+
+  @@map("pricing_domain")
+}
+
+/// Qoidaning ANIQLIK darajasi. Eng aniq qoida g'olib chiqadi (TZ 3.3.1).
+///
+///   PRODUCT — aynan shu mahsulot        (domain=PRODUCT)
+///   FACTORY — shu zavodning hammasi     (domain=PRODUCT)
+///   ROUTE   — aynan shu yo'nalish       (domain=TRANSPORT)
+///   ALL     — mijozning hamma narsasi   (ikkala domenda ham)
+enum PricingScope {
+  PRODUCT
+  FACTORY
+  ROUTE
+  ALL
+
+  @@map("pricing_scope")
+}
+
+enum PricingValueType {
+  /// Aniq summa — "bu mijozga aynan shu kafel 8 000 so'm"
+  FIXED
+  /// Foiz — "bazaviy narxdan −20%". Bazaviy narx o'zgarsa, avtomatik moslashadi.
+  PERCENT
+
+  @@map("pricing_value_type")
+}
+
+/// Mijozga individual narx/chegirma qoidasi (TZ 3.3.1).
+///
+/// Muammo: bitta kafel bir mijozga 10 000, ikkinchisiga 8 000 so'm bo'lishi
+/// kerak — va buni boshqa mijoz ham, menejer ham bilmasin.
+///
+/// ⚠ NEGA `scopeId` EMAS, uchta alohida FK: qoida mahsulotga, zavodga yoki
+///   yo'nalishga ishora qiladi. Bitta polimorf `scopeId` ustuni bo'lganida
+///   baza uni tekshirib bera olmasdi — mahsulot o'chirilsa, qoida "osilib"
+///   qolardi va mijozga JIMGINA noto'g'ri narx chiqarardi. Uchta haqiqiy FK
+///   bilan bunday holat imkonsiz; domen/scope/nishon mosligi ham CHECK
+///   bilan qulflangan.
+///
+/// 🔒 Maxfiylik: qoidaning MAZMUNI (necha foiz, qaysi daraja) faqat uni
+///    yaratgan filial adminiga ko'rinadi. SUPER_ADMIN qo'ygan qoidalar
+///    hech kimga ko'rinmaydi — mijoz ham, menejer ham faqat YAKUNIY narxni
+///    ko'radi (B-055).
+model PricingRule {
+  id String @id @default(cuid())
+
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  domain PricingDomain
+  scope  PricingScope
+
+  /// scope = PRODUCT bo'lganda
+  productId String?  @map("product_id")
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// scope = FACTORY bo'lganda
+  factoryId String?  @map("factory_id")
+  factory   Factory? @relation(fields: [factoryId], references: [id], onDelete: Cascade)
+
+  /// scope = ROUTE bo'lganda (filial × viloyat × transport turi, B-053)
+  branchRegionTariffId String?             @map("branch_region_tariff_id")
+  branchRegionTariff   BranchRegionTariff? @relation(fields: [branchRegionTariffId], references: [id], onDelete: Cascade)
+
+  type  PricingValueType
+  /// FIXED → so'mdagi narx (musbat). PERCENT → foiz, masalan -20 yoki +5.
+  value Decimal          @db.Decimal(14, 2)
+
+  /// Kim qo'ygani. ⚠ `createdByRole` — maxfiylik uchun MUHIM: filial admini
+  ///   faqat O'ZI qo'ygan qoidani ko'radi, SUPER_ADMIN qo'yganini ko'rmaydi.
+  ///   Foydalanuvchi o'chirilsa ham rol yozuvi qoladi.
+  createdByUserId String?  @map("created_by_user_id")
+  createdBy       User?    @relation("PricingRules", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdByRole   UserRole @map("created_by_role")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Narx zanjiri bitta so'rovda mijozning shu domendagi HAMMA qoidasini
+  /// oladi, keyin xotirada eng aniqini tanlaydi (B-054).
+  @@index([customerId, domain])
+  @@index([productId])
+  @@index([factoryId])
+  @@index([branchRegionTariffId])
+  @@map("pricing_rules")
+}

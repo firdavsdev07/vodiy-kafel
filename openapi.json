@@ -1,0 +1,2207 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/v1/auth/admin/login": {
+      "post": {
+        "description": "Telefon va parol bilan kirish. Muvaffaqiyatli javobda access va refresh tokenlar keladi.\n\nRol va filial tokenning ichida bo‘ladi — ularni so‘rovda yuborish kerak emas va yuborilsa ham e’tiborga olinmaydi.",
+        "operationId": "AuthController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kirish muvaffaqiyatli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Telefon raqam topilmadi, parol xato yoki hisob faol emas — uch holat uchun bir xil javob (raqam bazada bor-yo‘qligi oshkor qilinmaydi).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Xodim kirishi (admin, moderator, filial admini, menejer)",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/wholesale/login": {
+      "post": {
+        "description": "Login va parol bilan kirish. Ikkovini ham ADMIN yoki MENEJER beradi — mijoz o‘zi ro‘yxatdan o‘tolmaydi.\n\nLogin katta-kichik harfga sezgir emas.\n\n⚠ Javobdagi `mustChangePassword: true` — bu vaqtinchalik parol. Mijoz `/auth/wholesale/change-password` dan boshqa hech qayerga o‘tolmaydi (403), shuning uchun frontend darhol parol almashtirish oynasini ko‘rsatishi kerak.",
+        "operationId": "AuthController_wholesaleLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WholesaleLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kirish muvaffaqiyatli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WholesaleTokensResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login topilmadi, parol xato yoki hisob faol emas — uch holat uchun bir xil javob.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Optom (B2B) mijoz kirishi",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/wholesale/change-password": {
+      "post": {
+        "description": "Birinchi kirishda MAJBURIY, keyin ixtiyoriy.\n\nJoriy parol ham so‘raladi — o‘g‘irlangan token bilan hisobni butunlay egallab olishning oldini oladi.\n\n⚠ Javobda YANGI token juftligi keladi: eskisida `mustChangePassword: true` qolgan va u bilan mijoz hamon to‘silgan bo‘lardi. Frontend eski tokenlarni almashtirishi shart.",
+        "operationId": "AuthController_changeWholesalePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parol almashtirildi, yangi tokenlar berildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WholesaleTokensResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Yangi parol qoidaga mos emas yoki joriy paroldan farq qilmaydi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yaroqsiz, joriy parol xato yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Optom mijoz parolini almashtirish",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "description": "Refresh token o‘rniga yangi access + refresh juftligi beriladi.\n\n⚠ Bu yerga faqat `refreshToken` yuboriladi — access token boshqa kalit bilan imzolangani uchun qabul qilinmaydi.\n\nXodim va optom mijoz tokenlari — ikkovi ham shu endpoint orqali yangilanadi (tur tokenning ichida).\n\nRol, filial va parol holati bazadan qayta o‘qiladi: xodim boshqa filialga o‘tkazilgan bo‘lsa yangi token yangi filialni oladi, admin mijoz parolini qayta tiklagan bo‘lsa yangi token to‘silgan holatda chiqadi.\n\n⚠ Javobda faqat token juftligi bo‘ladi. Optom mijozning `mustChangePassword` holati tokenning ichida keladi va uni `PasswordChangeRequiredGuard` qo‘llaydi.",
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi token juftligi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token yaroqsiz, muddati tugagan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tokenlarni yangilash",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "⚠ MUHIM: tokenlar stateless (server tomonda saqlanmaydi), shuning uchun bu endpoint tokenni BEKOR QILMAYDI — berilgan access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi.\n\nChiqish frontend zimmasida: `accessToken` va `refreshToken` saqlangan joydan O‘CHIRILISHI shart. Bu endpoint faqat tasdiq qaytaradi (va kelajakda audit yozuvi uchun joy bo‘lib qoladi).",
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Chiqish qabul qilindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LogoutResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q yoki yaroqsiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tizimdan chiqish",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "description": "Tokendagi `sub` bo‘yicha bazadan o‘qiladi — profil har doim joriy holatni ko‘rsatadi (token eski bo‘lsa ham).\n\n🔒 Parol hashi javobda hech qachon bo‘lmaydi.\n\n⚠ Faqat XODIM tokeni uchun. Optom mijoz tokeni bilan kelinsa 401 qaytadi — mijoz profili kabinet endpointlarida (B-018+).",
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Joriy xodim profili",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserProfileResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, yaroqsiz yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Joriy foydalanuvchi profili",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/admin/customers/{id}/reset-password": {
+      "post": {
+        "description": "Mijoz parolni unutganda yoki hisob birinchi marta topshirilayotganda ishlatiladi.\n\n⚠ Yangi parol javobda FAQAT BIR MARTA ko‘rinadi — bazada hash saqlanadi. Uni mijozga telefon yoki Telegram orqali yetkazing.\n\nMijoz keyingi kirishida parolni almashtirishga majbur bo‘ladi.\n\n🔒 Filial admini/menejeri faqat O‘Z filiali mijoziga parol bera oladi; begona filial mijozi uchun 404 qaytadi.\n\n⚠ Eski tokenlar darhol o‘chmaydi: mijozning qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi. Refresh esa holatni bazadan o‘qigani uchun darhol to‘siladi.",
+        "operationId": "CustomersAdminController_resetPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mijoz ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Yangi vaqtinchalik parol yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ResetPasswordResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mijoz topilmadi yoki boshqa filialga tegishli (ikki holat ataylab farqlanmaydi)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Optom mijozga yangi vaqtinchalik parol berish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/factories": {
+      "get": {
+        "description": "Bosh sahifadagi logotip-kartalar uchun faol zavodlar ro‘yxati.\n\nTartib: avval admin qo‘ygan tartib raqami, teng bo‘lsa alifbo bo‘yicha. O‘chirilgan zavodlar ro‘yxatga tushmaydi.\n\nSahifalash yo‘q — zavodlar soni chegaralangan (o‘nlab, yuzlab emas).",
+        "operationId": "FactoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Faol zavodlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FactoryPublicResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Zavodlar vitrinasi",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/factories": {
+      "get": {
+        "description": "Ochiq vitrinadan farqi: `isActive: false` bo‘lganlar ham ko‘rinadi, va har bir zavodda unga bog‘langan mahsulotlar soni bor.",
+        "operationId": "FactoriesAdminController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Zavodlar ro‘yxati",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FactoryAdminResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Barcha zavodlar (o‘chirilganlari bilan)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "URL uchun `slug` nomdan AVTOMATIK yasaladi va keyin o‘zgarmaydi.\n\nBir xil slug beradigan nom allaqachon bo‘lsa — 409.",
+        "operationId": "FactoriesAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFactoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zavod yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FactoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydonlar noto‘g‘ri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Bunday nomli zavod bor yoki nomdan URL yasab bo‘lmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yangi zavod qo‘shish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/factories/{id}": {
+      "patch": {
+        "description": "Faqat yuborilgan maydonlar o‘zgaradi.\n\n⚠ `name` o‘zgarsa ham `slug` ESKICHA qoladi — katalog manzillari va tashqi havolalar buzilmasligi uchun.\n\nO‘chirilgan zavodni qaytarish: `{ \"isActive\": true }`.",
+        "operationId": "FactoriesAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Zavod ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFactoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan zavod",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FactoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Zavod topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Zavodni tahrirlash",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "description": "⚠ Yozuv BAZADAN O‘CHIRILMAYDI — faqat `isActive: false` bo‘ladi va ochiq vitrinadan yo‘qoladi. Sabab: zavodga mahsulotlar va narx qoidalari bog‘langan, ularni yo‘qotish eski buyurtmalar tarixini buzardi.\n\nJavobda `productCount` — o‘chirish nechta mahsulotga ta’sir qilgani.\n\nQaytarish: `PATCH { \"isActive\": true }`.",
+        "operationId": "FactoriesAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Zavod ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirilgan zavod (isActive: false)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FactoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Zavod topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Zavodni o‘chirish (soft delete)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/sizes": {
+      "get": {
+        "description": "Katalogdagi «o‘lcham bo‘yicha filtr» ro‘yxati.\n\nTartib: avval admin qo‘ygan tartib raqami, teng bo‘lsa yozuv bo‘yicha. Sahifalash yo‘q — o‘lchamlar soni chegaralangan.",
+        "operationId": "SizesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "O‘lchamlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SizePublicResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "O‘lchamlar ro‘yxati (filtr uchun)",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/sizes": {
+      "get": {
+        "description": "Ochiq ro‘yxatdan farqi: tartib raqami va har o‘lchamdagi mahsulotlar soni ko‘rinadi.",
+        "operationId": "SizesAdminController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "O‘lchamlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SizeAdminResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "O‘lchamlar ro‘yxati (boshqaruv uchun)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "Ko‘rinadigan yozuv (`label`) eni va bo‘yidan AVTOMATIK yasaladi: `60` × `60` → `\"60x60\"`.\n\nUni qo‘lda yuborib bo‘lmaydi — aks holda yozuv bilan haqiqiy o‘lcham bir-biriga mos kelmay qolishi va katalog filtri jimgina noto‘g‘ri ishlashi mumkin edi.",
+        "operationId": "SizesAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSizeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "O‘lcham yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SizeAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Eni yoki bo‘yi noto‘g‘ri (butun son, 1–1000 sm)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Bunday o‘lcham allaqachon mavjud",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yangi o‘lcham qo‘shish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/sizes/{id}": {
+      "patch": {
+        "description": "⚠ Eni yoki bo‘yi o‘zgarsa `label` QAYTA HISOBLANADI — o‘lcham yozuvi haqiqiy qiymatga mos bo‘lib qolishi uchun.\n\nFaqat bir tomoni yuborilsa, ikkinchisi eskisicha qoladi.",
+        "operationId": "SizesAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "O‘lcham ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSizeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan o‘lcham",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SizeAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "O‘lcham topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Yangi o‘lcham allaqachon mavjud",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "O‘lchamni tahrirlash",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "description": "⚠ Bu HAQIQIY o‘chirish (zavodlardagi kabi soft delete EMAS): `ProductSize` da `isActive` ustuni yo‘q, ya’ni «o‘chirilgan lekin saqlangan» holat sxemada nazarda tutilmagan.\n\n🔒 Shu o‘lchamda mahsulot bo‘lsa — 409, va javobda nechtasi to‘sib turgani aytiladi.\n\nJavobda o‘chirilgan yozuv qaytadi.",
+        "operationId": "SizesAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "O‘lcham ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirilgan o‘lcham",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/SizePublicResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "O‘lcham topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "O‘lchamda mahsulotlar bor — o‘chirib bo‘lmaydi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "O‘lchamni o‘chirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "description": "Zavod, o‘lcham, sirt turi bo‘yicha filtr va nom/zavod bo‘yicha qidiruv. Sahifalangan.\n\n🔒 Javobda narx YO‘Q va zaxiraning aniq soni YO‘Q — faqat `availability`: `AVAILABLE` yoki `UNAVAILABLE`.\n\nO‘chirilgan mahsulotlar va o‘chirilgan ZAVODNING mahsulotlari ro‘yxatga tushmaydi.",
+        "operationId": "ProductsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralash maydoni. Ro‘yxatdagidan boshqasi qabul qilinmaydi.\n\nNarx bo‘yicha saralash YO‘Q — ochiq katalogda narx ko‘rinmaydi.",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "name",
+                "createdAt",
+                "viewCount"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "factoryId",
+            "required": false,
+            "in": "query",
+            "description": "Zavod bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sizeId",
+            "required": false,
+            "in": "query",
+            "description": "O‘lcham bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "surface",
+            "required": false,
+            "in": "query",
+            "description": "Sirt turi: pol yoki devor",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "POL",
+                "DEVOR"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi)",
+            "schema": {
+              "maxLength": 100,
+              "example": "yongxin",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan mahsulotlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedProductListItemResponseDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mahsulotlar ro‘yxati va filtr",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/products/{slug}": {
+      "get": {
+        "description": "Kartadagi hamma narsa + tavsif va to‘liq media ro‘yxati (suratlar, 360° materiallar).\n\n🔒 Narx va zaxira aniq soni bu yerda ham yo‘q.\n\n⚠ Ko‘rishlar soni bu endpointda OSHMAYDI — buning uchun alohida `POST /products/:slug/view` bo‘ladi. Aks holda har bir bot tashrifi statistikani buzardi.",
+        "operationId": "ProductsController_findOne",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Mahsulot URL nomi",
+            "schema": {
+              "example": "lyuks-keramogranit-60x60",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mahsulot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ProductDetailResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi, o‘chirilgan yoki zavodi o‘chirilgan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mahsulot sahifasi",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Vodiy Kafel API",
+    "description": "Vodiy Kafel savdo platformasining backend API'si.\n\n### Javob formati\nBarcha muvaffaqiyatli javoblar `{ \"data\": ... }` ichida keladi.\nSahifalangan ro'yxatlarda qo'shimcha `meta` bo'ladi.\n\nBarcha xatolar bir xil formatda — `ApiErrorDto` modeliga qarang.\n\n### Autentifikatsiya\nToken `Authorization: Bearer <token>` sarlavhasida yuboriladi.\nYuqoridagi **Authorize** tugmasi orqali kiritishingiz mumkin.\n\n### Muhim qoidalar\n- Mahsulot javoblarida ombordagi **aniq son yo'q** — faqat `stockStatus`.\n- Buyurtma summasini backend o'zi hisoblaydi; frontend yuborgan narx e'tiborga olinmaydi.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Kirish va ro‘yxatdan o‘tish — admin, mijoz va optom mijoz"
+    },
+    {
+      "name": "Catalog",
+      "description": "Mahsulotlar, zavodlar, o‘lchamlar, galereya (ochiq)"
+    },
+    {
+      "name": "Calculator",
+      "description": "Paddon → kv², og‘irlik, summa va yo‘l kira hisobi"
+    },
+    {
+      "name": "Delivery",
+      "description": "Transport turlari, viloyatlar, filial × viloyat × transport tarif matritsasi"
+    },
+    {
+      "name": "Pricing",
+      "description": "Mijozga individual narx/chegirma qoidalari (mahsulot va transport)"
+    },
+    {
+      "name": "Orders",
+      "description": "Buyurtma yaratish va holatini kuzatish"
+    },
+    {
+      "name": "Payments",
+      "description": "To‘lov boshlash va holatini tekshirish"
+    },
+    {
+      "name": "Customers",
+      "description": "Mijoz kabineti: profil, balans, tranzaksiyalar"
+    },
+    {
+      "name": "Branches",
+      "description": "Filiallar ro‘yxati (RETAIL va CENTRAL)"
+    },
+    {
+      "name": "Partners",
+      "description": "Hamkorlar ro‘yxati"
+    },
+    {
+      "name": "Managers",
+      "description": "Menejerlar va ular bilan bog‘lanish"
+    },
+    {
+      "name": "Moderators",
+      "description": "Markaziy ombor xodimlari — filial va agent buyurtmalarini boshqaradi"
+    },
+    {
+      "name": "Notifications",
+      "description": "Bildirishnomalar va o‘qilmaganlar soni"
+    },
+    {
+      "name": "Settings",
+      "description": "Ochiq sozlamalar (zaxira chegaralari, to‘lov rekvizitlari)"
+    },
+    {
+      "name": "Admin",
+      "description": "Boshqaruv paneli — faqat admin/menejer uchun"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "description": "JWT access token"
+      }
+    },
+    "schemas": {
+      "AuthTokensResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access token. `Authorization: Bearer <token>` sarlavhasida yuboriladi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token. Access token muddati tugaganda `/auth/refresh` endpointiga yuboriladi. Access token bilan almashtirib bo‘lmaydi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Xodimning telefon raqami (bazadagi ko‘rinishida)",
+            "example": "+998900000001",
+            "maxLength": 20
+          },
+          "password": {
+            "type": "string",
+            "description": "Parol",
+            "example": "Parol123!",
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "phone",
+          "password"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400,
+            "description": "HTTP status kodi"
+          },
+          "error": {
+            "type": "string",
+            "example": "Bad Request",
+            "description": "Status nomi"
+          },
+          "message": {
+            "description": "Xato matni. Validatsiya xatosida — matnlar massivi, aks holda bitta matn.",
+            "oneOf": [
+              {
+                "type": "string",
+                "example": "Mahsulot topilmadi"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "pallets must not be less than 1"
+                ]
+              }
+            ]
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/v1/products",
+            "description": "So‘rov manzili"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-09-08T17:02:11.419Z",
+            "format": "date-time"
+          },
+          "requestId": {
+            "type": "string",
+            "example": "1339b1a6-5cf7-4d0f-9d4b-10bfbd295f49",
+            "description": "Kuzatuv ID. Xato haqida xabar berganda shu ID ni ayting — log‘dan aniq so‘rov topiladi."
+          }
+        },
+        "required": [
+          "statusCode",
+          "error",
+          "message",
+          "path",
+          "timestamp"
+        ]
+      },
+      "WholesaleTokensResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access token. `Authorization: Bearer <token>` sarlavhasida yuboriladi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token. Access token muddati tugaganda `/auth/refresh` endpointiga yuboriladi. Access token bilan almashtirib bo‘lmaydi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "Vaqtinchalik parol hali almashtirilmagan. `true` bo‘lsa mijoz `/auth/wholesale/change-password` dan boshqa endpointlarga o‘tolmaydi.",
+            "example": true
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "mustChangePassword"
+        ]
+      },
+      "WholesaleLoginDto": {
+        "type": "object",
+        "properties": {
+          "login": {
+            "type": "string",
+            "description": "Admin bergan login. Katta-kichik harf farq qilmaydi — server uni kichik harfga keltirib qidiradi.",
+            "example": "fargona-optom",
+            "maxLength": 64
+          },
+          "password": {
+            "type": "string",
+            "description": "Parol (birinchi kirishda — admin bergan vaqtinchalik parol)",
+            "example": "Parol123!",
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "login",
+          "password"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "oldPassword": {
+            "type": "string",
+            "description": "Joriy parol (birinchi kirishda — admin bergan vaqtinchalik)",
+            "example": "Parol123!",
+            "maxLength": 72
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "Yangi parol. Kamida 8 belgi va joriy paroldan farq qilishi shart.",
+            "example": "YangiParol456!",
+            "minLength": 8,
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "Kirish paytida berilgan `refreshToken`. Access token bu yerda ISHLAMAYDI — refresh token boshqa kalit bilan imzolanadi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "LogoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Tizimdan chiqdingiz — tokenlarni o‘chiring",
+            "description": "Ma’lumot uchun matn. Server tomonda hech narsa o‘zgarmaydi: tokenni o‘chirish frontend zimmasida."
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "UserProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtyomomc0000ofm2khdxnoug"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+998900000001"
+          },
+          "email": {
+            "type": "object",
+            "example": "admin@vodiykafel.uz",
+            "nullable": true,
+            "description": "Ixtiyoriy — kiritilmagan bo‘lsa `null`"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Alisher Karimov"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "BRANCH_ADMIN",
+              "MANAGER",
+              "MODERATOR"
+            ],
+            "example": "BRANCH_ADMIN"
+          },
+          "branchId": {
+            "type": "object",
+            "example": "cmtyomomq0001ofm24t896smr",
+            "nullable": true,
+            "description": "Xodim filiali. `SUPER_ADMIN` da `null` — u barcha filiallarni ko‘radi."
+          },
+          "telegramUsername": {
+            "type": "object",
+            "example": "alisher_k",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "fullName",
+          "role"
+        ]
+      },
+      "ResetPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Yangi vaqtinchalik parol. Faqat SHU javobda ko‘rinadi — saqlab qo‘ying va mijozga yetkazing.",
+            "example": "Kp7mQx4rTn92"
+          },
+          "login": {
+            "type": "string",
+            "description": "Parol tiklangan mijozning logini",
+            "example": "fargona-optom"
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "Har doim `true`: mijoz shu parol bilan kirgach uni almashtirishi shart.",
+            "example": true
+          }
+        },
+        "required": [
+          "temporaryPassword",
+          "login",
+          "mustChangePassword"
+        ]
+      },
+      "FactoryPublicResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "YONGXIN"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL uchun nom — katalog manzilida ishlatiladi",
+            "example": "yongxin"
+          },
+          "logoUrl": {
+            "type": "string",
+            "example": "/uploads/factories/yongxin.png"
+          },
+          "description": {
+            "type": "object",
+            "example": "Xitoyning yirik keramogranit ishlab chiqaruvchisi"
+          },
+          "websiteUrl": {
+            "type": "object",
+            "example": "https://yongxin.example.com"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "logoUrl"
+        ]
+      },
+      "FactoryAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "YONGXIN"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL uchun nom — katalog manzilida ishlatiladi",
+            "example": "yongxin"
+          },
+          "logoUrl": {
+            "type": "string",
+            "example": "/uploads/factories/yongxin.png"
+          },
+          "description": {
+            "type": "object",
+            "example": "Xitoyning yirik keramogranit ishlab chiqaruvchisi"
+          },
+          "websiteUrl": {
+            "type": "object",
+            "example": "https://yongxin.example.com"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi (kichik son — oldinroq)",
+            "example": 10
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "`false` — zavod o‘chirilgan (soft delete), ochiq API’da ko‘rinmaydi",
+            "example": true
+          },
+          "productCount": {
+            "type": "number",
+            "description": "Shu zavodga bog‘langan mahsulotlar soni — zavodni o‘chirishdan oldin ta’sir doirasini ko‘rish uchun.",
+            "example": 12
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "logoUrl",
+          "sortOrder",
+          "isActive",
+          "productCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateFactoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "YONGXIN",
+            "maxLength": 120
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Logotip manzili. Ichki fayl yo‘li ham (`/uploads/...`), tashqi havola ham bo‘lishi mumkin — shuning uchun qat’iy URL tekshiruvi yo‘q.",
+            "example": "/uploads/factories/yongxin.png",
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Zavodning rasmiy sayti (to‘liq URL)",
+            "example": "https://yongxin.example.com"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi. Kichik son — oldinroq.",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name",
+          "logoUrl"
+        ]
+      },
+      "UpdateFactoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "YONGXIN",
+            "maxLength": 120
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Logotip manzili. Ichki fayl yo‘li ham (`/uploads/...`), tashqi havola ham bo‘lishi mumkin — shuning uchun qat’iy URL tekshiruvi yo‘q.",
+            "example": "/uploads/factories/yongxin.png",
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Zavodning rasmiy sayti (to‘liq URL)",
+            "example": "https://yongxin.example.com"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi. Kichik son — oldinroq.",
+            "default": 0,
+            "minimum": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Zavodni qayta faollashtirish yoki o‘chirish. `DELETE` endpointi ham shu maydonni `false` qiladi — o‘chirilgan zavodni qaytarish uchun shu yerdan `true` yuboriladi."
+          }
+        }
+      },
+      "SizePublicResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "label": {
+            "type": "string",
+            "description": "Ko‘rinadigan yozuv — o‘lchamlardan avtomatik yasaladi",
+            "example": "60x60"
+          },
+          "widthCm": {
+            "type": "number",
+            "description": "Eni, sm",
+            "example": 60
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "Bo‘yi, sm",
+            "example": 60
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "widthCm",
+          "heightCm"
+        ]
+      },
+      "SizeAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "label": {
+            "type": "string",
+            "description": "Ko‘rinadigan yozuv — o‘lchamlardan avtomatik yasaladi",
+            "example": "60x60"
+          },
+          "widthCm": {
+            "type": "number",
+            "description": "Eni, sm",
+            "example": 60
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "Bo‘yi, sm",
+            "example": 60
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Filtr ro‘yxatida chiqish tartibi (kichik son — oldinroq)",
+            "example": 1
+          },
+          "productCount": {
+            "type": "number",
+            "description": "Shu o‘lchamdagi mahsulotlar soni. 0 dan katta bo‘lsa o‘lchamni o‘chirib bo‘lmaydi.",
+            "example": 5
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "widthCm",
+          "heightCm",
+          "sortOrder",
+          "productCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateSizeDto": {
+        "type": "object",
+        "properties": {
+          "widthCm": {
+            "type": "number",
+            "description": "Eni, sm",
+            "example": 60,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "Bo‘yi, sm",
+            "example": 60,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Filtr ro‘yxatida chiqish tartibi",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "widthCm",
+          "heightCm"
+        ]
+      },
+      "UpdateSizeDto": {
+        "type": "object",
+        "properties": {
+          "widthCm": {
+            "type": "number",
+            "description": "Eni, sm",
+            "example": 60,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "Bo‘yi, sm",
+            "example": 60,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Filtr ro‘yxatida chiqish tartibi",
+            "default": 0,
+            "minimum": 0
+          }
+        }
+      },
+      "ProductFactoryRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "YONGXIN"
+          },
+          "slug": {
+            "type": "string",
+            "example": "yongxin"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "ProductSizeRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "label": {
+            "type": "string",
+            "example": "60x60"
+          },
+          "widthCm": {
+            "type": "number",
+            "example": 60
+          },
+          "heightCm": {
+            "type": "number",
+            "example": 60
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "widthCm",
+          "heightCm"
+        ]
+      },
+      "ProductListItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Katalog manzili uchun — `/products/:slug`",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/ProductFactoryRefDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "object",
+            "example": "Bej",
+            "nullable": true
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg), satr ko‘rinishida",
+            "example": "1250.5"
+          },
+          "primaryImageUrl": {
+            "type": "object",
+            "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
+            "example": "/uploads/products/lyuks-1.jpg",
+            "nullable": true
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ],
+            "description": "🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.",
+            "example": "AVAILABLE"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "factory",
+          "size",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet",
+          "availability"
+        ]
+      },
+      "PaginatedProductListItemResponseDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductListItemResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "ProductMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "url": {
+            "type": "string",
+            "example": "/uploads/products/lyuks-1.jpg"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "IMAGE",
+              "IMAGE_360",
+              "VIDEO_360"
+            ],
+            "description": "`IMAGE` — oddiy surat, `IMAGE_360` — aylanuvchi surat to‘plami, `VIDEO_360` — 360° video.",
+            "example": "IMAGE"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "type"
+        ]
+      },
+      "ProductDetailResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Katalog manzili uchun — `/products/:slug`",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/ProductFactoryRefDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "object",
+            "example": "Bej",
+            "nullable": true
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg), satr ko‘rinishida",
+            "example": "1250.5"
+          },
+          "primaryImageUrl": {
+            "type": "object",
+            "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
+            "example": "/uploads/products/lyuks-1.jpg",
+            "nullable": true
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE"
+            ],
+            "description": "🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.",
+            "example": "AVAILABLE"
+          },
+          "description": {
+            "type": "object",
+            "example": "Yuqori sifatli keramogranit, sirti silliq.",
+            "nullable": true
+          },
+          "media": {
+            "description": "Suratlar va 360° materiallar — ko‘rsatish tartibida.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductMediaResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "factory",
+          "size",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet",
+          "availability",
+          "media"
+        ]
+      }
+    }
+  }
+}
