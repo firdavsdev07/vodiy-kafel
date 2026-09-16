@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ThrottlerModule, seconds } from '@nestjs/throttler';
 import { AppConfigService } from '../config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -29,6 +30,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         signOptions: { algorithm: 'HS256', expiresIn: config.jwt.expiresIn },
       }),
     }),
+    // 🔒 B-049: auth endpointlari (login, parol almashtirish) — bir IP
+    // daqiqasiga 10 so'rov bilan cheklanadi. Parol qo'pol kuch (brute force)
+    // bilan taxmin qilishning oldini oladi.
+    ThrottlerModule.forRoot([{ ttl: seconds(60), limit: 10 }]),
   ],
   controllers: [AuthController],
   providers: [

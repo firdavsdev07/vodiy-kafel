@@ -1,98 +1,100 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Vodiy Kafel — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Kafel/keramogranit savdo platformasining backend qismi. NestJS 11 +
+Prisma 7 + PostgreSQL. Frontend uchun yagona shartnoma — Swagger
+(`/api/docs`) va `openapi.json`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Loyiha qoidalari va konventsiyalari — [CLAUDE.md](CLAUDE.md). Task
+ro'yxati va joriy holat — [task.txt](task.txt).
 
-## Description
+## Ishga tushirish
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+Kerak: **Node ≥ 24.9** (`@nestjs/config`/`@nestjs/jwt` ESM-only,
+eski Node'da testlar ishlamaydi), local PostgreSQL 16 (docker
+ishlatilmaydi).
 
 ```bash
-$ pnpm install
+pnpm install
+cp .env.example .env        # DATABASE_URL, JWT_SECRET va h.k. ni to'ldiring
+pnpm db:migrate              # sxemani bazaga qo'llaydi
+pnpm db:seed                 # test ma'lumotlari (pastga qarang)
+pnpm start:dev                # http://localhost:3000/api/v1
 ```
 
-## Compile and run the project
+Swagger: `http://localhost:3000/api/docs` (`SWAGGER_ENABLED=true` bo'lsa).
+
+## Test hisoblar (`pnpm db:seed` dan keyin)
+
+⚠ `pnpm db:seed` bazani TO'LIQ TOZALAB qayta to'ldiradi va
+`NODE_ENV=production` da ishlamaydi. Barcha hisoblarda parol: **`Parol123!`**
+
+| Turi                | Login / telefon      | Rol / kompaniya                     |
+| -------------------- | --------------------- | ------------------------------------- |
+| Xodim (telefon bilan) | `+998900000001`       | `SUPER_ADMIN`                         |
+| Xodim                 | `+998900000002`       | `MODERATOR` (markaziy ombor)          |
+| Xodim                 | `+99890011001`        | `BRANCH_ADMIN` — Farg'ona             |
+| Xodim                 | `+99890022001`        | `MANAGER` — Farg'ona                  |
+| Optom mijoz (login bilan) | `fargona-optom`   | Farg'ona Qurilish MChJ                |
+| Optom mijoz           | `andijon-optom`       | Andijon Qurilish MChJ                 |
+| Optom mijoz           | `namangan-optom`      | Namangan Qurilish MChJ                |
+| Optom mijoz           | `qoqon-optom`         | Qo'qon Qurilish MChJ                  |
+| Optom mijoz (markaz agenti) | `navoiy-agent`  | Navoiy Agent MChJ                     |
+
+Xodim `POST /auth/admin/login` bilan (`phone` + `password`), optom mijoz
+`POST /auth/wholesale/login` bilan (`login` + `password`) kiradi.
+Har bir viloyat uchun aniq telefon raqamlar seed ishga tushganda
+terminalga chiqadi (`pnpm db:seed` chiqishiga qarang).
+
+⚠ Barcha optom mijozlarda `mustChangePassword: true` — birinchi
+kirishdan keyin `POST /auth/wholesale/change-password` chaqirilishi
+SHART, aks holda boshqa hech qaysi endpoint ishlamaydi (`403`).
+Chakana (oddiy) mijozda umuman hisob yo'q — katalog token talab qilmaydi.
+
+## Testlar
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm test          # unit — 42 fayl, ~611 test, mock'lar bilan (baza kerak emas)
+pnpm test:e2e      # e2e — real HTTP + real Postgres (pastga qarang)
+pnpm test:cov      # coverage
 ```
 
-## Run tests
+`pnpm test:e2e` **alohida** `vodiy-kafel-test` bazasida ishlaydi — dev
+bazangizga (`.env`) tegmaydi. Muhit `.env.test` da (`test/setup-env.ts`
+uni yuklaydi), har ishga tushishda migratsiya + seed avtomatik bajariladi
+(`test/global-setup.ts`) — qo'lda tayyorlov shart emas, faqat Postgres
+ishlab turishi kerak:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+createdb vodiy-kafel-test   # bir martalik, agar hali yo'q bo'lsa
+pnpm test:e2e
 ```
 
-## Deployment
+Ssenariylar — `test/critical-flows.e2e-spec.ts`: ochiq katalog, optom
+mijoz onboarding, filial narx izolyatsiyasi, kalkulyator→buyurtma (soxta
+narx e'tiborsiz qoldirilishi), mock to'lov→balans→bildirishnoma, admin
+holat o'zgartirishi→mijoz pollingda ko'rishi, IDOR himoyasi (404), auth
+guard (401), filial admin faqat o'z narxini o'zgartirishi.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Frontend uchun hujjat paketi (B-048)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+| Fayl                                    | Nima uchun                                                    |
+| ---------------------------------------- | ---------------------------------------------------------------|
+| [`openapi.json`](openapi.json)           | To'liq, avtomatik generatsiya qilingan shartnoma — 92 yo'l. `pnpm openapi:export` bilan yangilanadi. Postman/Thunder Client/Insomnia'ga to'g'ridan-to'g'ri import qilinadi. |
+| [`docs/vodiy-kafel.postman_collection.json`](docs/vodiy-kafel.postman_collection.json) | Asosiy oqimlar bo'yicha tayyor Postman kolleksiyasi — login qilingach token o'zi saqlanadi, qo'lda ko'chirish shart emas. |
+| [`docs/enums.md`](docs/enums.md)         | Barcha enum qiymatlari + o'zbekcha ko'rinishi (status nomlarini ekranda qanday chiqarish kerak). |
+| [`docs/error-codes.md`](docs/error-codes.md) | Xato javobining formati va har bir HTTP status qachon chiqishi. |
+| [`docs/adr/`](docs/adr)                  | Muhim arxitektura qarorlari (masalan filial→markaziy ombor ta'minot buyurtmasi). |
+| `/api/docs` (Swagger)                    | Jonli, interaktiv hujjat — har bir endpointni shu yerdan "Try it out" bilan sinab ko'rish mumkin. |
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+## Muhim texnik eslatmalar
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Barcha endpointlar `/api/v1/...` ostida.
+- Muvaffaqiyatli javob har doim `{ "data": ... }` (ba'zan `meta` bilan);
+  xato — `docs/error-codes.md` dagi bitta format.
+- Pul — satr ko'rinishida (`"85000.00"`), **hech qachon** `float` emas —
+  to'g'ridan-to'g'ri arifmetikaga ishlatmang, ekranga chiqarishdan oldin
+  formatlang.
+- Ochiq katalogda narx ham, aniq zaxira soni ham YO'Q — faqat login
+  qilgan optom mijoz ko'radi (o'z filialining narxi, o'z chegirmasi bilan).
+- `/dev/payments/:id/simulate` faqat `NODE_ENV=development` da mavjud —
+  mock to'lov oqimini frontend tomonidan qo'lsiz sinash uchun.

@@ -194,6 +194,8 @@ model Customer {
 
   pricingRules PricingRule[]
 
+  contracts Contract[]
+
   @@index([branchId, isActive])
   @@index([managerId])
   @@index([phone])
@@ -637,6 +639,7 @@ model Order {
 
   payments     Payment[]
   transactions AccountTransaction[]
+  contracts    Contract[]
 
   @@index([branchId, status])
   @@index([customerId, createdAt])
@@ -870,6 +873,8 @@ enum NotificationType {
   NEW_PRODUCT
   /// Izoh/javob keldi
   COMMENT_REPLY
+  /// Shartnoma tayyor bo'ldi va yuborildi (B-045, TZ 3.10)
+  CONTRACT_READY
 
   @@map("notification_type")
 }
@@ -1031,4 +1036,55 @@ model PricingRule {
   @@index([factoryId])
   @@index([branchRegionTariffId])
   @@map("pricing_rules")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B-045 · Shartnoma moduli (mock) — EPIC 10, TZ 3.10
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ⚠ Bu spike (B-044) natijasidan QAT'I NAZAR quriladigan qism — faqat
+///   `CompanyLookupProvider` (INN → kompaniya ma'lumoti) haqiqiy Didox.uz
+///   bilan almashadi, qolgani o'zgarmaydi.
+enum ContractStatus {
+  /// Generatsiya qilindi, hali yuborilmagan
+  DRAFT
+  /// Mijozga Telegram orqali yuborildi
+  SENT
+  /// E-IMZO bilan imzolangan — REAL integratsiya kelgach (kelajakda)
+  SIGNED
+
+  @@map("contract_status")
+}
+
+model Contract {
+  id String @id @default(cuid())
+
+  customerId String   @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  /// Ixtiyoriy — shartnoma qaysi buyurtma munosabati bilan tuzilgani.
+  orderId String? @map("order_id")
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  /// Soliq to'lovchi raqami — shu bo'yicha CompanyLookupProvider so'raladi.
+  inn String
+
+  /// CompanyLookupProvider javobi — to'liq, o'zgarmas nusxa (audit uchun;
+  /// keyin haqiqiy Didox.uz ulansa ham eski shartnoma o'sha paytdagi
+  /// ma'lumotni saqlaydi).
+  companyDataJson Json @map("company_data_json")
+
+  /// StorageService ichki manzili (`contracts` papkasi). ⚠ Ochiq
+  /// `/uploads/...` orqali BERILMAYDI — faqat autentifikatsiya bilan,
+  /// `GET /wholesale/contracts/:id/download` orqali (B-045).
+  pdfUrl String @map("pdf_url")
+
+  status ContractStatus @default(DRAFT)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([customerId, createdAt])
+  @@index([orderId])
+  @@map("contracts")
 }

@@ -11,6 +11,7 @@ import {
 } from './channels/notification-channel.interface';
 import {
   AppEvent,
+  type ContractReadyEvent,
   type OrderCreatedEvent,
   type OrderStatusChangedEvent,
   type PaymentPaidEvent,
@@ -156,6 +157,29 @@ export class NotificationService {
         title: 'To‘landi',
         body: `${order.orderNumber} — ${sum} to‘landi.`,
         payload,
+      });
+    });
+  }
+
+  /**
+   * Shartnoma tayyor bo'ldi (B-045, TZ 3.10) — kabinetga xabar. PDF'ning
+   * o'zi Telegram orqali alohida yuboriladi (`ContractDeliveryChannel`) —
+   * bu shunchaki "tayyor bo'ldi" degan qisqa xabar, hujjat emas.
+   */
+  @OnEvent(AppEvent.ContractReady, { async: true })
+  async onContractReady({ contractId }: ContractReadyEvent): Promise<void> {
+    await this.safely(AppEvent.ContractReady, async () => {
+      const contract = await this.prisma.contract.findUnique({
+        where: { id: contractId },
+        select: { customerId: true },
+      });
+      if (!contract) return;
+
+      await this.dispatch([{ customerId: contract.customerId }], {
+        type: NotificationType.CONTRACT_READY,
+        title: 'Shartnoma tayyor',
+        body: 'Shartnomangiz tayyor va Telegram orqali yuborildi.',
+        payload: { contractId },
       });
     });
   }

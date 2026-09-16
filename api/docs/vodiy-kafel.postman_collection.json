@@ -1,0 +1,390 @@
+{
+  "info": {
+    "name": "Vodiy Kafel API",
+    "description": "Asosiy oqimlar bo'yicha ishlaydigan namunalar (B-048). To'liq 92 endpoint ro'yxati uchun `openapi.json` ni Postman/Thunder Client'ga to'g'ridan-to'g'ri import qiling — bu kolleksiya faqat qo'l bilan sinash uchun tez boshlanish nuqtasi.\n\nTokenlar login so'rovlaridan keyin avtomatik `Tests` skripti orqali kolleksiya o'zgaruvchilariga yoziladi — qo'lda ko'chirish shart emas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "superAdminPhone", "value": "+998900000001" },
+    { "key": "devPassword", "value": "Parol123!" },
+    { "key": "wholesaleLogin", "value": "fargona-optom" },
+    { "key": "adminToken", "value": "" },
+    { "key": "wholesaleToken", "value": "" },
+    { "key": "wholesaleRefreshToken", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "paymentId", "value": "" },
+    { "key": "contractId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin login (SUPER_ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{superAdminPhone}}\",\n  \"password\": \"{{devPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wholesale login (optom mijoz)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/wholesale/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{wholesaleLogin}}\",\n  \"password\": \"{{devPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('wholesaleToken', body.data.accessToken);",
+                  "pm.collectionVariables.set('wholesaleRefreshToken', body.data.refreshToken);",
+                  "if (body.data.mustChangePassword) {",
+                  "  console.warn('mustChangePassword=true — seed hisobida parolni avval /auth/wholesale/change-password bilan almashtiring, keyin devPassword ni yangisiga o‘zgartiring.');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wholesale change-password (birinchi kirishda MAJBURIY)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/auth/wholesale/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"{{devPassword}}\",\n  \"newPassword\": \"YangiParol456!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('wholesaleToken', body.data.accessToken);",
+                  "pm.collectionVariables.set('devPassword', 'YangiParol456!');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh (wholesale)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{wholesaleRefreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me (joriy foydalanuvchi)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Katalog (ochiq — token kerak emas)",
+      "item": [
+        {
+          "name": "Mahsulotlar ro'yxati",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products?page=1&limit=20"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data.items.length) {",
+                  "  pm.collectionVariables.set('productId', body.data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        { "name": "Mahsulot sahifasi", "request": { "method": "GET", "url": "{{baseUrl}}/products/:slug" } },
+        { "name": "O'xshash mahsulotlar", "request": { "method": "GET", "url": "{{baseUrl}}/products/:slug/similar" } },
+        { "name": "Zavodlar", "request": { "method": "GET", "url": "{{baseUrl}}/factories" } },
+        { "name": "O'lchamlar", "request": { "method": "GET", "url": "{{baseUrl}}/sizes" } },
+        { "name": "Filiallar (RETAIL)", "request": { "method": "GET", "url": "{{baseUrl}}/branches" } },
+        { "name": "Hamkorlar", "request": { "method": "GET", "url": "{{baseUrl}}/partners" } },
+        { "name": "Galereya", "request": { "method": "GET", "url": "{{baseUrl}}/gallery" } },
+        { "name": "Ochiq sozlamalar", "request": { "method": "GET", "url": "{{baseUrl}}/settings/public" } },
+        {
+          "name": "Buyurtmani kuzatish (token siz)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/orders/VK-2026-000001/track?phone=%2B998901234567" }
+        }
+      ]
+    },
+    {
+      "name": "Kalkulyator (optom mijoz)",
+      "item": [
+        {
+          "name": "To'liq hisob (mahsulot + yo'l kira)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/calculator/quote",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"{{productId}}\", \"pallets\": 10 }]\n}"
+            }
+          }
+        },
+        {
+          "name": "Faqat yo'l kira",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/calculator/delivery",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalPallets\": 25,\n  \"regionId\": \"<region-id>\",\n  \"transportTypeId\": \"<transport-type-id>\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Buyurtma va to'lov (optom mijoz)",
+      "item": [
+        {
+          "name": "Buyurtma berish",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"{{productId}}\", \"pallets\": 5 }],\n  \"paymentMethod\": \"CASH\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('orderId', body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mening buyurtmalarim",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }],
+            "url": "{{baseUrl}}/me/orders"
+          }
+        },
+        {
+          "name": "Buyurtma tafsiloti",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }],
+            "url": "{{baseUrl}}/me/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "To'lovni boshlash (CARD)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/payment",
+            "body": { "mode": "raw", "raw": "{\n  \"method\": \"CARD\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('paymentId', body.data.paymentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "To'lov holati",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }],
+            "url": "{{baseUrl}}/payments/{{paymentId}}/status"
+          }
+        },
+        {
+          "name": "🧪 DEV: to'lovni PAID qilish (faqat NODE_ENV=development)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/dev/payments/{{paymentId}}/simulate",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"PAID\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mening kabinetim (optom mijoz)",
+      "item": [
+        { "name": "Hisobim (balans)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }], "url": "{{baseUrl}}/me/account" } },
+        { "name": "Hisob harakatlari", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }], "url": "{{baseUrl}}/me/account/transactions" } },
+        { "name": "Bildirishnomalar", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }], "url": "{{baseUrl}}/me/notifications" } },
+        { "name": "O'qilmaganlar soni", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }], "url": "{{baseUrl}}/me/notifications/unread-count" } },
+        { "name": "O'zgarishlar (polling)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }], "url": "{{baseUrl}}/me/updates" } }
+      ]
+    },
+    {
+      "name": "Shartnoma — mock (optom mijoz, B-045)",
+      "item": [
+        {
+          "name": "Shartnoma yaratish (INN bo'yicha)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }
+            ],
+            "url": "{{baseUrl}}/wholesale/contracts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inn\": \"301234567\",\n  \"orderId\": \"{{orderId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('contractId', body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mening shartnomalarim",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }],
+            "url": "{{baseUrl}}/wholesale/contracts"
+          }
+        },
+        {
+          "name": "Shartnoma PDF yuklab olish",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{wholesaleToken}}" }],
+            "url": "{{baseUrl}}/wholesale/contracts/{{contractId}}/download"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Optom mijoz yaratish (vaqtinchalik parol qaytadi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/customers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"yangi-mijoz\",\n  \"companyName\": \"Namuna MChJ\",\n  \"contactName\": \"Aliyev Vali\",\n  \"phone\": \"+998901234567\"\n}"
+            }
+          }
+        },
+        { "name": "Mijozlar ro'yxati", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/customers" } },
+        { "name": "Buyurtmalar ro'yxati", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/orders" } },
+        { "name": "Buyurtma tafsiloti", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/orders/{{orderId}}" } },
+        {
+          "name": "Buyurtma holatini o'zgartirish",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"LOADING\",\n  \"note\": \"Yuklashga tayyorlanmoqda\"\n}" }
+          }
+        },
+        { "name": "Filial narxlari ro'yxati", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/branch-products" } },
+        {
+          "name": "Filial narxini o'rnatish",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/branch-products",
+            "body": { "mode": "raw", "raw": "{\n  \"branchId\": \"<branch-id>\",\n  \"productId\": \"{{productId}}\",\n  \"pricePerSqm\": \"85000\"\n}" }
+          }
+        },
+        { "name": "Filiallar (RETAIL + CENTRAL)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/branches" } },
+        { "name": "Sozlamalar (admin)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }], "url": "{{baseUrl}}/admin/settings" } }
+      ]
+    }
+  ]
+}

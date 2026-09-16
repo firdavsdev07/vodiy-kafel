@@ -15,3 +15,4 @@ export * from './order-source.enum';
 export * from './notification-type.enum';
 export * from './sort-order.enum';
 export * from './product-sort.enum';
+export * from './contract-status.enum';

@@ -16,6 +16,7 @@ export const AppEvent = {
   OrderStatusChanged: 'order.status.changed',
   PaymentPaid: 'payment.paid',
   ProductActivated: 'product.activated',
+  ContractReady: 'contract.ready',
 } as const;
 
 export interface OrderCreatedEvent {
@@ -39,4 +40,9 @@ export interface PaymentPaidEvent {
  */
 export interface ProductActivatedEvent {
   productId: string;
+}
+
+/** Shartnoma PDF'i generatsiya qilinib, mijozga yuborildi (B-045). */
+export interface ContractReadyEvent {
+  contractId: string;
 }

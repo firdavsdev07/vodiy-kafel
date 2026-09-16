@@ -1,0 +1,1166 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║            V O D I Y   K A F E L   —   D A S H B O A R D                     ║
+║                     TASK RO'YXATI  (v1.1)                                    ║
+║                                                                              ║
+║   Stack : React 19 + Vite + TypeScript + Tailwind + TanStack Query           ║
+║   Manba : api/openapi.json (92 endpoint) + api/CLAUDE.md + Notion TZ v1.1    ║
+║   Doira : FAQAT ADMIN PANEL (xodimlar uchun). Backend — api/ da tayyor.      ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ISHLASH TARTIBI                                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  1. Tasklar YUQORIDAN PASTGA ketma-ket bajariladi. Bittada — bitta task.
+  2. Task boshlanganda  [ ]  →  [~]   (jarayonda)
+     Task tugaganda     [~]  →  [x]   (tugadi)
+     Bloklangan bo'lsa  [ ]  →  [!]   (javob kutilmoqda)
+  3. Har bir task tugagach: `pnpm build` + `pnpm lint` + `pnpm test` o'tishi
+     shart, sahifa brauzerda haqiqiy backend bilan ishlashi shart.
+  4. "Bog'liq" maydonidagi tasklar tugamagan bo'lsa — boshlanmaydi.
+  5. Backendga o'zgartirish KERAK bo'lib qolsa — bu yerda o'zi qilinmaydi:
+     api/task.txt ga yangi task qo'shiladi va shu task bloklanadi.
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  BELGILAR                                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  [ ] bajarilmagan    [~] jarayonda    [x] tugadi    [!] bloklangan
+  🔒 xavfsizlik muhim         ❓ ochiq savol bor
+  🆕 backendda yangi task talab qiladi     🔁 keyinroq qayta ko'riladi
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  DOIRA — BU PAKET KIM UCHUN                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Dashboard — FAQAT XODIMLAR uchun ichki panel. To'rt rol kiradi:
+
+    SUPER_ADMIN   — branchId yo'q, hamma filialni ko'radi, hammasini
+                    boshqaradi (katalog, narx qoidalari, xodimlar, sozlama)
+    MODERATOR     — CENTRAL filial xodimi. Zaxira + filial/agent
+                    ta'minot buyurtmalari (EPIC 5)
+    BRANCH_ADMIN  — RETAIL filial. Faqat O'Z filialining narxi, mijozi,
+                    buyurtmasi. Zaxirani ko'radi, lekin o'zgartira olmaydi
+    MANAGER       — BRANCH_ADMIN bilan bir xil doira, kamroq huquq
+
+  BU PAKETDA YO'Q:
+    • Chakana (mehmon) katalogi — u `storefront/` da, hisob umuman yo'q
+    • Optom mijoz kabineti (`/me/*`, `/wholesale/*`) — ❓ 1-savolga qarang
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  GLOBAL QOIDALAR — HAR BIR TASKDA AMAL QILADI                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  G1. BIZNES-MANTIQ BACKENDDA
+      Dashboard HECH NARSANI hisoblamaydi. Narx, summa, chegirma, yo'l kira,
+      zaxira holati, ruxsat etilgan keyingi status — hammasi API'dan keladi.
+      Frontendda formula yozilsa — u backend bilan darrov ajralib ketadi.
+
+  G2. SHARTNOMA — openapi.json
+      Turlar QO'LDA yozilmaydi. `api/openapi.json` dan generatsiya qilinadi
+      (D-004). Backend o'zgarsa — `pnpm api:types` qayta ishga tushiriladi va
+      TypeScript buzilgan joyni O'ZI ko'rsatadi.
+
+  G3. JAVOB FORMATI — BITTA JOYDA OCHILADI
+      Muvaffaqiyat: `{ data, meta? }`. Xato: `{ statusCode, error, message,
+      path, timestamp, requestId }`. Har bir komponent `res.data.data` deb
+      yozmaydi — buni API qatlami (D-004) ochib beradi.
+
+  G4. ROL UI'NI BEKITADI, LEKIN HIMOYA EMAS                            🔒
+      Tugmani yashirish — qulaylik. Haqiqiy tekshiruv backendda (RolesGuard).
+      "Frontendda yashirdik" degani "himoyalandi" degani EMAS.
+
+  G5. FILIAL — TOKENDAN, FORMADAN EMAS                                 🔒
+      `branchId` hech qachon forma maydoni sifatida yuborilmaydi. Yagona
+      istisno — SUPER_ADMIN ning ro'yxat FILTRI (u haqiqatan hammasini
+      ko'radi). Filial admini uchun bunday filtr umuman ko'rsatilmaydi.
+
+  G6. PUL — SATR, FLOAT EMAS
+      API pulni `"85000.00"` ko'rinishida beradi. `Number()` ga aylantirib
+      qo'shish/ayirish QILINMAYDI — faqat ko'rsatishdan oldin formatlanadi.
+      Hisob-kitob kerak bo'lsa — backend endpointi ishlatiladi.
+
+  G7. ENUM → O'ZBEKCHA MATN BITTA JOYDA
+      API faqat `SEARCHING_TRANSPORT` yuboradi. O'zbekcha matn — bitta
+      lug'atda (D-043), manba `api/docs/enums.md`. Komponent ichida
+      qo'lda yozilgan status nomi bo'lmaydi.
+
+  G8. STATUS O'TISHLARI HARDCODE QILINMAYDI
+      Buyurtma javobida `allowedNextStatuses` keladi — tugmalar FAQAT shundan
+      quriladi. Frontendda o'tish matritsasini takrorlash = ikki manba =
+      ertami-kechmi ajralish.
+
+  G9. VAQT — UTC KELADI
+      Bazada va API'da UTC. Ekranda Asia/Tashkent bo'yicha ko'rsatiladi.
+      Formatlash — bitta util orqali, `new Date().toLocaleString()` tarqalmaydi.
+
+  G10. HAR BIR RO'YXAT — SAHIFALANADI
+      Barcha ro'yxat endpointlari `page`, `limit`, `sortBy`, `sortOrder` oladi
+      va `meta` da `total`/`totalPages` qaytaradi. "Hammasini yuklab olib,
+      frontendda filtrlash" QILINMAYDI.
+
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 0 — POYDEVOR (Foundation)                                              ║
+║  Maqsad: skelet. Bularsiz birorta sahifa yozilmaydi.                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-001 · TypeScript va loyiha tuzilishi ─────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Hozirgi Vite shabloni tozalanadi (App.css, assets/hero.png, react.svg   │
+│      — demo qoldiqlari o'chiriladi)                                          │
+│    • Frontend MAJBURIY TypeScript'da yoziladi: `typescript`, `tsconfig.json`│
+│      (`strict: true`, `noUncheckedIndexedAccess: true`); barcha `.jsx`/`.js`│
+│      React kodlari `.tsx`/`.ts` ga o'tkaziladi. JavaScript ishlatilmaydi.  │
+│    • Papka tuzilishi:                                                        │
+│        src/app/         — router, provayderlar, global layout                │
+│        src/pages/<domen>/ — sahifalar (har domen o'z papkasida)              │
+│        src/features/<domen>/ — domenga xos hook va komponentlar              │
+│        src/shared/ui/   — umumiy komponentlar (D-008)                        │
+│        src/shared/api/  — API qatlami (D-004)                                │
+│        src/shared/lib/  — util (format, enum lug'ati, sana)                  │
+│    • Path alias `@/` → `src/` (vite + tsconfig ikkalasida)                   │
+│    • `.env.example`: `VITE_API_URL=http://localhost:3000/api/v1`             │
+│    • oxlint TypeScript bilan ishlashi tekshiriladi                           │
+│                                                                              │
+│  ❗ Nega TypeScript: 92 ta endpoint, har birida o'z DTO'si. TypeScript
+      backend maydonlari va API kontrakti o'zgarganda xatoni build vaqtida
+      korsatadi. Dashboard kodida JS ishlatilmaydi.   │
+│                                                                              │
+│  Natija: `pnpm dev` ishlaydi, `pnpm build` type-check bilan o'tadi           │
+│  Bog'liq: —                                                                  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-002 · Tailwind va dizayn tizimi ──────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Tailwind v4 o'rnatiladi (storefront bilan bir xil stack)                │
+│    • Storefront palitrasi asosida tokenlar: bone `#EEECE5`, stone `#D8D3C8`,
+│      clay `#71685E`, charcoal `#232321`, ink `#0B0B0A`. Status ranglari ham
+│      markaziy tokenlar orqali boshqariladi.
+│    • Light VA dark rejim majburiy: CSS variables + Tailwind `dark:` orqali
+│      barcha sahifalar ikki rejimda ishlaydi. Rejim localStorage'ga saqlanadi,
+│      dastlabki qiymat OS preference'dan olinadi va top paneldan almashtiriladi.
+│    • Dizayn tokenlari: radius, soya, spacing — CSS o'zgaruvchilarda           │
+│    • Tipografika: bitta shrift oilasi, 5-6 o'lcham pog'onasi                 │
+│    • Status ranglari bitta joyda belgilanadi (buyurtma holati, to'lov        │
+│      holati, zaxira 🟢🟡🔴) — komponentlarda rang qo'lda yozilmaydi             │
+│    • Ikonkalar: bitta to'plam (lucide-react), `public/icons.svg` qoldig'i    │
+│      o'chiriladi                                                             │
+│                                                                              │
+│  ⚠ Bu — ichki panel, marketing sayti emas. Animatsiya, 3D, GSAP KERAK EMAS.  │
+│    Asosiy mezon: zichlik va tezlik — menejer kuniga 100 marta ochadi.        │
+│                                                                              │
+│  Natija: storefront palitrasiga mos, light/dark rejimli, rang/o'lcham
+  qo'lda yozilmaydigan holat                             │
+│  Bog'liq: D-001                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-003 · Routing skeleti va layout ──────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `react-router` (v7) ulanadi                                             │
+│    • Layout: yon menyu (collapse bo'ladigan) + yuqori panel (foydalanuvchi,  │
+│      filial nomi, chiqish) + kontent                                         │
+│    • Marshrutlar daraxti barcha epiclar uchun oldindan belgilanadi           │
+│      (`/`, `/products`, `/prices`, `/stock`, `/customers`, `/orders`,        │
+│       `/supply-orders`, `/branches`, `/partners`, `/staff`, `/delivery`,     │
+│       `/settings`)                                                           │
+│    • 404 sahifasi, `<Suspense>` + route-level lazy loading                   │
+│    • Sahifa sarlavhasi (`document.title`) marshrutdan avtomatik              │
+│                                                                              │
+│  Natija: bo'sh, lekin to'liq navigatsiya qilinadigan skelet                  │
+│  Bog'liq: D-002                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-004 · API qatlami va generatsiya qilinadigan turlar ──────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `openapi-typescript` devDependency: `pnpm api:types` skripti            │
+│      `../api/openapi.json` → `src/shared/api/schema.d.ts`                    │
+│    • Yupqa `fetch` wrapper (og'ir generatsiya qilingan klient EMAS):         │
+│        – `VITE_API_URL` bazasi                                               │
+│        – `Authorization: Bearer` (D-006 dan)                                 │
+│        – `{ data }` o'ramini OCHADI — chaqiruvchi `data` ni oladi (G3)       │
+│        – xato javobini `ApiError` klassiga aylantiradi (statusCode,          │
+│          message, requestId saqlanadi — log uchun requestId muhim)           │
+│        – 204 va PDF (blob) javoblarini ham to'g'ri qaytaradi                 │
+│    • `meta` (sahifalash) alohida qaytariladi, yo'qolmaydi                    │
+│                                                                              │
+│  ⚠ `schema.d.ts` QO'LDA TAHRIRLANMAYDI va git'ga KIRADI (frontendchi         │
+│    api/ papkasisiz ham ishlay olishi uchun).                                 │
+│                                                                              │
+│  Natija: `api.get('/admin/products', { query })` — turlari bilan             │
+│  Bog'liq: D-001                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-005 · TanStack Query sozlash ─────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `@tanstack/react-query` + QueryClientProvider                           │
+│    • Standart sozlama: `retry` — 4xx da QAYTA URINILMAYDI (faqat 5xx va      │
+│      tarmoq xatosida), `staleTime` aqlli standart                            │
+│    • Query key konventsiyasi: `['admin','products',{filters}]` —             │
+│      bitta `queryKeys` faylida, satr qo'lda yozilmaydi                       │
+│    • Mutatsiyadan keyin invalidatsiya qoidalari                              │
+│    • 401 → global handler → refresh urinishi → bo'lmasa logout (D-006)       │
+│    • DevTools faqat `import.meta.env.DEV` da                                 │
+│                                                                              │
+│  Natija: server holati bitta mexanizm orqali, `useEffect` + `fetch` yo'q     │
+│  Bog'liq: D-004                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-006 · Kirish va token oqimi                                  🔒 ──────┐
+│                                                                              │
+│  Endpointlar: `POST /auth/admin/login`, `POST /auth/refresh`,                │
+│               `GET /auth/me`, `POST /auth/logout`                            │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Login sahifasi: telefon + parol (optom mijoz login formasi EMAS —       │
+│      u boshqa endpoint, ❓ 1-savol)                                          │
+│    • Access + refresh juftligi saqlanadi; `GET /auth/me` bilan profil        │
+│      olinadi (rol va filial TOKENDAN emas, shu javobdan ishlatiladi —        │
+│      token eskirsa ham profil joriy holatni beradi)                          │
+│    • Access muddati tugaganda `POST /auth/refresh` bilan jimgina             │
+│      yangilanadi; parallel 401 lar BITTA refresh so'roviga birlashtiriladi   │
+│      (aks holda 5 ta so'rov 5 ta refresh chaqiradi va bir-birini buzadi)     │
+│    • Refresh ham muvaffaqiyatsiz bo'lsa → logout + login sahifasi            │
+│    • `POST /auth/logout` chaqiriladi, keyin local holat tozalanadi           │
+│                                                                              │
+│  ❗ Tokenni QAYERDA saqlash — D-048 da qayta ko'riladi. Boshlang'ich qaror:   │
+│    access — xotirada (JS o'zgaruvchi), refresh — `localStorage`. Sabab:      │
+│    backend hozir cookie o'rnatmaydi, faqat javob tanasida token beradi.      │
+│                                                                              │
+│  Natija: kirish, avtomatik yangilanish, chiqish ishlaydi                     │
+│  Bog'liq: D-005                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-007 · Rol asosida ko'rinish (RBAC)                           🔒 ──────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `<RequireAuth>` — kirmaganni login sahifasiga yuboradi                  │
+│    • `<RequireRole roles={[...]}>` — roli yetmasa 403 sahifasi               │
+│    • Yon menyu roldan quriladi: MANAGER ga "Xodimlar" bo'limi umuman         │
+│      ko'rinmaydi, MODERATOR ga "Narxlar" ko'rinmaydi va h.k.                 │
+│    • Rol → ruxsat jadvali BITTA faylda (`shared/lib/permissions.ts`),        │
+│      manba — `api/src/**/*.admin.controller.ts` dagi `@Roles(...)`           │
+│                                                                              │
+│  Rol matritsasi (backenddan olingan, to'liqrog'i har taskda):                │
+│    • Katalog CRUD (zavod, o'lcham, mahsulot, media) — SUPER_ADMIN yozadi,    │
+│      qolganlar faqat ko'radi                                                 │
+│    • Zaxira yozish — SUPER_ADMIN + MODERATOR                                 │
+│    • Narx qoidalari — SUPER_ADMIN + BRANCH_ADMIN (chegara bilan)             │
+│    • Ta'minot buyurtmalari — SUPER_ADMIN + MODERATOR                         │
+│    • Menejerlar — SUPER_ADMIN + BRANCH_ADMIN; Moderatorlar — SUPER_ADMIN     │
+│                                                                              │
+│  ⚠ G4: bu FAQAT UX. Backend baribir o'zi tekshiradi.                         │
+│                                                                              │
+│  Natija: har rol faqat o'ziga tegishlisini ko'radi                           │
+│  Bog'liq: D-006                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-008 · Umumiy UI komponentlar ─────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `DataTable` — TanStack Table ustida: server tomonda sahifalash,         │
+│      saralash (`sortBy`/`sortOrder`), ustun kengligi, bo'sh holat,           │
+│      yuklanish skeleti, qator bosilganda navigatsiya                         │
+│    • `Pagination` — `meta.total`/`totalPages` bilan ishlaydi                 │
+│    • `FilterBar` — filtrlar URL query'ga yoziladi (sahifa yangilanganda      │
+│      yo'qolmaydi, havolani hamkasbga yuborsa bo'ladi)                        │
+│    • Forma maydonlari: `react-hook-form` + `zod` resolver bilan              │
+│      (Input, Select, Textarea, Checkbox, MoneyInput, PhoneInput)             │
+│    • `Modal` / `ConfirmDialog` — o'chirish har doim tasdiq so'raydi          │
+│    • `Toast` — muvaffaqiyat va xato xabarlari                                │
+│    • `StatusBadge` — enum → rang + o'zbekcha matn (D-043 lug'atidan)         │
+│    • `MoneyText`, `DateText` — formatlashning yagona joyi (G6, G9)           │
+│    • `ErrorState` — `ApiError` ni odam tushunadigan matnga aylantiradi,      │
+│      `requestId` ni ko'rsatadi (qo'llab-quvvatlash uchun)                    │
+│                                                                              │
+│  Natija: keyingi 40 ta task shu qismlardan yig'iladi                         │
+│  Bog'liq: D-005                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 1 — KATALOG BOSHQARUVI                                                 ║
+║  Maqsad: mahsulot, zavod, o'lcham, media. Eng oddiy CRUD — shu yerda         ║
+║          D-008 komponentlari haqiqiy sinovdan o'tadi.                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-009 · Zavodlar (Factory) CRUD ────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/factories`,                                   │
+│               `PATCH,DELETE /admin/factories/{id}`                           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat jadvali (nom, slug, mahsulotlar soni, holat)                    │
+│    • Yaratish/tahrirlash modali                                              │
+│    • O'chirish — tasdiq bilan; mahsuloti bor zavod o'chmasa, backend         │
+│      xatosi tushunarli ko'rsatiladi                                          │
+│                                                                              │
+│  🔒 Ko'rish — barcha xodim; yozish — faqat SUPER_ADMIN                       │
+│                                                                              │
+│  Natija: birinchi to'liq CRUD sahifasi — namuna sifatida qoladi              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-010 · O'lchamlar (ProductSize) CRUD ──────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/sizes`, `PATCH,DELETE /admin/sizes/{id}`      │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat + yaratish/tahrirlash (o'lcham, paddondagi m², dona soni)       │
+│    • Bu qiymatlar KALKULYATORGA kiradi — formada aniq ogohlantirish:         │
+│      o'zgartirish keyingi hisob-kitoblarga ta'sir qiladi                     │
+│                                                                              │
+│  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│  Bog'liq: D-009                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-011 · Mahsulotlar ro'yxati va filtr ──────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /admin/products`                                             │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: rasm, nom, zavod, o'lcham, sirt (POL/DEVOR), zaxira holati,     │
+│      faollik                                                                 │
+│    • Filtrlar: zavod, o'lcham, sirt, faollik, qidiruv — URL'ga yoziladi      │
+│    • Saralash: nom, yaratilgan sana, ko'rishlar soni                         │
+│      ⚠ NARX bo'yicha saralash YO'Q — narx `Product` da emas (api/CLAUDE.md)  │
+│    • Sahifalash server tomonda                                               │
+│                                                                              │
+│  Natija: eng ko'p ishlatiladigan sahifa — tezligi muhim                      │
+│  Bog'liq: D-009, D-010                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-012 · Mahsulot yaratish va tahrirlash ────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `POST /admin/products`, `GET,PATCH,DELETE /admin/products/{id}`│
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • To'liq forma: nom, slug (nomdan avtomatik, qo'lda ham o'zgartiriladi),  │
+│      zavod, o'lcham, sirt, tavsif, faollik                                   │
+│    • Validatsiya zod bilan — backend qoidalari bilan mos                     │
+│      (xabar matni backenddan kelgani ustun)                                  │
+│    • Saqlanmagan o'zgarish bilan chiqishda ogohlantirish                     │
+│    • Tahrirlash sahifasida tab'lar: Asosiy | Media (D-013) |                 │
+│      O'xshash (D-014) | Narxlar (D-016 ga havola) | Zaxira (D-018 ga havola) │
+│                                                                              │
+│  ⚠ Bu formada NARX ham, ZAXIRA ham YO'Q — ular boshqa jadvalda               │
+│    (`BranchProduct` va `ProductStock`). Bu — tasodif emas, arxitektura.      │
+│                                                                              │
+│  Bog'liq: D-011                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-013 · Mahsulot media (rasm va 360°) ──────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/products/{id}/media`,                         │
+│               `PATCH /admin/products/{id}/media/order`,                      │
+│               `DELETE /admin/media/{id}`                                     │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Fayl yuklash (drag & drop), yuklash jarayoni ko'rsatkichi               │
+│    • Tur: IMAGE | IMAGE_360 | VIDEO_360                                      │
+│    • Tartibni drag bilan o'zgartirish → `PATCH .../media/order`              │
+│    • O'chirish — tasdiq bilan                                                │
+│    • Backend faylni MAZMUNIDAN aniqlaydi (kengaytmadan emas) — noto'g'ri     │
+│      fayl yuborilganda xato tushunarli ko'rsatiladi                          │
+│    • Yuklangan fayl `/uploads/...` orqali ochiladi (ochiq havola)            │
+│                                                                              │
+│  Bog'liq: D-012                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-014 · O'xshash mahsulotlar ───────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/products/{id}/similar`                        │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mahsulot kartasida "O'xshash" tab'i                                     │
+│    • Qidiruv orqali mahsulot tanlab qo'shish, olib tashlash                  │
+│    • O'zini o'ziga bog'lash oldini olinadi                                   │
+│                                                                              │
+│  Bog'liq: D-012                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-015 · Loyiha galereyasi ──────────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/gallery`, `PATCH,DELETE /admin/gallery/{id}`  │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Galereya yozuvlari (sarlavha, rasm, tavsif, bog'langan mahsulotlar)     │
+│    • Rasm yuklash, tartib                                                    │
+│                                                                              │
+│  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│  Bog'liq: D-013                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 2 — NARX VA ZAXIRA                                          🔒         ║
+║  Maqsad: loyihaning eng nozik qismi. Xato narx = mijozga xato hisob.         ║
+║          Bu epicda har bir tugma kimga ko'rinishi alohida o'ylanadi.         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-016 · Filial narxlari jadvali                               🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `GET,PUT /admin/branch-products`,                              │
+│               `PATCH /admin/branch-products/{id}/price`                      │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: mahsulot × narx (o'z filiali uchun)                             │
+│    • Inline tahrirlash: narxni jadvalning o'zida o'zgartirish                │
+│    • SUPER_ADMIN uchun filial tanlagich; BRANCH_ADMIN/MANAGER uchun          │
+│      bunday tanlagich UMUMAN KO'RSATILMAYDI (G5)                             │
+│    • Narx — satr sifatida yuboriladi (`@IsPositiveDecimalString`)            │
+│                                                                              │
+│  🔒 Eng muhim ssenariy: Andijon admini Farg'ona narxini ochmoqchi bo'lsa     │
+│    backend 404 qaytaradi. UI buni "topilmadi" deb ko'rsatadi — "ruxsat       │
+│    yo'q" DEMAYDI (mavjudligini oshkor qilmaslik uchun, api/CLAUDE.md §6).    │
+│                                                                              │
+│  Bog'liq: D-011                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-017 · Ommaviy narx yangilash                                🔒 ───────┐
+│                                                                              │
+│  Endpoint: `PUT /admin/branch-products`                                      │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Bir nechta mahsulot narxini birdan o'zgartirish                         │
+│    • Tanlash → "Narxni o'zgartirish" → aniq summa yoki foiz                  │
+│    • ⚠ TASDIQLASH EKRANI MAJBURIY: nechta mahsulot, qaysi filial, eski →     │
+│      yangi narx namunasi ko'rsatiladi. Bu — qaytarib bo'lmaydigan amal       │
+│    • Natija: nechtasi o'zgardi, nechtasi xato — ro'yxat bilan                │
+│                                                                              │
+│  Bog'liq: D-016                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-018 · Zaxira boshqaruvi                                     🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `GET,PUT /admin/product-stocks`                                │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: mahsulot, paddon soni, holat (🟢 IN_STOCK / 🟡 LOW /              │
+│      🔴 OUT_OF_STOCK), chegara qiymati                                        │
+│    • Yozish — FAQAT SUPER_ADMIN va MODERATOR                                 │
+│    • BRANCH_ADMIN / MANAGER: jadval ko'rinadi, lekin faqat O'QISH uchun —    │
+│      maydonlar `disabled`, sababi tushuntiriladi ("zaxira markaziy           │
+│      omborda boshqariladi")                                                  │
+│                                                                              │
+│  ⚠ Zaxira FILIALGA BOG'LIQ EMAS — bitta umumiy son (api/CLAUDE.md §5).       │
+│    Jadvalda "filial" ustuni BO'LMAYDI. Buni UI'da ham ko'rsatish kerak,      │
+│    aks holda filial admini "mening zaxiram" deb o'ylaydi.                    │
+│                                                                              │
+│  Bog'liq: D-011                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-019 · Mijozga individual narx qoidalari                     🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/customers/{id}/pricing-rules`,                │
+│               `DELETE /admin/customers/{id}/pricing-rules/{ruleId}`          │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mijoz kartasida "Narx qoidalari" tab'i                                  │
+│    • Qoida yaratish: domen (PRODUCT | TRANSPORT), doira (PRODUCT |           │
+│      FACTORY | ROUTE | ALL), tur (FIXED | PERCENT), qiymat                   │
+│    • Amaldagi qoidalar ro'yxati, o'chirish                                   │
+│    • Zanjir tartibi UI'da TUSHUNTIRILADI (eng aniq qoida yutadi):            │
+│        mijoz+mahsulot > mijoz+zavod > mijoz umumiy > filial bazaviy narxi    │
+│    • BRANCH_ADMIN faqat PERCENT qo'ya oladi va                               │
+│      `pricing.branchAdminMaxDiscountPercent` chegarasigacha — forma shu      │
+│      chegarani `GET /admin/settings` dan o'qib ko'rsatadi                    │
+│                                                                              │
+│  🔒 Boshqa mijozning narxi hech qayerda ko'rinmaydi.                         │
+│                                                                              │
+│  Bog'liq: D-022                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 3 — OPTOM MIJOZLAR VA MOLIYA                                           ║
+║  Maqsad: mijoz hisobini ochish, balans, qarz, to'lovni qo'lda kiritish.      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-020 · Optom mijozlar ro'yxati ────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /admin/customers`                                            │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: kompaniya, mas'ul shaxs, telefon, login, filial, balans,        │
+│      faollik                                                                 │
+│    • Filtr: filial (faqat SUPER_ADMIN), faollik, qidiruv                     │
+│    • Balans ustuni: qarz qizil, avans yashil (G6 — satr, formatlanadi)       │
+│                                                                              │
+│  🔒 Filial admini faqat o'z filialining mijozlarini ko'radi — bu backendda,  │
+│    frontendda qo'shimcha filtr QO'YILMAYDI (ikki joyda filtr = chalkashlik)  │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-021 · Mijoz yaratish va vaqtinchalik parol                  🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `POST /admin/customers`,                                       │
+│               `POST /admin/customers/{id}/reset-password`                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Yaratish formasi: kompaniya, INN, mas'ul shaxs, telefon, login          │
+│    • Javobda VAQTINCHALIK PAROL keladi — u FAQAT BIR MARTA ko'rsatiladi      │
+│    • Maxsus ekran: parol yirik shriftda, "nusxa olish" tugmasi va aniq       │
+│      ogohlantirish — "bu oyna yopilgach parol qayta ko'rsatilmaydi"          │
+│    • Parolni tiklash ham shu ekranni ishlatadi                               │
+│                                                                              │
+│  🔒 Vaqtinchalik parol: log'ga yozilmaydi, `localStorage` ga saqlanmaydi,    │
+│    URL'ga tushmaydi, TanStack Query keshida qolib ketmaydi (mutatsiya        │
+│    natijasi darhol tozalanadi).                                              │
+│                                                                              │
+│  ⚠ Self-registration YO'Q — mijozni faqat xodim yaratadi (api/CLAUDE.md §4)  │
+│                                                                              │
+│  Bog'liq: D-020                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-022 · Mijoz kartasi ──────────────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,PATCH /admin/customers/{id}`,                             │
+│               `PATCH /admin/customers/{id}/active`                           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Tab'lar: Profil | Hisob (D-023) | Narx qoidalari (D-019) |              │
+│      Buyurtmalar (D-024 filtri bilan)                                        │
+│    • Profilni tahrirlash, faollikni yoqish/o'chirish (tasdiq bilan)          │
+│    • "Parol almashtirishi kerak" holati ko'rinadi (mijoz hali birinchi       │
+│      kirishni qilmagan bo'lsa)                                               │
+│                                                                              │
+│  Bog'liq: D-021                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-023 · Hisob, balans va tranzaksiyalar ────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET /admin/customers/{id}/account`,                           │
+│               `GET,POST /admin/customers/{id}/transactions`                  │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Balans kartasi: joriy balans, jami qarz, jami to'lov                    │
+│    • Tranzaksiyalar jadvali: sana, tur (DEBT / PAYMENT / ADJUSTMENT),        │
+│      summa (ishora bilan), izoh, bog'langan buyurtma                         │
+│    • Qo'lda yozuv qo'shish (naqd to'lov, tuzatish) — tasdiq bilan            │
+│                                                                              │
+│  ⚠ Yozuv TAHRIRLANMAYDI va O'CHIRILMAYDI (api/CLAUDE.md §9). Xatoni          │
+│    tuzatish yo'li — teskari ishorali ADJUSTMENT. UI'da "tahrirlash" yoki     │
+│    "o'chirish" tugmasi BO'LMAYDI, o'rniga "tuzatish kiritish".               │
+│                                                                              │
+│  🔒 Yozish — SUPER_ADMIN, BRANCH_ADMIN, MODERATOR                            │
+│                                                                              │
+│  Bog'liq: D-022                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 4 — BUYURTMALAR                                                        ║
+║  Maqsad: kunlik ish shu yerda. Menejer eng ko'p vaqtni shu sahifada          ║
+║          o'tkazadi — tezlik va kam bosish muhim.                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-024 · Buyurtmalar ro'yxati va filtrlar ───────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /admin/orders`                                               │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: raqam, mijoz, summa, holat, to'lov holati, tezkor belgisi,      │
+│      menejer, sana                                                           │
+│    • Filtrlar (hammasi backendda bor): `status`, `source`, `isUrgent`,       │
+│      `paymentStatus`, `branchId`, `managerId`, `dateFrom`, `dateTo`,         │
+│      `search` (raqam / kompaniya / ism / telefon)                            │
+│    • Tez filtrlar: "Yangi", "Tezkor", "To'lanmagan", "Menga biriktirilgan"   │
+│    • Tezkor buyurtmalar vizual ajratiladi                                    │
+│    • Filtr URL'da — menejer havolani hamkasbiga yubora oladi                 │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-025 · Buyurtma kartasi ───────────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /admin/orders/{id}`                                          │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mijoz ma'lumoti (yoki hisobsiz xaridor: `guestName`/`guestPhone`)       │
+│    • Mahsulotlar jadvali: nom, paddon, m², SNAPSHOT narxi, summa             │
+│    • Yetkazib berish: viloyat, transport turi, yo'l kira                     │
+│    • To'lov holati, usuli                                                    │
+│    • Holat tarixi (vaqti bilan)                                              │
+│                                                                              │
+│  ⚠ Narx — buyurtma paytidagi NUSXA (api/CLAUDE.md §8). Mahsulotning          │
+│    hozirgi narxi bilan farq qilishi MUMKIN va bu — xato emas. UI eski        │
+│    buyurtmani "yangilab" ko'rsatmaydi.                                       │
+│                                                                              │
+│  Bog'liq: D-024                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-026 · Buyurtma holatini o'zgartirish ─────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `PATCH /admin/orders/{id}/status`                                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Tugmalar FAQAT `allowedNextStatuses` dan quriladi (G8)                  │
+│    • Yakuniy holatda (DELIVERED / CANCELLED) tugma umuman bo'lmaydi          │
+│    • CANCELLED — alohida tasdiq va sabab so'raladi                           │
+│    • Optimistik yangilash EMAS — javob kelgunicha kutiladi (status           │
+│      o'zgarishi mijozga bildirishnoma yuboradi, "orqaga qaytarish" yo'q)     │
+│                                                                              │
+│  Ikki yo'l bor (api/docs/enums.md):                                          │
+│    • Yetkazib berish bilan: NEW → SEARCHING_TRANSPORT → LOADING →            │
+│      DELIVERING → DELIVERED                                                  │
+│    • Olib ketish: NEW → LOADING → DELIVERED                                  │
+│                                                                              │
+│  Bog'liq: D-025                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-027 · Menejerga biriktirish va tezkor belgisi ────────────────────────┐
+│                                                                              │
+│  Endpointlar: `PATCH /admin/orders/{id}/assign`,                             │
+│               `PATCH /admin/orders/{id}/urgent`                              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Menejer tanlash (o'z filialidagilar ro'yxatidan — D-035)                │
+│    • "Tezkor" belgisini yoqish/o'chirish                                     │
+│    • Ikkalasi ham ro'yxatdan turib ham, kartadan ham qilinadi                │
+│                                                                              │
+│  🔒 Biriktirish — SUPER_ADMIN, BRANCH_ADMIN, MODERATOR                       │
+│                                                                              │
+│  Bog'liq: D-026                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-028 · Qo'lda buyurtma kiritish (telefon / Telegram) ──────────────────┐
+│                                                                              │
+│  Endpoint: `POST /admin/orders`                                              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Xaridor: mavjud mijozni tanlash YOKI hisobsiz xaridor                   │
+│      (`guestName` + `guestPhone`)                                            │
+│    • Mahsulot qatorlari: mahsulot qidiruvi + paddon soni                     │
+│    • Yetkazib berish: viloyat + transport turi (yoki olib ketish)            │
+│    • Manba: PHONE | TELEGRAM | ADMIN                                         │
+│                                                                              │
+│  ❗ MUHIM CHEKLOV: `/calculator/*` endpointlari `CustomerOnlyGuard` bilan     │
+│    himoyalangan — XODIM TOKENI BILAN ISHLAMAYDI. Ya'ni menejer buyurtma      │
+│    yaratishdan OLDIN summani ko'ra olmaydi; summa faqat yaratilgandan        │
+│    keyin javobda keladi.                                                     │
+│    → Vaqtinchalik yechim: yaratgandan keyin summa bilan tasdiq ekrani.       │
+│    → To'g'ri yechim ❓ 2-savolda — backendga admin uchun preview             │
+│      endpointi kerak (`POST /admin/orders/preview`).                         │
+│                                                                              │
+│  🔒 Narx baribir BACKENDDA hisoblanadi — forma hech qanday summa yubormaydi  │
+│                                                                              │
+│  Bog'liq: D-024, D-037                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-029 · To'lovni tasdiqlash ────────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `PATCH /admin/payments/{id}/confirm`                              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Naqd yoki perechislenie to'lovini xodim qo'lda tasdiqlaydi              │
+│    • Tasdiq dialogida summa va mijoz ko'rsatiladi                            │
+│    • Tasdiqlangach: to'lov holati, mijoz balansi va buyurtma kartasi         │
+│      birdan yangilanadi (TanStack Query invalidatsiyasi)                     │
+│                                                                              │
+│  🔒 SUPER_ADMIN, BRANCH_ADMIN, MODERATOR                                     │
+│                                                                              │
+│  ⚠ Karta orqali avtomatik to'lov hozircha MOCK (B-050 bloklangan) —          │
+│    UI'da "Payme"/"Click" nomi YOZILMAYDI, faqat "Karta orqali".              │
+│                                                                              │
+│  Bog'liq: D-025, D-023                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 5 — MARKAZIY OMBOR (MODERATOR)                                         ║
+║  Maqsad: RETAIL filial markaziy ombordan mahsulot buyurtma qiladi —          ║
+║          xuddi mijoz kabi, o'sha Order mexanizmi orqali (B-058).             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-030 · Ta'minot buyurtmalari ro'yxati (moderator ko'zi) ───────────────┐
+│                                                                              │
+│  Endpoint: `GET /admin/branch-orders`                                        │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Jadval: raqam, buyurtmachi (filial yoki agent), turi                    │
+│      (`orderingType`: BRANCH | AGENT), summa, holat, sana                    │
+│    • Filtrlar va sahifalash                                                  │
+│                                                                              │
+│  🔒 Faqat SUPER_ADMIN va MODERATOR                                           │
+│                                                                              │
+│  Bog'liq: D-024                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-031 · Ta'minot buyurtmasi kartasi va holati ──────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET /admin/branch-orders/{id}`,                               │
+│               `PATCH /admin/branch-orders/{id}/status`                       │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Karta: buyurtmachi filial, mahsulotlar, summa, holat tarixi             │
+│    • Holat o'zgartirish — yana `allowedNextStatuses` dan (G8)                │
+│                                                                              │
+│  Bog'liq: D-030                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-032 · Filial sifatida ta'minot buyurtmasi berish ─────────────────────┐
+│                                                                              │
+│  Endpointlar: `POST,GET /branch-orders`, `GET /branch-orders/{id}`           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • BRANCH_ADMIN / MANAGER uchun "Markazdan buyurtma" sahifasi              │
+│    • Mahsulot + paddon tanlab yuborish                                       │
+│    • O'z yuborgan buyurtmalari ro'yxati va holati                            │
+│                                                                              │
+│  ⚠ Bu — D-030/D-031 ning TESKARI tomoni: bir xil ma'lumot, boshqa rol.       │
+│    Endpoint ham boshqa: `/branch-orders` (filial) va                         │
+│    `/admin/branch-orders` (markaz).                                          │
+│                                                                              │
+│  🔒 Faqat BRANCH_ADMIN va MANAGER                                            │
+│                                                                              │
+│  Bog'liq: D-031                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 6 — FILIAL, HAMKOR, XODIM                                              ║
+║  Maqsad: tashkiliy ma'lumotnomalar. Kam o'zgaradi, lekin xato qimmatga       ║
+║          tushadi (xodim huquqi noto'g'ri berilsa).                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-033 · Filiallar (Branch) CRUD ────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/branches`,                                    │
+│               `GET,PATCH,DELETE /admin/branches/{id}`,                       │
+│               `POST /admin/branches/{id}/image`                              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat: nom, turi (RETAIL / CENTRAL), manzil, telefon, faollik         │
+│    • Yaratish/tahrirlash: koordinata (lat/lng — son, satr emas),             │
+│      ish vaqti, rasm yuklash                                                 │
+│    • CENTRAL va RETAIL vizual ajratiladi — ular TENG EMAS                    │
+│      (CENTRAL da zaxira bor, RETAIL da faqat narx)                           │
+│                                                                              │
+│  🔒 Yaratish/o'chirish — faqat SUPER_ADMIN; tahrirlash — filial adminiga     │
+│    ham (faqat o'ziniki)                                                      │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-034 · Hamkorlar (Partner) CRUD ───────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/partners`,                                    │
+│               `PATCH,DELETE /admin/partners/{id}`,                           │
+│               `POST /admin/partners/{id}/logo`                               │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat + yaratish/tahrirlash, logo yuklash, tartib                     │
+│                                                                              │
+│  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│  Bog'liq: D-033                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-035 · Menejerlar CRUD ────────────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/managers`, `PATCH /admin/managers/{id}`       │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat: ism, telefon, Telegram, filial, faollik                        │
+│    • Yaratish: parol beriladi (D-021 dagi "bir marta ko'rsatish" ekrani      │
+│      qayta ishlatiladi)                                                      │
+│    • Biriktirish mantig'i hozircha BY_BRANCH (❓ ochiq savol, B-043)         │
+│                                                                              │
+│  🔒 SUPER_ADMIN va BRANCH_ADMIN. BRANCH_ADMIN faqat o'z filialiga            │
+│    menejer qo'sha oladi — forma `branchId` so'ramaydi (G5)                   │
+│                                                                              │
+│  Bog'liq: D-033                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-036 · Moderatorlar CRUD                                     🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/moderators`,                                  │
+│               `PATCH,DELETE /admin/moderators/{id}`                          │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Markaziy ombor xodimlari ro'yxati va boshqaruvi                         │
+│    • Forma faqat CENTRAL turdagi filialni taklif qiladi                      │
+│      (MODERATOR RETAIL filialga biriktirilmaydi — B-057)                     │
+│                                                                              │
+│  🔒 FAQAT SUPER_ADMIN. Boshqa rollarda bu bo'lim menyuda ko'rinmaydi.        │
+│                                                                              │
+│  Bog'liq: D-035                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 7 — YETKAZIB BERISH (viloyat × transport × filial)                     ║
+║  Maqsad: yo'l kira matritsasi. Tarif YAGONA EMAS — uch o'lchamli.            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-037 · Viloyatlar (Region) CRUD ───────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/regions`, `PATCH,DELETE /admin/regions/{id}`  │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat + yaratish/tahrirlash (nom, tartib, faollik)                    │
+│                                                                              │
+│  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│  ❓ Viloyatlarning yakuniy ro'yxati mijozdan hali kelmagan (9-savol) —       │
+│    lekin CRUD bor, ish to'xtamaydi                                           │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-038 · Transport turlari CRUD ─────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,POST /admin/transport-types`,                             │
+│               `PATCH,DELETE /admin/transport-types/{id}`                     │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat + yaratish/tahrirlash (nom, sig'imi, tartib)                    │
+│                                                                              │
+│  ⚠ Transport turlari HARDCODE EMAS — jadvalda (api/CLAUDE.md §5).            │
+│    Frontendda ham ro'yxat qo'lda yozilmaydi, API'dan olinadi.                │
+│                                                                              │
+│  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│  Bog'liq: D-037                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-039 · Tarif matritsasi                                      🔒 ───────┐
+│                                                                              │
+│  Endpointlar: `GET,PUT /admin/tariffs`, `PATCH /admin/tariffs/{id}/price`    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Matritsa ko'rinishi: qator — viloyat, ustun — transport turi,           │
+│      katak — narx (filial tokendan olinadi)                                  │
+│    • Inline tahrirlash + ommaviy saqlash (`PUT /admin/tariffs`)              │
+│    • To'ldirilmagan kataklar aniq ko'rinadi (bo'sh tarif = hisob xatosi)     │
+│                                                                              │
+│  🔒 SUPER_ADMIN va BRANCH_ADMIN (o'z filiali uchun)                          │
+│                                                                              │
+│  Bog'liq: D-038                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 8 — SOZLAMALAR                                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-040 · Sozlamalar sahifasi ────────────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET,PATCH /admin/settings`                                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Backend hozir UCHTA kalitni taniydi (yangisini FRONTEND yarata olmaydi):│
+│        `stock.lowThresholdPallets`          — «kam qoldi» chegarasi (paddon) │
+│        `payment.requisites`                 — bank rekvizitlari              │
+│                                               (bank, mfo:5, account:20,      │
+│                                                inn:9, name)                  │
+│        `pricing.branchAdminMaxDiscountPercent` — filial admini chegarasi (%) │
+│    • Har biri o'z tipiga mos maydon bilan; `isDefault: true` bo'lsa          │
+│      "standart qiymat" deb belgilanadi                                       │
+│    • Validatsiya backend qoidalari bilan mos (masalan MFO — aynan 5 raqam)   │
+│                                                                              │
+│  🔒 Ko'rish — SUPER_ADMIN va BRANCH_ADMIN; o'zgartirish — faqat SUPER_ADMIN  │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 9 — BOSH SAHIFA VA SIFAT                                               ║
+║  Maqsad: panelni haqiqiy ishga topshirishga tayyorlash.                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] D-041 · Bosh sahifa (KPI)                                   ❓ 🆕 ──────┐
+│                                                                              │
+│  ❗ MUAMMO: backendda statistika endpointi UMUMAN YO'Q. `/admin/dashboard`,   │
+│    `/admin/stats` — yo'q (tekshirildi: openapi.json, 92 yo'l).               │
+│                                                                              │
+│  Ikki yo'l:                                                                  │
+│    A) Mavjud ro'yxatlardan yig'ish — `GET /admin/orders?status=NEW&limit=1`  │
+│       so'rovining `meta.total` qiymatini olish. Ishlaydi, lekin 5-6 ta       │
+│       so'rov va faqat SON beradi (summa, dinamika yo'q)                      │
+│    B) 🆕 api/task.txt ga yangi task: `GET /admin/dashboard/stats` —          │
+│       bitta so'rovda kunlik/oylik son va summa, filial bo'yicha              │
+│                                                                              │
+│  Tavsiya: A varianti bilan boshlash (backendni bloklamaydi), B ni            │
+│  api/task.txt ga qo'shib qo'yish. ❓ 3-savolga qarang.                       │
+│                                                                              │
+│  Nima qilinadi (A varianti):                                                 │
+│    • Kartochkalar: yangi buyurtmalar, tezkorlar, to'lanmaganlar,             │
+│      kam qolgan mahsulotlar, faol mijozlar                                   │
+│    • Har kartochka bosilganda tegishli ro'yxatga FILTR bilan o'tadi          │
+│    • Rol bo'yicha farq: MODERATOR ga ta'minot buyurtmalari ko'rsatiladi      │
+│                                                                              │
+│  Bog'liq: D-024, D-030                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-042 · Xato, yuklanish va bo'sh holatlar ──────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Global `ErrorBoundary` — oq ekran o'rniga tushunarli sahifa             │
+│    • Har bir ro'yxatda: yuklanish skeleti, bo'sh holat, xato holati          │
+│      ("qayta urinish" tugmasi bilan)                                         │
+│    • Tarmoq yo'qolganda banner                                               │
+│    • 401 → login, 403 → "ruxsat yo'q", 404 → "topilmadi",                    │
+│      422/400 → forma maydoniga bog'lab ko'rsatish                            │
+│    • 500 da `requestId` ko'rsatiladi — backend logidan topish uchun          │
+│                                                                              │
+│  ⚠ 404 ni "ruxsat yo'q" deb ko'rsatish MUMKIN EMAS — backend ataylab 404     │
+│    qaytaradi (api/CLAUDE.md §6). UI uni "fosh qilib" qo'ymasligi kerak.      │
+│                                                                              │
+│  Bog'liq: D-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-043 · Matnlar va enum lug'ati ────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Bitta lug'at fayli: enum qiymati → o'zbekcha matn                       │
+│      Manba — `api/docs/enums.md` (OrderStatus, PaymentStatus,                │
+│      PaymentMethod, OrderSource, OrderingType, StockStatus,                  │
+│      AccountTransactionType, UserRole, BranchType, ContractStatus …)         │
+│    • Turlari `schema.d.ts` dan olinadi — enum'ga yangi qiymat qo'shilsa,     │
+│      lug'atda yo'qligi TYPE XATOSI bo'lib chiqadi (jimgina bo'sh matn emas)  │
+│    • Umumiy matnlar (tugma, tasdiq, xato) ham shu yerda                      │
+│                                                                              │
+│  ⚠ i18n kutubxonasi KERAK EMAS — panel faqat o'zbekcha. Lekin matn kod       │
+│    ichida tarqalmasligi kerak (G7).                                          │
+│                                                                              │
+│  Bog'liq: D-042                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-044 · Responsive va klaviatura ───────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Asosiy maqsad — noutbuk/desktop (1280px+). Menejer telefonda            │
+│      buyurtma kiritmaydi                                                     │
+│    • Planshet (768px+): yon menyu yig'iladi, jadval gorizontal scroll        │
+│    • Telefon: FAQAT ko'rish ssenariylari (buyurtmalar ro'yxati, karta)       │
+│      ishlaydigan holatga keltiriladi                                         │
+│    • Klaviatura: jadvalda o'q tugmalari, forma'da Tab tartibi,               │
+│      modal'da Esc, qidiruvga fokus (`/`)                                     │
+│    • Fokus ko'rinishi o'chirilmaydi, `aria-label` lar joyida                 │
+│                                                                              │
+│  Bog'liq: D-043                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-045 · Unit va komponent testlari ─────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Vitest + Testing Library + MSW (API'ni mock qilish)                     │
+│    • MSW handler'lari `schema.d.ts` turlaridan foydalanadi — mock javob      │
+│      haqiqiy shartnomadan chetlashsa, test kompilyatsiya bo'lmaydi           │
+│    • Qoplanadi:                                                              │
+│        – API qatlami: `{ data }` ochilishi, xato aylantirilishi, 401 refresh │
+│        – Permissions jadvali: har rol uchun ko'rinadigan menyu               │
+│        – Enum lug'ati: barcha qiymat qoplangani                              │
+│        – Pul va sana formatlash (chegara holatlari)                          │
+│        – Buyurtma holati tugmalari `allowedNextStatuses` dan qurilishi       │
+│        – Forma validatsiyasi (narx satr, MFO 5 raqam)                        │
+│                                                                              │
+│  Bog'liq: D-044                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-046 · E2E testlar (asosiy oqimlar) ───────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Playwright, haqiqiy backendga qarshi (`vodiy-kafel-test` bazasi,        │
+│      `api/test/global-setup.ts` bilan bir xil seed hisoblari)                │
+│                                                                              │
+│  Ssenariylar:                                                                │
+│     1. SUPER_ADMIN kiradi → bosh sahifa ochiladi                             │
+│     2. Mahsulot yaratadi → ro'yxatda ko'rinadi                               │
+│     3. Filial narxini o'zgartiradi → saqlanadi                               │
+│     4. Optom mijoz yaratadi → vaqtinchalik parol BIR MARTA ko'rsatiladi      │
+│     5. Qo'lda buyurtma kiritadi → summa backenddan keladi                    │
+│     6. Buyurtma holatini o'zgartiradi → faqat ruxsat etilgan tugmalar        │
+│     7. To'lovni tasdiqlaydi → balans yangilanadi                             │
+│     8. 🔒 BRANCH_ADMIN kiradi → "Moderatorlar" menyusi YO'Q                  │
+│     9. 🔒 BRANCH_ADMIN begona filial narxi URL'ini ochadi → "topilmadi"      │
+│    10. 🔒 MANAGER zaxira sahifasini ochadi → maydonlar disabled              │
+│    11. Token eskirganda avtomatik yangilanadi, ish uzilmaydi                 │
+│                                                                              │
+│  Bog'liq: D-045                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-047 · Build, muhit va deploy ─────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `.env.example` va muhit o'zgaruvchilari hujjatlashtiriladi              │
+│    • Production build: chunk bo'lish (route-level), bundle hajmi tekshiriladi│
+│    • `vercel.json` — SPA uchun rewrite (storefront'dagi kabi)                │
+│    • README: ishga tushirish, `pnpm api:types`, seed hisoblari,              │
+│      backendni local ishga tushirish tartibi                                 │
+│    • CORS: backend `APP_URL` ga dashboard domeni qo'shilishi kerakligi       │
+│      eslatiladi (bu — api/ tomondagi sozlama)                                │
+│                                                                              │
+│  Bog'liq: D-046                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-048 · Xavfsizlik yakuniy tekshiruvi                          🔒 ──────┐
+│                                                                              │
+│  Tekshiriladi:                                                               │
+│    [ ] Token `localStorage` da saqlanishi qayta ko'rildi (D-006 qarori)      │
+│    [ ] Vaqtinchalik parol hech qayerda saqlanmaydi (kesh, log, URL)          │
+│    [ ] Hech bir sahifa `branchId` ni formadan yubormaydi (G5)                │
+│    [ ] Rolga ko'ra yashirilgan sahifa URL orqali ham ochilmaydi              │
+│        (ochilsa ham backend 403/404 beradi — ikkalasi tekshiriladi)          │
+│    [ ] 404 "ruxsat yo'q" deb ko'rsatilmaydi                                  │
+│    [ ] Foydalanuvchi kiritgan matn `dangerouslySetInnerHTML` ga tushmaydi    │
+│    [ ] Chiqishda barcha kesh tozalanadi (keyingi foydalanuvchi eski          │
+│        ma'lumotni ko'rmaydi)                                                 │
+│    [ ] `.env` da maxfiy kalit yo'q (VITE_ prefiksi HAMMASINI brauzerga       │
+│        chiqaradi — bu yerga faqat API manzili yoziladi)                      │
+│    [ ] Bog'liqliklarda ma'lum zaiflik yo'q (`pnpm audit`)                    │
+│    [ ] Backend xato javobidagi `message` foydalanuvchiga ko'rsatilganda      │
+│        ichki ma'lumot (stack, SQL) chiqmasligi tekshirildi                   │
+│                                                                              │
+│  Natija: `docs/security-checklist.md` — dalillari bilan                      │
+│  Bog'liq: D-047                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+
+  UX VA VISUAL TAMOYILLAR
+
+  Dashboard storefrontdagi sokin, premium va materialga asoslangan vizual ruhdan ilhom oladi, lekin marketing sahifasi emas. Asosiy mezon — xodim har kuni ko‘p ishlatganda qulay, tez, tartibli va yoqimli ishlashi.
+
+  • Aniq ierarxiya: sarlavha → asosiy amal → filtr → ma’lumot → ikkilamchi amal. Har ekranda bitta asosiy CTA.
+  • Havodor va tartibli layout: bir xil spacing, padding, radius, border va typography tokenlari. Zich, lekin siqilgan emas.
+  • Jadval/formalar amaliy bo‘lsin: sticky header, keyboard navigation, loading/empty/error holatlari, aniq feedback va undo imkoniyati.
+  • Ortiqcha bezak yo‘q: GSAP, 3D, parallax, preloader, cursor effekti va chalg‘ituvchi animatsiyalar ishlatilmaydi. Faqat qisqa, funksional transitionlar.
+  • Responsive va accessibility majburiy: ko‘rinadigan focus, yetarli kontrast, rangning o‘zi yagona signal emas, prefers-reduced-motion hurmat qilinadi.
+  • Light/dark rejimda axborot ierarxiyasi, o‘qilish va kontrast bir xil saqlanadi.
+
+║  OCHIQ SAVOLLAR (javob kerak, lekin ish TO'XTAMAYDI)                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ❓ 1. OPTOM MIJOZ KABINETI QAYERDA?                          → doira masalasi
+        Backendda tayyor: `/auth/wholesale/login`, `/me/orders`,
+        `/me/account`, `/me/notifications`, `/wholesale/contracts`.
+        Ikki variant:
+          A) `storefront/` ichida — mijoz baribir o'sha saytga kiradi
+          B) `dashboard/` ichida alohida bo'lim — kod qayta ishlatiladi
+        Vaqtinchalik qaror: A (bu task.txt faqat XODIM panelini qamraydi).
+        Javob B bo'lsa — EPIC 10 qo'shiladi, mavjud tasklar o'zgarmaydi.
+
+  ❓ 2. ADMIN UCHUN KALKULYATOR PREVIEW BORMI?                       → D-028
+        `/calculator/*` faqat mijoz tokeni bilan ishlaydi. Menejer
+        qo'lda buyurtma kiritayotganda summani OLDINDAN ko'ra olmaydi.
+        Vaqtinchalik qaror: yaratgandan keyin tasdiq ekrani.
+        Kerak bo'lsa — api/task.txt ga yangi task.
+
+  ❓ 3. BOSH SAHIFA STATISTIKASI                                     → D-041
+        Backendda statistika endpointi yo'q. Vaqtinchalik qaror:
+        mavjud ro'yxatlarning `meta.total` qiymatlaridan yig'iladi.
+
+  ❓ 4. XODIM UCHUN BILDIRISHNOMA BORMI?                              → 🆕
+        `/me/notifications` — faqat OPTOM MIJOZ uchun (CustomerOnlyGuard).
+        Xodimda bildirishnoma endpointi umuman yo'q. Yangi buyurtma
+        kelganda menejer qanday biladi?
+        Vaqtinchalik qaror: ro'yxat sahifasi fonda yangilanadi
+        (TanStack Query `refetchInterval`). Yetarli bo'lmasa —
+        api/task.txt ga task (`/admin/updates` yoki SSE).
+
+  ❓ 5. BUYURTMA STATUS NOMLARI                                  → api B-029
+        TZ'da ikki xil versiya bor, mijoz javobi kutilmoqda. Bizga
+        ta'sir qilmaydi: matn bitta lug'atda (D-043), javob kelganda
+        bitta fayl tahrirlanadi.
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  UMUMIY HOLAT                                                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Jami tasklar : 48
+  Tugadi       : 0
+  Jarayonda    : 0
+  Bloklangan   : 0
+
+  Epic bo'yicha:
+    EPIC 0  Poydevor .................  0 / 8    [········]
+    EPIC 1  Katalog ..................  0 / 7    [·······]
+    EPIC 2  Narx va zaxira ...........  0 / 4    [····]
+    EPIC 3  Mijoz va moliya ..........  0 / 4    [····]
+    EPIC 4  Buyurtmalar ..............  0 / 6    [······]
+    EPIC 5  Markaziy ombor ...........  0 / 3    [···]
+    EPIC 6  Filial/Hamkor/Xodim ......  0 / 4    [····]
+    EPIC 7  Yetkazib berish ..........  0 / 3    [···]
+    EPIC 8  Sozlamalar ...............  0 / 1    [·]
+    EPIC 9  Bosh sahifa va sifat .....  0 / 8    [········]
+
+  ──────────────────────────────────────────────────────────────────────────
+  KEYINGI TASK:  D-001 · TypeScript va loyiha tuzilishi
+
+  Backend TAYYOR (api/task.txt: 55/58, faqat B-050 bloklangan) — ya'ni
+  bu ro'yxatdagi hech bir task backendni kutmaydi. Boshlash mumkin.
+  ──────────────────────────────────────────────────────────────────────────

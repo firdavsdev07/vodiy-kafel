@@ -11,8 +11,10 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { ApiDataResponse } from '../common';
 import { ApiErrorDto } from '../common/dto/api-error.dto';
 import type { Actor } from '../common/types/actor';
@@ -31,8 +33,20 @@ import {
 } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
+/**
+ * 🔒 B-049: butun controller `ThrottlerGuard` bilan qoplangan — bitta IP
+ * daqiqasiga 10 so'rov (`AuthModule` dagi `ThrottlerModule.forRoot`).
+ * Login/parol endpointlarini qo'pol kuch (brute force) bilan taxmin
+ * qilishning oldini oladi; `GET /auth/me` kabi zararsiz yo'llar ham shu
+ * chegara ichida — alohida ozod qilishning ma'nosi yo'q.
+ */
 @ApiTags(SwaggerTag.Auth)
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
+@ApiTooManyRequestsResponse({
+  description: 'Juda ko‘p urinish — biroz kutib qayta urining',
+  type: ApiErrorDto,
+})
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

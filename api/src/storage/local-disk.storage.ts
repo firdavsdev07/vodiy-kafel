@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
+import { NotFoundException } from '@nestjs/common';
 import type {
   StorageSaveInput,
   StorageService,
@@ -33,6 +34,20 @@ export class LocalDiskStorage implements StorageService {
     await writeFile(join(dir, fileName), buffer, { flag: 'wx' });
 
     return { url: `${UPLOADS_URL_PREFIX}/${folder}/${fileName}` };
+  }
+
+  async read(url: string): Promise<Buffer> {
+    const path = this.resolveOwnPath(url);
+    if (!path) throw new NotFoundException('Fayl topilmadi');
+
+    try {
+      return await readFile(path);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new NotFoundException('Fayl topilmadi');
+      }
+      throw error;
+    }
   }
 
   async delete(url: string): Promise<void> {

@@ -18,6 +18,7 @@ export const SwaggerTag = {
   Notifications: 'Notifications',
   Settings: 'Settings',
   Admin: 'Admin',
+  Contracts: 'Contracts',
 } as const;
 
 export type SwaggerTag = (typeof SwaggerTag)[keyof typeof SwaggerTag];
@@ -41,6 +42,8 @@ export const SWAGGER_TAG_DESCRIPTIONS: Record<SwaggerTag, string> = {
   Notifications: 'Bildirishnomalar va o‘qilmaganlar soni',
   Settings: 'Ochiq sozlamalar (zaxira chegaralari, to‘lov rekvizitlari)',
   Admin: 'Boshqaruv paneli — faqat admin/menejer uchun',
+  Contracts:
+    'Optom mijoz uchun shartnoma moduli (🧪 mock — Didox.uz o‘rniga, TZ 3.10)',
 };
 
 /** Bearer auth sxemasining nomi — @ApiBearerAuth(BEARER_AUTH) uchun. */

@@ -16,6 +16,13 @@ export interface StorageService {
 
   /** `save` qaytargan manzil bo'yicha o'chiradi. Fayl yo'q bo'lsa — xato emas. */
   delete(url: string): Promise<void>;
+
+  /**
+   * `save` qaytargan manzil bo'yicha o'qiydi (B-045 — shartnoma PDF'ini
+   * autentifikatsiya bilan berish uchun; ochiq `/uploads/...` orqali EMAS).
+   * Fayl topilmasa xato tashlaydi.
+   */
+  read(url: string): Promise<Buffer>;
 }
 
 export interface StorageSaveInput {
@@ -31,7 +38,8 @@ export interface StoredFile {
   url: string;
 }
 
-export type StorageFolder = 'products' | 'branches' | 'partners' | 'gallery';
+export type StorageFolder =
+  'products' | 'branches' | 'partners' | 'gallery' | 'contracts';
 
 /** DI tokeni — `@Inject(STORAGE_SERVICE) storage: StorageService`. */
 export const STORAGE_SERVICE = Symbol('STORAGE_SERVICE');

@@ -74,6 +74,24 @@ describe('LocalDiskStorage (B-022)', () => {
     await expect(storage.delete(url)).resolves.toBeUndefined();
   });
 
+  it('o‘qiydi (B-045 — shartnoma PDF)', async () => {
+    const { url } = await storage.save({
+      buffer: SAMPLE.png,
+      folder: 'contracts',
+      extension: 'pdf',
+    });
+    expect(await storage.read(url)).toEqual(SAMPLE.png);
+  });
+
+  it('mavjud bo‘lmagan yoki papkadan tashqaridagi manzilni o‘qishda xato', async () => {
+    await expect(storage.read('/uploads/contracts/yoq.pdf')).rejects.toThrow(
+      'Fayl topilmadi',
+    );
+    await expect(
+      storage.read('/uploads/../../../../etc/passwd'),
+    ).rejects.toThrow('Fayl topilmadi');
+  });
+
   it('🔒 papkadan tashqariga chiqadigan manzil o‘chirilmaydi', async () => {
     const outside = await mkdtemp(join(tmpdir(), 'vk-outside-'));
     const secret = join(outside, 'secret.txt');

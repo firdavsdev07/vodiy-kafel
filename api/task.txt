@@ -2021,7 +2021,7 @@
 │  Bog'liq: —                                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-045 · Shartnoma moduli (mock)                                     🧪 ─┐
+┌─ [x] B-045 · Shartnoma moduli (mock)                                     🧪 ─┐
 │                                                                              │
 │  Nima qilinadi (spike natijasidan qat'i nazar qilinadigan qism):             │
 │    • Contract modeli: id, customerId, orderId?, inn, companyDataJson,        │
@@ -2033,7 +2033,38 @@
 │    • GET /wholesale/contracts, GET /wholesale/contracts/:id/download         │
 │                                                                              │
 │  Haqiqiy Didox.uz ulanganda — faqat CompanyLookupProvider almashtiriladi.    │
-│  Bog'liq: B-044, B-017                                                       │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-16) — bloklanmagan holda qilindi (izoh: bu task       │
+│     o'zi "spike natijasidan qat'i nazar" deb belgilangan edi, oldinroq       │
+│     Trello'da xato o'laroq "B-044 tugagunicha boshlanmaydi" deb yozilgan     │
+│     edi — tuzatildi):                                                       │
+│     • `Contract` modeli + `ContractStatus` enum qo'shildi (yangi            │
+│       migratsiya `contracts_module`); `NotificationType.CONTRACT_READY`     │
+│       ham shu bilan birga qo'shildi                                         │
+│     • `CompanyLookupProvider` interfeysi + `MockCompanyLookupProvider`      │
+│       (INN'dan deterministik soxta ma'lumot)                                │
+│     • `ContractDeliveryChannel` interfeysi + mock Telegram "yuborish"       │
+│       (faqat log — B-037 dagi `NotificationChannel`dan ATAYLAB alohida,     │
+│       chunki u qisqa xabar uchun, bu esa hujjat yetkazish)                  │
+│     • `ContractGeneratorService` — pdfkit bilan haqiqiy PDF                 │
+│     • `StorageService` ga `read()` qo'shildi — PDF ochiq `/uploads/...`     │
+│       orqali EMAS, faqat `GET /wholesale/contracts/:id/download`            │
+│       autentifikatsiyasi bilan beriladi (🔒 boshqa fayllardan farqli,       │
+│       chunki mijozning maxfiy kompaniya ma'lumotini o'z ichiga oladi)       │
+│     • 🐞 Yo'lda topilgan, aloqasi yo'q eski xato: dev bazasida fayli        │
+│       yo'q `order_branch_required` degan "arvoh" migratsiya yozuvi bor      │
+│       edi (avvalgi sessiyadan qolgan) — Prisma yangi migratsiya             │
+│       yaratishni rad etardi. Bazani RESET qilmasdan, ikkita aniq SQL        │
+│       bilan tuzatildi: arvoh yozuv o'chirildi va noto'g'ri qo'yilgan        │
+│       `NOT NULL` cheklovi qaytarib olindi (schema.prisma bilan mos)         │
+│     • Testlar: 10 ta yangi unit (`contracts.service.spec.ts`,               │
+│       `contract-generator.service.spec.ts`,                                 │
+│       `mock-company-lookup.provider.spec.ts`) + 2 ta yangi e2e              │
+│       (`critical-flows.e2e-spec.ts` §9) — yaratish, ro'yxat, yuklab olish,  │
+│       begona buyurtma/shartnoma IDOR himoyasi                               │
+│                                                                              │
+│  Bog'liq: B-044 (faqat kelajakdagi haqiqiy Didox almashtirilishi uchun),    │
+│           B-017                                                             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -2041,7 +2072,7 @@
 ║  EPIC 11 — SIFAT VA YAKUNIY TAYYORGARLIK                                     ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] B-046 · Unit testlar (kritik mantiq) ───────────────────────────────────┐
+┌─ [x] B-046 · Unit testlar (kritik mantiq) ───────────────────────────────────┐
 │                                                                              │
 │  Qoplanadi:                                                                  │
 │    • CalculatorService — barcha formulalar, chegara holatlari                │
@@ -2050,10 +2081,16 @@
 │    • Order status o'tish matritsasi (noto'g'ri o'tish rad etilishi)          │
 │    • Balance hisoblash (tranzaksiyalar yig'indisi)                           │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16): bu task allaqachon bajarilgan ekan — task.txt    │
+│     yangilanmay qolgan edi. Tekshirilganda 42 ta test fayli, 611 ta test     │
+│     mavjud va hammasi o'tadi (`pnpm test`), jumladan yuqoridagi to'rttasi    │
+│     to'liq: calculator.service.spec.ts, product-stocks.service.spec.ts,      │
+│     order-status.service.spec.ts, account-ledger.service.spec.ts.            │
+│                                                                              │
 │  Bog'liq: B-035                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-047 · E2E testlar (asosiy oqimlar) ───────────────────────────────────┐
+┌─ [x] B-047 · E2E testlar (asosiy oqimlar) ───────────────────────────────────┐
 │                                                                              │
 │  Ssenariylar:                                                                │
 │     1. 🔒 Mehmon katalogni ko‘radi — token talab qilinmaydi                  │
@@ -2075,10 +2112,25 @@
 │        → rad etiladi (o‘z filialiga majburlanadi)                            │
 │    15. 🔒 Bitta mahsulot, ikki filial → ikki xil summa chiqadi               │
 │    16. ✅ SUPER_ADMIN hamma filialni ko‘radi                                 │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-16) — bu task, aksincha, HAQIQATAN qilinmagan edi:    │
+│     `test/app.e2e-spec.ts` faqat Nest'ning standart shablon testi edi.       │
+│     Endi qurilgan:                                                           │
+│     • Alohida `vodiy-kafel-test` bazasi (dev bazasiga TEGILMAYDI)            │
+│     • `test/global-setup.ts` — har `pnpm test:e2e`da migratsiya + seed       │
+│       avtomatik ishlaydi (qo'lda tayyorlov shart emas)                       │
+│     • `test/critical-flows.e2e-spec.ts` — yuqoridagi 16 ssenariyning         │
+│       barchasi (8-band /me/updates polling bilan alohida qo'shildi)          │
+│     • 🐞 Tuzatildi: `package.json`dagi `test:e2e` skriptida                  │
+│       `NODE_OPTIONS=--experimental-vm-modules` YO'Q edi (B-015 buni faqat    │
+│       `test`ga qo'shgan) — shu sabab e2e umuman ishga tushmasdi. Endi ham    │
+│       shu flag, ham `NODE_ENV=development` (mock to'lovni sinash uchun       │
+│       `/dev/payments/*` kerak) qo'shildi.                                    │
+│                                                                              │
 │  Bog‘liq: B-046                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-048 · Frontend uchun hujjat paketi ───────────────────────────────────┐
+┌─ [x] B-048 · Frontend uchun hujjat paketi ───────────────────────────────────┐
 │                                                                              │
 │  Tayyorlanadi:                                                               │
 │    • openapi.json export                                                     │
@@ -2089,35 +2141,58 @@
 │    • Xato kodlari jadvali                                                    │
 │                                                                              │
 │  ⚠ Bu — frontendchi bilan asosiy aloqa nuqtasi.                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-16):                                                  │
+│     • `openapi.json` qayta generatsiya qilindi — 89 yo'l                     │
+│     • `README.md` to'liq qayta yozildi (avvalgisi Nest shabloni edi):        │
+│       ishga tushirish, test hisoblar jadvali, testlarni ishga tushirish      │
+│     • `docs/vodiy-kafel.postman_collection.json` — asosiy oqimlar,           │
+│       tokenlar login javobidan avtomatik saqlanadi (Tests skripti).          │
+│       To'liq 89 yo'l uchun `openapi.json` ni to'g'ridan-to'g'ri              │
+│       Postman/Thunder Client'ga import qilish tavsiya etiladi                │
+│     • `docs/enums.md` — barcha enum (bazadagi + hisoblanadigan) + o'zbekcha  │
+│     • `docs/error-codes.md` — status kodlar, IDOR uchun 404 mantig'i,        │
+│       modulga xos maxsus holatlar jadvali                                    │
+│                                                                              │
 │  Bog'liq: B-047                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-049 · Xavfsizlik yakuniy tekshiruvi                  🔒 ──────────────┐
+┌─ [x] B-049 · Xavfsizlik yakuniy tekshiruvi                  🔒 ──────────────┐
 │                                                                              │
 │  Tekshiriladi:                                                               │
-│    [ ] Public endpointlar NARXNI qaytarmaydi                                 │
-│    [ ] Hech bir public endpoint zaxira ANIQ SONINI qaytarmaydi               │
-│    [ ] Buyurtma narxi faqat backendda, o‘sha filial narxi bo‘yicha           │
-│    [ ] Har bir /me/* endpointda egalik tekshiruvi (IDOR yo‘q)                │
+│    [x] Public endpointlar NARXNI qaytarmaydi                                 │
+│    [x] Hech bir public endpoint zaxira ANIQ SONINI qaytarmaydi               │
+│    [x] Buyurtma narxi faqat backendda, o‘sha filial narxi bo‘yicha           │
+│    [x] Har bir /me/* endpointda egalik tekshiruvi (IDOR yo‘q)                │
 │                                                                              │
 │    FILIAL IZOLYATSIYASI (B-051):                                             │
-│    [ ] Har bir admin endpoint BranchScopeService orqali o‘tadi               │
-│    [ ] Prisma so‘rovlarida branchId filtri unutilmagan                       │
-│    [ ] branchId ni body/query orqali "aldab" o‘zgartirib bo‘lmaydi           │
-│    [ ] Begona filial resursi → 404 (403 emas)                                │
+│    [x] Har bir admin endpoint BranchScopeService orqali o‘tadi               │
+│    [x] Prisma so‘rovlarida branchId filtri unutilmagan                       │
+│    [x] branchId ni body/query orqali "aldab" o‘zgartirib bo‘lmaydi           │
+│    [x] Begona filial resursi → 404 (403 emas)                                │
 │                                                                              │
-│    [ ] Rate limiting: auth endpointlarida                                    │
-│    [ ] Parollar bcrypt, javoblarda hech qachon chiqmaydi                     │
-│    [ ] Webhook idempotency ishlaydi                                          │
-│    [ ] /dev/* endpointlar production‘da o‘chirilgan                          │
-│    [ ] Fayl yuklash: tur va hajm validatsiyasi                               │
-│    [ ] Prisma raw query yo‘q (yoki parametrli)                               │
+│    [x] Rate limiting: auth endpointlarida                                    │
+│    [x] Parollar bcrypt, javoblarda hech qachon chiqmaydi                     │
+│    [x] Webhook idempotency ishlaydi                                          │
+│    [x] /dev/* endpointlar production‘da o‘chirilgan                          │
+│    [x] Fayl yuklash: tur va hajm validatsiyasi                               │
+│    [x] Prisma raw query yo‘q (yoki parametrli)                               │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-16) — to'liq audit: docs/security-audit.md.           │
+│     14 banddan 13 tasi allaqachon to'g'ri edi (kod+test bilan tasdiqlandi). │
+│     🐞 Yagona haqiqiy kamchilik: RATE LIMITING umuman yo'q edi. Tuzatildi:   │
+│     `@nestjs/throttler` qo'shildi, butun AuthController `ThrottlerGuard`    │
+│     bilan qoplandi (1 IP / daqiqasiga 10 so'rov, AuthModule).                │
+│     `test/rate-limiting.e2e-spec.ts` — 429 haqiqatan qaytishini tekshiradi.  │
+│                                                                              │
 │  Bog‘liq: B-048                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-050 · Haqiqiy Payme integratsiyasi                                🔁 ─┐
+┌─ [!] B-050 · Haqiqiy Payme integratsiyasi                                🔁 ─┐
 │                                                                              │
 │  ⚠ ENG OXIRIDA. Faqat mijoz Payme merchant ma'lumotlarini bergandan keyin.   │
+│  🔒 BLOKLANGAN (2026-09-16): mijoz talabi — haqiqiy to'lov tizimi hozircha   │
+│     ULANMAYDI. MockPaymentProvider (B-033) hamon ishlatiladi.                │
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • PaymeProvider klassi (PaymentProvider interfeysini implement qiladi)    │
@@ -2143,7 +2218,8 @@
   [~] 5. Menejer biriktirish mantig'i — hozircha BY_BRANCH (yuk) → B-043
   [~] 6. Didox.uz ✅ nomi aniqlandi, qolgani → B-044 (spike kerak)
   [ ] 7. Shartnoma shabloni — bitta yoki bir nechta            → B-045
-  [ ] 8. Payme merchant ma'lumotlari                           → B-050
+  [x] 8. Payme merchant ma'lumotlari → YOPILDI (2026-09-16): mijoz hozircha
+          bermaydi, real integratsiya TO'XTATILDI → B-050 bloklangan
   [ ] 9. Yetkazib berish narxi uchun viloyat ro'yxati (admin CRUD bor) → B-053
   [ ] 10. Xarita/geolocation provayderi (Yandex Maps/2GIS)     → B-013
   [~] 11. Filial admin transport narxini pastga tushirishda
@@ -2159,9 +2235,11 @@
 
   Jami tasklar : 58  (B-016 bekor; B-051...B-058 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator)
-  Tugadi       : 50
+  Tugadi       : 55
   Jarayonda    : 0
-  Bloklangan   : 1  (B-044 — Didox.uz spike)
+  Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
+                 (B-044 — Didox.uz spike hamon ochiq, lekin ENDI hech narsani
+                 to'xtatmaydi: B-045 mock bilan bajarildi)
 
   Epic bo'yicha:
     EPIC 0  Poydevor .................  5 / 5    [█████]
@@ -2174,10 +2252,15 @@
     EPIC 7  Moliya ...................  2 / 2    [██]
     EPIC 8  Bildirishnoma ............  4 / 4    [████]
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
-    EPIC 10 Didox.uz .................  0 / 2    [··]
-    EPIC 11 Sifat ....................  0 / 5    [·····]
+    EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
+                                                            B-044 hamon ochiq)
+    EPIC 11 Sifat ....................  4 / 5    [████·]
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  B-046 · Unit testlar (kritik mantiq)
-                 (B-044 bloklangan → B-045 ham kutadi)
+  KEYINGI TASK:  yo'q — qolgan yagona task BLOKLANGAN:
+                 B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
+                 B-044 (Didox.uz spike) hamon mijoz javobini kutmoqda, lekin
+                 ENDI hech narsani BLOKLAMAYDI — B-045 mock bilan bajarildi.
+                 Backend AMALDA TO'LIQ TAYYOR — B-048 hujjat paketi orqali
+                 frontendga topshirish mumkin.
   ──────────────────────────────────────────────────────────────────────────

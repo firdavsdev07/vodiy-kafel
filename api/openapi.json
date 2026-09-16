@@ -63,6 +63,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "summary": "Xodim kirishi (admin, moderator, filial admini, menejer)",
@@ -112,6 +122,16 @@
           },
           "401": {
             "description": "Login topilmadi, parol xato yoki hisob faol emas — uch holat uchun bir xil javob.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
             "content": {
               "application/json": {
                 "schema": {
@@ -185,6 +205,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -246,6 +276,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
           }
         },
         "summary": "Tokenlarni yangilash",
@@ -285,6 +325,16 @@
           },
           "401": {
             "description": "Token yo‘q yoki yaroqsiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
             "content": {
               "application/json": {
                 "schema": {
@@ -336,6 +386,16 @@
           },
           "401": {
             "description": "Token yo‘q, yaroqsiz yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
             "content": {
               "application/json": {
                 "schema": {
@@ -5726,6 +5786,330 @@
         ]
       }
     },
+    "/api/v1/wholesale/contracts": {
+      "post": {
+        "description": "INN bo‘yicha kompaniya ma’lumoti so‘raladi (🧪 mock), PDF generatsiya qilinadi va Telegram orqali \"yuboriladi\" (🧪 mock).\n\nNatija darhol `SENT` holatida qaytadi — mock oqimda kutish yo‘q.",
+        "operationId": "ContractsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContractDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Shartnoma yaratildi va yuborildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ContractResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`orderId` berilgan bo‘lsa — topilmadi yoki begonaniki",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Shartnoma yaratish (INN bo‘yicha)",
+        "tags": [
+          "Contracts"
+        ]
+      },
+      "get": {
+        "operationId": "ContractsController_findMine",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedContractResponseDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mening shartnomalarim",
+        "tags": [
+          "Contracts"
+        ]
+      }
+    },
+    "/api/v1/wholesale/contracts/{id}": {
+      "get": {
+        "operationId": "ContractsController_findMineOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Shartnoma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shartnoma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ContractResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Shartnoma tafsiloti",
+        "tags": [
+          "Contracts"
+        ]
+      }
+    },
+    "/api/v1/wholesale/contracts/{id}/download": {
+      "get": {
+        "description": "⚠ Ochiq `/uploads/...` orqali EMAS — faqat shu autentifikatsiya qilingan yo‘l bilan, faqat o‘z shartnomangiz uchun.",
+        "operationId": "ContractsController_download",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Shartnoma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF fayl (application/pdf)"
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki boshqa mijoznikiki",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Shartnoma PDF faylini yuklab olish",
+        "tags": [
+          "Contracts"
+        ]
+      }
+    },
     "/api/v1/orders": {
       "post": {
         "description": "Mahsulotlar (paddon bilan), ixtiyoriy yetkazib berish (viloyat + transport), to‘lov usuli.\n\n🔒 Summa backendda QAYTA hisoblanadi — `POST /calculator/quote` bilan aynan bir xil yo‘l. Frontend yuborgan narx/summa e’tiborga olinmaydi.\n\nOmborda yetarli bo‘lmasa — 409 (qancha borligi aytilmaydi).\n\nNatija: `NEW` holatdagi buyurtma va `PENDING` to‘lov yozuvi.",
@@ -9871,6 +10255,10 @@
     {
       "name": "Admin",
       "description": "Boshqaruv paneli — faqat admin/menejer uchun"
+    },
+    {
+      "name": "Contracts",
+      "description": "Optom mijoz uchun shartnoma moduli (🧪 mock — Didox.uz o‘rniga, TZ 3.10)"
     }
   ],
   "servers": [],
@@ -9884,46 +10272,6 @@
       }
     },
     "schemas": {
-      "AuthTokensResponseDto": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string",
-            "description": "Access token. `Authorization: Bearer <token>` sarlavhasida yuboriladi.",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "refreshToken": {
-            "type": "string",
-            "description": "Refresh token. Access token muddati tugaganda `/auth/refresh` endpointiga yuboriladi. Access token bilan almashtirib bo‘lmaydi.",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          }
-        },
-        "required": [
-          "accessToken",
-          "refreshToken"
-        ]
-      },
-      "AdminLoginDto": {
-        "type": "object",
-        "properties": {
-          "phone": {
-            "type": "string",
-            "description": "Xodimning telefon raqami (bazadagi ko‘rinishida)",
-            "example": "+998900000001",
-            "maxLength": 20
-          },
-          "password": {
-            "type": "string",
-            "description": "Parol",
-            "example": "Parol123!",
-            "maxLength": 72
-          }
-        },
-        "required": [
-          "phone",
-          "password"
-        ]
-      },
       "ApiErrorDto": {
         "type": "object",
         "properties": {
@@ -9977,6 +10325,46 @@
           "message",
           "path",
           "timestamp"
+        ]
+      },
+      "AuthTokensResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access token. `Authorization: Bearer <token>` sarlavhasida yuboriladi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token. Access token muddati tugaganda `/auth/refresh` endpointiga yuboriladi. Access token bilan almashtirib bo‘lmaydi.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ]
+      },
+      "AdminLoginDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Xodimning telefon raqami (bazadagi ko‘rinishida)",
+            "example": "+998900000001",
+            "maxLength": 20
+          },
+          "password": {
+            "type": "string",
+            "description": "Parol",
+            "example": "Parol123!",
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "phone",
+          "password"
         ]
       },
       "WholesaleTokensResponseDto": {
@@ -13089,6 +13477,97 @@
           }
         }
       },
+      "ContractResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j",
+            "description": "Shu ID bilan `GET /wholesale/contracts/:id/download` chaqiriladi — PDF havolasi alohida berilmaydi, faqat autentifikatsiya bilan."
+          },
+          "inn": {
+            "type": "string",
+            "example": "301234567"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SENT",
+              "SIGNED"
+            ]
+          },
+          "orderNumber": {
+            "type": "object",
+            "nullable": true,
+            "example": "VK-2026-000001"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-16T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "inn",
+          "status",
+          "createdAt"
+        ]
+      },
+      "CreateContractDto": {
+        "type": "object",
+        "properties": {
+          "inn": {
+            "type": "string",
+            "example": "301234567",
+            "description": "INN — 9 raqam. Shu bo‘yicha kompaniya ma’lumoti so‘raladi (hozircha 🧪 mock, Didox.uz B-044 spike’dan keyin ulanadi)."
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Shartnoma qaysi buyurtma munosabati bilan tuzilayotgani. Berilsa — faqat O‘Z buyurtmangiz bo‘lishi kerak."
+          }
+        },
+        "required": [
+          "inn"
+        ]
+      },
+      "PaginatedContractResponseDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
       "OrderItemResponseDto": {
         "type": "object",
         "properties": {
@@ -14720,7 +15199,8 @@
               "ORDER_STATUS_CHANGED",
               "PAYMENT_RECEIVED",
               "NEW_PRODUCT",
-              "COMMENT_REPLY"
+              "COMMENT_REPLY",
+              "CONTRACT_READY"
             ]
           },
           "title": {
