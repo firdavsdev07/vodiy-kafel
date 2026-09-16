@@ -1,13 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="uz">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dashboard</title>
+    <title>Vodiy Kafel — boshqaruv paneli</title>
+    <!-- Rejim bo'yashdan OLDIN qo'llanadi — miltillash bo'lmasin (src/shared/lib/theme.ts bilan bir xil mantiq). -->
+    <script>
+      (function () {
+        var theme;
+        try { theme = localStorage.getItem('vk-dashboard-theme'); } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

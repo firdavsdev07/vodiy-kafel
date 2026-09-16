@@ -1,0 +1,186 @@
+@import 'tailwindcss';
+
+/*
+ * Dizayn tizimi (D-002). Rang / o'lcham komponentda QO'LDA YOZILMAYDI —
+ * faqat shu tokenlar orqali (`bg-surface`, `text-muted`, `border-line`,
+ * `bg-success-soft`...). Palitra storefront bilan bir xil (DESIGN.md).
+ *
+ * Qatlamlar:
+ *   1. Xom palitra (bone, stone, clay, charcoal, ink) — `@theme`
+ *   2. Semantik tokenlar (--bg, --surface, --text...) — light / dark
+ *   3. Tailwind utility nomlari — `@theme inline` semantik tokenga bog'lanadi
+ */
+
+/* `dark:` varianti OS emas, <html data-theme="dark"> ga qaraydi (tanlov saqlanadi). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/manrope-400.ttf') format('truetype'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/manrope-500.ttf') format('truetype'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/manrope-600.ttf') format('truetype'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/manrope-700.ttf') format('truetype'); }
+
+/* 1. Xom palitra */
+@theme {
+  --color-bone: #eeece5;
+  --color-stone: #d8d3c8;
+  --color-clay: #71685e;
+  --color-charcoal: #232321;
+  --color-ink: #0b0b0a;
+
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Tipografika — ichki panel: zich, 6 pog'ona (asosiy matn 14px) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.625rem;
+  --text-xl--line-height: 2.125rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 2. Semantik tokenlar — LIGHT */
+:root {
+  color-scheme: light;
+
+  --bg: #f5f4ef;
+  --surface: #ffffff;
+  --surface-muted: #eeece5;
+  --surface-raised: #ffffff;
+  --line: #d8d3c8;
+  --line-strong: #bdb6a8;
+
+  --text: #232321;
+  --text-muted: #71685e; /* bone ustida ~5:1 — AA */
+  --text-inverse: #eeece5;
+
+  --accent: #232321;
+  --accent-hover: #0b0b0a;
+  --accent-contrast: #eeece5;
+  --focus: #232321;
+
+  --shadow-sm: 0 1px 2px #2823190f;
+  --shadow-md: 0 4px 16px #28231914, 0 1px 3px #2823190d;
+
+  /* Status — matn (fg) va fon (soft). Rang yagona signal emas: badge'da matn ham bor. */
+  --success: #3f6b3a;
+  --success-soft: #e4ecdc;
+  --warning: #8a5a0b;
+  --warning-soft: #f4e8cf;
+  --danger: #a3372a;
+  --danger-soft: #f6e0dc;
+  --info: #3b5a7a;
+  --info-soft: #e0e8f0;
+  --neutral: #5d5549;
+  --neutral-soft: #e9e6de;
+}
+
+/* 2. Semantik tokenlar — DARK (axborot ierarxiyasi va kontrast saqlanadi) */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0b0b0a;
+  --surface: #171715;
+  --surface-muted: #1f1f1d;
+  --surface-raised: #232321;
+  --line: #34332f;
+  --line-strong: #4a4843;
+
+  --text: #eeece5;
+  --text-muted: #c2b9ac; /* storefront: qorong'i sirtdagi ikkilamchi matn */
+  --text-inverse: #232321;
+
+  --accent: #eeece5;
+  --accent-hover: #ffffff;
+  --accent-contrast: #0b0b0a;
+  --focus: #eeece5;
+
+  --shadow-sm: 0 1px 2px #00000066;
+  --shadow-md: 0 6px 20px #00000080;
+
+  --success: #9cc591;
+  --success-soft: #1f2d1c;
+  --warning: #e3b766;
+  --warning-soft: #33280f;
+  --danger: #ef9a8c;
+  --danger-soft: #3a1c17;
+  --info: #9ab8d8;
+  --info-soft: #1a2633;
+  --neutral: #c2b9ac;
+  --neutral-soft: #2a2925;
+}
+
+/* 3. Utility nomlari → semantik tokenlar */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-inverse: var(--text-inverse);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-neutral: var(--neutral);
+  --color-neutral-soft: var(--neutral-soft);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-bg text-fg text-base;
+    font-feature-settings: 'tnum' 1; /* jadvalda raqamlar ustun bo'lib tursin */
+  }
+  /* Fokus HECH QACHON o'chirilmaydi (D-044). */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  ::selection {
+    background: var(--line-strong);
+    color: var(--text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
