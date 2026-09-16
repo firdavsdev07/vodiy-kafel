@@ -2206,6 +2206,33 @@
 │  Bog'liq: B-049                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
+┌─ [ ] B-059 · OpenAPI: nullable maydonlar turi yo‘qolgan         🆕 ──────────┐
+│                                                                              │
+│  TOPILDI: dashboard D-006 (2026-09-16), `pnpm api:types` natijasida.         │
+│                                                                              │
+│  Muammo: `string | null` (va `SomeDto | null`) maydonlarda Nest Swagger      │
+│  plugin turni aniqlay olmaydi → openapi.json da `type: object` (xossasiz)    │
+│  chiqadi → frontend turida `Record<string, never>`. 28 ta maydon, masalan:   │
+│    UserProfileResponseDto.branchId / email / telegramUsername                │
+│    AdminOrderListItemDto.branch / buyer / manager                            │
+│    AdminOrderDetailDto.delivery / branch / buyer / manager                   │
+│    AdminCustomerListItemDto.manager, PricingRuleAdminDto.target/createdBy    │
+│    FactoryAdminResponseDto.description / websiteUrl, ProductDetail.color …   │
+│  Frontend `order.branch.name` ni o'qiy olmaydi — dashboard G2 (turlar        │
+│  faqat generatsiyadan) buziladi.                                             │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Har maydonga aniq tur: `@ApiPropertyOptional({ type: String,            │
+│      nullable: true })` yoki `{ type: () => BranchRefDto, nullable: true }`  │
+│    • Test: openapi.json da xossasiz `type: object` qolmaganini tekshirish    │
+│      (Setting.value, Notification.payload kabi erkin JSON — istisno)         │
+│    • `pnpm openapi:export` → dashboard'da `pnpm api:types`                   │
+│                                                                              │
+│  ⚠ Xulq-atvor O'ZGARMAYDI — faqat hujjat/tur.                                │
+│  Bog'liq: B-047, B-048; dashboard D-006, D-020+, D-024+                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  MIJOZDAN JAVOB KUTILAYOTGAN SAVOLLAR (bloklangan tasklar)                   ║
@@ -2233,7 +2260,7 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 58  (B-016 bekor; B-051...B-058 qo‘shildi — filial
+  Jami tasklar : 59  (B-016 bekor; B-051...B-059 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator)
   Tugadi       : 55
   Jarayonda    : 0
@@ -2254,10 +2281,12 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat ....................  4 / 5    [████·]
+    EPIC 11 Sifat ....................  4 / 6    [████··]
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  yo'q — qolgan yagona task BLOKLANGAN:
+  KEYINGI TASK:  B-059 · OpenAPI nullable turlar (dashboard uchun kerak)
+
+  Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
                  B-044 (Didox.uz spike) hamon mijoz javobini kutmoqda, lekin
                  ENDI hech narsani BLOKLAMAYDI — B-045 mock bilan bajarildi.

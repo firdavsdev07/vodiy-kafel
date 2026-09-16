@@ -111,9 +111,10 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  EPIC 0 — POYDEVOR (Foundation)                                              ║
 ║  Maqsad: skelet. Bularsiz birorta sahifa yozilmaydi.                         ║
+║  Holat: 6 / 8 tugadi [██████··] — D-001…D-006 ✓                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-001 · TypeScript va loyiha tuzilishi ─────────────────────────────────┐
+┌─ [x] D-001 · TypeScript va loyiha tuzilishi ─────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Hozirgi Vite shabloni tozalanadi (App.css, assets/hero.png, react.svg   │
@@ -139,9 +140,30 @@
 │  Natija: `pnpm dev` ishlaydi, `pnpm build` type-check bilan o'tadi           │
 │  Bog'liq: —                                                                  │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • Demo qoldiqlari o‘chirildi: App.jsx/css, index.css, assets/*,          │
+│       vite.config.js. `public/icons.svg` — D-002 da (ikonka to‘plami bilan). │
+│     • TypeScript 7: tsconfig.json (references) → tsconfig.app.json          │
+│       (strict, noUncheckedIndexedAccess, noUnused*, verbatimModuleSyntax,    │
+│       `@/*` paths) + tsconfig.node.json (vite.config.ts). TS7 da `baseUrl`   │
+│       olib tashlangan — paths nisbiy. Tekshirildi: `xs[0]` → TS2322.         │
+│     • vite.config.ts — `@` alias, dev port 5174 (storefront bilan            │
+│       to‘qnashmasin), vitest konfiguratsiyasi shu faylda.                    │
+│     • Papkalar: app, pages, features, shared/{ui,api,lib,config}.            │
+│     • 🆕 shared/config/env.ts — VITE_API_URL shu yerda tekshiriladi (yo‘q /  │
+│       manzil emas / http(s) emas → darhol aniq xato; oxiridagi `/` olinadi). │
+│       Kodda import.meta.env to‘g‘ridan-to‘g‘ri ishlatilmaydi.                │
+│     • 🆕 vitest hozirdan (ish tartibi 3-band: har taskda `pnpm test`) — 5    │
+│       test. D-045 da Testing Library + MSW qo‘shiladi.                       │
+│     • oxlint: react + typescript + oxc + import; no-explicit-any va          │
+│       consistent-type-imports — error; react-in-jsx-scope o‘chiq.           │
+│     • .env.example, .gitignore (.env), index.html (lang uz, sarlavha),       │
+│       package.json nomi vodiy-kafel-dashboard, README yangilandi.            │
+│     • Skriptlar: dev, build (tsc -b && vite build), typecheck, lint, test.   │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-002 · Tailwind va dizayn tizimi ──────────────────────────────────────┐
+┌─ [x] D-002 · Tailwind va dizayn tizimi ──────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Tailwind v4 o'rnatiladi (storefront bilan bir xil stack)                │
@@ -165,9 +187,37 @@
   qo'lda yozilmaydigan holat                             │
 │  Bog'liq: D-001                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • Tailwind v4 (@tailwindcss/vite) — src/app/styles.css, uch qatlam:      │
+│       xom palitra (@theme: bone/stone/clay/charcoal/ink) → semantik          │
+│       tokenlar (:root / [data-theme='dark']: bg, surface, surface-muted,     │
+│       line, text, text-muted, accent, focus, soya, status) → utility nomlari │
+│       (@theme inline: bg-surface, text-muted, border-line, bg-success-soft…).│
+│     • Manrope (storefront bilan bir xil, lokal public/fonts, OFL).           │
+│       Tipografika 6 pog‘ona: xs 12 · sm 13 · base 14 · md 16 · lg 20 · xl 26 │
+│       (ichki panel — zich). Raqamlar tabular (tnum). Radius sm/md/lg.        │
+│     • 🔒 Rejim: `dark:` varianti <html data-theme> ga bog‘langan; tanlov     │
+│       localStorage (vk-dashboard-theme), birinchi marta — OS sozlamasi.       │
+│       index.html dagi inline skript bo‘yashdan OLDIN qo‘llaydi (miltillash   │
+│       yo‘q). ThemeToggle (lucide Sun/Moon, aria-label) — D-003 top panelga.  │
+│     • Status ranglari YAGONA joyda: shared/lib/status-tone.ts — OrderStatus, │
+│       PaymentStatus, StockStatus → ohang (satisfies Record — holat tushib    │
+│       qolsa type xatosi) → toneClasses. ⚠ Enum turlari hozircha qo‘lda —     │
+│       D-004 da schema.d.ts ga ulanadi.                                       │
+│     • 🆕 Kontrast TESTI: styles.css dagi tokenlar o‘qiladi, har ikki rejimda  │
+│       11 juftlik WCAG AA (≥4.5) tekshiriladi — rang o‘zgarsa test ushlaydi.  │
+│     • Fokus hech qachon o‘chirilmaydi; prefers-reduced-motion hurmat.        │
+│     • public/icons.svg va Vite favicon o‘chirildi → VK monogramma.           │
+│     • 🐛 Topildi: `text-${size}` kabi dinamik klassni Tailwind ko‘rmaydi —   │
+│       klass nomlari to‘liq yoziladi (qoida).                                 │
+│     • tsconfig.test.json — test fayllari node tiplari bilan alohida.         │
+│     • Brauzerda tekshirildi: light va dark, rejim qayta yuklashda saqlanadi. │
+│       App.tsx — vaqtinchalik token ko‘rgazmasi (D-003 da almashtiriladi).    │
+│       31 test o‘tadi.                                                        │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-003 · Routing skeleti va layout ──────────────────────────────────────┐
+┌─ [x] D-003 · Routing skeleti va layout ──────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `react-router` (v7) ulanadi                                             │
@@ -183,9 +233,28 @@
 │  Natija: bo'sh, lekin to'liq navigatsiya qilinadigan skelet                  │
 │  Bog'liq: D-002                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16):                                                   │
+│    • react-router ^7.18.4, createBrowserRouter + RouterProvider (data router │
+│      — useMatches/handle uchun).                                             │
+│    • app/navigation.ts — bo‘limlar YAGONA manbasi (id, path, sarlavha, lucide│
+│      ikonka, guruh: Asosiy/Savdo/Katalog/Tashkilot). Menyu, router va        │
+│      document.title shundan quriladi. D-007 da `roles` shu yerga qo‘shiladi. │
+│    • app/routes.tsx — 12 bo‘lim + `*` → 404; har sahifa React.lazy (alohida  │
+│      chunk). pages/<domen>/<Nom>Page.tsx — PagePlaceholder (task raqami bilan).│
+│    • app/layout: AppLayout (Suspense skeleton fallback + Outlet), Sidebar    │
+│      (NavLink aktiv holat, yig‘iladi → faqat ikonka + sr-only matn, holat    │
+│      localStorage `vk-dashboard-sidebar-collapsed`), Topbar (sarlavha, filial│
+│      joyi, ThemeToggle, chiqish tugmasi — D-006 gacha disabled).             │
+│    • document.title: "Buyurtmalar — Vodiy Kafel" (route handle.title).       │
+│    • 404 sahifasi — "topilmadi", "ruxsat yo‘q" demaydi.                      │
+│    • .oxlintrc overrides: routes.tsx da only-export-components o‘chirilgan.  │
+│    • navigation.test.ts — yo‘llar ro‘yxati, noyoblik, sarlavha formati.      │
+│    • Brauzerda tekshirildi: menyu orqali o‘tish, aktiv punkt, sarlavha,      │
+│      yig‘ish saqlanadi, /nope → 404. build/lint toza, 34 test o‘tadi.        │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-004 · API qatlami va generatsiya qilinadigan turlar ──────────────────┐
+┌─ [x] D-004 · API qatlami va generatsiya qilinadigan turlar ──────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `openapi-typescript` devDependency: `pnpm api:types` skripti            │
@@ -205,9 +274,35 @@
 │  Natija: `api.get('/admin/products', { query })` — turlari bilan             │
 │  Bog'liq: D-001                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16):                                                   │
+│    • `pnpm api:types` → schema.d.ts (10 943 qator, git'ga kiradi, oxlint     │
+│      e'tiborsiz). ⚠ openapi-typescript TS 7 da ishlamaydi (JS compiler API   │
+│      yo'q) — skript `pnpm dlx` orqali openapi-typescript@7.13.0 +            │
+│      typescript@5.9.3 bilan ishlaydi; devDependency qo'shilmadi.             │
+│    • shared/api/types.ts: ApiPath (`/api/v1` prefikssiz), PathsWith<M>,      │
+│      QueryOf, PathParamsOf, BodyOf, DataOf (o'ram ochilgan), Schema<'X'>.    │
+│    • shared/api/client.ts — createApiClient + `api`: get/post/put/patch/     │
+│      delete → data (G3); getWithMeta → {data, meta}; download → {blob,       │
+│      filename} (Content-Disposition). Bo'sh query tashlanadi, {id}           │
+│      kodlanadi, FormData (multipart) Content-Type'siz. Bearer —              │
+│      setAccessTokenGetter (D-006 ulaydi).                                    │
+│    • ApiError: statusCode, messages[], error, path, requestId (tanada        │
+│      bo'lmasa X-Request-Id sarlavhasidan); JSON bo'lmagan xato ham           │
+│      yo'qolmaydi; tarmoq xatosi → statusCode 0 (isNetworkError);             │
+│      AbortError o'zgarmay o'tadi (TanStack bekor qilishi).                   │
+│    • TYPE xavfsizligi testda (@ts-expect-error): noto'g'ri yo'l, yo'q        │
+│      metod, {id} siz chaqiruv, enumda yo'q query qiymati — xato.             │
+│    • status-tone.ts dagi qo'lda yozilgan OrderStatus/PaymentStatus/          │
+│      StockStatus → schema turlari.                                           │
+│    • 14 yangi test (jami 48). Brauzerda: api moduli yuklanadi, API           │
+│      o'chiq holatda ApiError(0), query/token to'g'ri yig'iladi.              │
+│    ⚠ Haqiqiy backend bilan tekshirilmadi: pull'dan keyin api/.env va         │
+│      api/node_modules yo'q — D-006 (login) oldidan backendni ishga           │
+│      tushirish kerak.                                                        │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-005 · TanStack Query sozlash ─────────────────────────────────────────┐
+┌─ [x] D-005 · TanStack Query sozlash ─────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `@tanstack/react-query` + QueryClientProvider                           │
@@ -222,9 +317,26 @@
 │  Natija: server holati bitta mexanizm orqali, `useEffect` + `fetch` yo'q     │
 │  Bog'liq: D-004                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16):                                                   │
+│    • @tanstack/react-query 5.103 (+ devtools devDependency, faqat DEV da     │
+│      lazy — production bundle'ga kirmaydi, tekshirildi).                     │
+│    • shared/query/query-client.ts: retry = shouldRetry — 4xx va kod xatosi   │
+│      takrorlanmaydi, 5xx/tarmoq 2 martagacha; mutatsiya retry: false (ikki   │
+│      marta yaratish xavfi); staleTime 30 s, refetchOnWindowFocus.            │
+│    • Invalidatsiya qoidasi: `useMutation({ meta: { invalidates: [            │
+│      queryKeys.orders.all, queryKeys.productStocks.all ] } })` — global      │
+│      MutationCache.onSuccess o'zi yangilaydi (Register bilan turlangan).     │
+│    • 401 → QueryCache/MutationCache onError → setUnauthorizedHandler         │
+│      (refresh/logout — D-006 ulaydi).                                        │
+│    • shared/query/query-keys.ts — queryKeys: me + 19 domen (api admin        │
+│      yo'llari bo'yicha), all/lists/list/details/detail ierarxiyasi.          │
+│    • app/AppProviders.tsx — QueryClientProvider; App.tsx shunga o'raldi.     │
+│    • 7 yangi test (jami 55): retry siyosati, key ierarxiyasi, meta           │
+│      invalidatsiyasi, 401 handler (403 da chaqirilmaydi).                    │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-006 · Kirish va token oqimi                                  🔒 ──────┐
+┌─ [x] D-006 · Kirish va token oqimi                                  🔒 ──────┐
 │                                                                              │
 │  Endpointlar: `POST /auth/admin/login`, `POST /auth/refresh`,                │
 │               `GET /auth/me`, `POST /auth/logout`                            │
@@ -248,9 +360,33 @@
 │  Natija: kirish, avtomatik yangilanish, chiqish ishlaydi                     │
 │  Bog'liq: D-005                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-16):                                                   │
+│    • shared/auth/token-store.ts — access xotirada, refresh localStorage      │
+│      (`vk-dashboard-refresh-token`), subscribe; storage bloklansa ham ishlaydi.│
+│    • shared/auth/session.ts — login, logout (server xato bersa ham local     │
+│      tozalanadi), refresh: parallel chaqiruvlar BITTA so'rovga birlashadi;   │
+│      refresh 4xx → sessiya tugaydi, tarmoq/5xx → sessiya qoladi.             │
+│    • API klient: 401 → refreshAccessToken → so'rov BIR MARTA qayta; login va │
+│      refresh yo'llarida refresh urinilmaydi va eski token yuborilmaydi.      │
+│    • features/auth: wireAuth() (main.tsx), useHasSession, useProfile         │
+│      (GET /auth/me — rol/filial shu javobdan), useLogin, useLogout;          │
+│      sessiya tugasa queryClient.clear() (boshqa xodim keshi qolmaydi).       │
+│    • /login sahifasi: telefon (+998 prefiks, normalizeUzPhone), parol        │
+│      (ko'rsatish tugmasi), 401/403/429/5xx/tarmoq xabarlari, kirgach         │
+│      `from` manzilga qaytadi. Sarlavha RootLayout ga ko'chdi (login ham).    │
+│    • Topbar: F.I.Sh., rol (shared/lib/labels.ts — G7 lug'ati boshlandi),     │
+│      filial nomi (GET /admin/branches/{id}; SUPER_ADMIN — "Barcha            │
+│      filiallar"), chiqish tugmasi.                                           │
+│    • AppLayout: sessiya yo'q → /login (D-007 da RequireAuth ga ajratiladi).  │
+│    • ⚠ api B-059 topildi: nullable maydonlar openapi.json da                 │
+│      Record<string, never> — profile.ts da VAQTINCHALIK override.            │
+│    • 24 yangi test (jami 79). Brauzerda mock auth server bilan: noto'g'ri    │
+│      parol, kirish, 3 parallel 401 → 1 refresh, yangilashda tiklanish,       │
+│      soxta refresh → /login, chiqish. Haqiqiy backend: api/.env yo'q.        │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-007 · Rol asosida ko'rinish (RBAC)                           🔒 ──────┐
+┌─ [~] D-007 · Rol asosida ko'rinish (RBAC)                           🔒 ──────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `<RequireAuth>` — kirmaganni login sahifasiga yuboradi                  │
@@ -1142,12 +1278,12 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 48
-  Tugadi       : 0
-  Jarayonda    : 0
+  Tugadi       : 6
+  Jarayonda    : 1
   Bloklangan   : 0
 
   Epic bo'yicha:
-    EPIC 0  Poydevor .................  0 / 8    [········]
+    EPIC 0  Poydevor .................  6 / 8    [██████··]   ✓ D-001 … D-006 · ~ D-007
     EPIC 1  Katalog ..................  0 / 7    [·······]
     EPIC 2  Narx va zaxira ...........  0 / 4    [····]
     EPIC 3  Mijoz va moliya ..........  0 / 4    [····]
@@ -1159,7 +1295,7 @@
     EPIC 9  Bosh sahifa va sifat .....  0 / 8    [········]
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  D-001 · TypeScript va loyiha tuzilishi
+  KEYINGI TASK:  D-007 · Rol asosida ko'rinish (RBAC)
 
   Backend TAYYOR (api/task.txt: 55/58, faqat B-050 bloklangan) — ya'ni
   bu ro'yxatdagi hech bir task backendni kutmaydi. Boshlash mumkin.
