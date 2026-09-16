@@ -472,8 +472,8 @@
 │    bekor qiladi — endi narx filial + viloyat + transport turi                │
 │    bo‘yicha farqlanadi.                                                      │
 │                                                                              │
-│  ❓ OCHIQ SAVOL: markaziy ombor (CENTRAL filial, B-009) uchun ham            │
-│     shu jadval kerakmi, yoki faqat RETAIL filiallarga?                       │
+│  ✅ YOPILDI (B-058): markaziy ombor (CENTRAL filial, B-009) uchun ham        │
+│     shu jadval kerak — ta’minot buyurtmasi yo‘l kirasi shundan.              │
 │                                                                              │
 │  Bog‘liq: B-009                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -798,7 +798,7 @@
 │       Jami 181 test o‘tadi.                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-055 · Admin: Mijozga individual narx CRUD              🔒 🆕 ─────────┐
+┌─ [x] B-055 · Admin: Mijozga individual narx CRUD              🔒 🆕 ─────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    GET    /admin/customers/:id/pricing-rules                                 │
@@ -819,6 +819,32 @@
 │     (B-051 filial izolyatsiyasi + IDOR himoyasi).                            │
 │                                                                              │
 │  Bog‘liq: B-052, B-036, B-051                                                │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • src/modules/pricing: PricingRulesAdminService + controller             │
+│       (Swagger: Pricing). DELETE — loyiha konventsiyasi: 200 + o‘chgan       │
+│       qoida.                                                                 │
+│     • 🔒 Rol birinchi tekshiriladi: MANAGER/MODERATOR/mijoz — 403;           │
+│       keyin BranchScope: begona filial mijozi — 404.                         │
+│     • 🔒 BRANCH_ADMIN: faqat PERCENT, faqat CHEGIRMA (manfiy; ustama         │
+│       yo‘q), |value| ≤ sozlama. Sozlama 0 → «ruxsat sozlanmagan».            │
+│       ❓ Savol 11 (transport chegarasi) — hozircha mahsulot bilan BITTA       │
+│       chegara.                                                               │
+│     • 🔒 Ro‘yxat/o‘chirish: filial admini faqat createdByUserId = o‘zi.       │
+│       Bosh admin qoidasi uchun — 404 (mavjudligi sir). ⚠ Bir darajaga        │
+│       ikkinchi qoida qo‘yishda 409 qaytadi — bu darajada «nimadir bor»       │
+│       ekanini bildiradi, lekin qiymati/turini emas (partial unique).         │
+│     • Tekshiruv: domen × scope matritsasi, scopeId ALL da yo‘q / boshqada    │
+│       majburiy, nishon mavjud; 🔒 ROUTE — FAQAT mijoz filialining tarifi.    │
+│       FIXED > 0, PERCENT > −100. Qoida tahrirlanmaydi (o‘chir + qo‘sh).      │
+│     • 🆕 prepare() — bazaga yozmasdan tekshiradi; B-036 bog‘lami SHU yo‘ldan: │
+│       POST /admin/customers { …, pricingRules[] } — qoidalar mijozdan        │
+│       OLDIN tekshiriladi, mijoz bilan BITTA so‘rovda (nested create)         │
+│       yoziladi; bittasi xato → mijoz ham yo‘q. Bog‘lamda bir darajada        │
+│       ikki qoida → 400. Max 50.                                              │
+│     • Jonli tekshiruv: 15 ssenariy, kalkulyatorda yakuniy narx aniq           │
+│       o‘zgardi (112000 → −12% 98560 → FIXED 55555 → o‘chirilgach 98560)       │
+│       va javobda qoida sababi yo‘q. Test qoidalari o‘chirildi (seed          │
+│       holati). Jami 499 test o‘tadi.                                         │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [x] B-022 · Mahsulot media (360°) ──────────────────────────────────────────┐
@@ -1199,10 +1225,10 @@
 │     • Tranzaksiya: hisoblagich + Order + OrderItem[] (narx SURATI) +         │
 │       StatusHistory(NEW) + Payment(PENDING, amount=grandTotal,               │
 │       idempotencyKey=uuid).                                                  │
-│     • ❓ AccountTransaction(DEBT) yaratilMAYDI — taskda yo‘q; qarz qachon    │
-│       yoziladi (buyurtmada / yetkazilganda) — B-034/B-035 da hal qilinadi.   │
+│     • ✅ AccountTransaction(DEBT) — B-035 da buyurtma berilganda yoziladigan │
+│       bo‘ldi.                                                                │
 │     • ❓ Takroriy bosish (double submit) himoyasi yo‘q — taskda yo‘q.        │
-│     • 🔁 7-qadam (bildirishnoma + sendLocation) — B-037 ga ko‘chirildi:      │
+│     • ✅ 7-qadam (bildirishnoma + sendLocation) — B-037 da qilindi.          │
 │       event/kanal tizimi hali yo‘q.                                          │
 │     • Jonli tekshiruv: 18 ssenariy + 20 parallel. Jami 326 test.             │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1242,9 +1268,9 @@
 │       "topilmadi" bilan bir xil 404. Javobda faqat holat/vaqt/viloyat —      │
 │       summa, tarkib, izoh, xodim yo‘q. Egasi telefoni yo‘q (filial           │
 │       ta‘minot) buyurtma kuzatilmaydi.                                       │
-│     • ❓ CANCELLED da PENDING to‘lov/zaxira nima bo‘ladi — B-034 da.         │
+│     • ✅ CANCELLED da PENDING to‘lov → CANCELLED (B-034). Zaxira — ochiq.     │
 │     • 🔁 Rate limiting (raqam+telefon tanlab ko‘rish) — B-049.               │
-│     • 🔁 Bildirishnoma — B-037.                                              │
+│     • ✅ Bildirishnoma — B-037 da qilindi.                                   │
 │     • Jonli tekshiruv: 22 ssenariy. Jami 347 test o‘tadi.                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -1328,7 +1354,7 @@
 ║  Maqsad: butun to'lov oqimi ishlasin, lekin haqiqiy pul harakati bo'lmasin.  ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] B-032 · PaymentProvider interfeysi ─────────────────────────────────────┐
+┌─ [x] B-032 · PaymentProvider interfeysi ─────────────────────────────────────┐
 │                                                                              │
 │  interface PaymentProvider {                                                 │
 │    createPayment(order, amount, idempotencyKey): Promise<PaymentIntent>      │
@@ -1341,9 +1367,30 @@
 │  ⚠ Butun loyihada FAQAT shu interfeys ishlatiladi.                           │
 │    Hech bir servis "Payme" so'zini bilmaydi.                                 │
 │  Bog'liq: B-028                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • src/modules/payments/providers/payment-provider.interface.ts +         │
+│       DI tokeni PAYMENT_PROVIDER (StorageService bilan bir xil naqsh).       │
+│     • Imzo taskdagidan biroz aniqroq: `order` → PaymentOrderRef              │
+│       {id, orderNumber}, `amount` → Money (Decimal, float emas),             │
+│       verifyWebhook/handleWebhook → bitta PaymentWebhookRequest              │
+│       {headers, body} — HTTP freymvorkidan mustaqil.                         │
+│     • 🔒 Provayder bazaga YOZMAYDI va summani HISOBLAMAYDI — saqlash,        │
+│       balans, bildirishnoma PaymentsService da (B-034). Provayder            │
+│       almashganda mantiq ikki joyda yozilib qolmaydi.                        │
+│     • PaymentEvent.eventId — XABAR kaliti (webhook idempotency, B-034).      │
+│     • 🆕 PaymentEvent.reply? — JSON-RPC uslubidagi provayderlar webhook      │
+│       javobida aniq tuzilma kutadi; B-050 da interfeys o‘zgarmasin.         │
+│     • Doira — faqat CARD. CASH/BANK_TRANSFER provayderga bormaydi,           │
+│       admin qo‘lda tasdiqlaydi (B-034).                                      │
+│     • Endpoint yo‘q (faqat tur) — Swagger o‘zgarmadi.                        │
+│     • 🐛 Yo‘l-yo‘lakay: quote.service.spec / orders.service.spec             │
+│       mocklari eskirgan edi (servisga filial mosligi va isAgent              │
+│       tekshiruvi qo‘shilgan, testlar yangilanmagan) — 10 test yiqilardi.     │
+│       Mocklar tuzatildi, kod o‘zgarmadi. ⚠ Testlar Node ≥ 24.9 talab         │
+│       qiladi (ESM paketlar). Jami 378 test o‘tadi.                           │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-033 · MockPaymentProvider                                         🧪 ─┐
+┌─ [x] B-033 · MockPaymentProvider                                         🧪 ─┐
 │                                                                              │
 │  Xatti-harakati:                                                             │
 │    • createPayment → soxta providerRef (`mock_<uuid>`) va                    │
@@ -1357,9 +1404,38 @@
 │                                                                              │
 │  Natija: frontendchi to'liq checkout oqimini test qila oladi.                │
 │  Bog'liq: B-032                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • src/modules/payments: MockPaymentProvider, PaymentsModule              │
+│       (provayder tanlovi FAQAT shu yerda — .env PAYMENT_PROVIDER=mock),      │
+│       PAYMENT_MOCK_AUTO_PAID (zod bilan, standart false).                    │
+│     • 🆕 PaymentWebhookService.process() — webhook'ni bazaga qo‘llash.        │
+│       Taskda B-034 da edi, lekin simulyatsiya «haqiqiy webhook kabi»         │
+│       ishlashi uchun shu yerda yozildi: dev endpoint ham, avto-to‘lov        │
+│       ham, B-034 dagi /webhooks/payment ham AYNAN shu yo‘ldan o‘tadi.        │
+│       Hozircha faqat Payment.status/paidAt/rawPayload; balans va             │
+│       bildirishnoma — B-034.                                                 │
+│     • 🔒 Idempotentlik: holat faqat PENDING dan o‘tadi, UPDATE … WHERE       │
+│       status = PENDING. Jonli: 10 parallel PAID → 1 APPLIED, 9 DUPLICATE.    │
+│       PAID→FAILED, FAILED→PAID — IGNORED. Alohida hodisalar jadvali          │
+│       kerak bo‘lmadi.                                                        │
+│     • 🔒 Taskdan farq: mock verifyWebhook «har doim true» EMAS — jarayon     │
+│       boshida tasodifiy kalit (timingSafeEqual). Aks holda B-034 dagi        │
+│       ochiq /webhooks/payment ga istalgan odam «PAID» yuborib, buyurtmani    │
+│       tekinga yopardi. Imzoli so‘rovni faqat provider.buildWebhook yasaydi.  │
+│     • POST /dev/payments/:id/simulate {status: PAID|FAILED} — token          │
+│       talab qilmaydi, ConditionalModule orqali FAQAT development da          │
+│       (jonli: NODE_ENV=production → 404). providerRef yo‘q (naqd/            │
+│       o‘tkazma) → 400; noma’lum ID → 404.                                    │
+│     • createPayment bir xil idempotencyKey bilan — o‘sha to‘lov qaytadi.     │
+│       Mock holati xotirada; noma’lum ref → PENDING (hech qachon PAID emas).  │
+│     • Avto-to‘lov: 10 s, qo‘lda yakunlangan bo‘lsa yubormaydi; timer         │
+│       unref. Ulash — MockAutoPayService (webhook servisi mockni bilmaydi).   │
+│     • 🔁 Jonli tekshiruv uchun providerRef li to‘lov hali yaratilmaydi —     │
+│       POST /orders/:id/payment (B-034) kerak; vaqtinchalik yozuv bilan       │
+│       tekshirildi va o‘chirildi. Jami 402 test o‘tadi.                       │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-034 · To'lov oqimi va webhook qabul qilish ───────────────────────────┐
+┌─ [x] B-034 · To'lov oqimi va webhook qabul qilish ───────────────────────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    POST /orders/:id/payment       { method } → { qrPayload, paymentId }      │
@@ -1377,6 +1453,40 @@
 │    2. AccountTransaction (PAYMENT) yaratiladi                                │
 │    3. Notification: mijozga + adminga "To'landi"                             │
 │  Bog'liq: B-033                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • POST /orders/:id/payment {method} — mijoz tokeni. 🔒 Summa             │
+│       so‘ralmaydi (buyurtma grandTotal). Javob: paymentId, method,           │
+│       status, amount, qrPayload (faqat CARD).                                │
+│       Qayta chaqirish xavfsiz: o‘sha usulda PENDING bo‘lsa — o‘zi.           │
+│       Usul almashsa: provayderga bormagan yozuvda — usul yangilanadi;        │
+│       provayderda ochilganda — eskisi CANCELLED + yangisi (providerRef       │
+│       yo‘qolmasin). CANCELLED/to‘langan buyurtma → 409.                      │
+│     • GET /payments/:id/status — faqat o‘z to‘lovi, begonasi 404.            │
+│     • POST /webhooks/payment — tokensiz, imzo bilan; javob provayder         │
+│       formatida (`{data}` ga O‘RALMAYDI, @Res).                              │
+│     • PATCH /admin/payments/:id/confirm {note?} — SUPER_ADMIN,               │
+│       BRANCH_ADMIN, MODERATOR (MANAGER emas — pul vakolati).                 │
+│       BranchScope (begona → 404). 🔒 CARD bu yo‘ldan tasdiqlanmaydi (400).   │
+│     • 🆕 PaymentSettlementService.settle — webhook va admin tasdig‘i         │
+│       uchun YAGONA yo‘l: WHERE status=PENDING + PAYMENT (manfiy) hisob       │
+│       yozuvi SHU tranzaksiyada. Hisobsiz xaridor — yozuv yo‘q.               │
+│     • 🆕 src/modules/accounts — AccountLedgerService.record(tx, …):          │
+│       AccountTransaction + CustomerAccount yig‘indisi (B-035 ham shu).       │
+│     • 🆕 Migratsiya payments_single_pending: 🔒 buyurtmada ko‘pi bilan        │
+│       BITTA PENDING to‘lov va providerRef noyob (partial unique index).      │
+│     • 🆕 B-029 ochiq savoli yopildi: buyurtma CANCELLED bo‘lsa PENDING        │
+│       to‘lovlar ham CANCELLED (PAID o‘zgarmaydi — qaytarish ADJUSTMENT).     │
+│       Kechikkan PAID webhook → IGNORED + «QO‘LDA TEKSHIRING» ogohlantirish.  │
+│     • ❓ DEBT (qarz) hali yozilmaydi — faqat PAYMENT. Natijada to‘lov         │
+│       balansni vaqtincha manfiyga (avans) tushiradi. Qarz qachon            │
+│       yoziladi — B-035 da hal qilinadi (TZ 7-bo‘lim, savol 3).               │
+│     • ✅ 3-qadam (bildirishnoma «To‘landi») — B-037 da qilindi.               │
+│     • 🔁 GET status faqat bazadan; webhook kelmasa provider.checkStatus       │
+│       bilan so‘rab olish — haqiqiy provayder (B-050) bilan qo‘shiladi.       │
+│     • Jonli tekshiruv: 21 ssenariy (IDOR 404, xodim tokeni 403, imzosiz      │
+│       webhook 401, takroriy PAID hisobga 1 marta, 8 parallel tasdiq →       │
+│       1 ta 200 / 1 yozuv, 6 parallel CARD → 1 to‘lov, avto-to‘lov 10 s).     │
+│       Jami 433 test o‘tadi.                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -1384,7 +1494,7 @@
 ║  EPIC 7 — MOLIYAVIY HISOB  (TZ 3.11)                                         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] B-035 · Hisob va tranzaksiyalar ────────────────────────────────────────┐
+┌─ [x] B-035 · Hisob va tranzaksiyalar ────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    GET   /me/account              → { totalPurchased, totalPaid, balance }   │
@@ -1402,9 +1512,34 @@
 │      ADJUSTMENT qo'shiladi (buxgalteriya printsipi)                          │
 │                                                                              │
 │  Bog'liq: B-034                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • ❓→ QAROR: QARZ (DEBT = grandTotal) BUYURTMA BERILGANDA yoziladi        │
+│       (OrdersService.place, o‘sha tranzaksiyada; qo‘lda kiritilgan mijoz     │
+│       buyurtmasi ham). Asos: seed ham shunday (yetkazilmagan buyurtmada      │
+│       DEBT). Hisobsiz xaridor — yozuv yo‘q. Mijoz «yetkazilganda» desa —     │
+│       faqat shu bitta joy ko‘chadi.                                          │
+│     • Bekor qilishda (OrderStatusService) — buyurtma bo‘yicha yozilgan       │
+│       DEBT yig‘indisi teskari ADJUSTMENT bilan qaytadi (summa HISOBDAN,      │
+│       buyurtmadan emas — qarzi yozilmagan eski buyurtmada ortiqcha           │
+│       kamaytirmaslik uchun). To‘langan pul qaytmaydi → mijozda avans         │
+│       (manfiy balans); naqd qaytarilsa — qo‘lda +ADJUSTMENT.                 │
+│     • GET /me/account, /me/account/transactions (?type, sahifalash,          │
+│       sortOrder). 🔒 Mijozga xodim ID si va paymentId berilmaydi.            │
+│     • GET /admin/customers/:id/account, …/transactions (createdBy,           │
+│       paymentId bilan) — barcha xodim. BranchScope: begona mijoz 404.        │
+│     • POST /admin/customers/:id/transactions — SUPER_ADMIN, BRANCH_ADMIN,    │
+│       MODERATOR (MANAGER emas, B-034 bilan bir xil). DEBT/PAYMENT summasi    │
+│       MUSBAT yuboriladi — ishorani backend qo‘yadi; ADJUSTMENT ishorali.     │
+│       `note` MAJBURIY (audit). 🆕 @IsNonZeroDecimalString validator.         │
+│       Javob — yangilangan hisob.                                             │
+│     • Balans = totalPurchased − totalPaid (kesh, AccountLedgerService        │
+│       tranzaksiya ichida yangilaydi). Jonli: kesh = Σ amount.                │
+│     • Jonli tekshiruv: 15 ssenariy (DEBT→PAYMENT→bekor→avans, filial         │
+│       izolyatsiyasi, rollar, 6 validatsiya holati, baza audit qulfi).        │
+│       Jami 449 test o‘tadi.                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-036 · Optom mijozlar — admin boshqaruvi             🔒 ───────────────┐
+┌─ [x] B-036 · Optom mijozlar — admin boshqaruvi             🔒 ───────────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    GET   /admin/customers  ?search=&hasDebt=&branchId=&page=                 │
@@ -1432,6 +1567,31 @@
 │  🔒 Parol javobda FAQAT yaratish/reset paytida bir marta qaytariladi,        │
 │     bazada bcrypt hash. Keyin uni hech kim (admin ham) ko‘rmaydi.            │
 │  Bog‘liq: B-035, B-017, B-051, B-055                                         │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • ⚠ B-036 ↔ B-055 aylanma bog‘liq. Asosiy CRUD shu yerda; `pricingRules` │
+│       bog‘lami B-055 da qo‘shildi ✅ (ruxsat                                  │
+│       tekshiruvi ikki joyda yozilmasligi uchun).                             │
+│     • CustomersAdminService (alohida, parol tiklash CustomersService da).    │
+│     • Rollar: GET/POST/PATCH — barcha xodim (TZ: filial admini YOKI          │
+│       menejeri ochadi); PATCH …/active — SUPER_ADMIN, BRANCH_ADMIN,          │
+│       MODERATOR. Menejer yaratsa — mijoz avtomatik unga biriktiriladi.       │
+│     • 🔒 Filial: requireBranchId — xodim har doim o‘z filiali (boshqasi      │
+│       404), SUPER_ADMIN aniq beradi (400). Filial faol bo‘lishi shart.       │
+│       Filialga ko‘chirish — faqat SUPER_ADMIN; eski menejer uziladi.         │
+│     • managerId — shu filialning faol MANAGER/BRANCH_ADMIN/MODERATOR i       │
+│       (B-030 bilan bir xil qoida), aks holda 400.                            │
+│     • login: kichik harfga, ^[a-z0-9][a-z0-9._-]{2,63}$, band — 409.         │
+│       INN — 9 raqam (null — tozalash). Login tahrirlanmaydi.                 │
+│     • GET ro‘yxat: search (login/kompaniya/kontakt/telefon/INN), hasDebt     │
+│       (kesh yig‘indilari ustun havolasi bilan — bitta SQL, raw yo‘q),        │
+│       branchId, managerId, isActive; qatorda balans.                         │
+│     • GET :id — profil + hisob + oxirgi 10 buyurtma + oxirgi 10 hisob        │
+│       harakati (AccountsService qayta ishlatildi).                           │
+│     • 🔒 POST javobi — mijoz kartasi + temporaryPassword (bir marta).        │
+│       Body dagi passwordHash/isActive whitelist bilan tashlanadi (jonli).    │
+│     • Jonli tekshiruv: 13 ssenariy (vaqtinchalik parol → almashtirish,       │
+│       Andijon admini 404, ko‘chirish, o‘chirilgan hisob: login 401 va        │
+│       eski token 401, 7 filtr). Jami 471 test o‘tadi.                        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -1440,7 +1600,7 @@
 ║  Maqsad: kanal-agnostik. Bugun DB + mock, ertaga Telegram/SMS/push.          ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] B-037 · Event tizimi va NotificationService ────────────────────────────┐
+┌─ [x] B-037 · Event tizimi va NotificationService ────────────────────────────┐
 │                                                                              │
 │  Arxitektura:                                                                │
 │    Biznes-servis → EventEmitter ('order.status.changed') →                   │
@@ -1466,9 +1626,36 @@
 │  🔁 B-028 dan: POST /orders hozircha event chiqarmaydi. Shu taskda           │
 │     `order.created` qo‘shiladi → mijoz/adminga bildirishnoma va              │
 │     exactLat bo‘lsa menejerga TelegramChannel.sendLocation().                │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • 🆕 @nestjs/event-emitter (EventEmitterModule.forRoot). Hodisalar         │
+│       (notifications/events.ts): order.created, order.status.changed,        │
+│       payment.paid — payload faqat ID; tinglovchi bazadan o‘qiydi.           │
+│     • 🔒 Hodisa DB tranzaksiyasi TUGAGACH chiqariladi (OrdersService,         │
+│       OrderStatusService, PaymentWebhookService — faqat APPLIED+PAID,        │
+│       PaymentsService.confirm). Tranzaksiya yiqilsa / takroriy webhook —     │
+│       hodisa yo‘q (testlangan).                                              │
+│     • NotificationChannel interfeysi + NOTIFICATION_CHANNELS massivi         │
+│       (yangi kanal = klass + bitta qator). InAppChannel (jadval),            │
+│       🧪 MockTelegramChannel (+ sendLocation), 🧪 MockSmsChannel.            │
+│     • Kimga qaysi kanal — manzil orqali (kanal manzilsiz qabul qiluvchini    │
+│       o‘tkazadi): optom mijoz — faqat kabinet (SMS pullik); hisobsiz         │
+│       xaridor — faqat SMS; xodim — admin panel + Telegram.                   │
+│     • Xodimlar: biriktirilgan menejer + filial BRANCH_ADMIN/MODERATOR        │
+│       (faollar). SUPER_ADMIN har buyurtmaga xabar olmaydi (shovqin).         │
+│     • order.created → xaridor + xodimlar; exactLat bo‘lsa joylashuv          │
+│       MENEJERGA (yo‘q bo‘lsa filial rahbariyatiga). order.status.changed     │
+│       → faqat xaridor (holat nomi + izoh). payment.paid → ikkalasi.          │
+│     • 🔒 Bildirishnoma biznes amalini buzmaydi: tinglovchi async, har        │
+│       kanal xatosi alohida log; hech narsa tashqariga otilmaydi.             │
+│     • Holat nomlari (ORDER_STATUS_LABEL) bitta jadvalda — ❓ TZ 3.4.         │
+│     • ❓ Telegram: xodimda faqat username — haqiqiy bot uchun chat ID         │
+│       kerak (/start). Haqiqiy kanal bilan hal qilinadi.                      │
+│     • Jonli tekshiruv: buyurtma (nuqta bilan) → 3 yozuv + Telegram +         │
+│       📍; holat → mijozga; naqd tasdiq → 3 yozuv + Telegram; telefon         │
+│       buyurtmasi → SMS (yaratish va holat). Jami 520 test o‘tadi.            │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-038 · Bildirishnoma endpointlari ─────────────────────────────────────┐
+┌─ [x] B-038 · Bildirishnoma endpointlari ─────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    GET   /me/notifications         ?isRead=&page=                            │
@@ -1478,9 +1665,21 @@
 │                                                                              │
 │  Izoh: TZ 3.6 — header'dagi «+1» hisoblagichi uchun unread-count.            │
 │  Bog'liq: B-037                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • 🆕 Bitta API ikki toifa uchun: optom mijoz tokeni → customerId,         │
+│       xodim tokeni → userId (B-037 xodimlarga ham yozadi — admin panel       │
+│       «+1» hisoblagichi ham kerak). Swagger: Notifications.                  │
+│     • Guard: JwtAuth + PasswordChangeRequired; servis hisob faolligini       │
+│       bazadan tekshiradi (o‘chirilgan — 401).                                │
+│     • 🔒 Har so‘rov egasi filtri bilan; begona/mavjud emas — bir xil 404.    │
+│     • PATCH :id/read — idempotent (readAt birinchi o‘qilgandagi qoladi);     │
+│       isRead + readAt birga (baza CHECK). read-all → { updated }.            │
+│     • GET ?isRead (toOptionalBoolean) + sahifalash, sortOrder.               │
+│     • Jonli tekshiruv: 7 ssenariy (Andijon mijozi va menejer begona          │
+│       bildirishnomaga 404, CHECK buzilmagan). Jami 528 test o‘tadi.          │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-039 · Real-vaqt kuzatuv (polling) ────────────────────────────────────┐
+┌─ [x] B-039 · Real-vaqt kuzatuv (polling) ────────────────────────────────────┐
 │                                                                              │
 │  Yondashuv: POLLING (TZ 5-bo'lim tavsiyasi — MVP uchun yetarli)              │
 │                                                                              │
@@ -1492,9 +1691,24 @@
 │  Frontend har 15 soniyada chaqiradi. Yengil javob — faqat o'zgarganlar.      │
 │  🔁 Keyinroq SSE'ga o'tkazish mumkin — endpoint shakli o'zgarmaydi.          │
 │  Bog'liq: B-038                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • GET /me/updates?since — mijoz ham, xodim ham (B-038 bilan bir xil      │
+│       qoida). Mijoz — o‘z buyurtmalari; 🔒 xodim — BranchScope doirasi.       │
+│     • since siz (birinchi chaqiriq) — bo‘sh ro‘yxatlar + unreadCount +        │
+│       serverTime. since ISO-8601 (strict), kelajakda — 400.                  │
+│     • Buyurtma «o‘zgargan» = updatedAt > since YOKI to‘lovi o‘zgargan         │
+│       (to‘lov holati buyurtma updatedAt ni yangilamaydi). Javobda qisqa      │
+│       ko‘rinish: id, raqam, holat, oxirgi to‘lov holati, updatedAt.          │
+│     • 🔒 serverTime so‘rovlardan OLDIN olinadi — o‘zgarish tushib             │
+│       qolmaydi (takror kelishi mumkin, frontend ID bo‘yicha birlashtiradi).  │
+│     • 🆕 Har ro‘yxat max 100; oshsa `truncated: true` — sahifani to‘liq        │
+│       yangilash signali (uzoq offline).                                      │
+│     • Jonli tekshiruv: admin holatni o‘zgartirdi → Farg‘ona mijozi keyingi   │
+│       pollingda buyurtma + bildirishnomani ko‘rdi; Andijon mijozi/admini —   │
+│       bo‘sh; SUPER_ADMIN — ko‘rdi. Jami 534 test o‘tadi.                     │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-040 · Yangi mahsulot bildirishnomasi                ❓ ───────────────┐
+┌─ [x] B-040 · Yangi mahsulot bildirishnomasi                ❓ ───────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Yangi mahsulot isActive bo‘lganda → OPTOM mijozlarga broadcast          │
@@ -1509,6 +1723,24 @@
 │  (bu chakana mehmonlar uchun ham ishlaydi — auth talab qilmaydi).            │
 │                                                                              │
 │  Bog‘liq: B-038                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • 🆕 Migratsiya product_announced_at: `products.announced_at` — bir       │
+│       martalik e’lon belgisi. Mavjud mahsulotlar = created_at (eski          │
+│       katalog «yangi» bo‘lib ketmasin); seed ham belgilaydi.                 │
+│     • ProductsAdminService faqat `product.activated` chiqaradi (faol         │
+│       yaratilganda / isActive: true bo‘lganda) — «yangimi» ni bilmaydi.      │
+│     • 🔒 NotificationService atomar da’vo: UPDATE … WHERE announced_at IS    │
+│       NULL AND faol AND zavodi faol. Jonli: o‘chirib-yoqish — qayta          │
+│       yuborilmadi. ⚠ Zavodi nofaol paytda yoqilgan mahsulot keyin            │
+│       e’lon qilinmaydi (zavod yoqilishi hodisa chiqarmaydi).                 │
+│     • Qabul qiluvchi: BARCHA faol optom mijozlar (katalog umumiy; narx      │
+│       filialda bo‘lmasa ham mahsulot ochiq katalogda ko‘rinadi). 100 tadan   │
+│       qismlab (cursor), faqat in-app. payload { productId, slug }.           │
+│     • POST /products/:slug/view — ochiq, 204; atomar +1 (jonli: 10           │
+│       parallel → +10); vitrinada yo‘q → 404. Soni ochiq javobda yo‘q.        │
+│       🔁 Suniy oshirish — rate limiting (B-049).                             │
+│     • Jonli: yangi mahsulot → 5/5 faol mijozga NEW_PRODUCT. Test             │
+│       mahsuloti va bildirishnomalari o‘chirildi. Jami 543 test o‘tadi.       │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -1516,7 +1748,7 @@
 ║  EPIC 9 — FILIALLAR, HAMKORLAR, MENEJERLAR                                   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] B-041 · Filiallar (Branch) ─────────────────────────────────────────────┐
+┌─ [x] B-041 · Filiallar (Branch) ─────────────────────────────────────────────┐
 │                                                                              │
 │  Public:                                                                     │
 │    GET /branches      → name, city, address, latitude, longitude,            │
@@ -1543,9 +1775,28 @@
 │  Izoh: TZ 3.7 — har bir filial kartasi bino surati, xarita nuqtasi,          │
 │        Telegram va Instagram tugmalari bilan.                                │
 │  Bog‘liq: B-015, B-022, B-051                                                │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • src/modules/branches. Ochiq: faqat faol RETAIL, `type`/isActive/       │
+│       sortOrder javobda yo‘q; CENTRAL yoki yopilgan — 404.                   │
+│     • Admin GET — barcha xodim; 🔒 filial xodimi faqat o‘z filiali           │
+│       (resurs = filialning o‘zi, filtr `id` bo‘yicha).                       │
+│     • POST/DELETE — SUPER_ADMIN. DELETE = soft (isActive=false), qayta       │
+│       ochish — PATCH. `type` yaratilgach o‘zgarmaydi (DTO da yo‘q).          │
+│     • PATCH — SUPER_ADMIN hamma maydon; 🔒 BRANCH_ADMIN va MODERATOR —        │
+│       faqat O‘Z filiali va faqat kontakt (address, lat/lng, workingHours,    │
+│       phones, telegramUrl, instagramUrl); boshqa maydon → 403 (qaysi         │
+│       maydon ekani aytiladi). MANAGER — 403.                                 │
+│     • POST :id/image — BRANCH_EDITORS; StorageService (folder branches),     │
+│       tur mazmundan; eski surat YANGISI saqlangach o‘chiriladi, baza         │
+│       yiqilsa yangi fayl o‘chiriladi.                                        │
+│     • Validatsiya: lat ±90, lng ±180, phones 1–5, Telegram/Instagram —       │
+│       faqat https://.                                                        │
+│     • Jonli tekshiruv: 7 ssenariy (SVG rad, eski fayl 404, yopilgan filial  │
+│       ochiq ro‘yxatdan yo‘qoldi). Test ma’lumotlari tiklandi.                │
+│       Jami 558 test o‘tadi.                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-056 · Admin: Transport turlari va tarif matritsasi CRUD 🔒 🆕 ────────┐
+┌─ [x] B-056 · Admin: Transport turlari va tarif matritsasi CRUD 🔒 🆕 ────────┐
 │                                                                              │
 │  Transport turlari (hammaga umumiy, faqat SUPER_ADMIN):                      │
 │    GET/POST/PATCH/DELETE  /admin/transport-types                             │
@@ -1567,18 +1818,46 @@
 │  Izoh: TZ 3.13, 3.14 — eski umumiy "fura/vagon narxi" (Settings)             │
 │        o‘rniga.                                                              │
 │  Bog‘liq: B-053, B-051, B-041                                                │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • Delivery moduliga: DeliveryAdminService + DeliveryAdminController      │
+│       (Swagger: Delivery). Public GET lar (B-027) o‘zgarmadi.                │
+│     • Transport turi / viloyat: GET — barcha xodim (?isActive), yozish —     │
+│       SUPER_ADMIN. Nom noyob (409), trim. DELETE = soft (buyurtmalar        │
+│       Restrict bilan bog‘langan); nofaol — ochiq tanlovda ham, kalkulyatorda │
+│       ham yo‘q. capacityPallets 1–1000; o‘zgarishi faqat yangi hisoblarga.   │
+│     • Tariflar: B-021 naqshi. GET ?branchId/regionId/transportTypeId/        │
+│       isActive — barcha xodim, 🔒 BranchScope. PUT (upsert uchlik kaliti)    │
+│       va PATCH :id/price — SUPER_ADMIN, BRANCH_ADMIN (MANAGER/MODERATOR      │
+│       emas). Narx — satr, musbat. Viloyat/transport yo‘q → 400.              │
+│     • ❓ B-053 savoli (CENTRAL uchun tarif) — cheklov qo‘yilmadi; B-058 da.   │
+│     • Jonli tekshiruv: 7 ssenariy (takroriy PUT yangi qator ochmadi,         │
+│       Andijon 404, menejer 403, o‘chirilgan tur ochiq ro‘yxatdan yo‘qoldi).  │
+│       Test yozuvlari o‘chirildi. Jami 569 test o‘tadi.                       │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-042 · Hamkorlar (Partner) ────────────────────────────────────────────┐
+┌─ [x] B-042 · Hamkorlar (Partner) ────────────────────────────────────────────┐
 │                                                                              │
 │  Public: GET /partners                                                       │
 │  Admin:  CRUD /admin/partners + logotip yuklash                              │
 │                                                                              │
 │  Izoh: TZ 3.8 — alohida "Hamkorlarimiz" sahifasi uchun.                      │
 │  Bog'liq: B-022 (fayl yuklash)                                               │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • src/modules/partners — galereya (B-024) naqshi.                        │
+│     • GET /partners — ochiq, faqat faollar: id, name, logoUrl, websiteUrl.   │
+│     • Admin: GET (?isActive) — barcha xodim; yozish — SUPER_ADMIN.           │
+│       POST multipart (file + name, websiteUrl?, sortOrder?) — logo           │
+│       majburiy (sxemada NOT NULL). PATCH — JSON (name, websiteUrl null,      │
+│       sortOrder, isActive). 🆕 POST :id/logo — almashtirish (eskisi          │
+│       yangisi saqlangach o‘chiriladi). DELETE — haqiqiy + fayl (hamkorga     │
+│       hech narsa bog‘lanmagan; yashirish — isActive=false).                  │
+│     • 🔒 websiteUrl faqat http(s):// (javascript: → 400); logotip turi        │
+│       mazmundan (SVG → 400).                                                 │
+│     • Jonli tekshiruv: 5 ssenariy, diskda yetim fayl qolmadi.                │
+│       Jami 575 test o‘tadi.                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-043 · Menejerlar va biriktirish                                   ❓ ─┐
+┌─ [x] B-043 · Menejerlar va biriktirish                                   ❓ ─┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    GET   /admin/managers                                                     │
@@ -1591,9 +1870,35 @@
 │     birinchi implementatsiya — BY_BRANCH (filial bo'yicha).                  │
 │     Round-robin yoki tur bo'yicha — keyin qo'shiladi, kod o'zgarmaydi.       │
 │  Bog'liq: B-041                                                              │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • 🔒🐛 TOPILDI VA TUZATILDI: RolesGuard faqat METOD metama’lumotini      │
+│       o‘qirdi — klassga qo‘yilgan @Roles jimgina e’tiborsiz qolib, endpoint  │
+│       har qanday xodimga ochiq edi (jonli: menejer menejer yaratdi — 201).   │
+│       Endi getAllAndOverride([handler, class]) — metodniki ustun.            │
+│       Regressiya testi haqiqiy Reflector bilan. Qolgan controllerlar         │
+│       tekshirildi: hammasida har metodda @Roles bor edi.                     │
+│     • 🆕 src/modules/staff — StaffAdminService (menejer + B-057 moderator     │
+│       bitta naqsh). /admin/managers GET/POST/PATCH — SUPER_ADMIN,            │
+│       BRANCH_ADMIN (o‘z filiali, begonasi 404). Menejer — faqat RETAIL       │
+│       filialga (400). Telefon = login: faqat raqamlar, noyob (409).          │
+│       telegramUsername `@` siz saqlanadi. POST javobi — temporaryPassword    │
+│       (bir marta). DELETE o‘rniga PATCH isActive=false.                      │
+│     • ❓ Xodimda mustChangePassword va parolni o‘zi almashtirish endpointi    │
+│       YO‘Q (faqat mijozda bor) — vaqtinchalik parol doimiy qolishi mumkin.   │
+│       🔁 B-049 da ko‘riladi.                                                 │
+│     • ManagerAssignmentStrategy (orders/manager-assignment.ts) + DI tokeni.  │
+│       BY_BRANCH: afzal xodim (mijoz menejeri / kirituvchi menejer) faol va   │
+│       shu filialda bo‘lsa — u; aks holda filialning ochiq buyurtmasi eng     │
+│       kam faol MANAGERi (teng — eng eski); yo‘q — null. OrdersService.place  │
+│       da — mijoz va qo‘lda buyurtma ikkalasi ham.                            │
+│     • GET /orders/:id/manager-contact — mijoz tokeni, o‘z buyurtmasi;        │
+│       { fullName, telegramUrl } (username yaroqsiz → null); telefon          │
+│       berilmaydi (xodim logini). Menejer yo‘q/nofaol → 404.                  │
+│     • ⚠ Seed menejer username "vk_farg'ona" — Telegram formatiga zid.        │
+│     • Jonli tekshiruv: 5 ssenariy + regressiya. Jami 594 test o‘tadi.        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-057 · Admin: Moderatorlar CRUD                        🔒 🆕 ──────────┐
+┌─ [x] B-057 · Admin: Moderatorlar CRUD                        🔒 🆕 ──────────┐
 │                                                                              │
 │  Endpointlar (faqat SUPER_ADMIN):                                            │
 │    GET    /admin/moderators                                                  │
@@ -1609,9 +1914,21 @@
 │        (Menejerlar) bilan bir xil naqsh, faqat CENTRAL filialga              │
 │        biriktiriladi.                                                        │
 │  Bog‘liq: B-006, B-009, B-051                                                │
+│  ✅ BAJARILDI (2026-09-16) — qabul qilingan qarorlar:                        │
+│     • B-043 dagi StaffAdminService qayta ishlatildi (kind: MODERATOR) —      │
+│       ModeratorsAdminController, klass darajasida @Roles(SUPER_ADMIN)        │
+│       (B-043 da tuzatilgan guard bilan ishlaydi; jonli: filial admini va     │
+│       moderator — 403).                                                      │
+│     • 🔒 Filial faqat CENTRAL (yaratishda ham, ko‘chirishda ham) — RETAIL     │
+│       → 400. branchId majburiy (SUPER_ADMIN). Boshqa rol ID si (menejer)     │
+│       moderator yo‘lida — 404.                                               │
+│     • DELETE — soft (isActive=false): u o‘zgartirgan holatlar/zaxira         │
+│       tarixi saqlanadi; kirish 401. Qaytarish — PATCH.                       │
+│     • Jonli tekshiruv: 5 ssenariy (yangi moderator markaz zaxirasini         │
+│       ko‘rdi). Test yozuvi o‘chirildi. Jami 597 test o‘tadi.                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-058 · Filial → Markaziy ombor ta’minot buyurtmasi     🔒 🆕 ──────────┐
+┌─ [x] B-058 · Filial → Markaziy ombor ta’minot buyurtmasi     🔒 🆕 ──────────┐
 │                                                                              │
 │  TZ 3.7.2 — filial markaziy ombor uchun XUDDI MIJOZ KABI buyurtma            │
 │  beradi. B-028 (mijoz buyurtmasi) bilan bir xil Order/OrderItem              │
@@ -1648,6 +1965,28 @@
 │  🔁 Bu — murakkab yangi oqim, implementatsiyadan oldin qisqa                 │
 │     texnik qaror (ADR) yozish tavsiya etiladi.                               │
 │  Bog‘liq: B-010, B-028, B-053, B-054, B-057                                  │
+│  ✅ BAJARILDI (2026-09-16) — ADR: docs/adr/0001-branch-supply-orders.md      │
+│     • Alohida jadval/oqim YO‘Q: OrdersService.place() — buyer turiga         │
+│       `{ orderingBranchId }` qo‘shildi. branchId = markaz (bajaruvchi),      │
+│       orderingType BRANCH, orderingBranchId = do‘kon (tokendan).             │
+│     • ❓→ B-053 savoli yopildi: narx — markazning BranchProduct (ta’minot     │
+│       narxi) va markaz tariflari; mijoz qoidalari qo‘llanmaydi. Jonli:       │
+│       74 800 (markaz) — 88 000 (Farg‘ona chakana) emas.                      │
+│     • To‘lov — BANK_TRANSFER PENDING (ichki); AccountTransaction yo‘q;       │
+│       menejer biriktirilmaydi (moderator boshqaradi).                        │
+│     • Markaz: faol CENTRAL bitta — avtomatik; bir nechta — centralBranchId   │
+│       majburiy; RETAIL ko‘rsatilsa — 400.                                    │
+│     • POST/GET /branch-orders, GET /branch-orders/:id — 🔒 faqat faol        │
+│       RETAIL filial BRANCH_ADMIN/MANAGERi (SUPER_ADMIN, moderator, CENTRAL   │
+│       xodimi — 403); faqat o‘z filiali buyurtmalari (begonasi 404).          │
+│     • GET /admin/branch-orders(/:id), PATCH …/:id/status — MODERATOR (o‘z     │
+│       markazi), SUPER_ADMIN; B-029 matritsasi va qulfi; mijoz buyurtmasi     │
+│       ID si bu yo‘lda — 404.                                                 │
+│     • Bildirishnoma: ta’minotda «xaridor» = buyurtma bergan filial           │
+│       BRANCH_ADMINi; markazda — moderator («Ta’minot: <filial>»).            │
+│     • ❓ ETA — ma’lumot manbai yo‘q, qaytmaydi. Markaz zaxirasi avtomatik     │
+│       kamaymaydi (mijoz buyurtmasi bilan bir xil ochiq savol).               │
+│     • Jonli tekshiruv: 6 ssenariy. Jami 611 test o‘tadi.                     │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -1799,16 +2138,16 @@
 
   [ ] 1. Buyurtma status nomlari — 2 xil versiya bor           → B-029
   [x] 2. Optom kirish xavfsizligi → YOPILDI: admin login+parol beradi
-  [ ] 3. Balans yangilanishi — qo'lda / avtomatik / ikkalasi   → B-035
-  [ ] 4. "Ko'rishlar soni" — tracking yoki oddiy counter       → B-040
-  [ ] 5. Menejer biriktirish mantig'i                          → B-043
+  [~] 3. Balans yangilanishi — IKKALASI qilindi; DEBT buyurtmada (vaqtincha) → B-035
+  [~] 4. "Ko'rishlar soni" — hozircha oddiy counter (B varianti) → B-040
+  [~] 5. Menejer biriktirish mantig'i — hozircha BY_BRANCH (yuk) → B-043
   [~] 6. Didox.uz ✅ nomi aniqlandi, qolgani → B-044 (spike kerak)
   [ ] 7. Shartnoma shabloni — bitta yoki bir nechta            → B-045
   [ ] 8. Payme merchant ma'lumotlari                           → B-050
-  [ ] 9. Yetkazib berish narxi uchun viloyat ro'yxati          → B-053
+  [ ] 9. Yetkazib berish narxi uchun viloyat ro'yxati (admin CRUD bor) → B-053
   [ ] 10. Xarita/geolocation provayderi (Yandex Maps/2GIS)     → B-013
-  [ ] 11. Filial admin transport narxini pastga tushirishda
-          chegara bormi                                       → B-055
+  [~] 11. Filial admin transport narxini pastga tushirishda
+          chegara bormi — hozircha mahsulot bilan bitta chegara → B-055
 
   ⚠ Javob kelmasa ham ish TO'XTAMAYDI — yuqoridagi tasklarda vaqtinchalik
     qaror qabul qilingan va u INTERFEYS ortiga yashirilgan.
@@ -1820,25 +2159,25 @@
 
   Jami tasklar : 58  (B-016 bekor; B-051...B-058 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator)
-  Tugadi       : 34
+  Tugadi       : 50
   Jarayonda    : 0
   Bloklangan   : 1  (B-044 — Didox.uz spike)
 
   Epic bo'yicha:
     EPIC 0  Poydevor .................  5 / 5    [█████]
     EPIC 1  DB sxemasi ............... 10 / 10   [██████████]
-    EPIC 2  Auth + filial izolyatsiyasi  4 / 5    [████·]
-    EPIC 3  Katalog ..................  7 / 8    [███████·]
+    EPIC 2  Auth + filial izolyatsiyasi  4 / 4    [████]  (B-016 bekor)
+    EPIC 3  Katalog ..................  8 / 8    [████████]
     EPIC 4  Kalkulyator ..............  4 / 4    [████]
     EPIC 5  Buyurtma .................  4 / 4    [████]
-    EPIC 6  To'lov (mock) ............  0 / 3    [···]
-    EPIC 7  Moliya ...................  0 / 2    [··]
-    EPIC 8  Bildirishnoma ............  0 / 4    [····]
-    EPIC 9  Filial/Hamkor/Menejer ....  0 / 6    [······]
+    EPIC 6  To'lov (mock) ............  3 / 3    [███]
+    EPIC 7  Moliya ...................  2 / 2    [██]
+    EPIC 8  Bildirishnoma ............  4 / 4    [████]
+    EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  0 / 2    [··]
     EPIC 11 Sifat ....................  0 / 5    [·····]
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  B-032 · PaymentProvider interfeysi
-                 (B-055 kutmoqda — B-036 ga bog‘liq, u hali yo‘q)
+  KEYINGI TASK:  B-046 · Unit testlar (kritik mantiq)
+                 (B-044 bloklangan → B-045 ham kutadi)
   ──────────────────────────────────────────────────────────────────────────

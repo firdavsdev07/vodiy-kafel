@@ -319,6 +319,8 @@ async function main() {
         sqmPerPallet: sqm,
         weightPerPallet: kg,
         viewCount: (i + 1) * 37,
+        // Seed katalogi — "yangi" emas: mijozlarga e'lon qilinmaydi (B-040).
+        announcedAt: new Date(),
         // Zaxira — FAQAT markaziy omborda, mahsulotga bitta son (TZ 3.2, 3.7.1)
         stock: { create: { stockPallets: p.zaxira, lowStockThreshold: 20 } },
         media: {

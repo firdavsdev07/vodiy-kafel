@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   paginate,
   type PaginatedResult,
@@ -11,6 +12,7 @@ import {
 import { ProductSortField, SortOrder } from '../../common/enums';
 import { slugify } from '../../common/utils';
 import { Prisma, PrismaService } from '../../prisma';
+import { AppEvent, type ProductActivatedEvent } from '../notifications/events';
 import type {
   CreateProductDto,
   ProductAdminQueryDto,
@@ -71,6 +73,7 @@ export class ProductsAdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stocks: ProductStocksService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async findAll(
@@ -124,6 +127,7 @@ export class ProductsAdminService {
         data: { ...dto, slug },
         select: ADMIN_SELECT,
       });
+      if (row.isActive) this.emitActivated(row.id);
       return this.toDto(row, await this.stocks.getGlobalLowThreshold());
     } catch (error) {
       // Tekshiruv bazaning unique cheklovida: oldindan `findUnique` qilish
@@ -155,7 +159,15 @@ export class ProductsAdminService {
       data: dto,
       select: ADMIN_SELECT,
     });
+    if (dto.isActive === true) this.emitActivated(row.id);
     return this.toDto(row, await this.stocks.getGlobalLowThreshold());
+  }
+
+  /** Yangi mahsulot e'loni (B-040) — bir martalikni tinglovchi ta'minlaydi. */
+  private emitActivated(productId: string): void {
+    this.events.emit(AppEvent.ProductActivated, {
+      productId,
+    } satisfies ProductActivatedEvent);
   }
 
   /**

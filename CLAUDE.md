@@ -227,6 +227,8 @@ src/modules/<nom>/
   Global `enableImplicitConversion` `"false"` ni `true` ga aylantiradi
 - Pul va pulga ko'paytiriladigan o'nlik son — satr,
   `@IsPositiveDecimalString(butun, o'nlik)` bilan (`common/validators`)
+- `@Roles` metodga ham, klassga ham qo'yiladi (metodniki ustun). Rol
+  talab qiladigan har bir controller `@UseGuards(JwtAuthGuard, RolesGuard)`
 - Controller ichida biznes-mantiq **yozilmaydi** — faqat service chaqiriladi
 - Prisma raw query ishlatilmaydi (kerak bo'lsa — parametrli)
 - Ko'p yozuvli operatsiyalar `$transaction` ichida
@@ -253,6 +255,9 @@ Lekin **ta'rif joyi ikki xil**:
 
 ## Muhit
 
+⚠ Node **≥ 24.9** kerak: `@nestjs/config`/`@nestjs/jwt` faqat ESM, jest ularni
+faqat shu versiyadan boshlab yuklay oladi (22 da testlarning ko'pi ishga tushmaydi).
+
 ```bash
 pnpm start:dev      # ishga tushirish
 pnpm build          # kompilyatsiya
@@ -278,6 +283,8 @@ Yuklangan fayllar `UPLOAD_DIR` (standart `uploads/`, git'da yo'q) papkasida,
 
 `/dev/*` endpointlar (mock to'lovni simulyatsiya qilish) faqat
 `NODE_ENV=development` da ro'yxatdan o'tadi.
+Mock to'lov: `POST /dev/payments/:id/simulate { status: PAID|FAILED }`;
+`PAYMENT_MOCK_AUTO_PAID=true` — 10 soniyada avtomatik PAID.
 
 ## Ochiq savollar
 

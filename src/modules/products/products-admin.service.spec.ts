@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, PrismaService } from '../../prisma';
 import { SettingsService } from '../settings/settings.service';
@@ -50,7 +51,10 @@ describe('ProductsAdminService (B-021)', () => {
     weightPerPallet: '32.5',
   };
 
+  let events: { emit: jest.Mock };
+
   beforeEach(async () => {
+    events = { emit: jest.fn() };
     prisma = {
       product: {
         count: jest.fn().mockResolvedValue(1),
@@ -74,6 +78,7 @@ describe('ProductsAdminService (B-021)', () => {
           useValue: { get: jest.fn().mockResolvedValue(20) },
         },
         { provide: PrismaService, useValue: prisma },
+        { provide: EventEmitter2, useValue: events },
       ],
     }).compile();
 
@@ -164,6 +169,33 @@ describe('ProductsAdminService (B-021)', () => {
       await expect(service.create(createDto)).rejects.toBeInstanceOf(
         ConflictException,
       );
+    });
+  });
+
+  describe('🆕 product.activated (B-040)', () => {
+    it('faol yaratilsa — chiqariladi', async () => {
+      await service.create(createDto);
+      expect(events.emit).toHaveBeenCalledWith('product.activated', {
+        productId: 'p1',
+      });
+    });
+
+    it('bazadan nofaol qaytsa — chiqmaydi', async () => {
+      prisma.product.create.mockResolvedValueOnce(row({ isActive: false }));
+      await service.create(createDto);
+      expect(events.emit).not.toHaveBeenCalled();
+    });
+
+    it('update isActive: true — chiqariladi; boshqa maydon — yo‘q', async () => {
+      await service.update('p1', { color: 'Oq' });
+      expect(events.emit).not.toHaveBeenCalled();
+      await service.update('p1', { isActive: true });
+      expect(events.emit).toHaveBeenCalledTimes(1);
+    });
+
+    it('soft delete — chiqmaydi', async () => {
+      await service.softDelete('p1');
+      expect(events.emit).not.toHaveBeenCalled();
     });
   });
 

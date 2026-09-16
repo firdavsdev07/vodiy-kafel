@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -6,6 +6,7 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -19,7 +20,11 @@ import { ApiDataResponse } from '../../common';
 import { ApiErrorDto } from '../../common/dto/api-error.dto';
 import type { Actor } from '../../common/types/actor';
 import { BEARER_AUTH, SwaggerTag } from '../../swagger/tags';
-import { CreateOrderDto, OrderCustomerResponseDto } from './dto';
+import {
+  CreateOrderDto,
+  ManagerContactDto,
+  OrderCustomerResponseDto,
+} from './dto';
 import { OrdersService } from './orders.service';
 
 /**
@@ -78,5 +83,24 @@ export class OrdersController {
     @Body() dto: CreateOrderDto,
   ): Promise<OrderCustomerResponseDto> {
     return this.orders.create(actor, dto);
+  }
+
+  @Get(':id/manager-contact')
+  @ApiOperation({
+    summary: 'Buyurtma menejeri bilan bog‘lanish',
+    description:
+      'Menejer ismi va Telegram havolasi (TZ 3.12). Faqat o‘z buyurtmasi.',
+  })
+  @ApiParam({ name: 'id', description: 'Buyurtma ID' })
+  @ApiDataResponse(ManagerContactDto, { description: 'Menejer' })
+  @ApiNotFoundResponse({
+    description: 'Buyurtma topilmadi yoki menejer hali biriktirilmagan',
+    type: ApiErrorDto,
+  })
+  managerContact(
+    @CurrentActor() actor: Actor,
+    @Param('id') id: string,
+  ): Promise<ManagerContactDto> {
+    return this.orders.managerContact(actor, id);
   }
 }

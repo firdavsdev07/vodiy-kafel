@@ -4,10 +4,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BranchScopeService } from '../../auth/branch-scope.service';
-import type { OrderStatus } from '../../common/enums';
+import {
+  AccountTransactionType,
+  OrderStatus,
+  PaymentStatus,
+} from '../../common/enums';
 import type { Actor } from '../../common/types/actor';
 import { PrismaService } from '../../prisma';
+import { AccountLedgerService } from '../accounts/account-ledger.service';
+import {
+  AppEvent,
+  type OrderStatusChangedEvent,
+} from '../notifications/events';
 import type {
   ChangeOrderStatusDto,
   OrderStatusChangeResponseDto,
@@ -42,6 +52,8 @@ export class OrderStatusService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly branchScope: BranchScopeService,
+    private readonly ledger: AccountLedgerService,
+    private readonly events: EventEmitter2,
   ) {}
 
   async change(
@@ -51,7 +63,13 @@ export class OrderStatusService {
   ): Promise<OrderStatusChangeResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { status: true, branchId: true, transportTypeId: true },
+      select: {
+        status: true,
+        branchId: true,
+        transportTypeId: true,
+        customerId: true,
+        orderNumber: true,
+      },
     });
     if (!order) throw new NotFoundException(ORDER_NOT_FOUND);
 
@@ -99,8 +117,47 @@ export class OrderStatusService {
           note: dto.note ?? null,
         },
       });
+
+      // Bekor qilingan buyurtma to'lanmaydi (B-034): kutilayotgan to'lov
+      // ham bekor. Kechikib kelgan "to'landi" webhook'i endi IGNORED bo'ladi
+      // va qo'lda tekshirish uchun ogohlantirish yoziladi. PAID to'lov
+      // o'zgarmaydi — pulni qaytarish teskari ADJUSTMENT bilan (qoida 9).
+      if (dto.status === OrderStatus.CANCELLED) {
+        await tx.payment.updateMany({
+          where: { orderId, status: PaymentStatus.PENDING },
+          data: { status: PaymentStatus.CANCELLED },
+        });
+
+        // Qarzni qaytarish (B-035): buyurtma bo'yicha yozilgan qarz qancha
+        // bo'lsa, shuncha teskari ADJUSTMENT. Summa buyurtmadan emas,
+        // HISOBDAN olinadi — qarz yozilmagan eski buyurtmada ikki marta
+        // "kamaytirib" yubormaslik uchun. To'langan pul qaytmaydi: mijozda
+        // avans (manfiy balans) qoladi, qaytarish — alohida ADJUSTMENT.
+        if (order.customerId) {
+          const { _sum } = await tx.accountTransaction.aggregate({
+            where: { orderId, type: AccountTransactionType.DEBT },
+            _sum: { amount: true },
+          });
+          if (_sum.amount?.isPositive() && !_sum.amount.isZero()) {
+            await this.ledger.record(tx, {
+              customerId: order.customerId,
+              type: AccountTransactionType.ADJUSTMENT,
+              amount: _sum.amount.neg(),
+              orderId,
+              createdByUserId: actor?.type === 'USER' ? actor.id : null,
+              note: `Buyurtma ${order.orderNumber} bekor qilindi`,
+            });
+          }
+        }
+      }
     });
 
+    this.events.emit(AppEvent.OrderStatusChanged, {
+      orderId,
+      from: order.status,
+      to: dto.status,
+      note: dto.note ?? null,
+    } satisfies OrderStatusChangedEvent);
     return this.getAdminStatus(orderId);
   }
 

@@ -192,3 +192,17 @@ export class CustomerOrderListItemDto {
   })
   updatedAt!: Date;
 }
+
+/** Buyurtma menejeri bilan bog'lanish (B-043, TZ 3.12). */
+export class ManagerContactDto {
+  @ApiProperty({ example: 'Farg‘ona menejeri' })
+  fullName!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://t.me/vk_fargona',
+    description: 'Telegram havolasi; menejerda username yo‘q bo‘lsa — `null`',
+  })
+  telegramUrl!: string | null;
+}

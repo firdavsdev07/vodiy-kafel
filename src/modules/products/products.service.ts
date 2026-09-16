@@ -145,6 +145,21 @@ export class ProductsService {
   }
 
   /**
+   * Ko'rishlar soni (B-040, TZ 3.6 — ❓ "B varianti": oddiy hisoblagich).
+   * Faqat vitrinada ko'rinadigan mahsulot; aks holda 404. Bitta atomar
+   * `UPDATE … SET view_count = view_count + 1` — parallel so'rovlar yo'qolmaydi.
+   *
+   * 🔁 Bir odamning qayta-qayta bosishi / bot — rate limiting (B-049).
+   */
+  async recordView(slug: string): Promise<void> {
+    const { count } = await this.prisma.product.updateMany({
+      where: { slug, ...this.visibilityWhere() },
+      data: { viewCount: { increment: 1 } },
+    });
+    if (count === 0) throw new NotFoundException('Mahsulot topilmadi');
+  }
+
+  /**
    * Ochiq katalogda nima ko'rinadi.
    *
    * Mahsulotning o'zi faol bo'lishi YETARLI EMAS — zavodi ham faol bo'lishi

@@ -67,6 +67,16 @@ export const envSchema = z.object({
   // Yuklangan fayllar papkasi (loyiha ildiziga nisbatan yoki absolyut yo'l).
   // `/uploads/...` manzili orqali beriladi.
   UPLOAD_DIR: z.string().min(1).default('uploads'),
+
+  // — To'lov (B-033) —
+  // Onlayn to'lov provayderi. Hozircha faqat `mock`; haqiqiysi B-050 da.
+  PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
+  // true — mock to'lov yaratilgach 10 soniyadan keyin o'zi PAID bo'ladi
+  // (frontend oqimini qo'lsiz sinash uchun).
+  PAYMENT_MOCK_AUTO_PAID: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

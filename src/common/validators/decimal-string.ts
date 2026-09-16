@@ -27,3 +27,21 @@ export const IsPositiveDecimalString = (integerDigits: number, scale: number) =>
       },
     ),
   );
+
+/**
+ * Noldan farqli, ISHORALI o'nlik son — satr (`"-15000.50"`, `"2000"`).
+ * Qoidalar `IsPositiveDecimalString` bilan bir xil, faqat oldida `-`
+ * bo'lishi mumkin (masalan hisob tuzatishi — ADJUSTMENT).
+ */
+export const IsNonZeroDecimalString = (integerDigits: number, scale: number) =>
+  applyDecorators(
+    IsString(),
+    Matches(
+      new RegExp(
+        `^-?(?!0+(?:\\.0+)?$)\\d{1,${integerDigits}}(?:\\.\\d{1,${scale}})?$`,
+      ),
+      {
+        message: `$property noldan farqli son bo‘lishi kerak (satr ko‘rinishida, ishorasi bilan, butun qismi ${integerDigits} tagacha, verguldan keyin ${scale} tagacha raqam)`,
+      },
+    ),
+  );

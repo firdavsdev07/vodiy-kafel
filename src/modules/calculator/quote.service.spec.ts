@@ -9,6 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BranchScopeService } from '../../auth/branch-scope.service';
 import { CustomerOnlyGuard } from '../../auth/guards/customer-only.guard';
 import {
+  BranchType,
   PricingDomain,
   PricingScope,
   PricingValueType,
@@ -27,6 +28,7 @@ describe('QuoteService (B-027)', () => {
   let service: QuoteService;
   let prisma: {
     customer: { findUnique: jest.Mock };
+    branch: { findUnique: jest.Mock };
     branchProduct: { findMany: jest.Mock };
   };
   let delivery: { requireActiveTariff: jest.Mock };
@@ -54,7 +56,15 @@ describe('QuoteService (B-027)', () => {
 
   beforeEach(async () => {
     prisma = {
-      customer: { findUnique: jest.fn().mockResolvedValue({ isActive: true }) },
+      customer: {
+        findUnique: jest.fn().mockResolvedValue({
+          isActive: true,
+          branchId: 'fargona',
+          managerId: null,
+          branch: { type: BranchType.RETAIL },
+        }),
+      },
+      branch: { findUnique: jest.fn().mockResolvedValue({ isActive: true }) },
       branchProduct: {
         findMany: jest.fn().mockResolvedValue([branchProduct('p1')]),
       },

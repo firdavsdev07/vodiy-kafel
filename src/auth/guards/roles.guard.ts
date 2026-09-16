@@ -8,10 +8,13 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>(
-      'roles',
+    // Metod darajasidagi @Roles klass darajasidagidan ustun. ⚠ Avval faqat
+    // metod o'qilardi — klassga qo'yilgan @Roles JIMGINA e'tiborsiz qolib,
+    // endpoint har qanday tokenga ochiq bo'lib qolardi (B-043 da topildi).
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
     if (!requiredRoles) return true;
 
     const request = context.switchToHttp().getRequest<Request>();

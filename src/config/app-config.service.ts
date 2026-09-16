@@ -78,6 +78,17 @@ export class AppConfigService {
     return this.get('UPLOAD_DIR');
   }
 
+  // — To'lov —
+  get payment(): {
+    provider: Env['PAYMENT_PROVIDER'];
+    mockAutoPaid: boolean;
+  } {
+    return {
+      provider: this.get('PAYMENT_PROVIDER'),
+      mockAutoPaid: this.get('PAYMENT_MOCK_AUTO_PAID'),
+    };
+  }
+
   // — CORS —
   /** '*' bo'lsa true (hamma ruxsat), aks holda domenlar ro'yxati */
   get corsOrigins(): string[] | true {

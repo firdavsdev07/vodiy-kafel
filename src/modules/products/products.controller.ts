@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import {
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiParam,
@@ -111,5 +112,25 @@ export class ProductsController {
     @Query() query: SimilarProductsQueryDto,
   ): Promise<ProductListItemResponseDto[]> {
     return this.similarProducts.findPublic(slug, query.limit);
+  }
+
+  @Post(':slug/view')
+  @HttpCode(204)
+  @ApiOperation({
+    summary: 'Ko‘rishni hisoblash',
+    description:
+      'Mahsulot sahifasi haqiqatan ochilganda frontend BIR MARTA chaqiradi ' +
+      '(token shart emas). Javob tanasi yo‘q.\n\n' +
+      'Soni ochiq javoblarda ko‘rsatilmaydi — "o‘xshash mahsulotlar" ' +
+      'saralashi va admin statistikasi uchun.',
+  })
+  @ApiParam({ name: 'slug', example: 'lyuks-keramogranit-60x60' })
+  @ApiNoContentResponse({ description: 'Hisoblandi' })
+  @ApiNotFoundResponse({
+    description: 'Mahsulot topilmadi yoki vitrinada yo‘q',
+    type: ApiErrorDto,
+  })
+  recordView(@Param('slug') slug: string): Promise<void> {
+    return this.productsService.recordView(slug);
   }
 }

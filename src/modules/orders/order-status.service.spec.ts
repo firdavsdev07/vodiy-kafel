@@ -3,11 +3,13 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BranchScopeService } from '../../auth/branch-scope.service';
-import { OrderStatus, UserRole } from '../../common/enums';
+import { OrderStatus, PaymentStatus, UserRole } from '../../common/enums';
 import type { Actor } from '../../common/types/actor';
-import { PrismaService } from '../../prisma';
+import { Prisma, PrismaService } from '../../prisma';
+import { AccountLedgerService } from '../accounts/account-ledger.service';
 import { allowedNextStatuses, canTransition } from './order-status';
 import { OrderStatusService, phoneKey } from './order-status.service';
 
@@ -75,10 +77,14 @@ describe('phoneKey', () => {
 
 describe('OrderStatusService (B-029)', () => {
   let service: OrderStatusService;
+  let events: { emit: jest.Mock };
   let tx: {
     order: { updateMany: jest.Mock };
     orderStatusHistory: { create: jest.Mock };
+    payment: { updateMany: jest.Mock };
+    accountTransaction: { aggregate: jest.Mock };
   };
+  let ledger: { record: jest.Mock };
   let prisma: {
     order: { findUnique: jest.Mock; findUniqueOrThrow: jest.Mock };
     $transaction: jest.Mock;
@@ -101,14 +107,24 @@ describe('OrderStatusService (B-029)', () => {
     status: S.NEW,
     branchId: 'andijon',
     transportTypeId: 'fura',
+    customerId: 'c1',
+    orderNumber: 'VK-2026-000001',
     ...over,
   });
 
   beforeEach(async () => {
+    events = { emit: jest.fn() };
     tx = {
       order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
       orderStatusHistory: { create: jest.fn().mockResolvedValue({}) },
+      payment: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      accountTransaction: {
+        aggregate: jest.fn().mockResolvedValue({
+          _sum: { amount: new Prisma.Decimal('500000') },
+        }),
+      },
     };
+    ledger = { record: jest.fn().mockResolvedValue(undefined) };
     prisma = {
       order: {
         findUnique: jest.fn().mockResolvedValue(order()),
@@ -128,6 +144,8 @@ describe('OrderStatusService (B-029)', () => {
         OrderStatusService,
         BranchScopeService,
         { provide: PrismaService, useValue: prisma },
+        { provide: EventEmitter2, useValue: events },
+        { provide: AccountLedgerService, useValue: ledger },
       ],
     }).compile();
 
@@ -210,6 +228,83 @@ describe('OrderStatusService (B-029)', () => {
         service.change(superAdmin, 'o1', { status: S.CANCELLED }),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(tx.orderStatusHistory.create).not.toHaveBeenCalled();
+      expect(tx.payment.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('bekor qilish — kutilayotgan to‘lovlar ham CANCELLED (B-034), PAID ga tegilmaydi', async () => {
+      await service.change(superAdmin, 'o1', { status: S.CANCELLED });
+      expect(tx.payment.updateMany).toHaveBeenCalledWith({
+        where: { orderId: 'o1', status: PaymentStatus.PENDING },
+        data: { status: PaymentStatus.CANCELLED },
+      });
+    });
+
+    it('🆕 order.status.changed — eski/yangi holat va izoh bilan (B-037)', async () => {
+      await service.change(andijonManager, 'o1', {
+        status: S.SEARCHING_TRANSPORT,
+        note: 'Mashina qidirilmoqda',
+      });
+      expect(events.emit).toHaveBeenCalledWith('order.status.changed', {
+        orderId: 'o1',
+        from: S.NEW,
+        to: S.SEARCHING_TRANSPORT,
+        note: 'Mashina qidirilmoqda',
+      });
+    });
+
+    it('rad etilgan o‘tish / poyga — hodisa chiqmaydi', async () => {
+      tx.order.updateMany.mockResolvedValueOnce({ count: 0 });
+      await expect(
+        service.change(superAdmin, 'o1', { status: S.CANCELLED }),
+      ).rejects.toBeDefined();
+      await expect(
+        service.change(superAdmin, 'o1', { status: S.DELIVERED }),
+      ).rejects.toBeDefined();
+      expect(events.emit).not.toHaveBeenCalled();
+    });
+
+    it('boshqa o‘tishda to‘lovlarga va hisobga tegilmaydi', async () => {
+      await service.change(superAdmin, 'o1', { status: S.SEARCHING_TRANSPORT });
+      expect(tx.payment.updateMany).not.toHaveBeenCalled();
+      expect(ledger.record).not.toHaveBeenCalled();
+    });
+
+    it('bekor qilish — yozilgan qarz teskari ADJUSTMENT bilan qaytadi (B-035)', async () => {
+      await service.change(superAdmin, 'o1', { status: S.CANCELLED });
+
+      expect(tx.accountTransaction.aggregate).toHaveBeenCalledWith({
+        where: { orderId: 'o1', type: 'DEBT' },
+        _sum: { amount: true },
+      });
+      const [txArg, entry] = ledger.record.mock.calls[0] as [
+        unknown,
+        { amount: Prisma.Decimal } & Record<string, unknown>,
+      ];
+      expect(txArg).toBe(tx);
+      expect(entry).toMatchObject({
+        customerId: 'c1',
+        type: 'ADJUSTMENT',
+        orderId: 'o1',
+        createdByUserId: 'u0',
+      });
+      expect(entry.amount.toString()).toBe('-500000');
+    });
+
+    it('bekor qilish — qarz yozilmagan (eski) buyurtma: ADJUSTMENT yo‘q', async () => {
+      tx.accountTransaction.aggregate.mockResolvedValueOnce({
+        _sum: { amount: null },
+      });
+      await service.change(superAdmin, 'o1', { status: S.CANCELLED });
+      expect(ledger.record).not.toHaveBeenCalled();
+    });
+
+    it('bekor qilish — hisobsiz xaridor: hisobga tegilmaydi', async () => {
+      prisma.order.findUnique.mockResolvedValueOnce(
+        order({ customerId: null }),
+      );
+      await service.change(superAdmin, 'o1', { status: S.CANCELLED });
+      expect(tx.accountTransaction.aggregate).not.toHaveBeenCalled();
+      expect(ledger.record).not.toHaveBeenCalled();
     });
   });
 

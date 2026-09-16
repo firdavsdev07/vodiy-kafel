@@ -1,11 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { randomUUID } from 'node:crypto';
 import {
+  AccountTransactionType,
   OrderingType,
   OrderSource,
   OrderStatus,
@@ -17,13 +20,20 @@ import {
 } from '../../common/dto/paginated-response.dto';
 import type { Actor } from '../../common/types/actor';
 import { Prisma, PrismaService } from '../../prisma';
+import { AccountLedgerService } from '../accounts/account-ledger.service';
 import { QuoteService } from '../calculator/quote.service';
+import { AppEvent, type OrderCreatedEvent } from '../notifications/events';
 import type {
   CreateOrderDto,
   CustomerOrderListItemDto,
   CustomerOrderQueryDto,
+  ManagerContactDto,
   OrderCustomerResponseDto,
 } from './dto';
+import {
+  MANAGER_ASSIGNMENT_STRATEGY,
+  type ManagerAssignmentStrategy,
+} from './manager-assignment';
 import { formatOrderNumber } from './order-number';
 
 export const ORDER_SELECT = {
@@ -95,7 +105,9 @@ export interface PlaceOrderInput {
   branchId: string;
   buyer:
     | { customerId: string; isAgent: boolean }
-    | { guestName: string; guestPhone: string };
+    | { guestName: string; guestPhone: string }
+    /** Filialning markaziy omborga ta'minot buyurtmasi (B-058). */
+    | { orderingBranchId: string };
   managerId: string | null;
   source: OrderSource;
   isUrgent: boolean;
@@ -112,6 +124,10 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly quotes: QuoteService,
+    private readonly ledger: AccountLedgerService,
+    private readonly events: EventEmitter2,
+    @Inject(MANAGER_ASSIGNMENT_STRATEGY)
+    private readonly assignment: ManagerAssignmentStrategy,
   ) {}
 
   /**
@@ -167,6 +183,12 @@ export class OrdersService {
       { regionId: draft.regionId, transportTypeId: draft.transportTypeId },
     );
 
+    // Menejer (B-043): afzal xodim yaroqli bo'lsa — u, aks holda strategiya.
+    const managerId = await this.assignment.pick({
+      branchId: input.branchId,
+      preferredManagerId: input.managerId,
+    });
+
     const stocks = await this.prisma.productStock.findMany({
       where: { productId: { in: result.items.map((item) => item.productId) } },
       select: { productId: true, stockPallets: true },
@@ -194,11 +216,16 @@ export class OrdersService {
               ? OrderingType.AGENT
               : OrderingType.CUSTOMER,
           }
-        : {
-            guestName: input.buyer.guestName,
-            guestPhone: input.buyer.guestPhone,
-            orderingType: OrderingType.CUSTOMER,
-          };
+        : 'orderingBranchId' in input.buyer
+          ? {
+              orderingType: OrderingType.BRANCH,
+              orderingBranchId: input.buyer.orderingBranchId,
+            }
+          : {
+              guestName: input.buyer.guestName,
+              guestPhone: input.buyer.guestPhone,
+              orderingType: OrderingType.CUSTOMER,
+            };
 
     const year = new Date().getUTCFullYear();
 
@@ -212,12 +239,12 @@ export class OrdersService {
         select: { lastValue: true },
       });
 
-      return tx.order.create({
+      const created = await tx.order.create({
         data: {
           orderNumber: formatOrderNumber(year, counter.lastValue),
           ...buyerData,
           branchId: input.branchId,
-          managerId: input.managerId,
+          managerId,
           source: input.source,
           status: OrderStatus.NEW,
           isUrgent: input.isUrgent,
@@ -258,11 +285,62 @@ export class OrdersService {
             },
           },
         },
-        select: { id: true },
+        select: { id: true, orderNumber: true },
       });
+
+      // Qarz buyurtma berilgan paytda yoziladi (B-035, TZ 3.11): mijoz
+      // hisobida "sotib olingan" = buyurtma qilingan. Bekor qilinsa —
+      // teskari ADJUSTMENT (OrderStatusService). Hisobsiz xaridorda hisob yo'q.
+      if ('customerId' in input.buyer) {
+        await this.ledger.record(tx, {
+          customerId: input.buyer.customerId,
+          type: AccountTransactionType.DEBT,
+          amount: result.grandTotal,
+          orderId: created.id,
+          createdByUserId: input.createdByUserId,
+          note: `Buyurtma ${created.orderNumber}`,
+        });
+      }
+      return created;
     });
 
+    // Tranzaksiyadan KEYIN: tinglovchi saqlangan buyurtmani o'qiydi (B-037).
+    this.events.emit(AppEvent.OrderCreated, {
+      orderId: order.id,
+    } satisfies OrderCreatedEvent);
     return order.id;
+  }
+
+  /**
+   * Buyurtma menejeri bilan bog'lanish (B-043, TZ 3.12) — mijoz Telegram
+   * orqali yozadi. 🔒 Faqat o'z buyurtmasi (qoida 6); telefon (xodimning
+   * login identifikatori) berilmaydi.
+   */
+  async managerContact(
+    actor: Actor | undefined,
+    orderId: string,
+  ): Promise<ManagerContactDto> {
+    const { customerId } = await this.quotes.requireCustomer(actor);
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, customerId },
+      select: {
+        manager: {
+          select: { fullName: true, telegramUsername: true, isActive: true },
+        },
+      },
+    });
+    if (!order) throw new NotFoundException('Buyurtma topilmadi');
+    if (!order.manager?.isActive) {
+      throw new NotFoundException('Buyurtmaga hali menejer biriktirilmagan');
+    }
+    const username = order.manager.telegramUsername?.replace(/^@/, '');
+    return {
+      fullName: order.manager.fullName,
+      telegramUrl:
+        username && /^[A-Za-z0-9_]{5,32}$/.test(username)
+          ? `https://t.me/${username}`
+          : null,
+    };
   }
 
   /**

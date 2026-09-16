@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BranchType,
@@ -21,11 +22,16 @@ import { PricingResolverService } from '../pricing/pricing-resolver.service';
 import { CustomerOrderQueryDto, type CreateOrderDto } from './dto';
 import { formatOrderNumber } from './order-number';
 import { OrdersService } from './orders.service';
+import { AccountLedgerService } from '../accounts/account-ledger.service';
+import { MANAGER_ASSIGNMENT_STRATEGY } from './manager-assignment';
 
 /** B-028 · buyurtma yaratish. */
 describe('OrdersService (B-028)', () => {
   let service: OrdersService;
+  let events: { emit: jest.Mock };
   let quotes: { requireCustomer: jest.Mock; build: jest.Mock };
+  let ledger: { record: jest.Mock };
+  let assignment: { pick: jest.Mock };
   let tx: {
     orderNumberCounter: { upsert: jest.Mock };
     order: { create: jest.Mock };
@@ -111,17 +117,32 @@ describe('OrdersService (B-028)', () => {
   };
 
   beforeEach(async () => {
+    events = { emit: jest.fn() };
     quotes = {
-      requireCustomer: jest
-        .fn()
-        .mockResolvedValue({ customerId: 'c1', branchId: 'fargona' }),
+      requireCustomer: jest.fn().mockResolvedValue({
+        customerId: 'c1',
+        branchId: 'fargona',
+        managerId: 'm1',
+        isAgent: false,
+      }),
       build: jest.fn().mockResolvedValue(built()),
     };
     tx = {
       orderNumberCounter: {
         upsert: jest.fn().mockResolvedValue({ lastValue: 7 }),
       },
-      order: { create: jest.fn().mockResolvedValue({ id: 'o1' }) },
+      order: {
+        create: jest
+          .fn()
+          .mockResolvedValue({ id: 'o1', orderNumber: 'VK-2026-000007' }),
+      },
+    };
+    ledger = { record: jest.fn().mockResolvedValue(undefined) };
+    assignment = {
+      pick: jest.fn(
+        ({ preferredManagerId }: { preferredManagerId: string | null }) =>
+          Promise.resolve(preferredManagerId),
+      ),
     };
     prisma = {
       productStock: {
@@ -149,6 +170,9 @@ describe('OrdersService (B-028)', () => {
         OrdersService,
         { provide: QuoteService, useValue: quotes },
         { provide: PrismaService, useValue: prisma },
+        { provide: EventEmitter2, useValue: events },
+        { provide: AccountLedgerService, useValue: ledger },
+        { provide: MANAGER_ASSIGNMENT_STRATEGY, useValue: assignment },
       ],
     }).compile();
 
@@ -305,15 +329,60 @@ describe('OrdersService (B-028)', () => {
   });
 
   it('markaziy omborga biriktirilgan mijoz — AGENT', async () => {
-    prisma.customer.findUniqueOrThrow.mockResolvedValueOnce({
+    quotes.requireCustomer.mockResolvedValueOnce({
+      customerId: 'c1',
+      branchId: 'central',
       managerId: null,
-      branch: { type: BranchType.CENTRAL },
+      isAgent: true,
     });
     await service.create(actor, dto());
     expect(orderData()).toMatchObject({
       orderingType: OrderingType.AGENT,
       managerId: null,
     });
+  });
+
+  it('mijoz hisobiga QARZ (DEBT = grandTotal) — shu tranzaksiyada (B-035)', async () => {
+    await service.create(actor, dto());
+    expect(ledger.record).toHaveBeenCalledTimes(1);
+    const [txArg, entry] = ledger.record.mock.calls[0] as [
+      unknown,
+      { amount: { toString(): string } } & Record<string, unknown>,
+    ];
+    expect(txArg).toBe(tx);
+    expect(entry).toMatchObject({
+      customerId: 'c1',
+      type: 'DEBT',
+      orderId: 'o1',
+      note: 'Buyurtma VK-2026-000007',
+    });
+    expect(entry.amount.toString()).toBe('1123200');
+  });
+
+  it('🆕 order.created — tranzaksiyadan KEYIN, faqat ID bilan (B-037)', async () => {
+    await service.create(actor, dto());
+    expect(events.emit).toHaveBeenCalledWith('order.created', {
+      orderId: 'o1',
+    });
+    const emitOrder = events.emit.mock.invocationCallOrder[0];
+    const txOrder = prisma.$transaction.mock.invocationCallOrder[0];
+    expect(emitOrder).toBeGreaterThan(txOrder);
+  });
+
+  it('tranzaksiya yiqilsa — hodisa chiqmaydi', async () => {
+    tx.order.create.mockRejectedValueOnce(new Error('db'));
+    await expect(service.create(actor, dto())).rejects.toThrow('db');
+    expect(events.emit).not.toHaveBeenCalled();
+  });
+
+  it('🆕 menejer strategiyadan (B-043): afzal — mijoz menejeri', async () => {
+    assignment.pick.mockResolvedValueOnce('m-auto');
+    await service.create(actor, dto());
+    expect(assignment.pick).toHaveBeenCalledWith({
+      branchId: 'fargona',
+      preferredManagerId: 'm1',
+    });
+    expect(orderData()).toMatchObject({ managerId: 'm-auto' });
   });
 
   it('javob — mijoz ko‘rinishi, summalar satr', async () => {

@@ -291,6 +291,11 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  /// Optom mijozlarga "yangi mahsulot" deb e'lon qilingan vaqt (B-040).
+  /// ⚠ Bir marta: yozish `WHERE announced_at IS NULL` bilan — mahsulot
+  ///   o'chirib-yoqilsa yoki ikki admin bir vaqtda yoqsa, qayta yuborilmaydi.
+  announcedAt DateTime? @map("announced_at")
+
   branchProducts BranchProduct[]
   media          ProductMedia[]
   galleryItems   GalleryItem[]

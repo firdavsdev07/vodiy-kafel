@@ -20,6 +20,7 @@ describe('ProductsService (B-020)', () => {
   let findMany: jest.Mock;
   let findFirst: jest.Mock;
   let count: jest.Mock;
+  let updateMany: jest.Mock;
 
   const row = (over: Record<string, unknown> = {}) => ({
     id: 'p1',
@@ -48,13 +49,14 @@ describe('ProductsService (B-020)', () => {
     findMany = jest.fn().mockResolvedValue([]);
     findFirst = jest.fn();
     count = jest.fn().mockResolvedValue(0);
+    updateMany = jest.fn().mockResolvedValue({ count: 1 });
 
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
         {
           provide: PrismaService,
-          useValue: { product: { findMany, findFirst, count } },
+          useValue: { product: { findMany, findFirst, count, updateMany } },
         },
       ],
     }).compile();
@@ -298,6 +300,27 @@ describe('ProductsService (B-020)', () => {
     it('bo‘sh ro‘yxat — bazaga bormaydi', async () => {
       expect(await service.findListItemsByIds([])).toEqual([]);
       expect(findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('recordView (B-040)', () => {
+    it('faqat ko‘rinadigan mahsulot, atomar +1', async () => {
+      await service.recordView('lyuks');
+      expect(updateMany).toHaveBeenCalledWith({
+        where: {
+          slug: 'lyuks',
+          isActive: true,
+          factory: { isActive: true },
+        },
+        data: { viewCount: { increment: 1 } },
+      });
+    });
+
+    it('topilmadi / vitrinada yo‘q — 404', async () => {
+      updateMany.mockResolvedValueOnce({ count: 0 });
+      await expect(service.recordView('yoq')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });
