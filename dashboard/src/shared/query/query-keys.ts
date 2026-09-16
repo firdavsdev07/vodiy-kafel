@@ -25,7 +25,11 @@ export const queryKeys = {
   /** GET /auth/me — joriy xodim profili (D-006). */
   me: ['auth', 'me'] as const,
 
-  products: domainKeys('products'),
+  products: {
+    ...domainKeys('products'),
+    /** Qo'lda bog'langan o'xshashlar — `products.all` prefiksi ostida (mahsulot o'zgarsa yangilanadi) */
+    similar: (id: string) => ['admin', 'products', 'detail', id, 'similar'] as const,
+  },
   factories: domainKeys('factories'),
   sizes: domainKeys('sizes'),
   media: domainKeys('media'),

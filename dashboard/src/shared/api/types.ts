@@ -25,7 +25,9 @@ export type PathsWith<M extends HttpMethod> = {
 }[ApiPath];
 
 type Params<Op> = Op extends { parameters: infer Ps } ? Ps : never;
-type Field<T, K extends string> = T extends Record<K, infer V> ? V : undefined;
+// `{ query?: {...} }` — openapi-typescript ixtiyoriy qiladi; `Record<K, V>` ixtiyoriy
+// kalitga MOS KELMAYDI (avval shu sabab barcha query turi `never` bo'lib qolgan edi)
+type Field<T, K extends string> = T extends { [P in K]?: infer V } ? V : undefined;
 
 export type QueryOf<P extends ApiPath, M extends HttpMethod> = NonNullable<
   Field<Params<Operation<P, M>>, 'query'>

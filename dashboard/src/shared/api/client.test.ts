@@ -177,6 +177,10 @@ describe('api klient', () => {
       void client.get('/admin/products/{id}');
       // @ts-expect-error — sortBy ro'yxatida yo'q qiymat
       void client.get('/admin/products', { query: { sortBy: 'price' } });
+      // To'g'ri query QABUL qilinadi (D-011 da topilgan: ixtiyoriy `query?` avval `never` edi)
+      void client.get('/admin/products', { query: { sortBy: 'name', page: 2, isActive: true } });
+      // @ts-expect-error — isActive boolean, satr emas
+      void client.get('/admin/products', { query: { isActive: 'true' } });
     };
     expect(typeOnly).toBeTypeOf('function');
     expectTypeOf<Awaited<ReturnType<typeof client.get<'/admin/products'>>>>().toHaveProperty('items');
