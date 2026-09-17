@@ -83,7 +83,11 @@ export interface UploadOptions {
  * Kirish yo'llari: 401 — "parol noto'g'ri"/"refresh yaroqsiz", refresh
  * urinilmaydi va (eskirgan) access token yuborilmaydi.
  */
-const AUTH_ENTRY_PATHS = new Set(['/auth/admin/login', '/auth/refresh']);
+const AUTH_ENTRY_PATHS = new Set([
+  '/auth/admin/login',
+  '/auth/wholesale/login',
+  '/auth/refresh',
+]);
 
 export function buildUrl(
   baseUrl: string,

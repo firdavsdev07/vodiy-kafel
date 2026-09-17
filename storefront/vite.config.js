@@ -13,8 +13,27 @@ export default defineConfig({
     },
   },
   build: {
-    // three/drei are already split out by the lazy import of the WebGL stage,
-    // so no manual chunking is needed on top of it.
-    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        /**
+         * Vendor ajratiladi (S-002). Maqsad — keshlash: React va GSAP
+         * oyiga bir marta ham o'zgarmaydi, sayt kodi esa har deployda
+         * o'zgaradi. Bitta faylda bo'lsa, bitta matn tuzatish butun
+         * 400 KB ni qaytadan yuklatadi.
+         *
+         * ⚠ Bu chunklar BIRINCHI EKRANDA baribir so'raladi: `Layout`
+         *   (Cursor, Lenis, ScrollTrigger) doim mount bo'ladi. GSAP ni
+         *   haqiqatan kechiktirish S-016 (kursor) dan keyin mumkin.
+         */
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react'
+          if (id.includes('react-router')) return 'vendor-router'
+          if (id.includes('lenis')) return 'vendor-lenis'
+          if (id.includes('gsap')) return 'vendor-gsap'
+          return 'vendor'
+        },
+      },
+    },
   },
 })

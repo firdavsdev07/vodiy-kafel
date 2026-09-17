@@ -4,6 +4,7 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { PricingModule } from '../pricing/pricing.module';
 import { CustomersAdminService } from './customers-admin.service';
 import { CustomersAdminController } from './customers.admin.controller';
+import { MeProfileController } from './me-profile.controller';
 import { CustomersService } from './customers.service';
 
 /**
@@ -15,7 +16,7 @@ import { CustomersService } from './customers.service';
  */
 @Module({
   imports: [AuthModule, AccountsModule, PricingModule],
-  controllers: [CustomersAdminController],
+  controllers: [CustomersAdminController, MeProfileController],
   providers: [CustomersService, CustomersAdminService],
   exports: [CustomersService],
 })

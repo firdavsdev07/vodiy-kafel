@@ -5,7 +5,8 @@
 ║                                                                              ║
 ║   Stack : React 19 + Vite + Tailwind v4 + GSAP + Lenis (R3F — o'chiriladi)   ║
 ║   Manba : mavjud kod auditi (2026-09-17) + api/openapi.json + Notion TZ      ║
-║   Doira : OCHIQ SAYT (chakana mijoz va mehmon). Admin panel — dashboard/.    ║
+║   Doira : OCHIQ REKLAMA SAYTI. Hisob YO'Q — xodim paneli ham, optom mijoz    ║
+║           kabineti ham `dashboard/` da (2026-09-17 qarori).                  ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -72,10 +73,18 @@
 ║  GLOBAL QOIDALAR                                                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  G1. CHAKANA MIJOZDA HISOB YO'Q
+  G1. BU SAYTDA UMUMAN HISOB YO'Q  (qaror: 2026-09-17)
       Ro'yxatdan o'tish, kirish, savatcha, checkout — YO'Q (api/CLAUDE.md §4).
       Ochiq katalogda NARX ham, aniq zaxira soni ham KO'RSATILMAYDI —
       faqat `AVAILABLE` / `UNAVAILABLE`. Bu — backend qoidasi, buzilmaydi.
+
+      ⚠ 2026-09-17 QARORI: OPTOM MIJOZ KABINETI HAM BU YERDA EMAS.
+        Kabinet `dashboard/` ichida quriladi (dashboard/task.txt EPIC 10,
+        D-049 … D-060). Storefront — FAQAT reklama/marketing sayti:
+        katalogni ko'rsatadi, ishontiradi, telefon/manzil beradi. Kirish
+        tugmasi, `/auth/wholesale/login` chaqiruvi, `/me/*` so'rovlari —
+        bu paketda YOZILMAYDI. Mijozni kabinetga yo'naltirish kerak
+        bo'lsa — oddiy havola (S-044 da manzil aniqlanadi).
 
   G2. MA'LUMOT — API'DAN, MOCK'DAN EMAS
       `src/data/*.js` vaqtinchalik. EPIC 5 tugagach mahsulot, filial,
@@ -111,7 +120,7 @@
 ║          Bu epicsiz qolgan ish eski yukni ortmoqlab yuradi.                  ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-001 · O'lik kodni va o'lik bog'liqliklarni olib tashlash ─────────────┐
+┌─ [x] S-001 · O'lik kodni va o'lik bog'liqliklarni olib tashlash ─────────────┐
 │                                                                              │
 │  TOPILDI (import izlab tekshirildi — hech qayerda ishlatilmaydi):            │
 │    • `src/three/` — BUTUN papka: Stage.jsx, HeroScene/HeroSculpture.jsx,     │
@@ -140,9 +149,46 @@
 │  Natija: faqat haqiqatan ishlatiladigan kod qoladi                           │
 │  Bog'liq: —                                                                  │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-17                                                    │
+│                                                                              │
+│    O'CHIRILDI (15 ta fayl, hammasi git tarixida qoladi):                     │
+│      • src/three/ — Stage, HeroSculpture, MaterialSlab, MarbleMaterial       │
+│      • src/components/ui/Marquee.jsx, SceneBoundary.jsx                      │
+│      • public/models/ — 836 KB (ceramic-vase.glb + vase/ + 3 tekstura)       │
+│      • public/icons.svg                                                      │
+│      • src/assets/react.svg, vite.svg — Vite shablonidan qolgan              │
+│      • CSS: .ceramic-stage, .ceramic-stage:active, .stage-fallback           │
+│        va mobil .ceramic-stage (faqat o'lik SceneBoundary/Stage ishlatardi)  │
+│                                                                              │
+│    package.json: three, @react-three/fiber, @react-three/drei chiqarildi.    │
+│      pnpm: -61 paket. pnpm-lock.yaml da `three` dan hech nima qolmadi.       │
+│                                                                              │
+│    vite.config.js: `build.chunkSizeWarningLimit` bloki olib tashlandi —      │
+│      uning izohi "three/drei lazy WebGL stage bilan bo'linadi" degan edi,    │
+│      bu endi mavjud bo'lmagan narsaga ishora qilardi.                        │
+│                                                                              │
+│    Hujjatlar (doc drift) tuzatildi:                                          │
+│      • ASSETS.md — "Ceramic model" bo'limi "REMOVED (S-001)" ga aylandi;     │
+│        model CC0 edi, qarz yo'q, kerak bo'lsa git tarixidan qaytariladi      │
+│      • DESIGN.md — hero endi "CC0 ceramic GLB" emas, salom beruvchi          │
+│        yigit surati; "No WebGL anywhere" qatori qo'shildi                    │
+│                                                                              │
+│    ⚠ TASK RO'YXATIDAGI XATO TUZATILDI:                                       │
+│      `src/lib/enquiry.js` O'LIK EMAS — uni `Contact.jsx:7` import qiladi     │
+│      (`submitEnquiry`). O'chirilmadi. U mock, lekin tirik mock va uning      │
+│      taqdiri S-030 (kontakt formasi) da hal bo'ladi, bu yerda emas.          │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓ — 477.20 KB (gzip 153.53 KB). Bashorat qilinganidek    │
+│        O'ZGARMADI: Vite o'lik kodni allaqachon tashlab yuborayotgan edi.     │
+│        Haqiqiy foyda — install yengilligi va kod tozaligi. Hajm S-002 da.    │
+│      • `pnpm lint` ✓ (oxlint, xato yo'q)                                     │
+│      • Brauzer: /, /catalog, /contact ochildi — konsolda xato YO'Q,          │
+│        icons.svg ga so'rov yo'q, hero surati va menyu joyida.                │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-002 · Marshrut bo'yicha kod bo'linishi (code splitting) ──────────────┐
+┌─ [x] S-002 · Marshrut bo'yicha kod bo'linishi (code splitting) ──────────────┐
 │                                                                              │
 │  TOPILDI: `pnpm build` → BITTA `index.js` fayl, 477 KB (gzip 153 KB).        │
 │  Ya'ni bosh sahifaga kirgan odam Catalog, ProductDetail, About, Contact,     │
@@ -157,9 +203,99 @@
 │  Maqsad: birinchi ekran uchun JS ≤ 150 KB (gzip ≤ 55 KB)                     │
 │  Bog'liq: S-001                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-17  (maqsad qisman: pastdagi "BYUDJET" ga qarang)     │
+│                                                                              │
+│    1) Sahifalar `React.lazy` + `<Suspense>` ga o'tdi (`App.jsx`).            │
+│       `Home` ATAYLAB lazy EMAS — odam deyarli har doim shu yerga tushadi,    │
+│       uni bo'lish birinchi ekranga ortiqcha so'rov qo'shardi, foyda emas.    │
+│       Suspense chegarasi `Layout` ichida, `<Outlet />` atrofida: sahifa      │
+│       almashganda Nav, Footer va kursor mount holicha qoladi.                │
+│                                                                              │
+│    2) `Preloader` ham lazy — kirish darvozasi faqat BIRINCHI tashrifda       │
+│       ochiladi, seansda kirgan odam uning 4.30 KB ini umuman olmaydi.        │
+│                                                                              │
+│    3) Suspense fallback — `RouteSkeleton` (yangi komponent + CSS).           │
+│       Bo'sh ekran emas: yorliq + sarlavha + ikki qator, saytning o'z         │
+│       qog'oz/stone ohangida. `prefers-reduced-motion` da porlash o'chadi.    │
+│                                                                              │
+│    4) Lenis DINAMIK import qilindi (`lib/lenis.js`). U sof yaxshilanish —    │
+│       usiz brauzerning o'z scroll'i ishlaydi — shuning uchun birinchi        │
+│       ekranni to'sib turishi shart emas. Yuklanish paytida `destroyLenis`    │
+│       kelsa mount qilinmaydi (`wanted` bayrog'i), menyu qulfi ham            │
+│       saqlanadi (`lenis-stopped` sinfi tekshiriladi).                        │
+│                                                                              │
+│    5) `manualChunks`: vendor-react / vendor-router / vendor-gsap /           │
+│       vendor-lenis / vendor. Sababi keshlash: bitta matn tuzatish endi       │
+│       400 KB ni emas, faqat `index` chunk'ini qaytadan yuklatadi.            │
+│                                                                              │
+│    ── O'LCHANDI (`pnpm build`, keyin `vite preview` da brauzer bilan) ──     │
+│                                                                              │
+│      OLDIN : bitta index.js — 477.20 KB (gzip 153.53). Bosh sahifaga         │
+│              kirgan odam Catalog, Contact, About — hammasini olardi.         │
+│                                                                              │
+│      HOZIR, `/` ni ochganda TO'SUVCHI yuk:                                   │
+│         vendor-react  210.99 KB (gzip 65.85)                                 │
+│         vendor-gsap   112.83 KB (gzip 44.35)                                 │
+│         index          52.89 KB (gzip 14.84)                                 │
+│         vendor-router  39.64 KB (gzip 14.29)                                 │
+│         vendor         11.19 KB (gzip  4.46)                                 │
+│         runtime         0.71 KB (gzip  0.42)                                 │
+│         ───────────────────────────────────                                  │
+│         JAMI          428.25 KB (gzip 144.21)                                │
+│       + keyin, chizilgandan SO'NG: vendor-lenis 18.66 (gzip 5.44)            │
+│       + faqat birinchi tashrifda: Preloader 4.30 (gzip 1.64)                 │
+│                                                                              │
+│      ENDI YUKLANMAYDI (bosh sahifada): Catalog 3.21 · ProductDetail 5.04     │
+│         Categories 3.15 · CategoryDetail 2.49 · About 5.32 · Contact 7.10    │
+│         NotFound 1.63 · ProductGrid 1.44 · PageHeader 0.94  = 30.32 KB       │
+│                                                                              │
+│      Brauzerda tasdiqlandi: `/` ochilganda tarmoqda Catalog chunk YO'Q;      │
+│      `/catalog` ochilganda `Catalog-*.js` aynan o'sha payt so'raladi.        │
+│                                                                              │
+│    ── ⚠ BYUDJET BAJARILMADI — VA U BAJARILMAYDI ──                           │
+│                                                                              │
+│      Taskda "birinchi ekran ≤ 150 KB (gzip ≤ 55 KB)" deb yozilgan edi.       │
+│      Bu yetib bo'lmaydigan raqam va sababi arifmetik:                        │
+│                                                                              │
+│        • YOLG'IZ React + React DOM = 210.99 KB (gzip 65.85).                 │
+│          Ya'ni bitta qator ham yozmasdan, byudjet allaqachon buzilgan.       │
+│        • Router yana 39.64 KB (gzip 14.29) qo'shadi.                         │
+│                                                                              │
+│      Kod bo'lish bunga yordam BERMAYDI — bu vendor og'irligi, sahifa         │
+│      og'irligi emas. Byudjet React'ni tashlab, boshqa ramkaga o'tishni       │
+│      talab qiladi; bu S-002 ning ishi emas.                                  │
+│                                                                              │
+│      ❓ TAVSIYA: byudjet haqiqiy raqamga qayta yozilsin. Erishsa              │
+│         bo'ladigani — gzip ≈ 100 KB, va u GSAP ni kechiktirish bilan         │
+│         qo'lga kiritiladi (pastga qarang).                                   │
+│                                                                              │
+│    ── QOLGAN YAGONA KATTA RICHAG: GSAP (112.83 KB / gzip 44.35) ──           │
+│                                                                              │
+│      Taskda "GSAP va Lenis faqat kerak bo'lganda yuklansin" deyilgan.        │
+│      Lenis — BAJARILDI. GSAP — BAJARILMADI, chunki u qobiqning o'zida:       │
+│        • `Cursor.jsx`      — `gsap.quickTo`, har mount'da                    │
+│        • `useReveal.js`    — gsap + ScrollTrigger                            │
+│        • `Layout.jsx`      — `ScrollTrigger.refresh()`                       │
+│        • `Menu.jsx`, `useParallax.js`, `Preloader.jsx`                       │
+│      Bularning hammasi modul darajasida import qiladi, ya'ni GSAP            │
+│      birinchi ekranda baribir so'raladi.                                     │
+│                                                                              │
+│      Uni kechiktirish = kursor va reveal qatlamini qayta yozish. Aynan       │
+│      shu ish S-016 (kursor) va S-018 (ScrollTrigger) da rejalashtirilgan.    │
+│      Shuning uchun GSAP ni kechiktirish O'SHA TASKLARGA ko'chirildi —        │
+│      bu yerda yarim-yo'l qilib, ikki marta qayta yozilmasin.                 │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓ (oxlint, xato yo'q)                  │
+│      • `vite preview` (production build) — konsolda xato YO'Q                │
+│      • 1440px: `/`, `/catalog` — Nav/Footer sahifa almashganda joyida,       │
+│        Lenis silliq scroll dinamik yuklangandan keyin ishlayapti             │
+│      • 375px: `/about` ochildi, xato yo'q                                    │
+│      • `route-skeleton` CSS build'ga tushgani tasdiqlandi                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-003 · Shriftlar: TTF → WOFF2 ─────────────────────────────────────────┐
+┌─ [x] S-003 · Shriftlar: TTF → WOFF2 ─────────────────────────────────────────┐
 │                                                                              │
 │  TOPILDI: `public/fonts/` da 4 ta Manrope TTF, JAMI 384 KB                   │
 │  (har biri ~95 KB). `index.html` faqat `manrope-400` ni preload qiladi,      │
@@ -175,6 +311,86 @@
 │                                                                              │
 │  Bog'liq: S-002                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-17  (bashoratdan yaxshiroq: ~110 KB emas, 61.7 KB)    │
+│                                                                              │
+│    NATIJA:  384.0 KB (4 ta TTF)  →  61.7 KB (4 ta subset WOFF2)   −84%       │
+│                                                                              │
+│      manrope-400.woff2  15 480 bayt   (avval 94 972)                         │
+│      manrope-500.woff2  15 264 bayt   (avval 95 060)                         │
+│      manrope-600.woff2  15 400 bayt   (avval 95 096)                         │
+│      manrope-700.woff2  15 552 bayt   (avval 94 928)                         │
+│                                                                              │
+│    TTF fayllar repodan O'CHIRILDI. `format('woff2')` — WOFF2 ni              │
+│    qo'llamaydigan brauzer tizim shriftiga tushadi (`font-family` da          │
+│    `ui-sans-serif, system-ui` allaqachon bor), sayt buzilmaydi.              │
+│                                                                              │
+│    ── OG'IRLIKLAR: TO'RTTASI HAM QOLDI (taskdagi taxmin tasdiqlanmadi) ──    │
+│                                                                              │
+│      Task "500 yoki 600 dan biri yetishi mumkin" degan edi. Kod              │
+│      tekshirildi — to'rttasi ham HAQIQATAN ishlatiladi:                      │
+│        400 — asosiy matn (`body`)                                            │
+│        500 — katta sarlavhalar: `.hero-copy h1`, `.entry-heading h1`         │
+│        600 — `font-semibold` (Catalog, ProductGrid, Contact) +               │
+│              `.entry-monogram` + uchta `type-*` sinf                         │
+│        700 — `.floating-nav a:first-child` (VODIY KAFEL® logotipi)           │
+│                                                                              │
+│      700 faqat BITTA qoidada ishlatiladi, ya'ni uni 600 ga tushirib          │
+│      15.5 KB yutish mumkin edi. Qilinmadi: butun to'plam endi 61.7 KB —      │
+│      bitta eski TTF dan ham yengil, 15 KB uchun logotip ko'rinishini         │
+│      o'zgartirish arzimaydi. Tipografika baribir S-005 da qayta              │
+│      quriladi — og'irlik qisqartirilsa, o'sha yerda qaror qilinsin.          │
+│                                                                              │
+│    ── SUBSET: NIMA QOLDI, NIMA KETDI ──                                      │
+│                                                                              │
+│      Glif soni: 678 → 338.  Kirill (104 glif) TASHLANDI — sayt               │
+│      `lang="uz"`, lotin yozuvida. Kerak bo'lsa skriptga diapazon             │
+│      qo'shib qayta yasaladi.                                                 │
+│                                                                              │
+│      Qoldi: lotin + Latin-1, Latin Extended-A (chet el brend nomlari:        │
+│      ğ ş ı ć …), tirnoqlar ‘ ’ “ ”, tire – —, ellips …, « », № ™ € ×         │
+│      ² ° § ® ©, strelkalar, nbsp.                                            │
+│                                                                              │
+│      ⚠ Diapazon BUGUNGI matnga emas, UMUMAN o'zbek matniga qarab             │
+│        tanlandi — G2 bo'yicha katalog keyin API dan keladi, o'sha            │
+│        paytdagi mahsulot nomlari uchun ham yetishi kerak.                    │
+│                                                                              │
+│    ── 🔎 TOPILDI: MANROPE DA O'ZBEKCHA ʻ YO'Q ──                              │
+│                                                                              │
+│      Asl TTF tekshirildi (taxmin emas): Manrope da `U+02BB` (ʻ) ham,         │
+│      `U+02BC` (ʼ, tutuq belgisi) ham YO'Q. Bu — subset kamchiligi            │
+│      emas, shriftning o'zida yo'q.                                           │
+│                                                                              │
+│      Sayt hozir `U+2018` (‘) ishlatadi — u Manrope da BOR va to'g'ri         │
+│      ko'rinadi, shuning uchun bugun muammo yo'q. Lekin API dan               │
+│      `U+02BB` bilan matn kelsa, o'sha bitta belgi so'z o'rtasida             │
+│      tizim shriftiga tushadi va ko'zga tashlanadi.                           │
+│      → EPIC 5 da matn kiritish qoidasi belgilansin: ‘ (U+2018).              │
+│                                                                              │
+│    ── QAYTA YASASH MUMKIN (bir martalik qo'l ishi emas) ──                   │
+│                                                                              │
+│      `scripts/subset-fonts.sh` qo'shildi — aynan shu buyruq, izohlari        │
+│      bilan. Asl TTF repoda saqlanmaydi; Google Fonts dan qayta olinadi.      │
+│      OFL 1.1 subset qilish va tarqatishga RUXSAT BERADI; `OFL.txt`           │
+│      shriftlar yonida qoldi, Reserved Font Name o'zgartirilmadi.             │
+│                                                                              │
+│    ── PRELOAD TUZATILDI ──                                                   │
+│                                                                              │
+│      Avval: faqat `manrope-400.ttf` preload, CSS esa to'rttasini             │
+│      so'rardi. Endi 400 (matn) va 500 (h1) preload qilinadi —                │
+│      ikkalasi ham birinchi ekranda aniq ishlatiladi. 600/700                 │
+│      pastroqda kerak, oldindan tortilmaydi.                                  │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓                                      │
+│      • `dist/fonts/` da FAQAT woff2 + OFL.txt — TTF chiqmadi                 │
+│      • `vite preview`: 4 ta woff2 → HTTP 200 (`font/woff2`);                 │
+│        eski `.ttf` yo'li endi SPA fallback (`text/html`), shrift emas        │
+│      • Brauzerda: `document.fonts` — 400/500/600/700 "loaded",               │
+│        `fonts.check()` to'rttasi ham `true`                                  │
+│      • "ko‘rish so‘m Farg‘ona" matni Manrope kengligida o'lchandi            │
+│        (fallback dan farq qiladi) — ya'ni ‘ belgisi shriftdan chiqyapti      │
+│      • 1440px: kirish ekrani + `/catalog` ko'z bilan tekshirildi             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [ ] S-004 · Muhit va API qatlami ───────────────────────────────────────────┐
@@ -477,6 +693,12 @@
 │                                                                              │
 │  Bog'liq: S-002                                                              │
 │                                                                              │
+│                                                                              │
+│  🔁 S-002 dan ko'chdi: GSAP (112.83 KB / gzip 44.35) birinchi ekranni         │
+│     to'sib turibdi, chunki `Cursor.jsx` uni modul darajasida import          │
+│     qiladi. Kursor qayta yozilganda — GSAP siz variant tanlansa (A yoki      │
+│     B da `quickTo` o'rniga oddiy `transform` yetadi) — GSAP qobiqdan         │
+│     chiqadi. Qaysi yo'l tanlansa ham, shu savol hisobga olinsin.             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [ ] S-017 · Scroll silliqligi (Lenis) sozlash ──────────────────────────────┐
@@ -512,6 +734,14 @@
 │  O'lchov: scroll paytida 60 FPS (Performance panelida tasdiqlanadi)          │
 │  Bog'liq: S-017                                                              │
 │                                                                              │
+│                                                                              │
+│  🔁 S-002 dan ko'chdi: GSAP ni DINAMIK import qilish shu taskning ishi.       │
+│     Hozir `useReveal.js`, `useParallax.js`, `Menu.jsx` va `Layout.jsx`       │
+│     (`ScrollTrigger.refresh()`) modul darajasida import qiladi, shuning      │
+│     uchun GSAP birinchi ekranda so'raladi. Reveal'lar ekrandan pastda        │
+│     bo'lgani uchun ular kechiktirilsa — birinchi yukdan gzip ≈ 44 KB         │
+│     ketadi. Shart: GSAP kelguncha kontent YAKUNIY holatda ko'rinsin,         │
+│     aks holda matn bir zum ko'rinmay turadi (FOUC).                          │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [ ] S-019 · GSAP imkoniyatlarini kengaytirish (yangi effektlar) ────────────┐
@@ -1032,6 +1262,18 @@
         Hozir toza SPA — ulashilgan havola bo'sh ko'rinadi.
         Tavsiya: prerender (arzon, yetarli).
 
+  ❓ 4a. LOGOTIP (favicon) QAYERDAN KELDI?                        → ASSETS.md
+        2026-09-17 da `logo.png` berildi va ikkala frontendga favicon
+        qilib qo'yildi (avval storefront'da Vite ning binafsha
+        chaqmog'i, dashboard'da qo'lda yasalgan "VK" turardi).
+        ⚖️ Muallifi/litsenziyasi NOMA'LUM — yasalganmi, sotib
+        olinganmi yoki ishlab chiqaruvchi saytidan olinganmi?
+        Uchinchisi bo'lsa — Marazzi bilan bir xil muammo (G7).
+        Ayni paytda 16px da (brauzer yorlig'i o'lchami) olti kafel
+        bir-biriga qo'shilib, rang dog'iga aylanadi. Xohlasangiz
+        shu shaklning soddalashtirilgan, tekis SVG varianti
+        yasaladi — u har o'lchamda tiniq qoladi.
+
   ❓ 4. MAHSULOT SURATLARI KIM TOMONIDAN OLINADI?                 → S-033
         ⚖️ Hozirgilari Marazzi'niki — tijoriy foydalanishga ruxsat YO'Q.
         Bu SAYTNI EFIRGA CHIQISHDAN TO'XTATADI. Suratga olish
@@ -1051,17 +1293,44 @@
         qo'shiladi (🆕 `api/task.txt`).
 
 
+┌─ [ ] S-045 · «Optom kirish» tugmasi (TZ 2-bo'lim) 🆕 ─────────────────────────┐
+│                                                                              │
+│  🆕 2026-09-17 da qo'shildi — kabinet dashboard'ga ko'chgani uchun.           │
+│                                                                              │
+│  TZ 2-bo'limi (dizayn talablari) aniq talab qiladi:                          │
+│    «Header'da «Optom kirish» tugmasi — rangi bilan ajralib turadigan,        │
+│     mobil va desktopda ko'rinadigan joyda»                                   │
+│                                                                              │
+│  TZ bu tugmani saytda LOGIN FORMASI ochadi deb ko'zda tutgan edi.            │
+│  Endi kabinet dashboard'da (dashboard/task.txt EPIC 10), shuning uchun       │
+│  tugma HAVOLA bo'ladi — bosilganda kabinet manziliga olib chiqadi.           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `Nav` da ajralib turadigan tugma — desktop va mobil menyuda             │
+│    • Manzil `.env` dan: `VITE_CABINET_URL` (dev: localhost:5174)             │
+│    • ⚠ Bu YAGONA joy bo'lib qolsin: storefront'da login formasi,             │
+│      token, `/me/*` so'rovi YOZILMAYDI (G1)                                  │
+│                                                                              │
+│  ⚠ Chakana mijozga bu tugma nima ekani tushunarli bo'lishi kerak —           │
+│    u hisob ocholmaydi (G1). Matn shuni bildirsin: «Optom mijozlar            │
+│    uchun» degan qisqa izoh yoki tooltip.                                     │
+│                                                                              │
+│  Bog'liq: S-005 (tipografika — tugma o'lchami ≥ 16px)                        │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 44
-  Tugadi       : 0
+  Jami tasklar : 45
+  Tugadi       : 3
   Jarayonda    : 0
   Bloklangan   : 0
 
   Epic bo'yicha:
-    EPIC 0  Tozalash va poydevor ......  0 / 4   [····]
+    EPIC 0  Tozalash va poydevor ......  3 / 4   [xxx·]
     EPIC 1  Tipografika ..............  0 / 2    [··]
     EPIC 2  Hero va greeter ..........  0 / 3    [···]
     EPIC 3  Responsive ...............  0 / 6    [······]
@@ -1070,9 +1339,10 @@
     EPIC 6  Huquqiy va kontent .......  0 / 3    [···]
     EPIC 7  SEO ......................  0 / 4    [····]
     EPIC 8  Sifat ....................  0 / 5    [·····]
+    (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  S-001 · O'lik kodni va o'lik bog'liqliklarni olib tashlash
+  KEYINGI TASK:  S-004 · Muhit va API qatlami
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,

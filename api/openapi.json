@@ -1077,6 +1077,67 @@
         ]
       }
     },
+    "/api/v1/me/profile": {
+      "get": {
+        "description": "Kabinet sarlavhasi uchun: kompaniya nomi, mas’ul shaxs, login va BIRIKTIRILGAN FILIAL.\n\nFilial muhim — mijoz aynan o‘sha filialning narxini ko‘radi (CLAUDE.md qoida 5), shuning uchun u qaysi filial ekanini bilishi kerak.\n\n🔒 Narx qoidalari, chegirma sabablari va balans bu yerda YO‘Q.",
+        "operationId": "MeProfileController_getMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerProfileResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas (xodim tokeni bilan kelindi)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mening profilim",
+        "tags": [
+          "Customers"
+        ]
+      }
+    },
     "/api/v1/me/account": {
       "get": {
         "description": "Jami xarid, jami to‘langan va qarz. Qarz manfiy bo‘lsa — avans.",
@@ -11182,6 +11243,82 @@
         "required": [
           "temporaryPassword",
           "login",
+          "mustChangePassword"
+        ]
+      },
+      "CustomerProfileBranchDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtyomomq0001ofm24t896smr"
+          },
+          "name": {
+            "type": "string",
+            "example": "Vodiy Kafel — Farg'ona"
+          },
+          "city": {
+            "type": "string",
+            "example": "Farg'ona"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "city"
+        ]
+      },
+      "CustomerProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmu59j5oz004urjm25rvhvdpo"
+          },
+          "login": {
+            "type": "string",
+            "description": "Admin bergan login (kichik harfda saqlanadi)",
+            "example": "fargona-optom"
+          },
+          "companyName": {
+            "type": "string",
+            "example": "Farg'ona Qurilish MChJ"
+          },
+          "contactName": {
+            "type": "string",
+            "example": "Alisher Karimov"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+998901234567"
+          },
+          "inn": {
+            "type": "string",
+            "description": "Soliq to‘lovchi raqami — shartnoma uchun (B-044)",
+            "nullable": true,
+            "example": "123456789"
+          },
+          "branch": {
+            "description": "Biriktirilgan filial. ⚠ Mijoz AYNAN shu filialning narxini ko‘radi va buyurtmani ham unga beradi (CLAUDE.md qoida 5) — shuning uchun kabinet uni ko‘rsatishi kerak.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerProfileBranchDto"
+              }
+            ]
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "Vaqtinchalik parol hali almashtirilmagan. ⚠ Bu maydon ATAYLAB shu yerda ham bor: kirish javobidan keyin frontend uni boshqa hech qayerdan bilolmasdi va sahifa yangilanganda yo‘qotardi.",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "login",
+          "companyName",
+          "contactName",
+          "phone",
+          "branch",
           "mustChangePassword"
         ]
       },

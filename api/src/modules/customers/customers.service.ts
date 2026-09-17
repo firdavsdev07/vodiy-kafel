@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from '../../auth/auth.service';
 import { BranchScopeService } from '../../auth/branch-scope.service';
 import type { Actor } from '../../common/types/actor';
 import { PrismaService } from '../../prisma';
-import type { ResetPasswordResponseDto } from './dto';
+import type {
+  CustomerProfileResponseDto,
+  ResetPasswordResponseDto,
+} from './dto';
 import { generateTemporaryPassword } from './temp-password';
 
 /** Mijoz topilmagani va begona filial mijozi uchun YAGONA matn. */
@@ -16,6 +23,50 @@ export class CustomersService {
     private readonly authService: AuthService,
     private readonly branchScope: BranchScopeService,
   ) {}
+
+  /**
+   * Mijozning O'Z profili — kabinet sarlavhasi uchun (B-065).
+   *
+   * 🔒 Mijoz ID si TOKENDAN olinadi, so'rovda umuman yo'q — boshqa
+   *    mijozning profilini so'rashning yo'li ham yo'q (IDOR emas).
+   *
+   * ⚠ Hisob o'chirilgan bo'lsa 401: token hali amal qilayotgan bo'lishi
+   *   mumkin, lekin hisob bloklangan bo'lsa u ishlamasligi kerak.
+   *   `JwtAuthGuard` buni allaqachon tekshiradi, bu — ikkinchi to'siq
+   *   (token bilan hisob orasida poyga bo'lsa).
+   */
+  async getMyProfile(actor: Actor): Promise<CustomerProfileResponseDto> {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: actor.id },
+      select: {
+        id: true,
+        login: true,
+        companyName: true,
+        contactName: true,
+        phone: true,
+        inn: true,
+        mustChangePassword: true,
+        isActive: true,
+        branch: { select: { id: true, name: true, city: true } },
+      },
+    });
+
+    if (!customer || !customer.isActive) {
+      throw new UnauthorizedException('Hisob mavjud emas yoki faol emas');
+    }
+
+    // `isActive` faqat tekshiruv uchun so'raldi — javobga chiqmaydi
+    return {
+      id: customer.id,
+      login: customer.login,
+      companyName: customer.companyName,
+      contactName: customer.contactName,
+      phone: customer.phone,
+      inn: customer.inn,
+      branch: customer.branch,
+      mustChangePassword: customer.mustChangePassword,
+    };
+  }
 
   /**
    * Optom mijozga yangi vaqtinchalik parol beradi (B-017).

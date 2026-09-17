@@ -3,7 +3,7 @@ import { ApiError } from '@/shared/api/api-error';
 import type { ApiClient } from '@/shared/api/client';
 import { normalizeUzPhone } from './phone';
 import { createSession } from './session';
-import { createTokenStore, REFRESH_TOKEN_KEY } from './token-store';
+import { ACTOR_TYPE_KEY, createTokenStore, REFRESH_TOKEN_KEY } from './token-store';
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial));
@@ -138,5 +138,96 @@ describe('normalizeUzPhone', () => {
 
   it.each(['', '90 123 45', '+7 900 123 45 67', '99890123456789'])('%s → null', (input) => {
     expect(normalizeUzPhone(input)).toBeNull();
+  });
+});
+
+describe('aktor turi (D-049) — xodim va optom mijoz ajratiladi', () => {
+  it('sessiya yo‘q → aktor ham yo‘q', () => {
+    expect(createTokenStore(memoryStorage()).getActorType()).toBeNull();
+  });
+
+  it('kirishda aktor yoziladi va saqlanadi', () => {
+    const storage = memoryStorage();
+    const store = createTokenStore(storage);
+    store.setTokens(pair(1), 'customer');
+    expect(store.getActorType()).toBe('customer');
+    expect(storage.data.get(ACTOR_TYPE_KEY)).toBe('customer');
+  });
+
+  it('sahifa yangilangandan keyin aktor storage dan tiklanadi', () => {
+    const store = createTokenStore(
+      memoryStorage({ [REFRESH_TOKEN_KEY]: 'r0', [ACTOR_TYPE_KEY]: 'customer' }),
+    );
+    expect(store.getActorType()).toBe('customer');
+  });
+
+  it('`/auth/refresh` aktorni O‘ZGARTIRMAYDI', () => {
+    const store = createTokenStore(memoryStorage());
+    store.setTokens(pair(1), 'customer');
+    store.setTokens(pair(2)); // refresh — aktor berilmaydi
+    expect(store.getActorType()).toBe('customer');
+    expect(store.getAccessToken()).toBe('a2');
+  });
+
+  it('🔒 ORQAGA MOSLIK: aktor yozilmagan eski sessiya — xodim deb olinadi', () => {
+    // D-049 dan oldin kirgan xodimda `ACTOR_TYPE_KEY` yo‘q. `null` qaytsa
+    // `useProfile` o‘chib qolardi va panel bo‘sh ko‘rinardi.
+    const store = createTokenStore(memoryStorage({ [REFRESH_TOKEN_KEY]: 'r0' }));
+    expect(store.getActorType()).toBe('staff');
+  });
+
+  it('chiqishda aktor ham tozalanadi', () => {
+    const storage = memoryStorage();
+    const store = createTokenStore(storage);
+    store.setTokens(pair(1), 'customer');
+    store.clear();
+    expect(store.getActorType()).toBeNull();
+    expect(storage.data.get(ACTOR_TYPE_KEY)).toBeUndefined();
+  });
+});
+
+describe('optom mijoz kirishi (D-049)', () => {
+  it('`/auth/wholesale/login` chaqiriladi va aktor `customer` bo‘ladi', async () => {
+    const store = createTokenStore(memoryStorage());
+    const api = {
+      post: vi.fn().mockResolvedValue({ ...pair(1), mustChangePassword: false }),
+    } as unknown as ApiClient;
+    const session = createSession({ api, store });
+
+    const result = await session.loginWholesale({ login: 'Fargona-Optom', password: 'p' });
+
+    expect(api.post).toHaveBeenCalledWith('/auth/wholesale/login', {
+      body: { login: 'Fargona-Optom', password: 'p' },
+    });
+    expect(store.getActorType()).toBe('customer');
+    expect(result.mustChangePassword).toBe(false);
+  });
+
+  it('vaqtinchalik parol bayrog‘i qaytariladi (⚠ `/auth/me` mijozga 401 beradi)', async () => {
+    const store = createTokenStore(memoryStorage());
+    const api = {
+      post: vi.fn().mockResolvedValue({ ...pair(1), mustChangePassword: true }),
+    } as unknown as ApiClient;
+    const session = createSession({ api, store });
+    await expect(
+      session.loginWholesale({ login: 'x', password: 'p' }),
+    ).resolves.toEqual({ mustChangePassword: true });
+  });
+
+  it('parol almashgach YANGI tokenlar saqlanadi (eskisi hamon to‘silgan)', async () => {
+    const store = createTokenStore(memoryStorage());
+    const api = {
+      post: vi
+        .fn()
+        .mockResolvedValueOnce({ ...pair(1), mustChangePassword: true })
+        .mockResolvedValueOnce({ ...pair(2), mustChangePassword: false }),
+    } as unknown as ApiClient;
+    const session = createSession({ api, store });
+
+    await session.loginWholesale({ login: 'x', password: 'temp' });
+    await session.changeWholesalePassword({ oldPassword: 'temp', newPassword: 'New123!' });
+
+    expect(store.getAccessToken()).toBe('a2');
+    expect(store.getActorType()).toBe('customer');
   });
 });

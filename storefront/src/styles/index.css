@@ -1,8 +1,11 @@
 @import 'tailwindcss';
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/manrope-400.ttf') format('truetype'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/manrope-500.ttf') format('truetype'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/manrope-600.ttf') format('truetype'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/manrope-700.ttf') format('truetype'); }
+/* Manrope — subset WOFF2 (S-003): 4 og'irlik jami ~62 KB (avval 384 KB TTF).
+   Kirill tashlandi (sayt lang="uz", lotin). Qayta yasash: scripts/subset-fonts.sh
+   `swap` — shrift kelguncha matn tizim shriftida DARHOL ko'rinadi. */
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/manrope-400.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/manrope-500.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/manrope-600.woff2') format('woff2'); }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/manrope-700.woff2') format('woff2'); }
 
 /* Contrast follows the section surface, including nested dark sections. */
 :where(.text-bone, .bg-ink, .bg-charcoal) { --color-clay: #c2b9ac; }
@@ -71,8 +74,6 @@
 
 .hero-gallery { position: relative; z-index: 10; min-height: 100svh; padding: 160px 5vw 110px; display: flex; align-items: center; pointer-events: none; }
 .hero-gallery a { pointer-events: auto; }
-.ceramic-stage { position: absolute; z-index: 11; top: 170px; right: 0; width: 49%; height: calc(100svh - 320px); min-height: 400px; cursor: grab; background: radial-gradient(ellipse at center, #d5cdbd66, transparent 68%); }
-.ceramic-stage:active { cursor: grabbing; }
 .hero-greeter { position: absolute; z-index: 11; top: 112px; right: 2.5vw; width: min(47vw, 610px); height: calc(100svh - 112px); min-height: 560px; pointer-events: none; overflow: hidden; }
 .hero-greeter::after { content: ''; position: absolute; z-index: 2; left: 15%; right: 2%; bottom: 0; height: 18%; background: linear-gradient(to bottom, transparent, #eeece5 80%); }
 .hero-greeter img { position: absolute; right: 0; bottom: -12%; width: 82%; height: auto; filter: saturate(.15) contrast(.96); }
@@ -82,12 +83,10 @@
 .material-study { position: relative; z-index: 12; display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; align-items: center; padding: 120px 5vw; }
 .material-study-image { transform: rotate(-4deg); }
 .material-study .type-head { font-size: clamp(2.5rem, 4.5vw, 6rem); }
-.stage-fallback { display: grid; place-items: center; height: 100%; color: #71685e; }
 @media (max-width: 767px) {
  .hero-greeter { top: 430px; right: 0; width: 88vw; height: 500px; min-height: 0; }
  .hero-greeter img { right: -2%; bottom: -15%; width: 82%; }
  .hero-greeting { top: 8%; left: 0; padding: 13px 17px; font-size: 16px; }
- .ceramic-stage { top: 460px; width: 100%; height: 410px; min-height: 0; }
  .material-study { grid-template-columns: 1fr; padding: 80px 6vw; gap: 60px; }
 }
 .hero-copy { max-width: 60%; padding-bottom: 40px; }
@@ -382,4 +381,15 @@
   [data-reveal] .r-clip {
     clip-path: none !important;
   }
+
+  .route-skeleton-bar {
+    animation: none !important;
+    background: #d8d3c8 !important;
+  }
 }
+
+/* Lazy sahifa yuklanayotgandagi skelet (S-002) — saytning o'z qog'oz ohangida. */
+.route-skeleton { display: flex; flex-direction: column; gap: 18px; min-height: 70svh; padding: clamp(120px, 16vh, 200px) 5vw 120px; }
+.route-skeleton-bar { display: block; border-radius: 2px; background: linear-gradient(90deg, #d8d3c8 0%, #e6e2d9 50%, #d8d3c8 100%); background-size: 220% 100%; animation: skeleton-sweep 1.5s ease-in-out infinite; }
+.route-skeleton-bar:nth-child(3) { margin-top: 14px; }
+@keyframes skeleton-sweep { to { background-position: -220% 0; } }

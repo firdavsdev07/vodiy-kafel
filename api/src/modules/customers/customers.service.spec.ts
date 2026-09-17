@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../../auth/auth.service';
 import { BranchScopeService } from '../../auth/branch-scope.service';
@@ -150,5 +150,115 @@ describe('generateTemporaryPassword (B-017)', () => {
       '',
     );
     expect(joined).not.toMatch(/[0O1lI]/);
+  });
+});
+
+/**
+ * B-065 · mijozning o'z profili. Diqqat markazida — mijoz ID si TOKENDAN
+ * olinishi (so'rovdan emas) va faol bo'lmagan hisobning to'silishi.
+ */
+describe('CustomersService.getMyProfile (B-065)', () => {
+  let service: CustomersService;
+  let findUnique: jest.Mock;
+
+  const row = (over: Record<string, unknown> = {}) => ({
+    id: 'customer-1',
+    login: 'fargona-optom',
+    companyName: "Farg'ona Qurilish MChJ",
+    contactName: 'Alisher Karimov',
+    phone: '+998901234567',
+    inn: '123456789',
+    mustChangePassword: false,
+    isActive: true,
+    branch: {
+      id: 'branch-1',
+      name: "Vodiy Kafel — Farg'ona",
+      city: "Farg'ona",
+    },
+    ...over,
+  });
+
+  const customerActor: Actor = {
+    id: 'customer-1',
+    type: 'CUSTOMER',
+    branchId: 'branch-1',
+  };
+
+  beforeEach(async () => {
+    findUnique = jest.fn();
+    const moduleRef: TestingModule = await Test.createTestingModule({
+      providers: [
+        CustomersService,
+        { provide: PrismaService, useValue: { customer: { findUnique } } },
+        { provide: AuthService, useValue: { hashPassword: jest.fn() } },
+        {
+          provide: BranchScopeService,
+          useValue: { assertWithinScope: jest.fn() },
+        },
+      ],
+    }).compile();
+    service = moduleRef.get(CustomersService);
+  });
+
+  it("mijoz ID si TOKENDAN olinadi — so'rovdan emas", async () => {
+    findUnique.mockResolvedValue(row());
+    await service.getMyProfile(customerActor);
+    expect(findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'customer-1' } }),
+    );
+  });
+
+  it("filial qaytariladi — mijoz qaysi narxni ko'rayotganini bilishi kerak", async () => {
+    findUnique.mockResolvedValue(row());
+    const profile = await service.getMyProfile(customerActor);
+    expect(profile.branch).toEqual({
+      id: 'branch-1',
+      name: "Vodiy Kafel — Farg'ona",
+      city: "Farg'ona",
+    });
+  });
+
+  it('🔒 `isActive` javobga CHIQMAYDI — u ichki maydon', async () => {
+    findUnique.mockResolvedValue(row());
+    const profile = await service.getMyProfile(customerActor);
+    expect(profile).not.toHaveProperty('isActive');
+  });
+
+  it("🔒 parol hashi so'ralmaydi ham, qaytarilmaydi ham", async () => {
+    findUnique.mockResolvedValue(row());
+    const profile = await service.getMyProfile(customerActor);
+    const [args] = findUnique.mock.calls[0] as [
+      { select: Record<string, unknown> },
+    ];
+    expect(args.select.passwordHash).toBeUndefined();
+    expect(profile).not.toHaveProperty('passwordHash');
+  });
+
+  it('`mustChangePassword` qaytariladi (sahifa yangilangandan keyin ham kerak)', async () => {
+    findUnique.mockResolvedValue(row({ mustChangePassword: true }));
+    await expect(service.getMyProfile(customerActor)).resolves.toMatchObject({
+      mustChangePassword: true,
+    });
+  });
+
+  it("INN yo'q bo'lsa `null`", async () => {
+    findUnique.mockResolvedValue(row({ inn: null }));
+    await expect(service.getMyProfile(customerActor)).resolves.toMatchObject({
+      inn: null,
+    });
+  });
+
+  it('bloklangan hisob — 401', async () => {
+    findUnique.mockResolvedValue(row({ isActive: false }));
+    await expect(service.getMyProfile(customerActor)).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it("mijoz o'chirilgan — 401 (404 emas: token bor, hisob yo'q)", async () => {
+    findUnique.mockResolvedValue(null);
+    await expect(service.getMyProfile(customerActor)).rejects.toThrow(
+      UnauthorizedException,
+    );
   });
 });

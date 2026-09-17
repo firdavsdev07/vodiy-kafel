@@ -2421,13 +2421,113 @@
     qaror qabul qilingan va u INTERFEYS ortiga yashirilgan.
 
 
+┌─ [ ] B-064 · Optom mijoz uchun katalog: narx va zaxira 🆕 ────────────────────┐
+│                                                                              │
+│  KIM TOPDI: dashboard EPIC 10 (optom mijoz kabineti) rejalashtirilayotganda, │
+│             2026-09-17. Kabinetning D-052 taski shu taskni KUTADI.           │
+│                                                                              │
+│  MUAMMO:                                                                     │
+│    Optom mijoz kabinetiga katalog kerak, lekin bugun berib bo'ladigan        │
+│    yagona katalog — `GET /products` (ochiq katalog). Unda:                   │
+│                                                                              │
+│      1. NARX YO'Q va bo'lishi ham mumkin emas. `products.service.ts:21`:     │
+│         "🔒 `branchProducts` BU YERDA YO'Q va bo'lmaydi — narx o'sha          │
+│          jadvalda". To'g'ri qaror: ochiq katalogda narx ko'rinmasligi        │
+│          SHART (TZ 3.2, CLAUDE.md qoida 1).                                  │
+│                                                                              │
+│      2. Zaxira faqat ikki darajada: `PublicAvailability`                     │
+│         (AVAILABLE / UNAVAILABLE).                                           │
+│         Holbuki `StockStatus` (IN_STOCK / LOW / OUT_OF_STOCK) allaqachon     │
+│         yozilgan va uning O'Z IZOHIDA shunday deyilgan:                      │
+│           "Bu — auth bor joyda (OPTOM MIJOZ KABINETI, admin panel)           │
+│            ko'rinadigan uch rangli variant"                                  │
+│         Ya'ni enum aynan shu ish uchun yozilgan, lekin uni MIJOZGA           │
+│         beradigan endpoint yo'q — faqat `/admin/product-stocks`.             │
+│                                                                              │
+│      3. Filialga bog'lanmagan: mijoz filiali sotmaydigan mahsulot ham        │
+│         ro'yxatda chiqadi.                                                   │
+│                                                                              │
+│    Natija: bugun mijoz narxni faqat `POST /calculator/quote` orqali,         │
+│    aniq `productId` + paddon soni bilan bila oladi. "Katalogni ochib,        │
+│    narxlarni ko'rib tanlash" MUMKIN EMAS — u ko'r-ko'rona tanlab,            │
+│    keyin kalkulyator chaqirishi kerak.                                       │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Yangi endpoint — mijoz tokeni bilan, `CustomerOnlyGuard` +              │
+│      `PasswordChangeRequiredGuard` ostida (masalan `GET /me/catalog`).       │
+│      Yoki `GET /products` ni auth-aware qilish — ⚠ LEKIN bu xavfliroq:       │
+│      bitta xato va ochiq katalogda narx chiqib ketadi. Alohida endpoint      │
+│      tavsiya etiladi.                                                        │
+│    • Filial — TOKENDAN (G5/qoida 5), so'rovdan EMAS                          │
+│    • Narx — to'liq zanjir bo'yicha yakuniy qiymat (qoida 11):                │
+│        mijoz+mahsulot > mijoz+zavod > mijoz umumiy > filial bazaviy          │
+│      🔒 Qaysi qoida ishlagani javobda KO'RSATILMAYDI — faqat yakuniy narx     │
+│    • `stockStatus` — uch daraja, `toStockStatus()` qayta ishlatiladi         │
+│    • 🔒 Aniq zaxira SONI hech qachon javobga chiqmaydi (qoida 2)              │
+│    • Filtr/saralash/sahifalash — `GET /products` bilan bir xil shaklda       │
+│    • Narx — `Decimal`, javobda SATR (qoida 7)                                │
+│                                                                              │
+│  Tekshirish:                                                                 │
+│    • Xodim tokeni bilan — 403 (bu mijoz endpointi)                           │
+│    • Tokensiz — 401                                                          │
+│    • Ikki xil mijoz, ikki xil filial → ikki xil narx                         │
+│    • Individual qoidasi bor mijoz → qoida narxi, sababi ko'rinmasdan         │
+│    • Filialda sotilmaydigan mahsulot ro'yxatda YO'Q                          │
+│    • `openapi.json` yangilanadi (dashboard tiplari shundan)                  │
+│                                                                              │
+│  Bog'liq: B-014 (ochiq katalog), B-027 (kalkulyator narx zanjiri)            │
+│  Bloklaydi: dashboard D-052                                                  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [~] B-065 · Optom mijoz o‘z profilini ko‘ra olmaydi 🆕 ──────────────────────┐
+│                                                                              │
+│  KIM TOPDI: dashboard D-049 (mijoz kirishi) yozilayotganda, 2026-09-17.      │
+│                                                                              │
+│  MUAMMO:                                                                     │
+│    Mijoz kirgandan keyin kabinet sarlavhasida o'z kompaniyasi nomini,        │
+│    filialini, loginini ko'rsatishi kerak. Lekin buni beradigan endpoint      │
+│    YO'Q:                                                                     │
+│      • `GET /auth/me` — mijozga 401. Controller izohi aniq yozadi:           │
+│        "⚠ Faqat XODIM tokeni uchun. Optom mijoz tokeni bilan kelinsa         │
+│         401 qaytadi — mijoz profili kabinet endpointlarida (B-018+)"         │
+│        …lekin o'sha "kabinet endpointlarida" u aslida qurilmagan.            │
+│      • `GET /me/account` — faqat uch raqam: totalPurchased, totalPaid,       │
+│        balance. Kompaniya nomi, filial, login, INN — yo'q.                   │
+│      • Boshqa `/me/*` endpointlari ham profil bermaydi.                      │
+│                                                                              │
+│    Natija: mijoz kabinetga kiradi va "men kimman, qaysi filialdaman"         │
+│    degan savolga javob yo'q. Filial esa MUHIM — narx aynan filialga          │
+│    bog'liq (3.7.1), mijoz qaysi filial narxini ko'rayotganini bilishi        │
+│    kerak.                                                                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `GET /me/profile` (yoki `GET /auth/me` ni aktor turiga qarab            │
+│      ikki xil javob beradigan qilish — ⚠ lekin bu tur birlashmasi            │
+│      bo'ladi va `openapi-typescript` uni noqulay generatsiya qiladi;         │
+│      ALOHIDA endpoint tavsiya etiladi)                                       │
+│    • Javobda: `id`, `login`, `companyName`, `contactName`, `phone`,          │
+│      `inn`, `branch { id, name }`, `mustChangePassword`                      │
+│    • 🔒 `passwordHash`, boshqa mijozlar, narx qoidalari — YO'Q                │
+│    • `CustomerOnlyGuard` ostida; xodim tokeni bilan — 403                    │
+│                                                                              │
+│  ⚠ `mustChangePassword` hozir FAQAT login javobida keladi. Sahifa            │
+│    yangilangandan keyin frontend uni faqat eslab qolgan qiymatdan            │
+│    biladi — bu ishonchsiz. Profil javobida ham bo'lishi SHART.               │
+│                                                                              │
+│  Bog'liq: B-018 (kabinet endpointlari)                                       │
+│  Bloklaydi: dashboard D-051 (kabinet sarlavhasi)                             │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 63  (B-016 bekor; B-051...B-063 qo‘shildi — filial
+  Jami tasklar : 65  (B-016 bekor; B-051...B-065 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator +
-                 dashboard ishida topilganlar: B-059 … B-063)
+                 dashboard ishida topilganlar: B-059 … B-063, hamda optom
+                 mijoz kabineti rejasidan chiqqan B-064)
   Tugadi       : 58
   Jarayonda    : 0
   Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
@@ -2447,11 +2547,17 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat ....................  7 / 10   [███████···] (B-059 … B-063
+    EPIC 11 Sifat ....................  7 / 12   [███████·····] (B-059 … B-065
                                                             qo‘shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
+  KEYINGI TASK:  B-064 · Optom mijoz uchun katalog (narx + zaxira)
+                 B-065 · Optom mijoz o'z profilini ko'ra olmaydi
+                 ⚠ Ikkalasi ham dashboard'ni BLOKLAYDI (D-052 katalog,
+                   D-051 kabinet sarlavhasi). 2026-09-17 da optom mijoz kabineti dashboard
+                   ichida qurilishi qaror qilingandan keyin topildi.
+
+                 B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
                  B-063 · Bosh sahifa statistikasi + zaxira holati filtri
                  (ikkalasi dashboard ishida topildi; dashboard ularni
                  KUTMAYDI — vaqtinchalik yechimlar bilan ishlaydi)

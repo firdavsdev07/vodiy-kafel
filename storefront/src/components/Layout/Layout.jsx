@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
 import { ScrollTrigger } from '@/animations/gsap'
@@ -6,10 +6,16 @@ import Cursor from '@/components/Cursor/Cursor'
 import Footer from '@/components/Footer/Footer'
 import Menu from '@/components/Menu/Menu'
 import Nav from '@/components/Nav/Nav'
-import Preloader from '@/components/Preloader/Preloader'
+import RouteSkeleton from '@/components/ui/RouteSkeleton'
 import { destroyLenis, initLenis, scrollToTop, startScroll, stopScroll } from '@/lib/lenis'
 import { EntryContext } from '@/lib/entryContext'
 import { hasEnteredThisSession } from '@/lib/session'
+
+/**
+ * Kirish darvozasi — `lazy` (S-002). U faqat BIRINCHI tashrifda ochiladi;
+ * seansda allaqachon kirgan odam uni umuman yuklab olmaydi.
+ */
+const Preloader = lazy(() => import('@/components/Preloader/Preloader'))
 
 export default function Layout() {
   const location = useLocation()
@@ -42,19 +48,25 @@ export default function Layout() {
       <Menu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main ref={mainRef} id="main">
-        <Outlet />
+        {/* Suspense chegarasi shu yerda — Nav, Footer va kursor sahifa
+            almashganda mount holicha qoladi, ekran oqarmaydi. */}
+        <Suspense fallback={<RouteSkeleton />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <Footer />
 
       {gateOpen && (
-        <Preloader
-          onDone={() => {
-            setEntered(true)
-            setGateOpen(false)
-            requestAnimationFrame(() => ScrollTrigger.refresh())
-          }}
-        />
+        <Suspense fallback={null}>
+          <Preloader
+            onDone={() => {
+              setEntered(true)
+              setGateOpen(false)
+              requestAnimationFrame(() => ScrollTrigger.refresh())
+            }}
+          />
+        </Suspense>
       )}
     </EntryContext.Provider>
   )

@@ -1,10 +1,12 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
 import { RequireAuth } from '@/features/auth/RequireAuth';
+import { RequireCustomer } from '@/features/auth/RequireCustomer';
 import { RequireRole } from '@/features/auth/RequireRole';
 import RouteErrorPage from '@/pages/error/RouteErrorPage';
 // Kichik va xato sahifasi ham ishlatadi — alohida chunk shart emas
 import NotFoundPage from '@/pages/not-found/NotFoundPage';
+import { AuthShell } from '@/pages/login/AuthShell';
 import { AppLayout } from './layout/AppLayout';
 import { RootLayout } from './layout/RootLayout';
 import { PERMISSIONS, rolesForAny } from '@/shared/lib/permissions';
@@ -49,6 +51,12 @@ const SupplyOrderCreatePage = lazy(() => import('@/pages/supply-orders/SupplyOrd
 const OrderCreatePage = lazy(() => import('@/pages/orders/OrderCreatePage'));
 const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
+// ── Optom mijoz kabineti (EPIC 10) ──
+const CustomerLoginPage = lazy(() => import('@/pages/login/CustomerLoginPage'));
+const CustomerPasswordPage = lazy(() => import('@/pages/login/CustomerPasswordPage'));
+const CustomerCabinetPlaceholder = lazy(
+  () => import('@/pages/login/CustomerCabinetPlaceholder'),
+);
 
 export const routes: RouteObject[] = [
   {
@@ -60,10 +68,50 @@ export const routes: RouteObject[] = [
         path: 'login',
         element: (
           <Suspense fallback={null}>
-            <LoginPage />
+            <AuthShell>
+              <LoginPage />
+            </AuthShell>
           </Suspense>
         ),
         handle: { title: 'Kirish' },
+      },
+      {
+        // ⚠ `/kabinet` ostida, lekin `RequireCustomer` DAN TASHQARIDA —
+        //   aks holda kirish sahifasining o'zi kirishni talab qilardi.
+        path: 'kabinet/kirish',
+        element: (
+          <Suspense fallback={null}>
+            <AuthShell>
+              <CustomerLoginPage />
+            </AuthShell>
+          </Suspense>
+        ),
+        handle: { title: 'Optom kabinet — kirish' },
+      },
+      {
+        // ⚠ `RequireCustomer` DAN TASHQARIDA emas, lekin kabinet ichida ham
+        //   emas: mijoz `mustChangePassword` holatida faqat SHU sahifada
+        //   tura oladi, qolgan hamma joyda backend 403 beradi (D-050).
+        path: 'kabinet/parol',
+        element: (
+          <Suspense fallback={null}>
+            <AuthShell>
+              <CustomerPasswordPage />
+            </AuthShell>
+          </Suspense>
+        ),
+        handle: { title: 'Yangi parol' },
+      },
+      {
+        path: 'kabinet',
+        element: (
+          <RequireCustomer>
+            <Suspense fallback={null}>
+              <CustomerCabinetPlaceholder />
+            </Suspense>
+          </RequireCustomer>
+        ),
+        handle: { title: 'Kabinet' },
       },
       {
         element: (

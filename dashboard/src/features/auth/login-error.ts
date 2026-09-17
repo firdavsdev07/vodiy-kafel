@@ -1,13 +1,23 @@
 import { ApiError } from '@/shared/api';
 
-/** Login xatosi → foydalanuvchiga tushunarli matn. */
-export function loginErrorMessage(error: unknown): string {
+/**
+ * Login xatosi → foydalanuvchiga tushunarli matn.
+ *
+ * `identifier` — nima bilan kirilgani: xodim telefon bilan, optom mijoz
+ * login satri bilan (D-049). Xato matnida aynan o'sha nom aytilsin,
+ * aks holda mijozga "telefon raqami noto'g'ri" deb yozilardi.
+ */
+export function loginErrorMessage(
+  error: unknown,
+  identifier: 'phone' | 'login' = 'phone',
+): string {
+  const who = identifier === 'phone' ? 'Telefon raqami' : 'Login';
   if (!(error instanceof ApiError)) return 'Kutilmagan xato. Sahifani yangilab ko‘ring.';
   if (error.isNetworkError) return error.message;
   switch (error.statusCode) {
     case 400:
     case 401:
-      return 'Telefon raqami yoki parol noto‘g‘ri.';
+      return `${who} yoki parol noto‘g‘ri.`;
     case 403:
       return 'Hisobingiz faol emas. Administratorga murojaat qiling.';
     case 429:

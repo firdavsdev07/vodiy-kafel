@@ -50,7 +50,7 @@
 
   BU PAKETDA YO'Q:
     • Chakana (mehmon) katalogi — u `storefront/` da, hisob umuman yo'q
-    • Optom mijoz kabineti (`/me/*`, `/wholesale/*`) — ❓ 1-savolga qarang
+    • (2026-09-17 dan boshlab optom mijoz kabineti BU PAKETDA — EPIC 10)
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -2289,6 +2289,396 @@
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 10 — OPTOM MIJOZ KABINETI (B2B)                                        ║
+║  Qaror: 2026-09-17 — kabinet DASHBOARD ichida quriladi (variant B).          ║
+║  Storefront — faqat reklama/marketing sayti, hisob u yerda YO'Q.             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  ⚠️ TZ DAN ATAYLAB CHETLASHISH — hujjatlashtirilgan                     │
+  │                                                                        │
+  │  Notion TZ (v1.1) kabinetni SAYTDA deb belgilagan. Dalillar:           │
+  │    • 2-bo'lim: «Header'da «Optom kirish» tugmasi» — saytning header'i  │
+  │    • 2-bo'lim: checkout oqimi sayt dizayn talablari ichida             │
+  │    • 3.3:  «📍 Joylashuvi: to'liq Optom (B2B) sahifasida»              │
+  │    • 3.6:  «sayt VA kabinet header'ida» bildirishnoma hisoblagichi     │
+  │    • 3.10: «Butunlay sayt ichida, tashqariga chiqmasdan»               │
+  │    • TZ boshida ikkalasi ajratilgan: kafel-web.vercel.app = sayt,      │
+  │      kafel-web.vercel.app/admin/dashboard = boshqaruv paneli           │
+  │                                                                        │
+  │  Mijoz 2026-09-17 da TZ ni ko'rib turib DASHBOARD ni tanladi.          │
+  │  Sabab: token/refresh, RBAC, forma, jadval, tema — hammasi tayyor;     │
+  │  storefront esa hali API'ga umuman ulanmagan (S-004 endi boshlanadi).  │
+  │                                                                        │
+  │  ⚠ SHUNDAN KELIB CHIQADIGAN MAJBURIYAT:                                │
+  │    TZ ning 2-bo'limidagi «Optom kirish» tugmasi BARIBIR kerak —        │
+  │    storefront header'ida bo'ladi, lekin forma emas, dashboard          │
+  │    manziliga HAVOLA. Bu `storefront/task.txt` ga S-045 sifatida        │
+  │    qo'shildi. Busiz TZ talabi bajarilmay qoladi.                       │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │  ⚠ BU EPIC BOSHLANISHIDAN OLDIN O'QING                                  │
+  │                                                                        │
+  │  Kabinet — xodim panelining yana bitta bo'limi EMAS. U:                │
+  │    • boshqa endpoint bilan kiradi (`/auth/wholesale/login`, telefon    │
+  │      emas — LOGIN satri),                                              │
+  │    • boshqa layout, boshqa menyu (xodim sidebar'i ko'rinmaydi),        │
+  │    • boshqa marshrut daraxti: `/kabinet/*`,                            │
+  │    • boshqa aktor turi — `CustomerOnlyGuard` bilan himoyalangan        │
+  │      endpointlarga faqat mijoz tokeni kiradi.                          │
+  │                                                                        │
+  │  Qayta ishlatiladigani — API klient, token/refresh, forma, jadval,     │
+  │  toast, tema, matn lug'ati. Aynan shuning uchun variant B tanlandi:    │
+  │  noldan yozilsa, shularning hammasi ikkinchi marta yozilardi.          │
+  └────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] D-049 · Mijoz seansi va aktor ajratish ─────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `POST /auth/wholesale/login` → `{ login, password }`              │
+│                                                                              │
+│  ⚠ XODIMDAN FARQI: telefon EMAS, `login` satri (masalan `fargona-optom`).    │
+│    Katta-kichik harf farq qilmaydi — server kichik harfga keltiradi.         │
+│    Mijoz o'zi ro'yxatdan o'tmaydi: login va parolni admin/menejer beradi.    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `shared/auth/session.ts` da `loginWholesale()` qo'shiladi — hozir       │
+│      `login()` `/auth/admin/login` ni QATTIQ yozib qo'ygan                   │
+│    • Token do'koni aktor turini eslab qoladi (`staff` | `customer`) —        │
+│      `/auth/refresh` ikkalasi uchun umumiy, lekin kimligini bilish kerak     │
+│    • `GET /auth/me` — `role` maydonidan aktor turi aniqlanadi                │
+│    • `RequireCustomer` / `RequireStaff` — bir-birini ichiga kiritmaydi       │
+│    • `/kabinet/kirish` — mijoz uchun alohida sahifa                          │
+│                                                                              │
+│  ❓ QAROR KERAK: bitta brauzerda xodim ham, mijoz ham kirsa nima bo'ladi?     │
+│     Token do'koni bitta — ikkinchi kirish birinchisini siqib chiqaradi.      │
+│     Tavsiya: shunday qoldirilsin (ogohlantirish bilan), chunki ikki          │
+│     parallel sessiya = ikki xil `localStorage` kaliti va chalkash holat.     │
+│                                                                              │
+│  Bog'liq: D-006 (xodim seansi — kod shundan o'sadi)                          │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-17                                                    │
+│                                                                              │
+│    • `token-store.ts`: aktor turi (`staff` | `customer`) saqlanadi.          │
+│      `/auth/refresh` uni O'ZGARTIRMAYDI — refresh aktorni almashtirmaydi.    │
+│    • `session.ts`: `loginWholesale()` + `changeWholesalePassword()`.         │
+│      Kirish javobidagi `mustChangePassword` chaqiruvchiga qaytariladi.       │
+│    • `client.ts`: `/auth/wholesale/login` ham AUTH_ENTRY_PATHS ga —          │
+│      401 da refresh urinilmasin, u shunchaki "parol xato".                   │
+│    • `RequireCustomer` (yangi) va `RequireAuth` (aktor tekshiruvi            │
+│      qo'shildi) — xodim va mijoz bir-birining marshrutiga kira olmaydi.      │
+│    • `/kabinet/kirish` — `CustomerLoginPage`. Login SATRI (telefon emas),    │
+│      `toLowerCase()` (backend ham shunday qidiradi), maxLength 64.           │
+│    • `AuthShell` + `PasswordInput` — ikkala kirish sahifasi uchun umumiy.    │
+│      Xodim `LoginPage` i ham shularga o'tkazildi (takror kod yo'q).          │
+│    • `loginErrorMessage(error, 'phone' | 'login')` — mijozga "telefon        │
+│      raqami noto'g'ri" deb yozilmasin.                                       │
+│                                                                              │
+│    ── 🐞 YO'L-YO'LAKAY TOPILGAN VA TUZATILGAN IKKI XATO ──                    │
+│                                                                              │
+│    1. ORQAGA MOSLIK (test yiqilib topildi, deployda hammani sindirardi):     │
+│       `useProfile` endi aktor turiga bog'liq. D-049 dan OLDIN kirgan         │
+│       xodimda `localStorage` da aktor kaliti YO'Q → `null` → profil          │
+│       yuklanmay qolardi: menyu bo'sh, ruxsat yo'q, panel ishlamaydi.         │
+│       Yechim: sessiya bor-u aktor yozilmagan bo'lsa — `'staff'`.             │
+│       (D-049 gacha kabinet umuman yo'q edi, boshqa variant bo'lishi          │
+│       mumkin emas.) Tekshiruvi `auth.test.ts` da alohida test bilan.         │
+│                                                                              │
+│    2. POYGA — vaqtinchalik parol ekrani CHETLAB O'TILARDI:                   │
+│       `loginWholesale` tokenni darhol saqlaydi → `hasSession` mutatsiya      │
+│       `onSuccess` idan OLDIN `true` bo'ladi → sahifadagi "allaqachon         │
+│       kirgan" tekshiruvi `/kabinet` ga yo'naltirib yuborardi.                │
+│       Brauzerda aniqlandi: API `mustChangePassword: true` qaytardi,          │
+│       lekin ilova baribir kabinetga o'tdi. Yechim: MOUNT paytidagi           │
+│       holat olinadi (`useState` initializer), jonli qiymat emas.             │
+│                                                                              │
+│    Tekshirildi (haqiqiy backend, brauzer):                                   │
+│      • `FARGONA-Optom` bilan kirish ✓ (katta-kichik harf farq qilmadi)       │
+│      • Xodim sessiyasi bilan `/kabinet/kirish` → `/` ga qaytardi ✓           │
+│      • Mijoz sessiyasi bilan `/prices`, `/customers` → `/kabinet` ✓          │
+│      • `pnpm build` ✓ `lint` ✓ `typecheck` ✓ `test` 294/294 ✓                │
+│        (9 ta yangi test: aktor turi, orqaga moslik, mijoz kirishi)           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] D-050 · Majburiy parol almashtirish 🔒 ──────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `POST /auth/wholesale/change-password`                            │
+│                                                                              │
+│  Backend qoidasi (auth.controller.ts izohi):                                 │
+│    Javobda `mustChangePassword: true` kelsa — bu VAQTINCHALIK parol.         │
+│    Mijoz `/auth/wholesale/change-password` dan boshqa HECH QAYERGA           │
+│    o'tolmaydi (403). Ya'ni kabinetning hamma sahifasi yopiq.                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Kirgandan keyin `mustChangePassword` tekshiriladi → darhol shu ekran    │
+│    • Boshqa `/kabinet/*` marshrutlariga urinish shu yerga qaytaradi          │
+│    • Joriy parol ham so'raladi (o'g'irlangan token bilan hisobni             │
+│      egallab olishning oldini oladi — backend shuni talab qiladi)            │
+│                                                                              │
+│    🔒 ⚠ Javobda YANGI token juftligi keladi va uni ALMASHTIRISH SHART:        │
+│      eskisida `mustChangePassword: true` qolgan, u bilan mijoz hamon         │
+│      to'silgan bo'lardi. Bu — jim o'tib ketadigan xato, chunki parol         │
+│      almashdi-yu, foydalanuvchi baribir ichkariga kira olmaydi.              │
+│                                                                              │
+│  Bog'liq: D-049                                                              │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-17                                                    │
+│                                                                              │
+│    ⚠ D-049 bilan BIRGA bajarildi, sababi: seed'dagi BARCHA besh optom        │
+│      mijozda `mustChangePassword = true`. Ya'ni D-050 siz har bir mijoz      │
+│      kirishi bilan mavjud bo'lmagan sahifaga tushardi — D-049 ni             │
+│      alohida yakunlab bo'lmasdi.                                             │
+│                                                                              │
+│    • `/kabinet/parol` — `CustomerPasswordPage`. Uch maydon: joriy,           │
+│      yangi, takror. "Keyinroq" tugmasi YO'Q — backend baribir 403 beradi.    │
+│    • Client validatsiya backendni aynan takrorlaydi: kamida 8 belgi          │
+│      (`MIN_PASSWORD_LENGTH`), joriy paroldan farq qilsin, takror mos         │
+│      kelsin. Brauzerda tasdiqlandi: bir xil parol kiritilganda serverga      │
+│      UMUMAN so'rov ketmadi, xato darhol ko'rindi.                            │
+│    • Javobdagi YANGI tokenlar saqlanadi — eskisida bayroq `true` qolgan.     │
+│                                                                              │
+│    ── 🔑 `mustChangePassword` QAYERDAN O'QILADI ──                            │
+│                                                                              │
+│      Muammo: bu bayroq FAQAT kirish javobida keladi, `GET /auth/me`          │
+│      esa mijozga 401 beradi. Sahifa yangilangandan keyin uni bilib           │
+│      bo'lmasdi — mijoz kabinetga kirib qolardi va har bir so'rovda           │
+│      403 ko'rardi.                                                           │
+│                                                                              │
+│      Yechim: bayroq refresh TOKEN ichidan o'qiladi                           │
+│      (`shared/auth/token-claims.ts`). Token payload'i base64, imzo           │
+│      TEKSHIRILMAYDI va tekshirilmasligi kerak — bu G4 bo'yicha faqat         │
+│      UX uchun marshrut tanlash, himoya emas.                                 │
+│                                                                              │
+│      ⚠ api B-065 (mijoz profili endpointi) kelganda buni qayta ko'rish       │
+│        kerak: bayroqni profil javobidan olish tozaroq bo'ladi.               │
+│                                                                              │
+│    Tekshirildi (haqiqiy backend, brauzer):                                   │
+│      • Kirish → `/kabinet/parol` ga tushdi ✓                                 │
+│      • `/kabinet` ga to'g'ridan-to'g'ri urinish → qaytarib yuborildi ✓       │
+│      • Sahifa qayta yuklangandan keyin ham to'siq saqlandi ✓                 │
+│      • Yangi parol → `/kabinet` ga o'tdi ✓                                   │
+│      • Sinovdan keyin `pnpm db:seed` bilan baza hujjatdagi holatiga          │
+│        qaytarildi (barcha mijozda `Parol123!`, bayroq `true`)                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-051 · Kabinet layouti va navigatsiya ─────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Alohida shell — xodimning `Sidebar` i EMAS. Mijoz menyusi:              │
+│        Katalog · Savat · Buyurtmalarim · Hisobim · Shartnomalar              │
+│    • Sarlavhada: kompaniya nomi, filial, bildirishnoma qo'ng'irog'i          │
+│      (`GET /me/notifications/unread-count`), chiqish                         │
+│    • Mobil: kabinet telefonda ishlatiladi (mijoz ofisda emas) — jadval       │
+│      emas, kartochka ko'rinishi                                              │
+│                                                                              │
+│  ⚠ Xodim panelining rangi/tuzilishi qayta ishlatiladi, lekin menyu           │
+│    bandlari ARALASHMAYDI: mijoz "Mahsulotlar", "Zaxira", "Filiallar"         │
+│    kabi xodim bo'limlarini umuman ko'rmaydi.                                 │
+│                                                                              │
+│  Bog'liq: D-049, D-050                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [!] D-052 · Kabinet katalogi: narx va zaxira 🔒 🆕 ───────────────────────────┐
+│                                                                              │
+│  ⛔ BLOKLANGAN — api/task.txt B-064 ni kutadi.                                │
+│                                                                              │
+│  MUAMMO (kod o'qib tasdiqlandi, taxmin emas):                                │
+│    `GET /products` — OCHIQ katalog. Unda:                                    │
+│      • NARX YO'Q. `products.service.ts:21` izohi: "branchProducts BU         │
+│        YERDA YO'Q va bo'lmaydi — narx o'sha jadvalda"                        │
+│      • Zaxira faqat `AVAILABLE` / `UNAVAILABLE` (`PublicAvailability`)       │
+│      • Filialga bog'liq emas — mijoz filiali sotmaydigan mahsulot ham        │
+│        ro'yxatda chiqadi                                                     │
+│                                                                              │
+│    Holbuki `StockStatus` enum (IN_STOCK / LOW / OUT_OF_STOCK) allaqachon     │
+│    yozilgan va uning O'Z IZOHIDA shunday deyilgan:                           │
+│      "Bu — auth bor joyda (optom mijoz kabineti, admin panel)                │
+│       ko'rinadigan uch rangli variant"                                       │
+│    Ya'ni enum kabinet uchun yozilgan, lekin uni MIJOZGA beradigan            │
+│    endpoint yo'q — faqat `/admin/product-stocks` (xodim uchun).              │
+│                                                                              │
+│    Natijada bugun mijoz narxni faqat `POST /calculator/quote` orqali,        │
+│    aniq mahsulot + paddon soni bilan ko'ra oladi. "Ro'yxatni ochib,          │
+│    narxlarni taqqoslab tanlash" MUMKIN EMAS.                                 │
+│                                                                              │
+│  Nima qilinadi (B-064 kelgandan keyin):                                      │
+│    • Kabinet katalogi: filialga bog'langan, narxli, uch darajali zaxira      │
+│    • Filtr/qidiruv — ochiq katalog bilan bir xil                             │
+│    • Narx — G6: satr ustida formatlanadi                                     │
+│    • 🔒 Chegirma SABABI ko'rsatilmaydi — faqat yakuniy narx                   │
+│      (CLAUDE.md: "qaysi qoida ishlagani mijozga ko'rinmaydi")                │
+│                                                                              │
+│  Bog'liq: D-051, api B-064                                                   │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-053 · Savat va kalkulyator ───────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `POST /calculator/quote`, `POST /calculator/delivery`             │
+│                                                                              │
+│  ⚠ O'LCHOV BIRLIGI — PADDON, kv.m EMAS (TZ 3.3, `QuoteItemDto.pallets`).     │
+│    Bitta qatorda ko'pi bilan 100 000 paddon, savatda 50 qator.               │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Savat brauzerda saqlanadi (`localStorage`) — backendda savat YO'Q       │
+│    • Har o'zgarishda `quote` qayta so'raladi (debounce bilan)                │
+│    • Yetkazib berish: viloyat + transport BIRGA tanlanadi yoki               │
+│      ikkalasi ham bo'sh = olib ketish (yo'l kira 0)                          │
+│    • Jami: mahsulotlar + yo'l kira, alohida qatorlarda                       │
+│                                                                              │
+│  🔒 Frontend NARX YUBORMAYDI. `QuoteRequestDto` izohi: yuborilgan             │
+│    `price`, `branchId` kabi maydonlarni ValidationPipe jimgina tashlaydi.    │
+│    Filial — tokendan (G5).                                                   │
+│                                                                              │
+│  Bog'liq: D-052                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-054 · Buyurtma berish ────────────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `POST /orders`                                                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Savatdan buyurtmaga: mahsulotlar, yetkazib berish, to'lov usuli         │
+│    • Xaritada aniq nuqta (`exactLat` + `exactLng`, ixtiyoriy) —              │
+│      ⚠ NARXGA TA'SIR QILMAYDI, faqat logistika uchun (TZ 3.13).              │
+│      Olib ketishda berilmaydi — backend 400 qaytaradi                        │
+│    • Natija: `NEW` holatdagi buyurtma + `PENDING` to'lov yozuvi              │
+│                                                                              │
+│  Xatolar (aynan shu matnlar bilan ko'rsatiladi):                             │
+│    • 409 — omborda yetarli emas. ⚠ Qancha borligi AYTILMAYDI                 │
+│      (zaxira soni mijozga sir — CLAUDE.md qoida 2)                           │
+│    • 404 — mahsulot filialda sotilmaydi yoki tarif yo'q                      │
+│    • 400 — viloyat va transport birga emas / koordinata noto'liq             │
+│                                                                              │
+│  🔒 Summa backendda QAYTA hisoblanadi — kalkulyator bilan AYNAN bir yo'l.     │
+│    Frontend ko'rsatgan summa bilan farq chiqsa — backendniki to'g'ri.        │
+│                                                                              │
+│  Bog'liq: D-053                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-055 · To'lov ─────────────────────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `POST /orders/{id}/payment`, `GET /payments/{id}/status`          │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • To'lov usulini tanlash va boshlash                                      │
+│    • Holatni kuzatish (`/payments/{id}/status`)                              │
+│    • Dev muhitida: `POST /dev/payments/{id}/simulate` bilan sinash           │
+│      (bu endpoint faqat `NODE_ENV=development` da ro'yxatdan o'tadi)         │
+│                                                                              │
+│  ⚠ Payme/Click nomlari KODDA YOZILMAYDI — backend hali mock, provayder       │
+│    o'z taskida ulanadi (CLAUDE.md: "provider names must not appear in        │
+│    code before their dedicated task"). UI usul nomini backenddan oladi.      │
+│                                                                              │
+│  Bog'liq: D-054                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-056 · Mening buyurtmalarim ───────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /me/orders`, `GET /me/orders/{id}`,                          │
+│            `GET /orders/{id}/manager-contact`                                │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat: raqam, sana, holat, summa, to'lov holati                       │
+│    • Tafsilot: qatorlar (paddon, narx snapshot), yetkazib berish, to'lov     │
+│    • "Menejer bilan bog'lanish" — `manager-contact` dan telefon              │
+│    • Holat nomlari — D-043 lug'atidan (❓ 5 hal bo'lganda bitta fayl)         │
+│                                                                              │
+│  ⚠ Narx — buyurtma paytidagi SNAPSHOT. Keyin narx o'zgarsa ham eski          │
+│    buyurtmada eskisi qoladi; UI uni qayta hisoblamaydi.                      │
+│                                                                              │
+│  Bog'liq: D-051                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-057 · Hisobim: balans va harakatlar ──────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /me/account`, `GET /me/account/transactions`                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Balans: qarz (qizil) / avans (yashil) — `BalanceText` qayta             │
+│      ishlatiladi (D-020 da yozilgan)                                         │
+│    • Harakatlar tarixi: sana, tur, summa, izoh, sahifalash                   │
+│                                                                              │
+│  ⚠ Balans — hisoblanadigan qiymat (ledger), maydon emas. Frontend uni        │
+│    o'zi yig'masligi kerak: backend bergan raqam ishlatiladi.                 │
+│                                                                              │
+│  G6: summa satr ustida formatlanadi, `Number()` ga aylantirilmaydi.          │
+│                                                                              │
+│  Bog'liq: D-051                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-058 · Bildirishnomalar va yangilanishlar ─────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /me/notifications`, `/unread-count`,                         │
+│            `PATCH /me/notifications/{id}/read`, `/read-all`,                 │
+│            `GET /me/updates`                                                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Qo'ng'iroq + o'qilmaganlar soni (sarlavhada)                            │
+│    • Ro'yxat, bittasini va hammasini o'qilgan deb belgilash                  │
+│    • `GET /me/updates` — ~15 soniyada bir marta so'raladi (backend           │
+│      summary'sida shunday yozilgan). TanStack Query `refetchInterval`.       │
+│      Sahifa fonda bo'lsa polling to'xtaydi (batareya).                       │
+│                                                                              │
+│  ⚠ Bu endpointlar FAQAT mijoz uchun (`CustomerOnlyGuard`). Xodimda           │
+│    bildirishnoma umuman yo'q — bu ochiq savol ❓ 4, aralashtirmang.           │
+│                                                                              │
+│  Bog'liq: D-051                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-059 · Shartnomalar (INN, PDF) ────────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /wholesale/contracts`, `POST /wholesale/contracts`,          │
+│            `GET /wholesale/contracts/{id}`, `/{id}/download`                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Ro'yxat va tafsilot                                                     │
+│    • Yangi shartnoma — INN bo'yicha                                          │
+│    • PDF yuklab olish                                                        │
+│                                                                              │
+│  🔒 PDF — oddiy `<a href>` bilan OLINMAYDI. Backend izohi: "PDF havolasi      │
+│    alohida berilmaydi, faqat autentifikatsiya bilan". Ya'ni token bilan      │
+│    `fetch` qilinadi, blob'ga aylantiriladi. Dashboard'da buning uchun        │
+│    `api.download()` allaqachon bor (`client.ts`) — qayta ishlatiladi.        │
+│                                                                              │
+│  ⚠ Didox.uz / E-IMZO nomlari hali kodda yozilmaydi — o'z taskida.            │
+│                                                                              │
+│  Bog'liq: D-051                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] D-060 · Kabinet xavfsizligi va ajratish tekshiruvi 🔒 ───────────────────┐
+│                                                                              │
+│  Nima tekshiriladi (brauzerda, haqiqiy backend bilan):                       │
+│    • Xodim tokeni bilan `/kabinet/*` — kirib bo'lmaydi                       │
+│    • Mijoz tokeni bilan xodim marshrutlari (`/products`, `/prices`,          │
+│      `/customers`) — kirib bo'lmaydi, menyuda ham ko'rinmaydi                │
+│    • Mijoz tokeni bilan `/admin/*` endpointlari — 403                        │
+│    • `mustChangePassword: true` holatida hamma sahifa yopiq (D-050)          │
+│    • Chiqishda token to'liq tozalanadi, orqaga tugmasi bilan                 │
+│      kabinetga qaytib bo'lmaydi                                              │
+│    • Boshqa mijozning buyurtmasi/shartnomasi ID bilan so'ralsa — 404         │
+│      (403 emas: IDOR himoyasi, CLAUDE.md)                                    │
+│                                                                              │
+│  ⚠ G4: bularning hammasi backendda ham tekshiriladi. Frontend himoyasi       │
+│    — qulaylik, yagona to'siq EMAS. Shuning uchun tekshiruv aynan             │
+│    SO'ROV darajasida qilinadi, menyu ko'rinishi bilan cheklanmaydi.          │
+│                                                                              │
+│  Bog'liq: D-049 … D-059                                                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
 
   UX VA VISUAL TAMOYILLAR
 
@@ -2304,14 +2694,14 @@
 ║  OCHIQ SAVOLLAR (javob kerak, lekin ish TO'XTAMAYDI)                         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  ❓ 1. OPTOM MIJOZ KABINETI QAYERDA?                          → doira masalasi
-        Backendda tayyor: `/auth/wholesale/login`, `/me/orders`,
-        `/me/account`, `/me/notifications`, `/wholesale/contracts`.
-        Ikki variant:
-          A) `storefront/` ichida — mijoz baribir o'sha saytga kiradi
-          B) `dashboard/` ichida alohida bo'lim — kod qayta ishlatiladi
-        Vaqtinchalik qaror: A (bu task.txt faqat XODIM panelini qamraydi).
-        Javob B bo'lsa — EPIC 10 qo'shiladi, mavjud tasklar o'zgarmaydi.
+  ✅ 1. OPTOM MIJOZ KABINETI QAYERDA?              → HAL BO'LDI 2026-09-17
+        JAVOB: B — kabinet `dashboard/` ichida quriladi.
+        Storefront — faqat reklama/marketing sayti, hisob u yerda YO'Q.
+        → EPIC 10 qo'shildi (D-049 … D-060), mavjud 48 task o'zgarmadi.
+        → `storefront/task.txt` ga ham yozildi (doira o'zgarishi).
+        ⚠ Bir narsa ochiq qoldi: bitta brauzerda xodim ham, mijoz ham
+          kirsa — token do'koni bitta, ikkinchisi birinchisini siqib
+          chiqaradi. Tavsiya D-049 da yozilgan.
 
   ❓ 2. ADMIN UCHUN KALKULYATOR PREVIEW BORMI?                       → D-028
         `/calculator/*` faqat mijoz tokeni bilan ishlaydi. Menejer
@@ -2341,10 +2731,10 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 48
-  Tugadi       : 48
+  Jami tasklar : 60
+  Tugadi       : 50
   Jarayonda    : 0
-  Bloklangan   : 0
+  Bloklangan   : 1   (D-052 — api B-064 ni kutadi)
 
   Epic bo'yicha:
     EPIC 0  Poydevor .................  8 / 8    [████████]   ✓ D-001 … D-008
@@ -2357,12 +2747,19 @@
     EPIC 7  Yetkazib berish ..........  3 / 3    [███]       ✓ D-037 … D-039
     EPIC 8  Sozlamalar ...............  1 / 1    [█]         ✓ D-040
     EPIC 9  Bosh sahifa va sifat .....  8 / 8    [████████]  ✓ D-041 … D-048
+    EPIC 10 Optom mijoz kabineti .....  2 / 12   [xx··········]  D-049 … D-060
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  yo'q — dashboard'dagi 48 taskning hammasi 2026-09-17 da yopildi.
-                 Qolgani: brauzerda qo'lda ko'rik (tasklarda ⚠ bilan belgilangan),
-                 api/task.txt B-062, B-063 va security-checklist tavsiyalari.
+  KEYINGI TASK:  D-051 · Kabinet layouti va navigatsiya
+                 ⚠ api B-065 ni kutadi (mijoz o'z kompaniya nomini/filialini
+                   ko'ra olmaydi — sarlavhaga qo'yadigan narsa yo'q)
 
-  Backend TAYYOR (api/task.txt: 58/63, B-050 bloklangan, B-062 va B-063
-  ochiq) — hech bir task backendni kutmaydi (ikkalasi yaxshilash).
+                 Xodim paneli (D-001 … D-048) 2026-09-17 da to'liq yopildi.
+                 2026-09-17 dagi qarordan keyin optom mijoz kabineti ham
+                 shu paketga kirdi — EPIC 10, 12 ta task.
+
+  ⚠ D-052 (kabinet katalogi) BLOKLANGAN: `GET /products` narx bermaydi va
+    zaxirani faqat ikki darajada ko'rsatadi. Mijozga narxli, filialga
+    bog'langan, uch darajali zaxirali katalog kerak — api/task.txt B-064.
+    Qolgan 11 task backendni kutmaydi, ketma-ket bajarilaveradi.
   ──────────────────────────────────────────────────────────────────────────
