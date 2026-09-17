@@ -21,6 +21,7 @@ import { PricingModule } from './modules/pricing/pricing.module';
 import { ProductsModule } from './modules/products/products.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { StatsModule } from './modules/stats/stats.module';
 import { SizesModule } from './modules/sizes/sizes.module';
 import { StorageModule } from './storage';
 import { AppController } from './app.controller';
@@ -51,6 +52,7 @@ import { AppService } from './app.service';
     BranchesModule,
     PartnersModule,
     StaffModule,
+    StatsModule,
     // 🧪 /dev/* — faqat development. `validateEnv` standart qiymatlarni
     // process.env ga yozgani uchun NODE_ENV bu yerda doim aniqlangan.
     ConditionalModule.registerWhen(

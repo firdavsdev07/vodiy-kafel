@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import type { Schema } from '@/shared/api';
 import { formatUzPhone } from '@/shared/lib/format';
-import { zRequiredText, zUzPhone } from '@/shared/lib/validation';
+import { zOptionalPassword, zRequiredText, zUzPhone } from '@/shared/lib/validation';
 
 export type Staff = Schema<'StaffDto'>;
 export type StaffRoleKind = Staff['role'];
 export type CreateStaffBody = Schema<'CreateStaffDto'>;
 export type UpdateStaffBody = Schema<'UpdateStaffDto'>;
+export type ResetStaffPasswordBody = Schema<'ResetStaffPasswordDto'>;
+export type StaffPasswordReset = Schema<'StaffPasswordResetDto'>;
 
 /** Backend `TELEGRAM_USERNAME` — boshidagi @ ni backend o'zi olib tashlaydi. */
 const TELEGRAM_USERNAME = /^@?[A-Za-z0-9_]{5,32}$/;
@@ -18,6 +20,12 @@ export type StaffFilters = { search: string; isActive: string; branchId: string 
  * Login — TELEFON (kirish sahifasi `+998` 9 raqam kutadi, shuning uchun
  * backenddan torroq: faqat O'zbekiston raqami).
  * 🔒 `branchRequired` — faqat SUPER_ADMIN; filial admini uchun maydon YO'Q (G5).
+ *
+ * `password` — FAQAT yaratishda va ixtiyoriy (api B-066): admin xodimga
+ * parolni og'zaki aytib berishi kerak bo'lsa, uni o'zi tanlaydi; bo'sh
+ * qoldirilsa tizim vaqtinchalik parol yaratadi. Tahrirlashda parol bu
+ * formada emas — alohida oqim (`StaffPasswordFlow`), chunki u boshqa
+ * endpoint va boshqa natija (bir marta ko'rsatiladigan parol).
  */
 export function staffSchema(opts: { branchRequired: boolean }) {
   return z.object({
@@ -29,6 +37,9 @@ export function staffSchema(opts: { branchRequired: boolean }) {
       .refine((v) => v === '' || TELEGRAM_USERNAME.test(v), 'Telegram username: 5–32 lotin harf, raqam yoki _')
       .transform((v) => v.replace(/^@/, '')),
     branchId: opts.branchRequired ? z.string().min(1, 'Filialni tanlang') : z.string(),
+    // `.optional()` — maydon umuman berilmasa ham sxema yiqilmaydi
+    // (forma har doim bo'sh satr beradi, lekin chaqiruvchi bittasi emas)
+    password: zOptionalPassword().optional(),
   });
 }
 
@@ -41,16 +52,22 @@ export function staffDefaults(staff?: Staff): StaffFormInput {
     phone: staff ? formatUzPhone(staff.phone) : '',
     telegramUsername: staff?.telegramUsername ?? '',
     branchId: staff?.branch.id ?? '',
+    password: '',
   };
 }
 
-/** Yaratish. `branchId` faqat berilganda (SUPER_ADMIN) — filial admini uchun backend o'zi qo'yadi. */
+/**
+ * Yaratish. `branchId` faqat berilganda (SUPER_ADMIN) — filial admini
+ * uchun backend o'zi qo'yadi. `password` berilmasa — backend vaqtinchalik
+ * parol yaratadi va javobda qaytaradi (api B-066).
+ */
 export function toCreateStaffBody(v: StaffFormValues): CreateStaffBody {
   return {
     fullName: v.fullName,
     phone: v.phone,
     ...(v.telegramUsername ? { telegramUsername: v.telegramUsername } : {}),
     ...(v.branchId ? { branchId: v.branchId } : {}),
+    ...(v.password ? { password: v.password } : {}),
   };
 }
 

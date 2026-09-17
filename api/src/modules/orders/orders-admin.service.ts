@@ -15,6 +15,7 @@ import type {
   AdminOrderDetailDto,
   AdminOrderListItemDto,
   AdminOrderQueryDto,
+  AssignableStaffDto,
   CreateManualOrderDto,
   OrderBuyerDto,
 } from './dto';
@@ -89,12 +90,18 @@ const LIST_SELECT = {
 
 type BuyerRow = Prisma.OrderGetPayload<{ select: typeof BUYER_SELECT }>;
 
-/** Buyurtmani qabul qila oladigan xodim rollari (biriktirish uchun). */
-const ASSIGNABLE_ROLES: readonly string[] = [
+/**
+ * Buyurtmani qabul qila oladigan xodim rollari (biriktirish uchun).
+ *
+ * ⚠ YAGONA MANBA: `assign()` ham, nomzodlar ro'yxati (`assignableStaff`,
+ *   B-062) ham shu ro'yxatdan o'qiydi. Ikki joyda yozilsa, ro'yxatda
+ *   ko'rinadigan-u biriktirishda 400 beradigan xodim paydo bo'lardi.
+ */
+const ASSIGNABLE_ROLES = [
   UserRole.MANAGER,
   UserRole.BRANCH_ADMIN,
   UserRole.MODERATOR,
-];
+] as const satisfies readonly UserRole[];
 
 /**
  * Buyurtmalar — admin boshqaruvi (B-030).
@@ -210,7 +217,9 @@ export class OrdersAdminService {
       if (
         !staff?.isActive ||
         staff.branchId !== branchId ||
-        !ASSIGNABLE_ROLES.includes(staff.role)
+        !ASSIGNABLE_ROLES.includes(
+          staff.role as (typeof ASSIGNABLE_ROLES)[number],
+        )
       ) {
         throw new BadRequestException(
           'Xodim topilmadi, faol emas yoki bu filialga tegishli emas',
@@ -223,6 +232,55 @@ export class OrdersAdminService {
       data: { managerId },
     });
     return this.findOne(actor, orderId);
+  }
+
+  /**
+   * Buyurtmaga biriktirish uchun nomzod xodimlar (B-062).
+   *
+   * ⚠ NEGA KERAK EDI: `GET /admin/managers` faqat SUPER_ADMIN va
+   *   BRANCH_ADMIN uchun ochiq va faqat MANAGER rolini qaytaradi. Ya'ni
+   *   MODERATOR markaziy ombor buyurtmasini boshqa xodimga biriktira
+   *   olmasdi (faqat o'ziga), BRANCH_ADMIN ni esa hech kim ro'yxatdan
+   *   tanlay olmasdi — biriktirish qabul qiladigan rollar ro'yxati
+   *   bilan mos kelmasdi.
+   *
+   * 🔒 Ro'yxat BUYURTMA filialiga bog'langan (so'rovdagi `branchId` ga
+   *    emas): begona filial buyurtmasi so'ralsa 404 (`requireOrderBranch`).
+   *    Shu sababli xodim boshqa filialning xodimlar ro'yxatini bu
+   *    endpoint orqali ham ko'rib olmaydi.
+   *
+   * ⚠ Faqat FAOL xodimlar: faolsizlantirilgan xodimga biriktirish
+   *   `assign()` da 400 beradi, demak uni ro'yxatda ko'rsatish xato.
+   */
+  async assignableStaff(
+    actor: Actor | undefined,
+    orderId: string,
+  ): Promise<AssignableStaffDto[]> {
+    const branchId = await this.requireOrderBranch(actor, orderId);
+    // Filialsiz buyurtma (mehmon, filial biriktirilmagan) — nomzod yo'q
+    if (!branchId) return [];
+
+    const rows = await this.prisma.user.findMany({
+      where: {
+        branchId,
+        isActive: true,
+        role: { in: [...ASSIGNABLE_ROLES] },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        role: true,
+        telegramUsername: true,
+      },
+      orderBy: [{ role: 'asc' }, { fullName: 'asc' }, { id: 'asc' }],
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      fullName: row.fullName,
+      role: row.role,
+      telegramUsername: row.telegramUsername,
+    }));
   }
 
   /**

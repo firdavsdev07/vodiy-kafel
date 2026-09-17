@@ -21,9 +21,56 @@ function domainKeys<const Name extends string>(name: Name) {
   };
 }
 
+/**
+ * Kabinet key'lari — `['me', …]` prefiksi bilan (D-051). Xodim
+ * key'laridan (`['admin', …]`) ATAYLAB ajratilgan: chiqishda yoki aktor
+ * almashganda butun daraxtni bitta prefiks bilan tozalash mumkin va
+ * mijoz keshi xodim keshiga aralashmaydi.
+ */
+function meKeys<const Name extends string>(name: Name) {
+  const all = ['me', name] as const;
+  return {
+    all,
+    lists: () => [...all, 'list'] as const,
+    list: <F extends object>(filters: F) => [...all, 'list', filters] as const,
+    details: () => [...all, 'detail'] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  };
+}
+
 export const queryKeys = {
   /** GET /auth/me — joriy xodim profili (D-006). */
   me: ['auth', 'me'] as const,
+
+  /** GET /admin/dashboard/stats — bosh sahifa ko'rsatkichlari (D-041, api B-063). */
+  dashboardStats: ['admin', 'dashboard', 'stats'] as const,
+
+  /** Optom mijoz kabineti (EPIC 10). */
+  cabinet: {
+    /** Butun kabinet keshi — chiqishda shu prefiks bilan tozalanadi. */
+    all: ['me'] as const,
+    /** GET /me/profile — mijozning o'z profili (D-051). */
+    profile: ['me', 'profile'] as const,
+    catalog: meKeys('catalog'),
+    orders: meKeys('orders'),
+    account: ['me', 'account'] as const,
+    transactions: meKeys('account-transactions'),
+    notifications: meKeys('notifications'),
+    unreadCount: ['me', 'notifications', 'unread-count'] as const,
+    /** GET /me/updates — fonda ~15 soniyada bir marta (D-058). */
+    updates: ['me', 'updates'] as const,
+    contracts: meKeys('contracts'),
+    /**
+     * Savat hisobi — kalkulyator javobi (D-053). Key'ga savat va
+     * yo'nalish KIRADI: ular o'zgarsa yangi so'rov ketadi, o'zgarmasa
+     * kesh ishlaydi.
+     */
+    quote: <P extends object>(payload: P) => ['me', 'quote', payload] as const,
+    /** To'lov holati — polling (D-055). */
+    payment: (id: string) => ['me', 'payment', id] as const,
+    /** Buyurtma menejeri bilan bog'lanish (D-056). */
+    managerContact: (orderId: string) => ['me', 'manager-contact', orderId] as const,
+  },
 
   products: {
     ...domainKeys('products'),

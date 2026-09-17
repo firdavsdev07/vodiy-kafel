@@ -1,8 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { PasswordInput } from '@/features/auth/PasswordInput';
 import { ApiError } from '@/shared/api';
 import { errorMessage } from '@/shared/lib/error-message';
+import { MIN_PASSWORD_LENGTH } from '@/shared/lib/validation';
 import { Button, InputField, Modal, PhoneField, SelectField, toast, type SelectOption } from '@/shared/ui';
 import {
   staffDefaults,
@@ -26,8 +28,13 @@ export type UpdateStaffMutation = UseMutationResult<Staff, Error, { id: string; 
  * Mutatsiyalarni sahifa beradi (endpoint roliga qarab boshqa).
  *
  * 🔒 `branchOptions: null` — filial maydoni UMUMAN yo'q (filial admini, G5):
- *    backend o'z filialiga yozadi. Yangi xodimning vaqtinchalik paroli
- *    `onCreated` orqali chaqiruvchiga beriladi va FAQAT bir marta ko'rsatiladi.
+ *    backend o'z filialiga yozadi. Yangi xodimning paroli `onCreated`
+ *    orqali chaqiruvchiga beriladi va FAQAT bir marta ko'rsatiladi.
+ *
+ * Parol maydoni faqat YARATISHDA bo'ladi va ixtiyoriy (api B-066):
+ * admin o'zi yozsa — aynan o'shasi, bo'sh qoldirsa tizim yaratadi.
+ * Mavjud xodimning parolini almashtirish — alohida oqim
+ * (`useStaffPasswordFlow`), chunki u boshqa endpoint.
  */
 export function StaffFormModal({
   open,
@@ -64,7 +71,11 @@ export function StaffFormModal({
       onClose={close}
       dismissible={!pending}
       title={staff ? `${staff.fullName} — ${title.edit}` : title.create}
-      description={staff ? undefined : 'Xodim telefon raqami bilan kiradi. Vaqtinchalik parol faqat bir marta ko‘rsatiladi.'}
+      description={
+        staff
+          ? undefined
+          : 'Xodim telefon raqami bilan kiradi. Parol faqat bir marta ko‘rsatiladi — uni saqlab oling.'
+      }
       footer={
         <>
           <Button onClick={close} disabled={pending}>
@@ -160,6 +171,21 @@ function StaffForm({
         <InputField control={form.control} name="fullName" label="F.I.Sh." required maxLength={150} autoComplete="off" className="sm:col-span-2" />
         <PhoneField control={form.control} name="phone" label="Telefon (login)" required hint={staff ? 'O‘zgarsa — xodim yangi raqam bilan kiradi' : undefined} />
         <InputField control={form.control} name="telegramUsername" label="Telegram username" placeholder="vk_fargona" maxLength={33} hint="Mijozlar bog‘lanishi uchun, ixtiyoriy" />
+        {!staff && (
+          <div className="sm:col-span-2">
+            <PasswordInput
+              register={form.register}
+              name="password"
+              label="Parol (ixtiyoriy)"
+              autoComplete="new-password"
+              error={form.formState.errors.password?.message}
+            />
+            <p className="mt-1 text-xs text-muted">
+              Bo‘sh qoldirilsa — tizim vaqtinchalik parol yaratadi. Kamida{' '}
+              {MIN_PASSWORD_LENGTH} belgi.
+            </p>
+          </div>
+        )}
         {withBranch && (
           <SelectField
             control={form.control}

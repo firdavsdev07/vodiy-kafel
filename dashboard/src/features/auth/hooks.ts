@@ -56,6 +56,27 @@ export function useProfile() {
 }
 
 /**
+ * Joriy optom mijoz — `GET /me/profile` (D-051, api B-065).
+ *
+ * Kabinet sarlavhasi shundan: kompaniya nomi, filial, login.
+ *
+ * ⚠ `PasswordChangeRequiredGuard` bu endpointda ATAYLAB yo'q (backend
+ *   izohi) — vaqtinchalik parol bilan kirgan mijoz ham o'zining kim
+ *   ekanini ko'radi. Shuning uchun `enabled` da `mustChangePassword`
+ *   tekshirilmaydi: parol ekranida ham profil kerak.
+ */
+export function useCustomerProfile() {
+  const hasSession = useHasSession();
+  const actorType = useActorType();
+  return useQuery({
+    queryKey: queryKeys.cabinet.profile,
+    queryFn: ({ signal }) => api.get('/me/profile', { signal }),
+    enabled: hasSession && actorType === 'customer',
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
  * Joriy xodimda ruxsat bormi (D-007) — tugma/ustunni ko'rsatish uchun.
  * Profil hali kelmagan bo'lsa `false`: yozish tugmasi keyin paydo bo'ladi,
  * lekin bir lahza ham ruxsatsiz ko'rinmaydi. ⚠ G4: faqat UX.

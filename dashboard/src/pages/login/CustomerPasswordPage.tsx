@@ -13,17 +13,17 @@ import {
 import { loginErrorMessage } from '@/features/auth/login-error';
 import { PasswordInput } from '@/features/auth/PasswordInput';
 import { Button } from '@/shared/ui/Button';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/shared/lib/validation';
 
-/** Backend: `MIN_PASSWORD_LENGTH = 8` (change-password.dto.ts). */
-const MIN_LENGTH = 8;
+const MIN_LENGTH = MIN_PASSWORD_LENGTH;
 
 const schema = z
   .object({
-    oldPassword: z.string().min(1, 'Joriy parolni kiriting').max(72),
+    oldPassword: z.string().min(1, 'Joriy parolni kiriting').max(MAX_PASSWORD_LENGTH),
     newPassword: z
       .string()
       .min(MIN_LENGTH, `Kamida ${MIN_LENGTH} belgi`)
-      .max(72, 'Parol 72 belgidan oshmasligi kerak'),
+      .max(MAX_PASSWORD_LENGTH, `Parol ${MAX_PASSWORD_LENGTH} belgidan oshmasligi kerak`),
     repeat: z.string().min(1, 'Parolni takrorlang'),
   })
   // Backend ham tekshiradi, lekin server javobini kutib o'tirmaymiz

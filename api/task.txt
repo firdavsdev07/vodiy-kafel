@@ -2421,7 +2421,7 @@
     qaror qabul qilingan va u INTERFEYS ortiga yashirilgan.
 
 
-┌─ [ ] B-064 · Optom mijoz uchun katalog: narx va zaxira 🆕 ────────────────────┐
+┌─ [x] B-064 · Optom mijoz uchun katalog: narx va zaxira 🆕 ────────────────────┐
 │                                                                              │
 │  KIM TOPDI: dashboard EPIC 10 (optom mijoz kabineti) rejalashtirilayotganda, │
 │             2026-09-17. Kabinetning D-052 taski shu taskni KUTADI.           │
@@ -2478,9 +2478,39 @@
 │  Bog'liq: B-014 (ochiq katalog), B-027 (kalkulyator narx zanjiri)            │
 │  Bloklaydi: dashboard D-052                                                  │
 │                                                                              │
+│  ✅ BAJARILDI — 2026-09-18                                                    │
+│                                                                              │
+│    • `GET /me/catalog` va `GET /me/catalog/{slug}` — yangi                   │
+│      `MeCatalogController` + `CustomerCatalogService`.                       │
+│      Guard'lar: `JwtAuthGuard` + `CustomerOnlyGuard` +                       │
+│      `PasswordChangeRequiredGuard`.                                          │
+│    • Javobda: ochiq kartaning hammasi + `pricePerSqm` (yakuniy narx)         │
+│      + `stockStatus` (uch daraja). `availability` ALMASHTIRILDI —            │
+│      DTO `OmitType(...,['availability'])` bilan yasalgan, ya'ni              │
+│      ochiq karta o'zgarsa bu ham avtomatik ergashadi.                        │
+│    • Narx — `PricingResolverService` (B-054), kalkulyator ishlatadigan       │
+│      O'SHA zanjir. Ikkinchi nusxa yozilmadi: aks holda katalogdagi narx      │
+│      bilan savatdagi narx vaqt o'tib bir-biridan uzoqlashardi.               │
+│    • Filial — `QuoteService.requireCustomer` orqali TOKENDAN; u token        │
+│      filialini bazadagi bilan solishtiradi (mos kelmasa 401).                │
+│    • Ro'yxatda faqat mijoz filialida FAOL `BranchProduct` bor                │
+│      mahsulotlar; slug topilmasa 404 (403 emas).                             │
+│                                                                              │
+│    ⚠ `GET /products` (ochiq katalog) UMUMAN O'ZGARMADI — narx u yerga        │
+│      sizib chiqishi tuzilma darajasida imkonsiz: select'da                   │
+│      `branchProducts` yo'q.                                                  │
+│    ⚠ NARX BO'YICHA SARALASH YO'Q: yakuniy narx bazada emas, hisoblanadi.     │
+│                                                                              │
+│    Tekshirildi: `build` ✓ `lint` ✓ `openapi:export` ✓ (97 yo'l)              │
+│      curl bilan: mijoz tokeni → narx + LOW/IN_STOCK/OUT_OF_STOCK keldi;      │
+│      javobda `stockPallets`, `availability`, bazaviy narx YO'Q;              │
+│      xodim tokeni → 403; tokensiz → 401; vaqtinchalik parol → 403.           │
+│    ⛔ `pnpm test` bu mashinada ishga tushmadi (jest ESM + Node 22;            │
+│      ≥24.9 kerak) — unit test yozilgan, lekin ishlatib ko'rilmagan:          │
+│      `customer-catalog.service.spec.ts` (6 test).                            │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [~] B-065 · Optom mijoz o‘z profilini ko‘ra olmaydi 🆕 ──────────────────────┐
+┌─ [x] B-065 · Optom mijoz o‘z profilini ko‘ra olmaydi 🆕 ──────────────────────┐
 │                                                                              │
 │  KIM TOPDI: dashboard D-049 (mijoz kirishi) yozilayotganda, 2026-09-17.      │
 │                                                                              │
@@ -2518,20 +2548,82 @@
 │  Bog'liq: B-018 (kabinet endpointlari)                                       │
 │  Bloklaydi: dashboard D-051 (kabinet sarlavhasi)                             │
 │                                                                              │
+│  ✅ BAJARILDI (kod oldindan yozilgan edi, 2026-09-18 da tasdiqlandi)          │
+│                                                                              │
+│    • `GET /me/profile` — `MeProfileController` + `CustomersService           │
+│      .getMyProfile`. Javobda: id, login, companyName, contactName,           │
+│      phone, inn, branch{id,name,city}, mustChangePassword.                   │
+│    • `PasswordChangeRequiredGuard` ATAYLAB yo'q — vaqtinchalik parol         │
+│      bilan kirgan mijoz ham o'zi kim ekanini ko'radi (curl bilan             │
+│      tasdiqlandi: `/me/catalog` 403, `/me/profile` 200).                     │
+│    • Dashboard D-051 shundan foydalanadi: kabinet sarlavhasida               │
+│      kompaniya nomi va filial.                                               │
 └──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] B-066 · Xodim paroli: admin belgilaydi va tiklaydi 🆕 ───────────────────┐
+│  KIM SO'RADI: mijoz, 2026-09-18 — "moderator menejerni parolini              │
+│  o'zgartirib berib bo'lmas ekan, yana moderator va menejer                   │
+│  yaratayotganda parol yozadigan inputni o'zi yo'q".                          │
+│                                                                              │
+│  MUAMMO:                                                                     │
+│    • `CreateStaffDto` da `password` YO'Q edi — parol har doim tizim          │
+│      tomonidan yaratilardi. Admin xodimga og'zaki aytadigan parolni          │
+│      o'zi tanlay olmasdi.                                                    │
+│    • Xodim uchun parol TIKLASH endpointi umuman yo'q edi (mijozda bor:       │
+│      `/admin/customers/{id}/reset-password`). Parolini unutgan               │
+│      menejer/moderator bilan qilinadigan ish qolmasdi — hisobni              │
+│      faolsizlantirib yangisini yaratishdan boshqa, u esa buyurtma            │
+│      tarixini uzardi.                                                        │
+│    • Xodim parolni O'ZI ham almashtira olmaydi: majburiy almashtirish        │
+│      oqimi (`mustChangePassword`) faqat `Customer` da, `User` da             │
+│      bunday maydon yo'q.                                                     │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-18                                                    │
+│                                                                              │
+│    • `CreateStaffDto.password` — IXTIYORIY, 8…72 belgi                       │
+│      (`MIN_PASSWORD_LENGTH` auth DTO'sidan qayta ishlatildi, ikkinchi        │
+│      konstanta yozilmadi). Berilsa aynan o'shasi, bo'sh bo'lsa               │
+│      `generateTemporaryPassword()` — eski xatti-harakat saqlandi.            │
+│    • `POST /admin/managers/{id}/reset-password`                              │
+│      `POST /admin/moderators/{id}/reset-password` — tanasi                   │
+│      `ResetStaffPasswordDto { password? }`, javobi                           │
+│      `StaffPasswordResetDto { phone, password }`, HTTP 200 (yangi            │
+│      resurs yaratilmaydi — mijoz endpointi bilan bir xil qoida).             │
+│    • `StaffAdminService.resetPassword` — `requireInScope` orqali:            │
+│      filial admini o'z filiali menejeriga parol beradi, begonasiga           │
+│      404; moderatorga faqat SUPER_ADMIN (controller darajasida).             │
+│                                                                              │
+│    ⚠ Bu parol MAJBURAN almashtirilmaydi (xodimda bunday oqim yo'q) —         │
+│      shuning uchun DTO izohida "vaqtinchalik" emas, shunchaki "parol".       │
+│    ⚠ Eski access token muddati tugaguncha (15 daqiqa) ishlaydi —             │
+│      mijoz parolini tiklash bilan bir xil, Swagger'da yozilgan.              │
+│                                                                              │
+│    Tekshirildi: `build` ✓ `lint` ✓ `openapi:export` ✓                        │
+│      curl bilan: admin bergan parol qaytdi va u bilan kirish OK;             │
+│      parolsiz — 12 belgilik parol; tiklashdan keyin ESKI parol rad           │
+│      etildi; 8 dan qisqa — 400; menejer ID si bilan moderator                │
+│      endpointi — 404.                                                        │
+│    ⛔ `pnpm test` ishga tushmadi (Node 22) — 5 yangi unit test                │
+│      yozilgan (`staff-admin.service.spec.ts`), ishlatib ko'rilmagan.         │
+│                                                                              │
+│  Bog'liq: B-043 (menejerlar), B-057 (moderatorlar)                           │
+│  Ochdi: dashboard D-061                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 65  (B-016 bekor; B-051...B-065 qo‘shildi — filial
+  Jami tasklar : 66  (B-016 bekor; B-051...B-066 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator +
-                 dashboard ishida topilganlar: B-059 … B-063, hamda optom
-                 mijoz kabineti rejasidan chiqqan B-064)
-  Tugadi       : 58
+                 dashboard ishida topilganlar: B-059 … B-063, optom mijoz
+                 kabineti rejasidan chiqqan B-064/B-065, hamda mijoz
+                 2026-09-18 da so‘ragan B-066)
+  Tugadi       : 61
   Jarayonda    : 0
   Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
-                 (B-044 — Didox.uz spike hamon ochiq, lekin ENDI hech narsani
+                 (B-044 — Didox.uz spike hamon ochiq, lekin ENDI hech nimani
                  to'xtatmaydi: B-045 mock bilan bajarildi)
 
   Epic bo'yicha:
@@ -2547,25 +2639,31 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat ....................  7 / 12   [███████·····] (B-059 … B-065
-                                                            qo‘shildi)
+    EPIC 11 Sifat .................... 10 / 13   [██████████···] (B-059 … B-066)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  B-064 · Optom mijoz uchun katalog (narx + zaxira)
-                 B-065 · Optom mijoz o'z profilini ko'ra olmaydi
-                 ⚠ Ikkalasi ham dashboard'ni BLOKLAYDI (D-052 katalog,
-                   D-051 kabinet sarlavhasi). 2026-09-17 da optom mijoz kabineti dashboard
-                   ichida qurilishi qaror qilingandan keyin topildi.
+  2026-09-18 DA BAJARILGANLAR (dashboard EPIC 10 ni yopish uchun):
 
-                 B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
+    [x] B-064  Optom mijoz katalogi — `GET /me/catalog` (+ `/{slug}`)
+               → dashboard D-052 ning blokini yechdi
+    [x] B-065  `GET /me/profile` — mijozning o'z profili (kod bor edi,
+               tasdiqlandi va dashboard D-051 da ishlatildi)
+    [x] B-066  Xodim paroli: yaratishda `password` + reset-password
+               → dashboard D-061
+
+  KEYINGI TASK:  B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
                  B-063 · Bosh sahifa statistikasi + zaxira holati filtri
                  (ikkalasi dashboard ishida topildi; dashboard ularni
-                 KUTMAYDI — vaqtinchalik yechimlar bilan ishlaydi)
+                 KUTMAYDI — vaqtinchalik yechimlar bilan ishlayapti)
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
                  B-044 (Didox.uz spike) hamon mijoz javobini kutmoqda, lekin
-                 ENDI hech narsani BLOKLAMAYDI — B-045 mock bilan bajarildi.
-                 Backend AMALDA TO'LIQ TAYYOR — B-048 hujjat paketi orqali
-                 frontendga topshirish mumkin.
+                 hech narsani BLOKLAMAYDI — B-045 mock bilan bajarildi.
+
+  ⚠ MUHIT: bu mashinada Node 22.22 — `start:dev`, `build`, `lint`,
+    `openapi:export` ISHLAYDI, lekin `pnpm test` (jest) ishlamaydi:
+    jest ESM modulni `require` qila olmaydi, ≥24.9 kerak. B-064 va
+    B-066 ning unit testlari yozilgan, lekin ishga tushirilmagan —
+    Node 24 o'rnatilganda birinchi ish shu bo'lishi kerak.
   ──────────────────────────────────────────────────────────────────────────

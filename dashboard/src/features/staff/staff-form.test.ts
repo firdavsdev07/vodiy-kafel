@@ -25,6 +25,34 @@ describe('xodim formasi (D-035)', () => {
     expect(toCreateStaffBody(v)).toEqual({ fullName: 'Ali', phone: '+998901234567', branchId: 'b2' });
   });
 
+  describe('parol (api B-066)', () => {
+    const schema = staffSchema({ branchRequired: false });
+    const base = { fullName: 'Ali', phone: '901234567', telegramUsername: '', branchId: '' };
+
+    it('bo‘sh qoldirilsa — tanaga umuman qo‘shilmaydi (tizim o‘zi yaratadi)', () => {
+      const v = schema.parse({ ...base, password: '' });
+      expect(toCreateStaffBody(v)).not.toHaveProperty('password');
+    });
+
+    it('admin yozgan parol tanaga tushadi', () => {
+      const v = schema.parse({ ...base, password: 'MenejerParol1' });
+      expect(toCreateStaffBody(v).password).toBe('MenejerParol1');
+    });
+
+    it('8 belgidan qisqa — xato (backend ham shunday cheklaydi)', () => {
+      expect(schema.safeParse({ ...base, password: 'qisqa' }).success).toBe(false);
+    });
+
+    it('72 belgidan uzun — xato (bcrypt cheki)', () => {
+      expect(schema.safeParse({ ...base, password: 'a'.repeat(73) }).success).toBe(false);
+    });
+
+    it('🔒 tahrirlash tanasida parol YO‘Q — u alohida endpoint', () => {
+      const v = schema.parse({ ...base, fullName: 'Yangi ism', password: 'MenejerParol1' });
+      expect(toUpdateStaffBody(v, staff, false)).not.toHaveProperty('password');
+    });
+  });
+
   it('telegram: 5–32 lotin harf/raqam/_', () => {
     const s = staffSchema({ branchRequired: false });
     expect(s.safeParse({ fullName: 'A', phone: '901234567', telegramUsername: 'abc', branchId: '' }).success).toBe(false);

@@ -8,6 +8,7 @@ import RouteErrorPage from '@/pages/error/RouteErrorPage';
 import NotFoundPage from '@/pages/not-found/NotFoundPage';
 import { AuthShell } from '@/pages/login/AuthShell';
 import { AppLayout } from './layout/AppLayout';
+import { CabinetLayout } from './layout/CabinetLayout';
 import { RootLayout } from './layout/RootLayout';
 import { PERMISSIONS, rolesForAny } from '@/shared/lib/permissions';
 import { useCan } from '@/features/auth/hooks';
@@ -54,9 +55,14 @@ const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 // ── Optom mijoz kabineti (EPIC 10) ──
 const CustomerLoginPage = lazy(() => import('@/pages/login/CustomerLoginPage'));
 const CustomerPasswordPage = lazy(() => import('@/pages/login/CustomerPasswordPage'));
-const CustomerCabinetPlaceholder = lazy(
-  () => import('@/pages/login/CustomerCabinetPlaceholder'),
-);
+const CabinetCatalogPage = lazy(() => import('@/pages/kabinet/CatalogPage'));
+const CabinetProductPage = lazy(() => import('@/pages/kabinet/ProductPage'));
+const CabinetCartPage = lazy(() => import('@/pages/kabinet/CartPage'));
+const CabinetOrdersPage = lazy(() => import('@/pages/kabinet/OrdersPage'));
+const CabinetOrderDetailPage = lazy(() => import('@/pages/kabinet/OrderDetailPage'));
+const CabinetAccountPage = lazy(() => import('@/pages/kabinet/AccountPage'));
+const CabinetNotificationsPage = lazy(() => import('@/pages/kabinet/NotificationsPage'));
+const CabinetContractsPage = lazy(() => import('@/pages/kabinet/ContractsPage'));
 
 export const routes: RouteObject[] = [
   {
@@ -103,15 +109,46 @@ export const routes: RouteObject[] = [
         handle: { title: 'Yangi parol' },
       },
       {
+        // Kabinet daraxti (D-051) — xodim marshrutlaridan BUTUNLAY alohida:
+        // boshqa layout, boshqa menyu, boshqa qo'riqchi.
         path: 'kabinet',
         element: (
           <RequireCustomer>
-            <Suspense fallback={null}>
-              <CustomerCabinetPlaceholder />
-            </Suspense>
+            <CabinetLayout />
           </RequireCustomer>
         ),
         handle: { title: 'Kabinet' },
+        children: [
+          { index: true, element: <CabinetCatalogPage />, handle: { title: 'Katalog' } },
+          {
+            path: 'mahsulot/:slug',
+            element: <CabinetProductPage />,
+            handle: { title: 'Mahsulot' },
+          },
+          { path: 'savat', element: <CabinetCartPage />, handle: { title: 'Savat' } },
+          {
+            path: 'buyurtmalar',
+            element: <CabinetOrdersPage />,
+            handle: { title: 'Buyurtmalarim' },
+          },
+          {
+            path: 'buyurtmalar/:id',
+            element: <CabinetOrderDetailPage />,
+            handle: { title: 'Buyurtma' },
+          },
+          { path: 'hisob', element: <CabinetAccountPage />, handle: { title: 'Hisobim' } },
+          {
+            path: 'bildirishnomalar',
+            element: <CabinetNotificationsPage />,
+            handle: { title: 'Bildirishnomalar' },
+          },
+          {
+            path: 'shartnomalar',
+            element: <CabinetContractsPage />,
+            handle: { title: 'Shartnomalar' },
+          },
+          { path: '*', element: <NotFoundPage />, handle: { title: 'Sahifa topilmadi' } },
+        ].map(withErrorElement),
       },
       {
         element: (

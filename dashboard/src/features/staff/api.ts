@@ -1,7 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api';
 import { queryKeys } from '@/shared/query';
-import { toStaffQuery, type CreateStaffBody, type StaffFilters, type UpdateStaffBody } from './staff-form';
+import {
+  toStaffQuery,
+  type CreateStaffBody,
+  type ResetStaffPasswordBody,
+  type StaffFilters,
+  type UpdateStaffBody,
+} from './staff-form';
 
 // ── Menejerlar (D-035) — SUPER_ADMIN, BRANCH_ADMIN ──
 // 🔒 Filial admini faqat o'z filiali menejerlarini ko'radi va qo'shadi (backend).
@@ -24,6 +30,24 @@ export function useCreateManager() {
     mutationFn: (body: CreateStaffBody) => api.post('/admin/managers', { body }),
     gcTime: 0,
     meta: { invalidates: [queryKeys.managers.all] },
+  });
+}
+
+/**
+ * Menejerga yangi parol (api B-066).
+ *
+ * 🔒 Javobda ochiq parol — `gcTime: 0`: natija keshda qolmaydi,
+ *    chaqiruvchi uni o'z holatiga oladi va oyna yopilganda o'chiradi
+ *    (D-021 / D-035 bilan bir xil qoida).
+ *
+ * ⚠ Ro'yxat YANGILANMAYDI (`invalidates` yo'q): parol almashishi bilan
+ *   ro'yxatdagi hech bir maydon o'zgarmaydi.
+ */
+export function useResetManagerPassword() {
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ResetStaffPasswordBody }) =>
+      api.post('/admin/managers/{id}/reset-password', { params: { id }, body }),
+    gcTime: 0,
   });
 }
 
@@ -52,6 +76,15 @@ export function useCreateModerator() {
     mutationFn: (body: CreateStaffBody) => api.post('/admin/moderators', { body }),
     gcTime: 0,
     meta: { invalidates: [queryKeys.moderators.all] },
+  });
+}
+
+/** 🔒 Moderatorga yangi parol — menejer bilan bir xil qoida (api B-066). */
+export function useResetModeratorPassword() {
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ResetStaffPasswordBody }) =>
+      api.post('/admin/moderators/{id}/reset-password', { params: { id }, body }),
+    gcTime: 0,
   });
 }
 

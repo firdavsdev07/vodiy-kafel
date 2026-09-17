@@ -121,11 +121,38 @@ export function useCustomerSearch(search: string) {
  * BRANCH_ADMIN (`managers.manage`); boshqa rolda so'ralmaydi.
  * SUPER_ADMIN filial tanlagan bo'lsa — faqat o'sha filial menejerlari.
  */
-export function useManagerOptions(enabled: boolean, branchId: string | undefined) {
+/**
+ * Ro'yxat FILTRI uchun menejerlar (`?managerId=`) — biriktirish emas.
+ *
+ * ⚠ `useAssignableStaff` bilan ARALASHTIRILMAYDI: bu yerda "kim bo'yicha
+ *   filtrlash mumkin" degan savol va u buyurtmaga bog'liq emas, shuning
+ *   uchun manba ham boshqa (`/admin/managers`). Ro'yxat MANAGER rolini
+ *   qaytaradi va faqat `managers.manage` ruxsati borga ochiq.
+ */
+export function useManagerFilterOptions(enabled: boolean, branchId: string | undefined) {
   const query = { isActive: true, ...(branchId ? { branchId } : {}) };
   return useQuery({
     queryKey: queryKeys.managers.list(query),
     queryFn: ({ signal }) => api.get('/admin/managers', { query, signal }),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Biriktirish uchun nomzod xodimlar (D-027, api B-062).
+ *
+ * ⚠ Filial so'rovda YUBORILMAYDI — backend uni BUYURTMADAN oladi (G5).
+ *   Shu sababli begona filial buyurtmasi so'ralsa 404 keladi.
+ * ⚠ `queryKey` buyurtma ostida: bitta filialning ro'yxati ikki
+ *   buyurtmada bir xil bo'lsa ham, key'ni buyurtmaga bog'lash
+ *   "qaysi filial" degan savolni frontendga qaytarmaydi.
+ */
+export function useAssignableStaff(orderId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...queryKeys.orders.detail(orderId), 'assignable-staff'] as const,
+    queryFn: ({ signal }) =>
+      api.get('/admin/orders/{id}/assignable-staff', { params: { id: orderId }, signal }),
     enabled,
     staleTime: 5 * 60_000,
   });

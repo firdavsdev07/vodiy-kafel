@@ -1,6 +1,7 @@
 export * from './product-query.dto';
 export * from './product-public.response.dto';
 export * from './product-detail.response.dto';
+export * from './product-customer.response.dto';
 export * from './create-product.dto';
 export * from './update-product.dto';
 export * from './product-admin-query.dto';

@@ -1,10 +1,15 @@
 import { AlertTriangle, Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
 /**
- * Vaqtinchalik parol — FAQAT BIR MARTA (D-021; D-035 menejerlar ham).
+ * Bir marta ko'rsatiladigan parol (D-021 mijoz; D-035/D-061 xodim).
+ *
+ * ⚠ `note` — KIMGA va NIMA deyilishi oqimga qarab boshqa. Mijoz birinchi
+ *   kirishda parolni almashtirishga majbur, XODIM esa emas
+ *   (`mustChangePassword` faqat `Customer` da bor) — shuning uchun matn
+ *   props'dan keladi, aks holda xodimga yolg'on aytilardi.
  * 🔒 Parol faqat shu komponent props'ida yashaydi: log'ga, localStorage'ga,
  * URL'ga, TanStack keshiga tushmaydi. Yopish — "saqladim" belgisidan keyin;
  * Esc va fon bosish yopmaydi (tasodifan yo'qotib qo'ymaslik uchun).
@@ -12,20 +17,43 @@ import { Modal } from './Modal';
 export function TemporaryPasswordDialog({
   credentials,
   title,
+  note,
+  confirmLabel = 'Parolni saqladim / mijozga yetkazdim',
   onClose,
 }: {
   credentials: { login: string; password: string } | null;
   title: string;
+  /** Ogohlantirish matni. Standarti — optom mijoz oqimi (D-021). */
+  note?: ReactNode;
+  confirmLabel?: string;
   onClose: () => void;
 }) {
   return (
     <Modal open={Boolean(credentials)} onClose={onClose} dismissible={false} size="sm" title={title}>
-      {credentials && <PasswordBody key={credentials.password} credentials={credentials} onClose={onClose} />}
+      {credentials && (
+        <PasswordBody
+          key={credentials.password}
+          credentials={credentials}
+          note={note}
+          confirmLabel={confirmLabel}
+          onClose={onClose}
+        />
+      )}
     </Modal>
   );
 }
 
-function PasswordBody({ credentials, onClose }: { credentials: { login: string; password: string }; onClose: () => void }) {
+function PasswordBody({
+  credentials,
+  note,
+  confirmLabel,
+  onClose,
+}: {
+  credentials: { login: string; password: string };
+  note: ReactNode;
+  confirmLabel: string;
+  onClose: () => void;
+}) {
   const [copied, setCopied] = useState<'password' | 'both' | null>(null);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -43,8 +71,8 @@ function PasswordBody({ credentials, onClose }: { credentials: { login: string; 
       <p className="flex gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
         <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
         <span>
-          <strong>Bu oyna yopilgach parol qayta ko‘rsatilmaydi.</strong> Uni hozir mijozga telefon yoki Telegram orqali
-          yetkazing. Mijoz birinchi kirishda parolni almashtiradi.
+          <strong>Bu oyna yopilgach parol qayta ko‘rsatilmaydi.</strong>{' '}
+          {note ?? 'Uni hozir mijozga telefon yoki Telegram orqali yetkazing. Mijoz birinchi kirishda parolni almashtiradi.'}
         </span>
       </p>
 
@@ -54,7 +82,7 @@ function PasswordBody({ credentials, onClose }: { credentials: { login: string; 
           <dd className="font-mono text-md select-all">{credentials.login}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted">Vaqtinchalik parol</dt>
+          <dt className="text-xs text-muted">Parol</dt>
           <dd className="mt-1 flex items-center gap-2">
             <span
               className="rounded-md border border-line-strong bg-surface-muted px-3 py-2 font-mono text-xl tracking-wider select-all"
@@ -82,7 +110,7 @@ function PasswordBody({ credentials, onClose }: { credentials: { login: string; 
 
       <label className="flex items-center gap-2 border-t border-line pt-4 text-sm">
         <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="size-4 accent-accent" />
-        Parolni saqladim / mijozga yetkazdim
+        {confirmLabel}
       </label>
       <div className="flex justify-end">
         <Button variant="primary" onClick={onClose} disabled={!confirmed}>

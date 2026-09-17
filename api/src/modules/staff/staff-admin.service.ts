@@ -12,8 +12,10 @@ import { Prisma, PrismaService } from '../../prisma';
 import { generateTemporaryPassword } from '../customers/temp-password';
 import type {
   CreateStaffDto,
+  ResetStaffPasswordDto,
   StaffCreatedDto,
   StaffDto,
+  StaffPasswordResetDto,
   StaffQueryDto,
   UpdateStaffDto,
 } from './dto/staff.dto';
@@ -61,7 +63,9 @@ type StaffRow = Prisma.UserGetPayload<{ select: typeof STAFF_SELECT }>;
  *    xodimlarini ko'radi va yaratadi; begonasi 404. Filial TURI ham
  *    tekshiriladi (menejer → RETAIL, moderator → CENTRAL) — bu jadvallararo
  *    qoida, baza CHECK bilan ifodalanmaydi (CLAUDE.md qoida 12).
- * 🔒 Parol javobda faqat yaratishda bir marta; bazada bcrypt.
+ * 🔒 Parol javobda faqat yaratishda va tiklashda (B-066) bir marta;
+ *    bazada bcrypt. Admin parolni o'zi yozishi mumkin — bo'sh qoldirsa
+ *    tizim yaratadi.
  * 🔒 Javobda `passwordHash` yo'q — select darajasida.
  */
 @Injectable()
@@ -107,7 +111,8 @@ export class StaffAdminService {
     const branchId = this.branchScope.requireBranchId(actor, dto.branchId);
     await this.assertBranch(kind, branchId);
 
-    const temporaryPassword = generateTemporaryPassword();
+    // Admin o'zi yozgan parol ustun; bo'sh bo'lsa — tizim yaratadi (B-066).
+    const temporaryPassword = dto.password ?? generateTemporaryPassword();
     const row = await this.unique(
       this.prisma.user.create({
         data: {
@@ -155,6 +160,39 @@ export class StaffAdminService {
       }),
     );
     return toDto(row);
+  }
+
+  /**
+   * Xodimga yangi parol beradi (B-066).
+   *
+   * ⚠ NEGA KERAK: xodim parolini o'zi almashtiradigan endpoint YO'Q
+   *   (`/auth/wholesale/change-password` — faqat optom mijoz uchun).
+   *   Parolni unutgan menejer/moderator bilan hech narsa qilib
+   *   bo'lmasdi — hisobni faolsizlantirib, yangisini yaratishdan boshqa
+   *   yo'l qolmasdi va u bilan birga buyurtma tarixi ham uzilardi.
+   *
+   * 🔒 Filial izolyatsiyasi — `requireInScope` (begona filial xodimi 404).
+   *    Filial admini o'z filiali menejeriga parol bera oladi; moderatorga
+   *    faqat SUPER_ADMIN (controller darajasida).
+   *
+   * ⚠ Eski tokenlar darhol o'chmaydi: qo'ldagi access token muddati
+   *   tugaguncha (15 daqiqa) ishlaydi — mijoz parolini tiklash bilan
+   *   bir xil xatti-harakat (`CustomersService.resetPassword`).
+   */
+  async resetPassword(
+    actor: Actor | undefined,
+    kind: StaffKind,
+    id: string,
+    dto: ResetStaffPasswordDto,
+  ): Promise<StaffPasswordResetDto> {
+    await this.requireInScope(actor, kind, id);
+    const password = dto.password ?? generateTemporaryPassword();
+    const row = await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: await this.authService.hashPassword(password) },
+      select: { phone: true },
+    });
+    return { phone: row.phone, password };
   }
 
   async deactivate(

@@ -9,3 +9,12 @@ import type { Schema } from '@/shared/api/types';
 export type StaffProfile = Schema<'UserProfileResponseDto'>;
 
 export type StaffRole = StaffProfile['role'];
+
+/**
+ * Optom mijoz profili — `GET /me/profile` (api B-065, D-051).
+ *
+ * ⚠ Xodim profilidan BOSHQA endpoint va boshqa shakl: bu yerda rol emas,
+ *   kompaniya nomi va biriktirilgan filial bor. Ikkisi hech qachon
+ *   birlashtirilmaydi — `GET /auth/me` mijoz tokeni bilan 401 qaytaradi.
+ */
+export type CustomerProfile = Schema<'CustomerProfileResponseDto'>;

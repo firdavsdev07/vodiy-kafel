@@ -7,11 +7,30 @@ import { useStocks, type StockFilters } from '@/features/stock/api';
 import { PalletsCell } from '@/features/stock/PalletsCell';
 import type { StockRow } from '@/features/stock/stock';
 import { ThresholdModal } from '@/features/stock/ThresholdModal';
+import { stockStatusLabel } from '@/shared/lib/labels';
 import type { ListParamsConfig } from '@/shared/lib/list-params';
 import { useListParams } from '@/shared/lib/use-list-params';
-import { DataTable, DateText, IconButton, Pagination, StatusBadge, tableColumns, type DataTableColumn } from '@/shared/ui';
+import {
+  DataTable,
+  DateText,
+  FilterBar,
+  FilterSelect,
+  IconButton,
+  Pagination,
+  StatusBadge,
+  tableColumns,
+  type DataTableColumn,
+} from '@/shared/ui';
 
-const listConfig: ListParamsConfig<StockFilters> = { filterKeys: ['productId'] };
+const stockStatusOptions = [
+  { value: 'LOW', label: stockStatusLabel.LOW },
+  { value: 'OUT_OF_STOCK', label: stockStatusLabel.OUT_OF_STOCK },
+  { value: 'IN_STOCK', label: stockStatusLabel.IN_STOCK },
+] as const;
+
+const listConfig: ListParamsConfig<StockFilters> = {
+  filterKeys: ['productId', 'stockStatus'],
+};
 const col = tableColumns<StockRow>();
 
 interface Ctx {
@@ -85,6 +104,18 @@ export default function StockPage() {
                 : 'Zaxira markaziy omborda boshqariladi — bu yerda faqat ko‘rish mumkin.'}
             </p>
           </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+          <FilterBar hasFilters={list.hasFilters} onReset={list.resetFilters}>
+            <FilterSelect
+              label="Zaxira holati"
+              value={list.params.filters.stockStatus}
+              onChange={(value) => list.setFilter('stockStatus', value)}
+              allLabel="Barcha holatlar"
+              options={stockStatusOptions}
+            />
+          </FilterBar>
         </div>
 
         {productId && (

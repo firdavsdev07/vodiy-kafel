@@ -2,10 +2,9 @@ import { Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useProfile } from '@/features/auth/hooks';
 import { errorMessage } from '@/shared/lib/error-message';
-import { can } from '@/shared/lib/permissions';
 import { Button, Modal, toast } from '@/shared/ui';
 import { controlClass } from '@/shared/ui/form/control-class';
-import { useAssignOrder, useManagerOptions, useSetOrderUrgent } from './api';
+import { useAssignableStaff, useAssignOrder, useSetOrderUrgent } from './api';
 import { assignOptions } from './assign';
 
 type OrderRef = {
@@ -64,15 +63,14 @@ export function UrgentToggle({ order, compact = false }: { order: OrderRef; comp
  */
 export function AssignManagerModal({ order, open, onClose }: { order: OrderRef; open: boolean; onClose: () => void }) {
   const profile = useProfile().data;
-  const listManagers = can(profile?.role, 'managers.manage');
-  const managers = useManagerOptions(open && listManagers && Boolean(order.branch), order.branch?.id);
+  // Nomzodlar buyurtma FILIALIDAN — backend o'zi aniqlaydi (B-062)
+  const staff = useAssignableStaff(order.id, open);
   const assign = useAssignOrder(order.id);
   const [value, setValue] = useState(order.manager?.id ?? '');
 
   const options = assignOptions({
-    role: profile?.role,
+    staff: staff.data,
     me: profile,
-    managers: managers.data,
     current: order.manager ?? null,
   });
 
@@ -124,11 +122,11 @@ export function AssignManagerModal({ order, open, onClose }: { order: OrderRef; 
           <select
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            disabled={managers.isFetching && options.length === 0}
+            disabled={staff.isFetching && options.length === 0}
             className={controlClass(false, 'h-9 px-2 font-normal')}
           >
             <option value="" disabled>
-              {listManagers && managers.isPending ? 'Yuklanmoqda…' : 'Tanlang…'}
+              {staff.isPending ? 'Yuklanmoqda…' : 'Tanlang…'}
             </option>
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -137,11 +135,15 @@ export function AssignManagerModal({ order, open, onClose }: { order: OrderRef; 
             ))}
           </select>
         </label>
-        {listManagers && managers.data?.length === 0 && (
-          <p className="text-xs text-muted">Bu filialda faol menejer yo‘q.</p>
+        {staff.data?.length === 0 && (
+          <p className="text-xs text-muted">
+            Bu filialda biriktirish mumkin bo‘lgan faol xodim yo‘q.
+          </p>
         )}
-        {profile?.role === 'MODERATOR' && (
-          <p className="text-xs text-muted">Moderator hozircha buyurtmani faqat o‘ziga biriktira oladi.</p>
+        {staff.error && (
+          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+            {errorMessage(staff.error)}
+          </p>
         )}
         {assign.error && (
           <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm whitespace-pre-line text-danger">

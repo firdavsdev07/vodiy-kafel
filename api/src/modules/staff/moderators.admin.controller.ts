@@ -29,8 +29,10 @@ import type { Actor } from '../../common/types/actor';
 import { BEARER_AUTH, SwaggerTag } from '../../swagger/tags';
 import {
   CreateStaffDto,
+  ResetStaffPasswordDto,
   StaffCreatedDto,
   StaffDto,
+  StaffPasswordResetDto,
   StaffQueryDto,
   UpdateStaffDto,
 } from './dto/staff.dto';
@@ -68,8 +70,10 @@ export class ModeratorsAdminController {
   @ApiOperation({
     summary: 'Moderator qo‘shish',
     description:
-      '`branchId` — CENTRAL filial (majburiy). Kirish: telefon + ' +
-      'vaqtinchalik parol (javobda FAQAT bir marta).',
+      '`branchId` — CENTRAL filial (majburiy). Kirish: telefon + parol ' +
+      '(javobda FAQAT bir marta).\n\n' +
+      '`password` berilsa — aynan o‘sha; bo‘sh qoldirilsa tizim ' +
+      'vaqtinchalik parol yaratadi (B-066).',
   })
   @ApiDataResponse(StaffCreatedDto, { status: 201, description: 'Qo‘shildi' })
   @ApiBadRequestResponse({
@@ -82,6 +86,40 @@ export class ModeratorsAdminController {
     @Body() dto: CreateStaffDto,
   ): Promise<StaffCreatedDto> {
     return this.staff.create(actor, 'MODERATOR', dto);
+  }
+
+  @Post(':id/reset-password')
+  // Yangi RESURS yaratilmaydi (mavjud xodimning paroli almashadi) — 200,
+  // `@ApiDataResponse` ham 200 deb e'lon qiladi (mijoz endpointi bilan bir xil).
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Moderatorga yangi parol berish',
+    description:
+      'Ikki holatda ishlatiladi: xodim parolni unutgan yoki admin unga ' +
+      'yangi parol bermoqchi.\n\n' +
+      '`password` berilsa — AYNAN o‘sha parol o‘rnatiladi; bo‘sh ' +
+      'qoldirilsa tizim tasodifiy parol yaratadi. Ikkala holatda ham ' +
+      'javobda ochiq matnda qaytadi (bazada faqat hash).\n\n' +
+      '⚠ Xodim parolni keyin o‘zi almashtira olmaydi — unda majburiy ' +
+      'almashtirish oqimi yo‘q (u faqat optom mijozda bor). Shuning ' +
+      'uchun parolni admin xodimga shaxsan yetkazadi.\n\n' +
+      '🔒 Faqat SUPER_ADMIN (butun controller shunday).\n\n' +
+      '⚠ Eski tokenlar darhol o‘chmaydi: xodim qo‘lidagi access token ' +
+      'muddati tugaguncha (15 daqiqa) ishlashda davom etadi.',
+  })
+  @ApiParam({ name: 'id', description: 'Moderator ID' })
+  @ApiDataResponse(StaffPasswordResetDto, { description: 'Yangi parol' })
+  @ApiBadRequestResponse({
+    description: 'Parol juda qisqa (kamida 8 belgi)',
+    type: ApiErrorDto,
+  })
+  @ApiNotFoundResponse({ description: 'Topilmadi', type: ApiErrorDto })
+  resetPassword(
+    @CurrentActor() actor: Actor,
+    @Param('id') id: string,
+    @Body() dto: ResetStaffPasswordDto,
+  ): Promise<StaffPasswordResetDto> {
+    return this.staff.resetPassword(actor, 'MODERATOR', id, dto);
   }
 
   @Patch(':id')

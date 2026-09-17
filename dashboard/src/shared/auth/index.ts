@@ -8,4 +8,4 @@ export {
 } from './token-store';
 export { normalizeUzPhone } from './phone';
 export { mustChangePassword } from './token-claims';
-export type { StaffProfile, StaffRole } from './profile';
+export type { CustomerProfile, StaffProfile, StaffRole } from './profile';

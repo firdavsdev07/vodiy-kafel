@@ -1,20 +1,31 @@
 import { ArrowLeftRight, ArrowRight, Boxes, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { useCan, useProfile } from '@/features/auth/hooks';
-import { useKpiCount } from '@/features/home/api';
-import { kpiCards, type KpiCard } from '@/features/home/kpi';
+import { useDashboardStats, useKpiCount } from '@/features/home/api';
+import {
+  kpiCards,
+  statsCount,
+  statsMoney,
+  type DashboardStats,
+  type KpiCard,
+} from '@/features/home/kpi';
 import { errorMessage } from '@/shared/lib/error-message';
 import { roleLabel } from '@/shared/lib/labels';
 import { toneClasses } from '@/shared/lib/status-tone';
+import { MoneyText } from '@/shared/ui';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 /**
  * Bosh sahifa (D-041): rolga mos ko'rsatkichlar va tezkor amallar.
- * ⚠ Sonlar mavjud ro'yxatlardan (A varianti) — summa va dinamika backendda
- *   statistika endpointi chiqqach (api/task.txt B-063).
+ *
+ * Sonlar BITTA so'rovdan — `GET /admin/dashboard/stats` (api B-063).
+ * Ikki kartochka ataylab eski yo'lda: menejerning shaxsiy ro'yxati va
+ * ta'minot buyurtmalari — ular statistikada yo'q (`kpi.ts` izohi).
  */
 export default function HomePage() {
   const profile = useProfile().data;
   const cards = kpiCards(profile ? { id: profile.id, role: profile.role } : undefined);
+  const stats = useDashboardStats();
   const canOrder = useCan('orders.manage');
   const canSupply = useCan('supplyOrders.create');
   const canStock = useCan('stock.view');
@@ -30,7 +41,7 @@ export default function HomePage() {
 
       <section aria-label="Ko‘rsatkichlar" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
-          <KpiTile key={card.id} card={card} />
+          <KpiTile key={card.id} card={card} stats={stats} />
         ))}
       </section>
 
@@ -53,16 +64,40 @@ export default function HomePage() {
       </section>
 
       <p className="text-xs text-muted">
-        Sonlar har daqiqada yangilanadi. “Kam qolgan mahsulotlar” soni hozircha yo‘q — backendda zaxira holati bo‘yicha filtr yo‘q (B-063);
-        holatni “Zaxira” sahifasida ko‘ring.
+        Sonlar har daqiqada yangilanadi. Kartochkani bosing — ro‘yxat aynan shu filtr bilan
+        ochiladi.
+        {stats.data && (
+          <>
+            {' '}Zaxira raqamlari markaziy ombor bo‘yicha (filialga bog‘liq emas), «kam qoldi»
+            chegarasi — {stats.data.stock.globalLowThreshold} paddon.
+          </>
+        )}
       </p>
     </div>
   );
 }
 
-function KpiTile({ card }: { card: KpiCard }) {
-  const count = useKpiCount(card.source);
+function KpiTile({
+  card,
+  stats,
+}: {
+  card: KpiCard;
+  stats: UseQueryResult<DashboardStats, Error>;
+}) {
+  // Statistikada bor kartochka — umumiy so'rovdan; qolgani o'z so'rovidan
+  const fallback = useKpiCount(
+    card.source.kind === 'stats' ? { kind: 'orders', query: {} } : card.source,
+    card.source.kind !== 'stats',
+  );
+  const source = card.source.kind === 'stats' ? stats : fallback;
+  const value =
+    card.source.kind === 'stats'
+      ? statsCount(stats.data, card.source.count)
+      : fallback.data;
+  const money =
+    card.source.kind === 'stats' ? statsMoney(stats.data, card.source.money) : undefined;
   const tone = toneClasses[card.tone];
+
   return (
     <Link
       to={card.href}
@@ -73,16 +108,23 @@ function KpiTile({ card }: { card: KpiCard }) {
         {card.label}
       </span>
       <span className="text-3xl font-semibold tabular-nums" aria-live="polite">
-        {count.isPending ? (
-          <span className="inline-block h-8 w-12 animate-pulse rounded-sm bg-surface-muted align-middle" aria-label="Yuklanmoqda" />
-        ) : count.error ? (
-          <span className="text-sm font-normal text-danger" title={errorMessage(count.error)}>
+        {source.isPending ? (
+          <span
+            className="inline-block h-8 w-12 animate-pulse rounded-sm bg-surface-muted align-middle"
+            aria-label="Yuklanmoqda"
+          />
+        ) : source.error ? (
+          <span className="text-sm font-normal text-danger" title={errorMessage(source.error)}>
             Olib bo‘lmadi
           </span>
         ) : (
-          count.data
+          value
         )}
       </span>
+      {/* G6: summa satr ustida formatlanadi */}
+      {money !== undefined && !source.isPending && !source.error && (
+        <MoneyText value={money} className="text-sm text-muted" />
+      )}
       <span className="flex items-center justify-between gap-2 text-xs text-muted">
         {card.hint}
         <ArrowRight size={14} aria-hidden className="shrink-0 transition-transform group-hover:translate-x-0.5" />

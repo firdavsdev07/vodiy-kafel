@@ -7,8 +7,10 @@ import {
   IsString,
   Matches,
   MaxLength,
+  MinLength,
   ValidateIf,
 } from 'class-validator';
+import { MIN_PASSWORD_LENGTH } from '../../../auth/dto';
 import { UserRole } from '../../../common/enums';
 import { toOptionalBoolean } from '../../../common/utils/query-boolean.util';
 
@@ -19,6 +21,22 @@ import { toOptionalBoolean } from '../../../common/utils/query-boolean.util';
 const LOGIN_PHONE = /^\+?\d{9,15}$/;
 /** Telegram username: 5–32, lotin harf/raqam/`_`; `@` bilan ham qabul qilinadi. */
 const TELEGRAM_USERNAME = /^@?[A-Za-z0-9_]{5,32}$/;
+
+/**
+ * Parol maydonining izohi — yaratishda ham, tiklashda ham BIR XIL matn.
+ *
+ * ⚠ Ixtiyoriy: admin o'zi parol yozsa — aynan o'sha ishlatiladi; bo'sh
+ *   qoldirsa tizim tasodifiy vaqtinchalik parol o'ylab topadi (eski
+ *   xatti-harakat, B-043/B-057). Talab 2026-09-18: admin xodimga parolni
+ *   og'zaki aytib beradigan bo'lsa, uni O'ZI tanlashi kerak.
+ *
+ * ⚠ Xodimda `mustChangePassword` YO'Q (bu maydon faqat `Customer` da) —
+ *   ya'ni bu parol majburan almashtirilmaydi. Shuning uchun uzunlik
+ *   optom mijoz paroli bilan bir xil chegarada tekshiriladi.
+ */
+const PASSWORD_DESCRIPTION =
+  `Parol (ixtiyoriy). Kamida ${MIN_PASSWORD_LENGTH} belgi. ` +
+  'Berilmasa — tizim vaqtinchalik parol yaratadi va javobda qaytaradi.';
 
 const stripAt = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().replace(/^@/, '') : value;
@@ -86,6 +104,18 @@ export class CreateStaffDto {
   @IsOptional()
   @IsString()
   branchId?: string;
+
+  @ApiPropertyOptional({
+    description: PASSWORD_DESCRIPTION,
+    example: 'Parol123!',
+    minLength: MIN_PASSWORD_LENGTH,
+    maxLength: 72,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(MIN_PASSWORD_LENGTH)
+  @MaxLength(72)
+  password?: string;
 }
 
 export class UpdateStaffDto {
@@ -175,7 +205,51 @@ export class StaffCreatedDto {
   @ApiProperty({
     example: 'Kp7mQx4rTn92',
     description:
-      'Vaqtinchalik parol — FAQAT SHU javobda. Xodimga shaxsan yetkazing.',
+      'Parol — FAQAT SHU javobda. Admin `password` bergan bo‘lsa aynan ' +
+      'o‘sha, aks holda tizim yaratgan vaqtinchalik parol. Xodimga ' +
+      'shaxsan yetkazing.',
   })
   temporaryPassword!: string;
+}
+
+/**
+ * POST /admin/{managers|moderators}/:id/reset-password tanasi (B-066).
+ *
+ * Bo'sh tana ham to'g'ri: u holda tizim vaqtinchalik parol yaratadi.
+ */
+export class ResetStaffPasswordDto {
+  @ApiPropertyOptional({
+    description: PASSWORD_DESCRIPTION,
+    example: 'Parol123!',
+    minLength: MIN_PASSWORD_LENGTH,
+    maxLength: 72,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(MIN_PASSWORD_LENGTH)
+  @MaxLength(72)
+  password?: string;
+}
+
+/**
+ * Yangi parol javobi (B-066).
+ *
+ * ⚠ Parol OCHIQ matnda qaytadi — bazada faqat hash bor, demak bu yagona
+ *   imkoniyat. Admin o'zi yozgan bo'lsa ham qaytariladi: shunda UI bitta
+ *   oyna bilan ikki holatni ham ko'rsatadi ("nusxa oling va yetkazing").
+ */
+export class StaffPasswordResetDto {
+  @ApiProperty({
+    example: '+998901234567',
+    description: 'Xodimning logini — telefon raqami',
+  })
+  phone!: string;
+
+  @ApiProperty({
+    example: 'Kp7mQx4rTn92',
+    description:
+      'Yangi parol. Admin bergan bo‘lsa — aynan o‘sha, aks holda tizim ' +
+      'yaratgani. FAQAT SHU javobda ko‘rinadi.',
+  })
+  password!: string;
 }

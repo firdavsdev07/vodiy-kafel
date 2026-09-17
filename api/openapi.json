@@ -3967,6 +3967,240 @@
         ]
       }
     },
+    "/api/v1/me/catalog": {
+      "get": {
+        "description": "Filtr, qidiruv, saralash va sahifalash `GET /products` bilan AYNAN bir xil shaklda.\n\nFarqi: har kartada mijozga tegishli yakuniy `pricePerSqm` va uch darajali `stockStatus` bor.\n\n⚠ Ro‘yxatda FAQAT mijoz filialida sotiladigan mahsulotlar bo‘ladi.\n\n⚠ Narx bo‘yicha saralash yo‘q: yakuniy narx bazada saqlanmaydi, har mijoz uchun hisoblanadi.",
+        "operationId": "MeCatalogController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralash maydoni. Ro‘yxatdagidan boshqasi qabul qilinmaydi.\n\nNarx bo‘yicha saralash YO‘Q — ochiq katalogda narx ko‘rinmaydi.",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "name",
+                "createdAt",
+                "viewCount"
+              ]
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "factoryId",
+            "required": false,
+            "in": "query",
+            "description": "Zavod bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sizeId",
+            "required": false,
+            "in": "query",
+            "description": "O‘lcham bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "surface",
+            "required": false,
+            "in": "query",
+            "description": "Sirt turi: pol yoki devor",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "POL",
+                "DEVOR"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi)",
+            "schema": {
+              "maxLength": 100,
+              "example": "yongxin",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mahsulotlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedCustomerCatalogItemDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan, hisob faol emas yoki filial o‘zgargan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas, vaqtinchalik parol almashtirilmagan yoki filial buyurtma qabul qilmaydi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Katalog — narx bilan",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/me/catalog/{slug}": {
+      "get": {
+        "description": "Karta + tavsif + butun media ro‘yxati.\n\n🔒 Mijoz filialida sotilmaydigan mahsulot uchun 404 (403 emas) — boshqa filialda nima borligi oshkor qilinmaydi.",
+        "operationId": "MeCatalogController_findOne",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "lyuks-keramogranit-60x60",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mahsulot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CustomerCatalogDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan, hisob faol emas yoki filial o‘zgargan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas, vaqtinchalik parol almashtirilmagan yoki filial buyurtma qabul qilmaydi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mahsulot topilmadi yoki filialingizda sotilmaydi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mahsulot sahifasi — narx bilan",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/v1/admin/products": {
       "get": {
         "description": "Ochiq katalogdagi filtrlar + `isActive`.\n\nJavobda markaziy ombor zaxirasining ANIQ soni va uch rangli holati (`stock`) bor — bu ichki ko‘rinish.\n\n⚠ Narx bu yerda yo‘q — filial narxlari `GET /admin/branch-products`.",
@@ -4949,6 +5183,20 @@
             "description": "Mahsulot bo‘yicha filtr",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "stockStatus",
+            "required": false,
+            "in": "query",
+            "description": "Zaxira holati bo‘yicha filtr (B-063). Chegara `effectiveThreshold` bilan AYNAN bir xil hisoblanadi: mahsulotning o‘z `lowStockThreshold` i, u bo‘lmasa global sozlama.\n\n⚠ Bu HISOBLANADIGAN qiymat — bazada `stock_status` ustuni yo‘q. Shuning uchun bu maydon bo‘yicha SARALASH yo‘q, faqat filtr.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "IN_STOCK",
+                "LOW",
+                "OUT_OF_STOCK"
+              ]
             }
           }
         ],
@@ -6870,6 +7118,80 @@
           }
         ],
         "summary": "Tezkor belgisini qo‘yish / olib tashlash",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{id}/assignable-staff": {
+      "get": {
+        "description": "Buyurtma FILIALINING faol xodimlari — aynan biriktirish qabul qiladigan rollar (MANAGER, BRANCH_ADMIN, MODERATOR).\n\n⚠ Rollar ro‘yxati `PATCH /admin/orders/{id}/assign` bilan BITTA manbadan (`ASSIGNABLE_ROLES`): ro‘yxatda ko‘rinadigan har bir xodimga biriktirish ishlaydi.\n\n🔒 Filial buyurtmadan olinadi, so‘rovdan EMAS — begona filial buyurtmasi so‘ralsa 404. Filialsiz buyurtma uchun bo‘sh ro‘yxat.\n\n⚠ `@Roles` aynan `assign` bilan bir xil: ro‘yxatni faqat biriktira oladigan xodim ko‘radi.",
+        "operationId": "OrdersAdminController_assignableStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nomzodlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AssignableStaffDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Buyurtma topilmadi yoki boshqa filialga tegishli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Biriktirish uchun nomzod xodimlar",
         "tags": [
           "Admin"
         ]
@@ -9653,7 +9975,7 @@
         ]
       },
       "post": {
-        "description": "Kirish: telefon + vaqtinchalik parol (javobda FAQAT bir marta).\n\n🔒 Filial admini — o‘z filialiga; SUPER_ADMIN — `branchId` majburiy, filial RETAIL bo‘lishi shart.",
+        "description": "Kirish: telefon + parol (javobda FAQAT bir marta).\n\n`password` berilsa — aynan o‘sha; bo‘sh qoldirilsa tizim vaqtinchalik parol yaratadi (B-066).\n\n🔒 Filial admini — o‘z filialiga; SUPER_ADMIN — `branchId` majburiy, filial RETAIL bo‘lishi shart.",
         "operationId": "ManagersAdminController_create",
         "parameters": [],
         "requestBody": {
@@ -9737,6 +10059,97 @@
           }
         ],
         "summary": "Menejer qo‘shish",
+        "tags": [
+          "Managers"
+        ]
+      }
+    },
+    "/api/v1/admin/managers/{id}/reset-password": {
+      "post": {
+        "description": "Ikki holatda ishlatiladi: xodim parolni unutgan yoki admin unga yangi parol bermoqchi.\n\n`password` berilsa — AYNAN o‘sha parol o‘rnatiladi; bo‘sh qoldirilsa tizim tasodifiy parol yaratadi. Ikkala holatda ham javobda ochiq matnda qaytadi (bazada faqat hash).\n\n⚠ Xodim parolni keyin o‘zi almashtira olmaydi — unda majburiy almashtirish oqimi yo‘q (u faqat optom mijozda bor). Shuning uchun parolni admin xodimga shaxsan yetkazadi.\n\n🔒 Filial admini faqat O‘Z filiali menejeriga parol bera oladi — begona filial menejeri uchun 404.\n\n⚠ Eski tokenlar darhol o‘chmaydi: xodim qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi.",
+        "operationId": "ManagersAdminController_resetPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Menejer ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetStaffPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi parol",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StaffPasswordResetDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parol juda qisqa (kamida 8 belgi)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat SUPER_ADMIN va filial admini",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Menejer topilmadi yoki boshqa filialniki",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Menejerga yangi parol berish",
         "tags": [
           "Managers"
         ]
@@ -9924,7 +10337,7 @@
         ]
       },
       "post": {
-        "description": "`branchId` — CENTRAL filial (majburiy). Kirish: telefon + vaqtinchalik parol (javobda FAQAT bir marta).",
+        "description": "`branchId` — CENTRAL filial (majburiy). Kirish: telefon + parol (javobda FAQAT bir marta).\n\n`password` berilsa — aynan o‘sha; bo‘sh qoldirilsa tizim vaqtinchalik parol yaratadi (B-066).",
         "operationId": "ModeratorsAdminController_create",
         "parameters": [],
         "requestBody": {
@@ -9998,6 +10411,97 @@
           }
         ],
         "summary": "Moderator qo‘shish",
+        "tags": [
+          "Moderators"
+        ]
+      }
+    },
+    "/api/v1/admin/moderators/{id}/reset-password": {
+      "post": {
+        "description": "Ikki holatda ishlatiladi: xodim parolni unutgan yoki admin unga yangi parol bermoqchi.\n\n`password` berilsa — AYNAN o‘sha parol o‘rnatiladi; bo‘sh qoldirilsa tizim tasodifiy parol yaratadi. Ikkala holatda ham javobda ochiq matnda qaytadi (bazada faqat hash).\n\n⚠ Xodim parolni keyin o‘zi almashtira olmaydi — unda majburiy almashtirish oqimi yo‘q (u faqat optom mijozda bor). Shuning uchun parolni admin xodimga shaxsan yetkazadi.\n\n🔒 Faqat SUPER_ADMIN (butun controller shunday).\n\n⚠ Eski tokenlar darhol o‘chmaydi: xodim qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi.",
+        "operationId": "ModeratorsAdminController_resetPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Moderator ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetStaffPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangi parol",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/StaffPasswordResetDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parol juda qisqa (kamida 8 belgi)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat SUPER_ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Moderatorga yangi parol berish",
         "tags": [
           "Moderators"
         ]
@@ -10170,6 +10674,77 @@
         "summary": "Moderatorni o‘chirish (soft)",
         "tags": [
           "Moderators"
+        ]
+      }
+    },
+    "/api/v1/admin/dashboard/stats": {
+      "get": {
+        "description": "BITTA so‘rovda: yangi / tezkor / to‘lanmagan buyurtmalar, bugungi va oylik buyurtma soni + summa, kam qolgan va tugagan mahsulotlar, faol va qarzdor mijozlar.\n\n⚠ Har bir son mavjud admin ro‘yxatining AYNAN o‘sha filtri bilan hisoblanadi — kartochkani bosgan xodim ro‘yxatda boshqa sonni ko‘rmaydi.\n\n🔒 Filial: cheklangan rol uchun HAR DOIM o‘z filiali (so‘rovdagi `branchId` boshqa bo‘lsa 404). SUPER_ADMIN `branchId` bermasa — butun tizim.\n\n⚠ Zaxira raqamlari filialga bog‘lanmagan (B-008): markaziy ombor zaxirasi butun tizim uchun bitta, shuning uchun ular filial kesimida O‘ZGARMAYDI.",
+        "operationId": "StatsAdminController_dashboard",
+        "parameters": [
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Faqat SUPER_ADMIN uchun kesim. Boshqa rolda 404.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ko‘rsatkichlar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DashboardStatsDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Xodim tokeni emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bosh sahifa ko‘rsatkichlari",
+        "tags": [
+          "Admin"
         ]
       }
     },
@@ -12742,6 +13317,215 @@
           "media"
         ]
       },
+      "CustomerCatalogItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Katalog manzili uchun — `/products/:slug`",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/ProductFactoryRefDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "string",
+            "example": "Bej",
+            "nullable": true
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg), satr ko‘rinishida",
+            "example": "1250.5"
+          },
+          "primaryImageUrl": {
+            "type": "string",
+            "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
+            "example": "/uploads/products/lyuks-1.jpg",
+            "nullable": true
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "description": "Mijozga tegishli YAKUNIY narx (1 m² uchun, so‘m). Narx zanjiri bo‘yicha hisoblangan: mijoz+mahsulot > mijoz+zavod > mijoz umumiy > filialning bazaviy narxi.\n\n⚠ Satr ko‘rinishida (CLAUDE.md qoida 7) — `Number()` ga aylantirilmaydi.\n\n🔒 Qaysi qoida ishlagani va bazaviy narx JAVOBDA YO‘Q.",
+            "example": "85000.00"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "LOW",
+              "OUT_OF_STOCK"
+            ],
+            "description": "Uch rangli zaxira holati (🟢 IN_STOCK / 🟡 LOW / 🔴 OUT_OF_STOCK). Chegara — mahsulotning o‘z `lowStockThreshold` i, u bo‘lmasa global sozlama (`stock.lowThresholdPallets`).\n\n🔒 Ombordagi aniq son hech qachon berilmaydi (TZ 3.2).",
+            "example": "IN_STOCK"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "factory",
+          "size",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet",
+          "pricePerSqm",
+          "stockStatus"
+        ]
+      },
+      "PaginatedCustomerCatalogItemDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerCatalogItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "CustomerCatalogDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Lyuks Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Katalog manzili uchun — `/products/:slug`",
+            "example": "lyuks-keramogranit-60x60"
+          },
+          "factory": {
+            "$ref": "#/components/schemas/ProductFactoryRefDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "POL",
+              "DEVOR"
+            ],
+            "example": "POL"
+          },
+          "color": {
+            "type": "string",
+            "example": "Bej",
+            "nullable": true
+          },
+          "sqmPerPallet": {
+            "type": "string",
+            "description": "1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).",
+            "example": "1.44"
+          },
+          "weightPerPallet": {
+            "type": "string",
+            "description": "1 paddon og‘irligi (kg), satr ko‘rinishida",
+            "example": "1250.5"
+          },
+          "primaryImageUrl": {
+            "type": "string",
+            "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
+            "example": "/uploads/products/lyuks-1.jpg",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "example": "Yuqori sifatli keramogranit, sirti silliq.",
+            "nullable": true
+          },
+          "media": {
+            "description": "Suratlar va 360° materiallar — ko‘rsatish tartibida.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductMediaResponseDto"
+            }
+          },
+          "pricePerSqm": {
+            "type": "string",
+            "description": "Mijozga tegishli yakuniy narx (1 m² uchun, so‘m)",
+            "example": "85000.00"
+          },
+          "stockStatus": {
+            "type": "string",
+            "enum": [
+              "IN_STOCK",
+              "LOW",
+              "OUT_OF_STOCK"
+            ],
+            "description": "Uch rangli zaxira holati",
+            "example": "IN_STOCK"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "factory",
+          "size",
+          "surface",
+          "sqmPerPallet",
+          "weightPerPallet",
+          "media",
+          "pricePerSqm",
+          "stockStatus"
+        ]
+      },
       "ProductStockSummaryDto": {
         "type": "object",
         "properties": {
@@ -14679,6 +15463,39 @@
           "isUrgent"
         ]
       },
+      "AssignableStaffDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Farg‘ona menejeri"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "MANAGER",
+              "BRANCH_ADMIN",
+              "MODERATOR"
+            ],
+            "description": "Xodim roli. Biriktirish uchun aynan shu uch rol qabul qilinadi (`PATCH /admin/orders/{id}/assign` bilan bitta manba)."
+          },
+          "telegramUsername": {
+            "type": "string",
+            "nullable": true,
+            "example": "vk_fargona",
+            "description": "Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)"
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
       "AssignOrderManagerDto": {
         "type": "object",
         "properties": {
@@ -16060,7 +16877,7 @@
           "temporaryPassword": {
             "type": "string",
             "example": "Kp7mQx4rTn92",
-            "description": "Vaqtinchalik parol — FAQAT SHU javobda. Xodimga shaxsan yetkazing."
+            "description": "Parol — FAQAT SHU javobda. Admin `password` bergan bo‘lsa aynan o‘sha, aks holda tizim yaratgan vaqtinchalik parol. Xodimga shaxsan yetkazing."
           }
         },
         "required": [
@@ -16090,12 +16907,50 @@
           "branchId": {
             "type": "string",
             "description": "Filial. Filial admini uchun e’tiborsiz — har doim O‘Z filiali (boshqasi 404). SUPER_ADMIN uchun majburiy."
+          },
+          "password": {
+            "type": "string",
+            "description": "Parol (ixtiyoriy). Kamida 8 belgi. Berilmasa — tizim vaqtinchalik parol yaratadi va javobda qaytaradi.",
+            "example": "Parol123!",
+            "minLength": 8,
+            "maxLength": 72
           }
         },
         "required": [
           "fullName",
           "phone"
         ]
+      },
+      "StaffPasswordResetDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "+998901234567",
+            "description": "Xodimning logini — telefon raqami"
+          },
+          "password": {
+            "type": "string",
+            "example": "Kp7mQx4rTn92",
+            "description": "Yangi parol. Admin bergan bo‘lsa — aynan o‘sha, aks holda tizim yaratgani. FAQAT SHU javobda ko‘rinadi."
+          }
+        },
+        "required": [
+          "phone",
+          "password"
+        ]
+      },
+      "ResetStaffPasswordDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "Parol (ixtiyoriy). Kamida 8 belgi. Berilmasa — tizim vaqtinchalik parol yaratadi va javobda qaytaradi.",
+            "example": "Parol123!",
+            "minLength": 8,
+            "maxLength": 72
+          }
+        }
       },
       "UpdateStaffDto": {
         "type": "object",
@@ -16121,6 +16976,128 @@
             "description": "`false` — kira olmaydi, yangi buyurtmalar biriktirilmaydi"
           }
         }
+      },
+      "DashboardOrderStatsDto": {
+        "type": "object",
+        "properties": {
+          "newCount": {
+            "type": "number",
+            "description": "`status=NEW`",
+            "example": 4
+          },
+          "urgentCount": {
+            "type": "number",
+            "description": "`isUrgent=true`",
+            "example": 1
+          },
+          "unpaidCount": {
+            "type": "number",
+            "description": "`paymentStatus=PENDING` — kutilayotgan to‘lovi bor",
+            "example": 2
+          },
+          "todayCount": {
+            "type": "number",
+            "description": "Bugun yaratilgan buyurtmalar (Toshkent kuni bo‘yicha)",
+            "example": 3
+          },
+          "todayTotal": {
+            "type": "string",
+            "description": "Bugungi buyurtmalar summasi. ⚠ SATR (CLAUDE.md qoida 7) — `float` ga aylantirilsa aniqlik yo‘qoladi.",
+            "example": "12450000.00"
+          },
+          "monthCount": {
+            "type": "number",
+            "description": "Shu oyda yaratilgan buyurtmalar",
+            "example": 37
+          },
+          "monthTotal": {
+            "type": "string",
+            "example": "184300000.00"
+          }
+        },
+        "required": [
+          "newCount",
+          "urgentCount",
+          "unpaidCount",
+          "todayCount",
+          "todayTotal",
+          "monthCount",
+          "monthTotal"
+        ]
+      },
+      "DashboardStockStatsDto": {
+        "type": "object",
+        "properties": {
+          "lowCount": {
+            "type": "number",
+            "description": "Kam qolgan mahsulotlar soni 🟡",
+            "example": 5
+          },
+          "outOfStockCount": {
+            "type": "number",
+            "description": "Tugagan mahsulotlar soni 🔴",
+            "example": 2
+          },
+          "globalLowThreshold": {
+            "type": "number",
+            "description": "Hisobda ishlatilgan global «kam qoldi» chegarasi (`stock.lowThresholdPallets`). Mahsulotning o‘z chegarasi bo‘lsa, o‘sha ustun turadi.",
+            "example": 20
+          }
+        },
+        "required": [
+          "lowCount",
+          "outOfStockCount",
+          "globalLowThreshold"
+        ]
+      },
+      "DashboardCustomerStatsDto": {
+        "type": "object",
+        "properties": {
+          "activeCount": {
+            "type": "number",
+            "description": "`isActive=true`",
+            "example": 12
+          },
+          "inDebtCount": {
+            "type": "number",
+            "description": "`hasDebt=true` — balansi qarzda bo‘lgan mijozlar",
+            "example": 3
+          }
+        },
+        "required": [
+          "activeCount",
+          "inDebtCount"
+        ]
+      },
+      "DashboardStatsDto": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "$ref": "#/components/schemas/DashboardOrderStatsDto"
+          },
+          "stock": {
+            "$ref": "#/components/schemas/DashboardStockStatsDto"
+          },
+          "customers": {
+            "$ref": "#/components/schemas/DashboardCustomerStatsDto"
+          },
+          "branchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Raqamlar qaysi filial kesimida. `null` — butun tizim (faqat SUPER_ADMIN)."
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Hisob vaqti (UTC). «Bugun» va «shu oy» Toshkent vaqti bo‘yicha hisoblanadi — xodim ekranda ko‘rgan kun bilan bir xil bo‘lsin."
+          }
+        },
+        "required": [
+          "orders",
+          "stock",
+          "customers",
+          "generatedAt"
+        ]
       },
       "SimulatePaymentResponseDto": {
         "type": "object",

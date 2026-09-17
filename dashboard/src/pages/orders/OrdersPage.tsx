@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { createContext, use, useState } from 'react';
 import { useProfile } from '@/features/auth/hooks';
 import { useBranches } from '@/features/branches/api';
-import { useManagerOptions, useOrders } from '@/features/orders/api';
+import { useManagerFilterOptions, useOrders } from '@/features/orders/api';
 import { AssignManagerModal, UrgentToggle } from '@/features/orders/OrderAssignControls';
 import {
   branchOrderConfig,
@@ -164,7 +164,7 @@ export default function OrdersPage() {
 
   const orders = useOrders(list.params);
   const branches = useBranches(isSuperAdmin);
-  const managers = useManagerOptions(canFilterManager, filters.branchId);
+  const managers = useManagerFilterOptions(canFilterManager, filters.branchId);
   const page = orders.data;
 
   const quick = quickFilters(profile ? { id: profile.id, isManager: profile.role === 'MANAGER' } : null);

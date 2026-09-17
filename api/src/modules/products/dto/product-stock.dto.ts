@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { StockStatus } from '../../../common/enums';
 import { ProductStockSummaryDto } from './product-admin.response.dto';
 import { ProductAdminRefDto } from './branch-product.dto';
 
@@ -19,6 +21,19 @@ export class ProductStockQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   productId?: string;
+
+  @ApiPropertyOptional({
+    enum: StockStatus,
+    description:
+      'Zaxira holati bo‘yicha filtr (B-063). Chegara `effectiveThreshold` ' +
+      'bilan AYNAN bir xil hisoblanadi: mahsulotning o‘z ' +
+      '`lowStockThreshold` i, u bo‘lmasa global sozlama.\n\n' +
+      '⚠ Bu HISOBLANADIGAN qiymat — bazada `stock_status` ustuni yo‘q. ' +
+      'Shuning uchun bu maydon bo‘yicha SARALASH yo‘q, faqat filtr.',
+  })
+  @IsOptional()
+  @IsEnum(StockStatus)
+  stockStatus?: StockStatus;
 }
 
 /**

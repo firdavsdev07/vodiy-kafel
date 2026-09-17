@@ -92,6 +92,18 @@ describe('StaffAdminService', () => {
       expect(result.temporaryPassword).toHaveLength(12);
     });
 
+    it('admin bergan parol ishlatiladi, tizim yangisini o‘ylab topmaydi (B-066)', async () => {
+      const result = await service.create(fargonaAdmin, 'MANAGER', {
+        ...dto,
+        password: 'MenejerParol1',
+      });
+      const [{ data }] = user.create.mock.calls[0] as [
+        { data: Record<string, unknown> },
+      ];
+      expect(result.temporaryPassword).toBe('MenejerParol1');
+      expect(data.passwordHash).toBe('hash(MenejerParol1)');
+    });
+
     it('🔒 menejer CENTRAL filialga — 400', async () => {
       branch.findUnique.mockResolvedValueOnce({
         type: BranchType.CENTRAL,
@@ -182,6 +194,66 @@ describe('StaffAdminService', () => {
       expect(user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { telegramUsername: null, isActive: false },
+        }),
+      );
+    });
+  });
+
+  describe('parol tiklash (B-066)', () => {
+    beforeEach(() => {
+      user.update.mockResolvedValue({ phone: '+998901234567' });
+    });
+
+    it('admin bergan parol o‘rnatiladi; javobda login ham qaytadi', async () => {
+      const result = await service.resetPassword(
+        fargonaAdmin,
+        'MANAGER',
+        'm1',
+        {
+          password: 'YangiParol1',
+        },
+      );
+      expect(result).toEqual({
+        phone: '+998901234567',
+        password: 'YangiParol1',
+      });
+      expect(user.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { passwordHash: 'hash(YangiParol1)' },
+        select: { phone: true },
+      });
+    });
+
+    it('parol berilmasa — tizim 12 belgilik parol yaratadi', async () => {
+      const result = await service.resetPassword(
+        superAdmin,
+        'MANAGER',
+        'm1',
+        {},
+      );
+      expect(result.password).toHaveLength(12);
+      const [{ data }] = user.update.mock.calls[0] as [
+        { data: { passwordHash: string } },
+      ];
+      expect(data.passwordHash).toBe(`hash(${result.password})`);
+    });
+
+    it('🔒 boshqa filial menejeri — 404, parol o‘zgarmaydi', async () => {
+      user.findFirst.mockResolvedValueOnce({ branchId: 'andijon' });
+      await expect(
+        service.resetPassword(fargonaAdmin, 'MANAGER', 'm1', {}),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(user.update).not.toHaveBeenCalled();
+    });
+
+    it('🔒 boshqa rol ID si (moderator sifatida menejer) — 404', async () => {
+      user.findFirst.mockResolvedValueOnce(null);
+      await expect(
+        service.resetPassword(superAdmin, 'MODERATOR', 'm1', {}),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'm1', role: UserRole.MODERATOR },
         }),
       );
     });

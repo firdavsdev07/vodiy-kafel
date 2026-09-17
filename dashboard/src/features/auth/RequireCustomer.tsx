@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { useActorType, useHasSession, useMustChangePassword } from './hooks';
+import { useActorType, useCustomerProfile, useHasSession, useMustChangePassword } from './hooks';
 
 /**
  * Kabinet marshrutlari — faqat optom mijoz sessiyasi bilan (D-049).
@@ -14,13 +14,23 @@ import { useActorType, useHasSession, useMustChangePassword } from './hooks';
  *     boshqa hamma endpointga 403 beradi, ya'ni kabinetni ko'rsatish
  *     foydasiz — sahifa ochiladi-yu, hamma so'rov xato bilan qaytadi.
  *
+ * Bayroq IKKI manbadan (D-051 da qo'shildi):
+ *   1. refresh token ichidagi da'vo — DARHOL, sahifa chizilishidan oldin
+ *   2. `GET /me/profile` — HAQIQIY holat, javob kelgandan keyin
+ * Ikkinchisi kerak, chunki admin mijozga yangi vaqtinchalik parol bergan
+ * bo'lsa (`/admin/customers/:id/reset-password`), qo'ldagi eski tokendagi
+ * da'vo hamon `false` turadi: mijoz kabinetga kirib, har bir so'rovda 403
+ * ko'rardi. Profil javobi shu holatni tuzatadi.
+ *
  * ⚠ G4: bu FAQAT UX. Backend baribir `CustomerOnlyGuard` bilan tekshiradi —
  *   xodim tokeni bilan `/me/*` ga so'rov ketsa 403 qaytadi.
  */
 export function RequireCustomer({ children }: { children: ReactNode }) {
   const hasSession = useHasSession();
   const actorType = useActorType();
-  const needsNewPassword = useMustChangePassword();
+  const claimSaysMustChange = useMustChangePassword();
+  const profile = useCustomerProfile();
+  const needsNewPassword = claimSaysMustChange || profile.data?.mustChangePassword === true;
   const location = useLocation();
 
   if (!hasSession) {

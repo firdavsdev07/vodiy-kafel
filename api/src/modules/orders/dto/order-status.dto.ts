@@ -7,7 +7,7 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { OrderStatus } from '../../../common/enums';
+import { OrderStatus, UserRole } from '../../../common/enums';
 
 export class ChangeOrderStatusDto {
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.SEARCHING_TRANSPORT })
@@ -30,6 +30,31 @@ export class StaffRefDto {
 
   @ApiProperty({ example: 'Farg‘ona menejeri' })
   fullName!: string;
+}
+
+/**
+ * Buyurtmaga biriktirish uchun nomzod xodim (B-062).
+ *
+ * `StaffRefDto` dan farqi — `role`: UI "menejer" va "filial admini" ni
+ * ajratib ko'rsatishi kerak, aks holda ro'yxatda bir xil ismlar
+ * yonma-yon turadi va kim kim ekani bilinmaydi.
+ */
+export class AssignableStaffDto extends StaffRefDto {
+  @ApiProperty({
+    enum: [UserRole.MANAGER, UserRole.BRANCH_ADMIN, UserRole.MODERATOR],
+    description:
+      'Xodim roli. Biriktirish uchun aynan shu uch rol qabul qilinadi ' +
+      '(`PATCH /admin/orders/{id}/assign` bilan bitta manba).',
+  })
+  role!: UserRole;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'vk_fargona',
+    description: 'Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)',
+  })
+  telegramUsername!: string | null;
 }
 
 export class OrderStatusAdminEntryDto {

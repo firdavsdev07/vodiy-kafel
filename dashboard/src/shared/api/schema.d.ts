@@ -314,6 +314,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mening profilim
+         * @description Kabinet sarlavhasi uchun: kompaniya nomi, mas’ul shaxs, login va BIRIKTIRILGAN FILIAL.
+         *
+         *     Filial muhim — mijoz aynan o‘sha filialning narxini ko‘radi (CLAUDE.md qoida 5), shuning uchun u qaysi filial ekanini bilishi kerak.
+         *
+         *     🔒 Narx qoidalari, chegirma sabablari va balans bu yerda YO‘Q.
+         */
+        get: operations["MeProfileController_getMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/account": {
         parameters: {
             query?: never;
@@ -910,6 +934,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Katalog — narx bilan
+         * @description Filtr, qidiruv, saralash va sahifalash `GET /products` bilan AYNAN bir xil shaklda.
+         *
+         *     Farqi: har kartada mijozga tegishli yakuniy `pricePerSqm` va uch darajali `stockStatus` bor.
+         *
+         *     ⚠ Ro‘yxatda FAQAT mijoz filialida sotiladigan mahsulotlar bo‘ladi.
+         *
+         *     ⚠ Narx bo‘yicha saralash yo‘q: yakuniy narx bazada saqlanmaydi, har mijoz uchun hisoblanadi.
+         */
+        get: operations["MeCatalogController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/catalog/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mahsulot sahifasi — narx bilan
+         * @description Karta + tavsif + butun media ro‘yxati.
+         *
+         *     🔒 Mijoz filialida sotilmaydigan mahsulot uchun 404 (403 emas) — boshqa filialda nima borligi oshkor qilinmaydi.
+         */
+        get: operations["MeCatalogController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/products": {
         parameters: {
             query?: never;
@@ -1411,6 +1483,32 @@ export interface paths {
         head?: never;
         /** Tezkor belgisini qo‘yish / olib tashlash */
         patch: operations["OrdersAdminController_setUrgent"];
+        trace?: never;
+    };
+    "/api/v1/admin/orders/{id}/assignable-staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Biriktirish uchun nomzod xodimlar
+         * @description Buyurtma FILIALINING faol xodimlari — aynan biriktirish qabul qiladigan rollar (MANAGER, BRANCH_ADMIN, MODERATOR).
+         *
+         *     ⚠ Rollar ro‘yxati `PATCH /admin/orders/{id}/assign` bilan BITTA manbadan (`ASSIGNABLE_ROLES`): ro‘yxatda ko‘rinadigan har bir xodimga biriktirish ishlaydi.
+         *
+         *     🔒 Filial buyurtmadan olinadi, so‘rovdan EMAS — begona filial buyurtmasi so‘ralsa 404. Filialsiz buyurtma uchun bo‘sh ro‘yxat.
+         *
+         *     ⚠ `@Roles` aynan `assign` bilan bir xil: ro‘yxatni faqat biriktira oladigan xodim ko‘radi.
+         */
+        get: operations["OrdersAdminController_assignableStaff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/orders/{id}/assign": {
@@ -1998,11 +2096,41 @@ export interface paths {
         put?: never;
         /**
          * Menejer qo‘shish
-         * @description Kirish: telefon + vaqtinchalik parol (javobda FAQAT bir marta).
+         * @description Kirish: telefon + parol (javobda FAQAT bir marta).
+         *
+         *     `password` berilsa — aynan o‘sha; bo‘sh qoldirilsa tizim vaqtinchalik parol yaratadi (B-066).
          *
          *     🔒 Filial admini — o‘z filialiga; SUPER_ADMIN — `branchId` majburiy, filial RETAIL bo‘lishi shart.
          */
         post: operations["ManagersAdminController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/managers/{id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Menejerga yangi parol berish
+         * @description Ikki holatda ishlatiladi: xodim parolni unutgan yoki admin unga yangi parol bermoqchi.
+         *
+         *     `password` berilsa — AYNAN o‘sha parol o‘rnatiladi; bo‘sh qoldirilsa tizim tasodifiy parol yaratadi. Ikkala holatda ham javobda ochiq matnda qaytadi (bazada faqat hash).
+         *
+         *     ⚠ Xodim parolni keyin o‘zi almashtira olmaydi — unda majburiy almashtirish oqimi yo‘q (u faqat optom mijozda bor). Shuning uchun parolni admin xodimga shaxsan yetkazadi.
+         *
+         *     🔒 Filial admini faqat O‘Z filiali menejeriga parol bera oladi — begona filial menejeri uchun 404.
+         *
+         *     ⚠ Eski tokenlar darhol o‘chmaydi: xodim qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi.
+         */
+        post: operations["ManagersAdminController_resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2044,9 +2172,39 @@ export interface paths {
         put?: never;
         /**
          * Moderator qo‘shish
-         * @description `branchId` — CENTRAL filial (majburiy). Kirish: telefon + vaqtinchalik parol (javobda FAQAT bir marta).
+         * @description `branchId` — CENTRAL filial (majburiy). Kirish: telefon + parol (javobda FAQAT bir marta).
+         *
+         *     `password` berilsa — aynan o‘sha; bo‘sh qoldirilsa tizim vaqtinchalik parol yaratadi (B-066).
          */
         post: operations["ModeratorsAdminController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/moderators/{id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Moderatorga yangi parol berish
+         * @description Ikki holatda ishlatiladi: xodim parolni unutgan yoki admin unga yangi parol bermoqchi.
+         *
+         *     `password` berilsa — AYNAN o‘sha parol o‘rnatiladi; bo‘sh qoldirilsa tizim tasodifiy parol yaratadi. Ikkala holatda ham javobda ochiq matnda qaytadi (bazada faqat hash).
+         *
+         *     ⚠ Xodim parolni keyin o‘zi almashtira olmaydi — unda majburiy almashtirish oqimi yo‘q (u faqat optom mijozda bor). Shuning uchun parolni admin xodimga shaxsan yetkazadi.
+         *
+         *     🔒 Faqat SUPER_ADMIN (butun controller shunday).
+         *
+         *     ⚠ Eski tokenlar darhol o‘chmaydi: xodim qo‘lidagi access token muddati tugaguncha (15 daqiqa) ishlashda davom etadi.
+         */
+        post: operations["ModeratorsAdminController_resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2075,6 +2233,32 @@ export interface paths {
          * @description Boshqa markaziy omborga o‘tkazish — `branchId` (CENTRAL).
          */
         patch: operations["ModeratorsAdminController_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/dashboard/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bosh sahifa ko‘rsatkichlari
+         * @description BITTA so‘rovda: yangi / tezkor / to‘lanmagan buyurtmalar, bugungi va oylik buyurtma soni + summa, kam qolgan va tugagan mahsulotlar, faol va qarzdor mijozlar.
+         *
+         *     ⚠ Har bir son mavjud admin ro‘yxatining AYNAN o‘sha filtri bilan hisoblanadi — kartochkani bosgan xodim ro‘yxatda boshqa sonni ko‘rmaydi.
+         *
+         *     🔒 Filial: cheklangan rol uchun HAR DOIM o‘z filiali (so‘rovdagi `branchId` boshqa bo‘lsa 404). SUPER_ADMIN `branchId` bermasa — butun tizim.
+         *
+         *     ⚠ Zaxira raqamlari filialga bog‘lanmagan (B-008): markaziy ombor zaxirasi butun tizim uchun bitta, shuning uchun ular filial kesimida O‘ZGARMAYDI.
+         */
+        get: operations["StatsAdminController_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/dev/payments/{id}/simulate": {
@@ -2538,6 +2722,41 @@ export interface components {
             /**
              * @description Har doim `true`: mijoz shu parol bilan kirgach uni almashtirishi shart.
              * @example true
+             */
+            mustChangePassword: boolean;
+        };
+        CustomerProfileBranchDto: {
+            /** @example cmtyomomq0001ofm24t896smr */
+            id: string;
+            /** @example Vodiy Kafel — Farg'ona */
+            name: string;
+            /** @example Farg'ona */
+            city: string;
+        };
+        CustomerProfileResponseDto: {
+            /** @example cmu59j5oz004urjm25rvhvdpo */
+            id: string;
+            /**
+             * @description Admin bergan login (kichik harfda saqlanadi)
+             * @example fargona-optom
+             */
+            login: string;
+            /** @example Farg'ona Qurilish MChJ */
+            companyName: string;
+            /** @example Alisher Karimov */
+            contactName: string;
+            /** @example +998901234567 */
+            phone: string;
+            /**
+             * @description Soliq to‘lovchi raqami — shartnoma uchun (B-044)
+             * @example 123456789
+             */
+            inn?: string | null;
+            /** @description Biriktirilgan filial. ⚠ Mijoz AYNAN shu filialning narxini ko‘radi va buyurtmani ham unga beradi (CLAUDE.md qoida 5) — shuning uchun kabinet uni ko‘rsatishi kerak. */
+            branch: components["schemas"]["CustomerProfileBranchDto"];
+            /**
+             * @description Vaqtinchalik parol hali almashtirilmagan. ⚠ Bu maydon ATAYLAB shu yerda ham bor: kirish javobidan keyin frontend uni boshqa hech qayerdan bilolmasdi va sahifa yangilanganda yo‘qotardi.
+             * @example false
              */
             mustChangePassword: boolean;
         };
@@ -3205,6 +3424,125 @@ export interface components {
             description?: string | null;
             /** @description Suratlar va 360° materiallar — ko‘rsatish tartibida. */
             media: components["schemas"]["ProductMediaResponseDto"][];
+        };
+        CustomerCatalogItemDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Lyuks Keramogranit */
+            name: string;
+            /**
+             * @description Katalog manzili uchun — `/products/:slug`
+             * @example lyuks-keramogranit-60x60
+             */
+            slug: string;
+            factory: components["schemas"]["ProductFactoryRefDto"];
+            size: components["schemas"]["ProductSizeRefDto"];
+            /**
+             * @example POL
+             * @enum {string}
+             */
+            surface: "POL" | "DEVOR";
+            /** @example Bej */
+            color?: string | null;
+            /**
+             * @description 1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).
+             * @example 1.44
+             */
+            sqmPerPallet: string;
+            /**
+             * @description 1 paddon og‘irligi (kg), satr ko‘rinishida
+             * @example 1250.5
+             */
+            weightPerPallet: string;
+            /**
+             * @description Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.
+             * @example /uploads/products/lyuks-1.jpg
+             */
+            primaryImageUrl?: string | null;
+            /**
+             * @description Mijozga tegishli YAKUNIY narx (1 m² uchun, so‘m). Narx zanjiri bo‘yicha hisoblangan: mijoz+mahsulot > mijoz+zavod > mijoz umumiy > filialning bazaviy narxi.
+             *
+             *     ⚠ Satr ko‘rinishida (CLAUDE.md qoida 7) — `Number()` ga aylantirilmaydi.
+             *
+             *     🔒 Qaysi qoida ishlagani va bazaviy narx JAVOBDA YO‘Q.
+             * @example 85000.00
+             */
+            pricePerSqm: string;
+            /**
+             * @description Uch rangli zaxira holati (🟢 IN_STOCK / 🟡 LOW / 🔴 OUT_OF_STOCK). Chegara — mahsulotning o‘z `lowStockThreshold` i, u bo‘lmasa global sozlama (`stock.lowThresholdPallets`).
+             *
+             *     🔒 Ombordagi aniq son hech qachon berilmaydi (TZ 3.2).
+             * @example IN_STOCK
+             * @enum {string}
+             */
+            stockStatus: "IN_STOCK" | "LOW" | "OUT_OF_STOCK";
+        };
+        PaginatedCustomerCatalogItemDtoDto: {
+            items: components["schemas"]["CustomerCatalogItemDto"][];
+            /**
+             * @description Jami elementlar soni
+             * @example 128
+             */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+            /**
+             * @description Jami sahifalar soni
+             * @example 7
+             */
+            totalPages: number;
+        };
+        CustomerCatalogDetailDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Lyuks Keramogranit */
+            name: string;
+            /**
+             * @description Katalog manzili uchun — `/products/:slug`
+             * @example lyuks-keramogranit-60x60
+             */
+            slug: string;
+            factory: components["schemas"]["ProductFactoryRefDto"];
+            size: components["schemas"]["ProductSizeRefDto"];
+            /**
+             * @example POL
+             * @enum {string}
+             */
+            surface: "POL" | "DEVOR";
+            /** @example Bej */
+            color?: string | null;
+            /**
+             * @description 1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).
+             * @example 1.44
+             */
+            sqmPerPallet: string;
+            /**
+             * @description 1 paddon og‘irligi (kg), satr ko‘rinishida
+             * @example 1250.5
+             */
+            weightPerPallet: string;
+            /**
+             * @description Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.
+             * @example /uploads/products/lyuks-1.jpg
+             */
+            primaryImageUrl?: string | null;
+            /** @example Yuqori sifatli keramogranit, sirti silliq. */
+            description?: string | null;
+            /** @description Suratlar va 360° materiallar — ko‘rsatish tartibida. */
+            media: components["schemas"]["ProductMediaResponseDto"][];
+            /**
+             * @description Mijozga tegishli yakuniy narx (1 m² uchun, so‘m)
+             * @example 85000.00
+             */
+            pricePerSqm: string;
+            /**
+             * @description Uch rangli zaxira holati
+             * @example IN_STOCK
+             * @enum {string}
+             */
+            stockStatus: "IN_STOCK" | "LOW" | "OUT_OF_STOCK";
         };
         ProductStockSummaryDto: {
             /**
@@ -4023,6 +4361,22 @@ export interface components {
             /** @example true */
             isUrgent: boolean;
         };
+        AssignableStaffDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Farg‘ona menejeri */
+            fullName: string;
+            /**
+             * @description Xodim roli. Biriktirish uchun aynan shu uch rol qabul qilinadi (`PATCH /admin/orders/{id}/assign` bilan bitta manba).
+             * @enum {string}
+             */
+            role: "MANAGER" | "BRANCH_ADMIN" | "MODERATOR";
+            /**
+             * @description Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)
+             * @example vk_fargona
+             */
+            telegramUsername?: string | null;
+        };
         AssignOrderManagerDto: {
             /** @description Shu buyurtma filialining faol xodimi. `null` — biriktirishni olib tashlash. */
             managerId: string | null;
@@ -4530,7 +4884,7 @@ export interface components {
         StaffCreatedDto: {
             staff: components["schemas"]["StaffDto"];
             /**
-             * @description Vaqtinchalik parol — FAQAT SHU javobda. Xodimga shaxsan yetkazing.
+             * @description Parol — FAQAT SHU javobda. Admin `password` bergan bo‘lsa aynan o‘sha, aks holda tizim yaratgan vaqtinchalik parol. Xodimga shaxsan yetkazing.
              * @example Kp7mQx4rTn92
              */
             temporaryPassword: string;
@@ -4550,6 +4904,30 @@ export interface components {
             telegramUsername?: string | null;
             /** @description Filial. Filial admini uchun e’tiborsiz — har doim O‘Z filiali (boshqasi 404). SUPER_ADMIN uchun majburiy. */
             branchId?: string;
+            /**
+             * @description Parol (ixtiyoriy). Kamida 8 belgi. Berilmasa — tizim vaqtinchalik parol yaratadi va javobda qaytaradi.
+             * @example Parol123!
+             */
+            password?: string;
+        };
+        StaffPasswordResetDto: {
+            /**
+             * @description Xodimning logini — telefon raqami
+             * @example +998901234567
+             */
+            phone: string;
+            /**
+             * @description Yangi parol. Admin bergan bo‘lsa — aynan o‘sha, aks holda tizim yaratgani. FAQAT SHU javobda ko‘rinadi.
+             * @example Kp7mQx4rTn92
+             */
+            password: string;
+        };
+        ResetStaffPasswordDto: {
+            /**
+             * @description Parol (ixtiyoriy). Kamida 8 belgi. Berilmasa — tizim vaqtinchalik parol yaratadi va javobda qaytaradi.
+             * @example Parol123!
+             */
+            password?: string;
         };
         UpdateStaffDto: {
             fullName?: string;
@@ -4560,6 +4938,81 @@ export interface components {
             branchId?: string;
             /** @description `false` — kira olmaydi, yangi buyurtmalar biriktirilmaydi */
             isActive?: boolean;
+        };
+        DashboardOrderStatsDto: {
+            /**
+             * @description `status=NEW`
+             * @example 4
+             */
+            newCount: number;
+            /**
+             * @description `isUrgent=true`
+             * @example 1
+             */
+            urgentCount: number;
+            /**
+             * @description `paymentStatus=PENDING` — kutilayotgan to‘lovi bor
+             * @example 2
+             */
+            unpaidCount: number;
+            /**
+             * @description Bugun yaratilgan buyurtmalar (Toshkent kuni bo‘yicha)
+             * @example 3
+             */
+            todayCount: number;
+            /**
+             * @description Bugungi buyurtmalar summasi. ⚠ SATR (CLAUDE.md qoida 7) — `float` ga aylantirilsa aniqlik yo‘qoladi.
+             * @example 12450000.00
+             */
+            todayTotal: string;
+            /**
+             * @description Shu oyda yaratilgan buyurtmalar
+             * @example 37
+             */
+            monthCount: number;
+            /** @example 184300000.00 */
+            monthTotal: string;
+        };
+        DashboardStockStatsDto: {
+            /**
+             * @description Kam qolgan mahsulotlar soni 🟡
+             * @example 5
+             */
+            lowCount: number;
+            /**
+             * @description Tugagan mahsulotlar soni 🔴
+             * @example 2
+             */
+            outOfStockCount: number;
+            /**
+             * @description Hisobda ishlatilgan global «kam qoldi» chegarasi (`stock.lowThresholdPallets`). Mahsulotning o‘z chegarasi bo‘lsa, o‘sha ustun turadi.
+             * @example 20
+             */
+            globalLowThreshold: number;
+        };
+        DashboardCustomerStatsDto: {
+            /**
+             * @description `isActive=true`
+             * @example 12
+             */
+            activeCount: number;
+            /**
+             * @description `hasDebt=true` — balansi qarzda bo‘lgan mijozlar
+             * @example 3
+             */
+            inDebtCount: number;
+        };
+        DashboardStatsDto: {
+            orders: components["schemas"]["DashboardOrderStatsDto"];
+            stock: components["schemas"]["DashboardStockStatsDto"];
+            customers: components["schemas"]["DashboardCustomerStatsDto"];
+            /** @description Raqamlar qaysi filial kesimida. `null` — butun tizim (faqat SUPER_ADMIN). */
+            branchId?: string | null;
+            /**
+             * Format: date-time
+             * @description Hisob vaqti (UTC). «Bugun» va «shu oy» Toshkent vaqti bo‘yicha hisoblanadi — xodim ekranda ko‘rgan kun bilan bir xil bo‘lsin.
+             */
+            generatedAt: string;
         };
         SimulatePaymentResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
@@ -5281,6 +5734,50 @@ export interface operations {
             };
             /** @description Mijoz topilmadi yoki boshqa filialga tegishli (ikki holat ataylab farqlanmaydi) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    MeProfileController_getMine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Profil */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CustomerProfileResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Token yo‘q, muddati o‘tgan yoki hisob faol emas */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Optom mijoz tokeni emas (xodim tokeni bilan kelindi) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7061,6 +7558,123 @@ export interface operations {
             };
         };
     };
+    MeCatalogController_findAll: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                /**
+                 * @description Saralash maydoni. Ro‘yxatdagidan boshqasi qabul qilinmaydi.
+                 *
+                 *     Narx bo‘yicha saralash YO‘Q — ochiq katalogda narx ko‘rinmaydi.
+                 */
+                sortBy?: "name" | "createdAt" | "viewCount";
+                sortOrder?: "asc" | "desc";
+                /** @description Zavod bo‘yicha filtr */
+                factoryId?: string;
+                /** @description O‘lcham bo‘yicha filtr */
+                sizeId?: string;
+                /** @description Sirt turi: pol yoki devor */
+                surface?: "POL" | "DEVOR";
+                /** @description Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mahsulotlar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PaginatedCustomerCatalogItemDtoDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Token yo‘q, muddati o‘tgan, hisob faol emas yoki filial o‘zgargan */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Optom mijoz tokeni emas, vaqtinchalik parol almashtirilmagan yoki filial buyurtma qabul qilmaydi */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    MeCatalogController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mahsulot */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CustomerCatalogDetailDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Token yo‘q, muddati o‘tgan, hisob faol emas yoki filial o‘zgargan */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Optom mijoz tokeni emas, vaqtinchalik parol almashtirilmagan yoki filial buyurtma qabul qilmaydi */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Mahsulot topilmadi yoki filialingizda sotilmaydi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
     ProductsAdminController_findAll: {
         parameters: {
             query?: {
@@ -7617,6 +8231,12 @@ export interface operations {
                 sortOrder?: "asc" | "desc";
                 /** @description Mahsulot bo‘yicha filtr */
                 productId?: string;
+                /**
+                 * @description Zaxira holati bo‘yicha filtr (B-063). Chegara `effectiveThreshold` bilan AYNAN bir xil hisoblanadi: mahsulotning o‘z `lowStockThreshold` i, u bo‘lmasa global sozlama.
+                 *
+                 *     ⚠ Bu HISOBLANADIGAN qiymat — bazada `stock_status` ustuni yo‘q. Shuning uchun bu maydon bo‘yicha SARALASH yo‘q, faqat filtr.
+                 */
+                stockStatus?: "IN_STOCK" | "LOW" | "OUT_OF_STOCK";
             };
             header?: never;
             path?: never;
@@ -8781,6 +9401,53 @@ export interface operations {
                 };
             };
             /** @description Topilmadi yoki boshqa filialga tegishli */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    OrdersAdminController_assignableStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Buyurtma ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Nomzodlar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AssignableStaffDto"][];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Buyurtma topilmadi yoki boshqa filialga tegishli */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -10611,6 +11278,66 @@ export interface operations {
             };
         };
     };
+    ManagersAdminController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Menejer ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetStaffPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Yangi parol */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StaffPasswordResetDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Parol juda qisqa (kamida 8 belgi) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Faqat SUPER_ADMIN va filial admini */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Menejer topilmadi yoki boshqa filialniki */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
     ManagersAdminController_update: {
         parameters: {
             query?: never;
@@ -10778,6 +11505,66 @@ export interface operations {
             };
         };
     };
+    ModeratorsAdminController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Moderator ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetStaffPasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Yangi parol */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StaffPasswordResetDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Parol juda qisqa (kamida 8 belgi) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Faqat SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Topilmadi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
     ModeratorsAdminController_remove: {
         parameters: {
             query?: never;
@@ -10885,6 +11672,53 @@ export interface operations {
             };
             /** @description Telefon band */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    StatsAdminController_dashboard: {
+        parameters: {
+            query?: {
+                /** @description Faqat SUPER_ADMIN uchun kesim. Boshqa rolda 404. */
+                branchId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ko‘rsatkichlar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DashboardStatsDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Token yo‘q, muddati o‘tgan yoki hisob faol emas */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Xodim tokeni emas */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -33,6 +33,7 @@ import {
   AdminOrderDetailDto,
   AdminOrderListItemDto,
   AdminOrderQueryDto,
+  AssignableStaffDto,
   AssignOrderManagerDto,
   ChangeOrderStatusDto,
   CreateManualOrderDto,
@@ -167,6 +168,37 @@ export class OrdersAdminController {
     @Body() dto: SetOrderUrgentDto,
   ): Promise<AdminOrderDetailDto> {
     return this.ordersAdmin.setUrgent(actor, id, dto.isUrgent);
+  }
+
+  @Get(':id/assignable-staff')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.BRANCH_ADMIN, UserRole.MODERATOR)
+  @ApiOperation({
+    summary: 'Biriktirish uchun nomzod xodimlar',
+    description:
+      'Buyurtma FILIALINING faol xodimlari — aynan biriktirish qabul ' +
+      'qiladigan rollar (MANAGER, BRANCH_ADMIN, MODERATOR).\n\n' +
+      '⚠ Rollar ro‘yxati `PATCH /admin/orders/{id}/assign` bilan BITTA ' +
+      'manbadan (`ASSIGNABLE_ROLES`): ro‘yxatda ko‘rinadigan har bir ' +
+      'xodimga biriktirish ishlaydi.\n\n' +
+      '🔒 Filial buyurtmadan olinadi, so‘rovdan EMAS — begona filial ' +
+      'buyurtmasi so‘ralsa 404. Filialsiz buyurtma uchun bo‘sh ro‘yxat.\n\n' +
+      '⚠ `@Roles` aynan `assign` bilan bir xil: ro‘yxatni faqat ' +
+      'biriktira oladigan xodim ko‘radi.',
+  })
+  @ApiParam({ name: 'id', description: 'Buyurtma ID' })
+  @ApiDataResponse(AssignableStaffDto, {
+    isArray: true,
+    description: 'Nomzodlar',
+  })
+  @ApiNotFoundResponse({
+    description: 'Buyurtma topilmadi yoki boshqa filialga tegishli',
+    type: ApiErrorDto,
+  })
+  assignableStaff(
+    @CurrentActor() actor: Actor,
+    @Param('id') id: string,
+  ): Promise<AssignableStaffDto[]> {
+    return this.ordersAdmin.assignableStaff(actor, id);
   }
 
   @Patch(':id/assign')

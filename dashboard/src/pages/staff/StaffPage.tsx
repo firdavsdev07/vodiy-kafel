@@ -1,4 +1,4 @@
-import { Pencil, Plus, UserCheck, UserX } from 'lucide-react';
+import { KeyRound, Pencil, Plus, UserCheck, UserX } from 'lucide-react';
 import { createContext, use, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useCan, useProfile } from '@/features/auth/hooks';
@@ -9,9 +9,12 @@ import {
   useDeactivateModerator,
   useManagerList,
   useModeratorList,
+  useResetManagerPassword,
+  useResetModeratorPassword,
   useUpdateManager,
   useUpdateModerator,
 } from '@/features/staff/api';
+import { useStaffPasswordFlow, type ResetPasswordMutation } from '@/features/staff/StaffPasswordFlow';
 import { telegramHref, type Staff, type StaffFilters } from '@/features/staff/staff-form';
 import { StaffFormModal, type CreateStaffMutation, type UpdateStaffMutation } from '@/features/staff/StaffFormModal';
 import { errorMessage } from '@/shared/lib/error-message';
@@ -82,7 +85,11 @@ const activeOptions = [
   { value: 'false', label: 'Faolsiz' },
 ] as const;
 
-type RowActionsApi = { edit: (s: Staff) => void; toggle: (s: Staff) => void };
+type RowActionsApi = {
+  edit: (s: Staff) => void;
+  toggle: (s: Staff) => void;
+  resetPassword: (s: Staff) => void;
+};
 const RowActionsContext = createContext<RowActionsApi | null>(null);
 
 const col = tableColumns<Staff>();
@@ -125,7 +132,7 @@ const tailColumns: DataTableColumn<Staff>[] = [
   }),
   col.display({
     id: 'actions',
-    size: 90,
+    size: 120,
     header: () => <span className="sr-only">Amallar</span>,
     meta: { align: 'right' },
     cell: ({ row }) => <RowActions staff={row.original} />,
@@ -146,6 +153,7 @@ function ManagersSection() {
   const branches = useBranches(isSuperAdmin);
   const create = useCreateManager();
   const update = useUpdateManager();
+  const resetPassword = useResetManagerPassword();
   // Menejer faqat do'kon (RETAIL) filialida — backend CENTRAL ni rad etadi
   const retail: SelectOption[] = (branches.data ?? []).filter((b) => b.type === 'RETAIL').map((b) => ({ value: b.id, label: b.name, disabled: !b.isActive }));
 
@@ -165,6 +173,7 @@ function ManagersSection() {
         create: create as CreateStaffMutation,
         update: update as UpdateStaffMutation,
       }}
+      resetPassword={resetPassword as ResetPasswordMutation}
       deactivateText="Menejer tizimga kira olmaydi va unga yangi buyurtma biriktirilmaydi. Biriktirilgan mijozlar va tarix saqlanadi."
     />
   );
@@ -182,6 +191,7 @@ function ModeratorsSection() {
   const create = useCreateModerator();
   const update = useUpdateModerator();
   const deactivate = useDeactivateModerator();
+  const resetPassword = useResetModeratorPassword();
   const central: SelectOption[] = (branches.data ?? []).filter((b) => b.type === 'CENTRAL').map((b) => ({ value: b.id, label: b.name, disabled: !b.isActive }));
 
   return (
@@ -200,6 +210,7 @@ function ModeratorsSection() {
         create: create as CreateStaffMutation,
         update: update as UpdateStaffMutation,
       }}
+      resetPassword={resetPassword as ResetPasswordMutation}
       deactivate={deactivate}
       deactivateText="Moderator tizimga kira olmaydi. Hisob o‘chirilmaydi — u o‘zgartirgan holatlar va zaxira tarixi saqlanadi."
     />
@@ -215,6 +226,7 @@ function StaffSection({
   list,
   branchFilter,
   form,
+  resetPassword,
   deactivate,
   deactivateText,
 }: {
@@ -232,6 +244,8 @@ function StaffSection({
     create: CreateStaffMutation;
     update: UpdateStaffMutation;
   };
+  /** Yangi parol berish (api B-066) — menejer va moderator uchun boshqa endpoint. */
+  resetPassword: ResetPasswordMutation;
   /** Faolsizlantirish uchun alohida endpoint (moderator: DELETE, soft). Yo'q bo'lsa — PATCH `isActive: false`. */
   deactivate?: { mutate: (id: string, options: { onSuccess: () => void }) => void; isPending: boolean; error: unknown; reset: () => void };
   deactivateText: string;
@@ -240,10 +254,11 @@ function StaffSection({
   const [toggling, setToggling] = useState<Staff | null>(null);
   // 🔒 Vaqtinchalik parol FAQAT shu holatda — oyna yopilganda o'chadi
   const [credentials, setCredentials] = useState<{ login: string; password: string } | null>(null);
+  const passwordFlow = useStaffPasswordFlow(resetPassword);
   const { update } = form;
 
   return (
-    <RowActionsContext value={{ edit: setEditing, toggle: setToggling }}>
+    <RowActionsContext value={{ edit: setEditing, toggle: setToggling, resetPassword: passwordFlow.request }}>
       <div className="flex flex-col gap-4">
         <div className="overflow-hidden rounded-lg border border-line bg-surface">
           <FilterBar
@@ -295,7 +310,14 @@ function StaffSection({
           onClose={() => setEditing(null)}
           onCreated={setCredentials}
         />
-        <TemporaryPasswordDialog credentials={credentials} title="Xodim qo‘shildi — vaqtinchalik parol" onClose={() => setCredentials(null)} />
+        <TemporaryPasswordDialog
+          credentials={credentials}
+          title="Xodim qo‘shildi — kirish paroli"
+        note="Uni xodimga shaxsan yetkazing. ⚠ Xodim keyin parolni o‘zi almashtira olmaydi — kerak bo‘lsa yana shu yerdan yangisini berasiz."
+        confirmLabel="Parolni saqladim / xodimga yetkazdim"
+          onClose={() => setCredentials(null)}
+        />
+        {passwordFlow.element}
 
         {toggling && (
           <ConfirmDialog
@@ -333,6 +355,12 @@ function RowActions({ staff }: { staff: Staff }) {
     <div className="flex justify-end gap-1">
       <IconButton label={`${staff.fullName} — tahrirlash`} onClick={() => actions.edit(staff)}>
         <Pencil size={15} aria-hidden />
+      </IconButton>
+      <IconButton
+        label={`${staff.fullName} — yangi parol berish`}
+        onClick={() => actions.resetPassword(staff)}
+      >
+        <KeyRound size={15} aria-hidden />
       </IconButton>
       <IconButton
         label={staff.isActive ? `${staff.fullName} — faolsizlantirish` : `${staff.fullName} — faollashtirish`}

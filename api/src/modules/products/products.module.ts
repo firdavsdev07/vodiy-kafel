@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../../auth/auth.module';
+import { CalculatorModule } from '../calculator/calculator.module';
+import { PricingModule } from '../pricing/pricing.module';
+import { SettingsModule } from '../settings/settings.module';
 import { BranchProductsAdminController } from './branch-products.admin.controller';
+import { CustomerCatalogService } from './customer-catalog.service';
+import { MeCatalogController } from './me-catalog.controller';
 import { BranchProductsService } from './branch-products.service';
 import { ProductMediaAdminController } from './product-media.admin.controller';
 import { ProductMediaService } from './product-media.service';
@@ -20,9 +25,14 @@ import { SimilarProductsService } from './similar-products.service';
  * `AuthModule` admin controller'lar uchun: guard'lar va `BranchScopeService`.
  */
 @Module({
-  imports: [AuthModule],
+  // `CalculatorModule` — kabinet katalogi (B-064) mijoz kontekstini
+  // `QuoteService.requireCustomer` orqali oladi: token filiali bazadagi
+  // bilan solishtiriladi. Kalkulyator va buyurtma ham SHU tekshiruvdan
+  // o'tadi — ikkinchi nusxa yozilsa, ular vaqt o'tib farq qila boshlardi.
+  imports: [AuthModule, CalculatorModule, PricingModule, SettingsModule],
   controllers: [
     ProductsController,
+    MeCatalogController,
     ProductsAdminController,
     BranchProductsAdminController,
     ProductStocksAdminController,
@@ -30,6 +40,7 @@ import { SimilarProductsService } from './similar-products.service';
   ],
   providers: [
     ProductsService,
+    CustomerCatalogService,
     ProductsAdminService,
     BranchProductsService,
     ProductStocksService,
