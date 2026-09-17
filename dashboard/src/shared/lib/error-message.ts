@@ -1,4 +1,5 @@
 import { ApiError } from '@/shared/api/api-error';
+import { commonText } from './labels';
 
 /**
  * Xato → odam tushunadigan matn (D-008). `ErrorState` va `toast.error`
@@ -6,7 +7,7 @@ import { ApiError } from '@/shared/api/api-error';
  * aynan o'sha ko'rsatiladi; 5xx ichki tafsilot bermaydi.
  */
 export function errorMessage(error: unknown): string {
-  if (!(error instanceof ApiError)) return 'Kutilmagan xato. Sahifani yangilab ko‘ring.';
+  if (!(error instanceof ApiError)) return commonText.unexpectedError;
   if (error.isNetworkError) return error.message;
   switch (error.statusCode) {
     case 401:

@@ -1,3 +1,4 @@
+import { commonText } from '@/shared/lib/labels';
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from 'react';
 import { useController, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 import { formatMoneyInput, parseMoneyInput } from '@/shared/lib/format';
@@ -103,7 +104,7 @@ export function SelectField<T extends FieldValues, TOut extends FieldValues = T>
   disabled,
   className,
   options,
-  placeholder = 'Tanlang…',
+  placeholder = commonText.choose,
   onValueChange,
 }: BaseProps<T, TOut> & {
   options: readonly SelectOption[];

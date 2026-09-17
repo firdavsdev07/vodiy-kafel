@@ -929,7 +929,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-019 · Mijozga individual narx qoidalari                     🔒 ───────┐
+┌─ [x] D-019 · Mijozga individual narx qoidalari                     🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/customers/{id}/pricing-rules`,                │
 │               `DELETE /admin/customers/{id}/pricing-rules/{ruleId}`          │
@@ -947,6 +947,27 @@
 │                                                                              │
 │  🔒 Boshqa mijozning narxi hech qayerda ko'rinmaydi.                         │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `CustomerPricingTab` — amaldagi qoidalar ro'yxati (domen, doira,        │
+│      nishon nomi, qiymat, kim/qachon qo'ygan), o'chirish — tasdiq bilan      │
+│    • `AddRuleModal` — domen → doira (backend `SCOPES_BY_DOMAIN` nusxasi),    │
+│      PRODUCT → mahsulot qidiruvi, FACTORY → zavod, ROUTE → mijoz             │
+│      filialining tariflari. Qoida TAHRIRLANMAYDI: o'chirib, yangisi          │
+│    • Zanjir tartibi UI'da: mijoz+mahsulot › mijoz+zavod › umumiy ›           │
+│      filial bazaviy narxi                                                    │
+│    • BRANCH_ADMIN: tur faqat PERCENT, faqat manfiy (chegirma), chegara       │
+│      `GET /admin/settings` dan; 0 bo'lsa "Qoida qo'shish" o'chiq. Sozlama    │
+│      o'qilmasa chegara 0 deb olinadi (cheksiz EMAS)                          │
+│    • Qoida o'zgarsa `pricingRules` + `branchProducts` invalidatsiya          │
+│    • pricing-rules.test.ts — build/lint/test toza (jami 202)                 │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • BRANCH_ADMIN −5% qo'ydi → 201; −50% → 400 "Chegirma 20% dan             │
+│      oshmasligi kerak" (forma xuddi shu matnni oldindan ko'rsatadi)          │
+│    • 🔒 BRANCH_ADMIN ro'yxatida faqat O'ZI qo'ygan qoida; SUPER_ADMIN        │
+│      qoidalari (FIXED 78 000, FACTORY) unga ko'rinmaydi                      │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi — keyingi ko'rikda tekshirilsin.        │
 │  Bog'liq: D-022                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1082,7 +1103,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-023 · Hisob, balans va tranzaksiyalar ────────────────────────────────┐
+┌─ [x] D-023 · Hisob, balans va tranzaksiyalar ────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET /admin/customers/{id}/account`,                           │
 │               `GET,POST /admin/customers/{id}/transactions`                  │
@@ -1099,6 +1120,32 @@
 │                                                                              │
 │  🔒 Yozish — SUPER_ADMIN, BRANCH_ADMIN, MODERATOR                            │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Hisob" tab'i: uchta karta — joriy balans (qarz/avans rangi va          │
+│      so'zi bilan), jami qarzga yozilgan, jami to'langan                      │
+│    • Tranzaksiyalar jadvali: sana, tur (badge), ISHORALI summa, izoh,        │
+│      buyurtma havolasi, kiritgan xodim (avtomatik yozuvda "Tizim").          │
+│      Tur filtri va sahifalash URL'da (G10)                                   │
+│    • `AddTransactionModal` — ikki bosqich: forma → tasdiq (tur, summa,       │
+│      "qarz oshadi/kamayadi", sabab). Izoh majburiy (3…500)                   │
+│    • Tuzatishda xodim ishorani QO'LDA yozmaydi — "qarzni oshirish /          │
+│      kamaytirish" tanlaydi; ishorani `toCreateTransactionBody` qo'yadi.      │
+│      DEBT/PAYMENT doim musbat yuboriladi (backend ishora qo'yadi)            │
+│    • Tahrirlash/o'chirish tugmasi va hook'i YO'Q (§9)                        │
+│    • "Yozuv qo'shish" faqat `accounts.write` ga; so'ng `customers.all`       │
+│      invalidatsiya — sarlavhadagi balans ham yangilanadi                     │
+│    • `transactionTypeLabel` + `transactionTypeTone` — lug'atda (G7),         │
+│      `StatusBadge kind="transaction"`                                        │
+│    • transactions.test.ts (7 test) — build/lint/test toza (jami 209)         │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • BRANCH_ADMIN PAYMENT 100 000 → balans 3 369 600 → 3 269 600             │
+│    • MANAGER yozuv qo'shishi → 403; o'qishi va tur filtri ishlaydi           │
+│    • 🔒 BRANCH_ADMIN boshqa filial mijozi hisobini so'rasa → 404             │
+│    • Sinov yozuvlari teskari ADJUSTMENT bilan qaytarildi — balans yana       │
+│      3 369 600 (yozuvlar ledger'da qoladi, bu to'g'ri xulq)                  │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi — keyingi ko'rikda tekshirilsin.        │
 │  Bog'liq: D-022                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1111,7 +1158,7 @@
 ║          o'tkazadi — tezlik va kam bosish muhim.                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-024 · Buyurtmalar ro'yxati va filtrlar ───────────────────────────────┐
+┌─ [x] D-024 · Buyurtmalar ro'yxati va filtrlar ───────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /admin/orders`                                               │
 │                                                                              │
@@ -1125,11 +1172,41 @@
 │    • Tezkor buyurtmalar vizual ajratiladi                                    │
 │    • Filtr URL'da — menejer havolani hamkasbiga yubora oladi                 │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Jadval: raqam (+ "Tezkor" belgisi), xaridor (mijoz / hisobsiz xaridor   │
+│      / filial ta'minoti), filial (faqat SUPER_ADMIN), summa + paddon,        │
+│      holat, to'lov holati, menejer, sana + manba                             │
+│    • Filtrlar: status, paymentStatus, isUrgent, source, branchId (faqat      │
+│      SUPER_ADMIN, G5), managerId (`managers.manage` borga), sana oralig'i,   │
+│      qidiruv. Hammasi URL'da; noma'lum enum qiymati so'rovga tushmaydi       │
+│    • Tez filtrlar: Yangi | Tezkor | To'lanmagan (paymentStatus=PENDING) |    │
+│      Menga biriktirilgan (faqat MANAGER rolida — boshqa rolga buyurtma       │
+│      biriktirilmaydi, tugma doim bo'sh natija berardi)                       │
+│    • Sana — Toshkent kuni: `2026-09-17` → `…T00:00:00+05:00`; "gacha"        │
+│      shu kunni ham oladi (backend `dateTo` ni kiritmaydi → ertasi kun).      │
+│      Teskari oraliq — ogohlantirish, so'rov 400 ga ketmaydi                  │
+│    • Tezkor qator vizual ajratiladi (fon + chap chiziq + "Tezkor" so'zi)     │
+│    • Ro'yxat har 60 s fonda yangilanadi (❓ 4 vaqtinchalik qarori)           │
+│    • `DataTable` ga `rowClassName` qo'shildi; lug'atga `orderSourceLabel`,   │
+│      `orderingTypeLabel` (G7)                                                │
+│    • 🐞 D-022 dagi "Barcha buyurtmalar →" havolasi `search=<login>` edi —     │
+│      backend login'ni QIDIRMAYDI, natija doim 0. Kompaniya nomiga o'zgardi   │
+│    • features/orders/list.test.ts (8 test) — build/lint/test toza (216)      │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali, dashboard yuboradigan so'rov):    │
+│    • status / paymentStatus / isUrgent / source / search / sana oralig'i     │
+│      — mos kelganda 1, kelmaganda 0 (seed'da 1 ta buyurtma)                  │
+│    • search=fargona-optom → 0, search=kompaniya nomi → 1 (🐞 tasdiqlandi)     │
+│    • MANAGER managerId=o'zi → 1; MODERATOR (markaz) → 0 (boshqa filial)      │
+│    • 🔒 BRANCH_ADMIN branchId=Andijon → 404                                  │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi. Qator bosilganda /orders/{id}          │
+│    ochiladi — u sahifa D-025 da.                                             │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-025 · Buyurtma kartasi ───────────────────────────────────────────────┐
+┌─ [x] D-025 · Buyurtma kartasi ───────────────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /admin/orders/{id}`                                          │
 │                                                                              │
@@ -1144,11 +1221,37 @@
 │    hozirgi narxi bilan farq qilishi MUMKIN va bu — xato emas. UI eski        │
 │    buyurtmani "yangilab" ko'rsatmaydi.                                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `/orders/:id` marshruti (`orders.manage`), ro'yxat qatoridan va         │
+│      mijoz kartasidagi buyurtmalardan ochiladi                               │
+│    • Sarlavha: raqam, holat, "Tezkor", sana, manba, filial, jami summa       │
+│    • Xaridor: hisobi bor mijoz (kartasiga havola) | hisobsiz xaridor         │
+│      (guestName/guestPhone) | filial ta'minoti (buyer = null, B-058)         │
+│    • Mahsulotlar: nom (mahsulot kartasiga), paddon, m², kg, SNAPSHOT         │
+│      narx, summa + "Jami" qatori. Ostida izoh: narx buyurtma paytidagi       │
+│      nusxa, keyin o'zgarsa ham bu buyurtma o'zgarmaydi (§8)                  │
+│    • Yetkazib berish: viloyat, transport × mashina soni, aniq nuqta          │
+│      (bo'lsa); `delivery = null` → "Olib ketish". Mahsulotlar + yo'l kira    │
+│      = jami — hammasi API qiymatlari, frontendda qo'shilmaydi (G1)           │
+│    • To'lov: usul (`paymentMethodLabel`, provayder nomi YO'Q), summa,        │
+│      holat, to'langan vaqt                                                   │
+│    • Holat tarixi — vaqt chizig'i: holat, vaqt, kim o'zgartirgan, izoh       │
+│    • features/orders/detail.test.ts (3 test) — build/lint/test toza (219)    │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • Seed buyurtmasi: 30 paddon, 43,2 m², 975 kg, 78 000 so'm/m²,            │
+│      mahsulot 3 369 600 + yo'l kira 8 000 000 = 11 369 600; Fura × 2;        │
+│      to'lov BANK_TRANSFER 8 000 000 PAID; tarix NEW → SEARCHING_TRANSPORT    │
+│    • BRANCH_ADMIN (o'z filiali) → 200                                        │
+│    • 🔒 MODERATOR (boshqa filial) → 404 "Buyurtma topilmadi"                 │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi. Amallar (holat, biriktirish,           │
+│    to'lov tasdig'i) — D-026, D-027, D-029.                                   │
 │  Bog'liq: D-024                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-026 · Buyurtma holatini o'zgartirish ─────────────────────────────────┐
+┌─ [x] D-026 · Buyurtma holatini o'zgartirish ─────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `PATCH /admin/orders/{id}/status`                                 │
 │                                                                              │
@@ -1164,11 +1267,38 @@
 │      DELIVERING → DELIVERED                                                  │
 │    • Olib ketish: NEW → LOADING → DELIVERED                                  │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Buyurtma kartasida "Holat" paneli — tugmalar FAQAT                      │
+│      `allowedNextStatuses` dan (G8); o'tish matritsasi frontendda YO'Q.      │
+│      Bo'sh ro'yxat → tugma yo'q, "Yakuniy holat" yozuvi                      │
+│    • Tugma matni — amal ("Yuklashni boshlash"), holat nomi emas:             │
+│      `orderStatusActionLabel` lug'atda (G7)                                  │
+│    • Har o'tish — tasdiq oynasi; izoh ixtiyoriy, "⚠ mijoz ko'radi".          │
+│      CANCELLED — qizil tugma, alohida matn (to'lov bekor, qarz qaytadi,      │
+│      orqaga yo'q) va SABAB MAJBURIY (3…500)                                  │
+│    • Optimistik EMAS: javob kelguncha tugma "pending", oyna yopilmaydi.      │
+│      Muvaffaqiyatda `orders.all` + `customers.all` (bekor qilish balansni    │
+│      o'zgartiradi) invalidatsiya                                             │
+│    • 400/409 (boshqa xodim ulgurib o'zgartirgan) — xato matni oynada,        │
+│      karta qayta yuklanadi va tugmalar yangi holatdan quriladi               │
+│    • features/orders/status.test.ts (3 test) — build/lint/test toza (222)    │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • Lokal bazada HISOBSIZ xaridor nomiga 2 ta sinov buyurtmasi yaratildi    │
+│      (mijoz balansiga ta'sir yo'q): VK-2026-000002, VK-2026-000003           │
+│    • Olib ketish: NEW da next=[LOADING, CANCELLED]; SEARCHING_TRANSPORT      │
+│      → 400; MANAGER NEW→LOADING → 200; takror LOADING → 400;                 │
+│      BRANCH_ADMIN LOADING→DELIVERED izoh bilan → next=[] (yakuniy);          │
+│      DELIVERED→CANCELLED → 400 "Bu yakuniy holat"                            │
+│    • Bekor qilish sabab bilan → CANCELLED, to'lov ham CANCELLED              │
+│    • 🔒 MODERATOR boshqa filial buyurtmasini o'zgartirsa → 404               │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-025                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-027 · Menejerga biriktirish va tezkor belgisi ────────────────────────┐
+┌─ [x] D-027 · Menejerga biriktirish va tezkor belgisi ────────────────────────┐
 │                                                                              │
 │  Endpointlar: `PATCH /admin/orders/{id}/assign`,                             │
 │               `PATCH /admin/orders/{id}/urgent`                              │
@@ -1180,11 +1310,37 @@
 │                                                                              │
 │  🔒 Biriktirish — SUPER_ADMIN, BRANCH_ADMIN, MODERATOR                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `UrgentToggle` — barcha xodim; tasdiqsiz (qaytariladigan amal).         │
+│      Kartada matnli tugma, ro'yxatda ⚡ ikonka (aria-pressed)                 │
+│    • `AssignManagerModal` — nomzodlar buyurtma FILIALIDAN                    │
+│      (`/admin/managers?branchId=`), "Olib tashlash" (`managerId: null`),     │
+│      backend 400 matni oynada ko'rsatiladi                                   │
+│    • Ikkalasi ham ro'yxat qatoridan (amallar ustuni) va kartadan;            │
+│      biriktirish tugmasi faqat `orders.assign` ga (SA, BA, MODERATOR)        │
+│    • Hozirgi xodim ro'yxatda bo'lmasa (faolsiz) — "(hozirgi)" bo'lib         │
+│      qoladi, select "Tanlang" ga tushib qolmaydi                             │
+│    • features/orders/assign.test.ts (3 test) — build/lint/test toza (225)    │
+│                                                                              │
+│    🆕 api/task.txt B-062: MODERATOR assign qila oladi, lekin nomzodlar        │
+│      ro'yxati (`GET /admin/managers`) unga YOPIQ; BRANCH_ADMIN ham           │
+│      biriktiriladigan rol, lekin hech bir ro'yxatda chiqmaydi.               │
+│      Vaqtinchalik: moderator faqat O'ZIGA biriktiradi. Bu task B-062 ni      │
+│      KUTMAYDI — endpoint chiqqach `assign.ts` bitta manbaga o'tadi.          │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali, VK-2026-000002 da):               │
+│    • MANAGER urgent true → ro'yxatda isUrgent=true filtrida chiqdi →         │
+│      false; MANAGER assign → 403                                             │
+│    • BRANCH_ADMIN: null → Farg'ona menejeri → 200; boshqa filial             │
+│      menejeri → 400 (SUPER_ADMIN uchun ham 400)                              │
+│    • 🔒 MODERATOR Farg'ona buyurtmasiga urgent/assign → 404                  │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-026                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-028 · Qo'lda buyurtma kiritish (telefon / Telegram) ──────────────────┐
+┌─ [x] D-028 · Qo'lda buyurtma kiritish (telefon / Telegram) ──────────────────┐
 │                                                                              │
 │  Endpoint: `POST /admin/orders`                                              │
 │                                                                              │
@@ -1205,11 +1361,38 @@
 │                                                                              │
 │  🔒 Narx baribir BACKENDDA hisoblanadi — forma hech qanday summa yubormaydi  │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Buyurtmalar ro'yxatida "Yangi buyurtma" → `/orders/new`                 │
+│      (`orders.manage` — barcha xodim)                                        │
+│    • Xaridor: "Optom mijoz" — faol mijozlarni qidirib tanlash (login,        │
+│      filial, balans ko'rinadi) | "Hisobsiz xaridor" — ism + telefon          │
+│      (+998 ga keltiriladi); SUPER_ADMIN uchun filial tanlovi (G5)            │
+│    • Mahsulotlar: qidiruv → qatorlar (paddon 1…100 000, bir mahsulot         │
+│      bir marta, 50 tagacha) — D-032 bilan bir xil qoida (`zPalletCount`)     │
+│    • Qabul qilish: olib ketish | yetkazib berish (viloyat + transport);      │
+│      manba: Telefon | Telegram | Admin panel (WEBSITE qo'lda YO'Q);          │
+│      to'lov usuli; "Tezkor"; izoh; saqlanmagan o'zgarish ogohlantirishi      │
+│    • ❗ Summa oldindan ko'rsatilmaydi (❓ 2) — vaqtinchalik yechim: yaratilgach│
+│      xabarda "VK-… yaratildi — jami N so'm" va buyurtma kartasi ochiladi     │
+│      (xato bo'lsa — kartadan bekor qilinadi, D-026)                          │
+│    • 🔒 Forma summa yubormaydi; mijozda filial yuborilmaydi; faqat bitta     │
+│      xaridor turi ketadi (backend: ikkalasi → 400)                           │
+│    • manual.test.ts (6 test) — build/lint/test toza (259)                    │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SA hisobsiz xaridor filialsiz → 400 "branchId ko'rsatilishi shart"      │
+│    • MANAGER 99 999 paddon → 409; MANAGER hisobsiz, Telegram, tezkor →       │
+│      VK-2026-000006, avtomatik o'ziga biriktirildi, naqd PENDING             │
+│    • BRANCH_ADMIN mijoz tanlovi qidiruvi → "Farg'ona Qurilish MChJ";         │
+│      yetkazib berish + o'tkazma → VK-2026-000007, 4 366 624 so'm; mijoz      │
+│      balansi 3 369 600 → 7 736 224 → bekor qilindi → 3 369 600 qaytdi        │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-024, D-037                                                       │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-029 · To'lovni tasdiqlash ────────────────────────────────────────────┐
+┌─ [x] D-029 · To'lovni tasdiqlash ────────────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `PATCH /admin/payments/{id}/confirm`                              │
 │                                                                              │
@@ -1224,6 +1407,27 @@
 │  ⚠ Karta orqali avtomatik to'lov hozircha MOCK (B-050 bloklangan) —          │
 │    UI'da "Payme"/"Click" nomi YOZILMAYDI, faqat "Karta orqali".              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Buyurtma kartasining "To'lov" bo'limida kutilayotgan NAQD yoki          │
+│      O'TKAZMA to'lovi yonida "Tasdiqlash" (faqat `payments.confirm`)         │
+│    • Karta to'lovida tugma YO'Q — "avtomatik tasdiqlanadi" izohi.            │
+│      Provayder nomi hech qayerda yozilmaydi, faqat "Karta orqali"            │
+│    • Tasdiq dialogi: buyurtma raqami, xaridor, usul, SUMMA (katta            │
+│      shriftda), ixtiyoriy izoh (kvitansiya raqami). Fokus "Bekor qilish"da   │
+│    • Tasdiqlangach `orders.all` + `customers.all` + `payments.all`           │
+│      invalidatsiya — to'lov holati, mijoz balansi va karta birdan            │
+│    • 409 (allaqachon tasdiqlangan / bekor) va 404 matni dialogda             │
+│    • `isManuallyConfirmable` + 1 test — build/lint/test toza (226)           │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • VK-2026-000002 naqd 192 960 → BRANCH_ADMIN izoh bilan → PAID,           │
+│      paidAt yozildi; "To'lanmagan" tez filtri 1 → 0                          │
+│    • MANAGER → 403; 🔒 MODERATOR boshqa filial → 404                         │
+│    • Takror → 409 "allaqachon tasdiqlangan"; CANCELLED → 409                 │
+│  ⚠ Hisobsiz xaridor buyurtmasida tekshirildi — mijoz balansiga yozuv         │
+│    tushishi (PAYMENT) optom mijoz buyurtmasida alohida ko'rilmadi.           │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-025, D-023                                                       │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1236,7 +1440,7 @@
 ║          xuddi mijoz kabi, o'sha Order mexanizmi orqali (B-058).             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-030 · Ta'minot buyurtmalari ro'yxati (moderator ko'zi) ───────────────┐
+┌─ [x] D-030 · Ta'minot buyurtmalari ro'yxati (moderator ko'zi) ───────────────┐
 │                                                                              │
 │  Endpoint: `GET /admin/branch-orders`                                        │
 │                                                                              │
@@ -1247,11 +1451,35 @@
 │                                                                              │
 │  🔒 Faqat SUPER_ADMIN va MODERATOR                                           │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Ta'minot buyurtmalari" sahifasi rolga qarab: markaz (SUPER_ADMIN,      │
+│      MODERATOR) — shu ro'yxat; do'kon filiali — D-032 (hozircha o'rin)       │
+│    • Jadval: raqam, buyurtmachi filial → markaziy ombor, summa + paddon,     │
+│      holat, to'lov holati, sana. Qator → `/supply-orders/{id}` (D-031)       │
+│    • Filtrlar (URL'da): holat, buyurtmachi filial (faqat RETAIL);            │
+│      sahifalash; har 60 s fonda yangilanadi                                  │
+│    • `features/supply-orders/` — `list.ts` ikki tomon uchun: markazda        │
+│      `orderingBranchId` filtri bor, filial tomonida URL'dan O'QILMAYDI (G5)  │
+│    • list.test.ts (2 test) — build/lint/test toza (228)                      │
+│                                                                              │
+│    ⚠ Taskda "turi (BRANCH | AGENT)" deyilgan, lekin `/admin/branch-orders`   │
+│      FAQAT `orderingType = BRANCH` qaytaradi va DTO'da tur maydoni yo'q.     │
+│      Agent buyurtmalari — oddiy "Buyurtmalar" (D-024) da, u yerda xaridor    │
+│      ustunida tur yoziladi. Sahifada shu haqda izoh bor.                     │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • BRANCH_ADMIN `POST /branch-orders` bilan sinov buyurtmasi yaratildi:    │
+│      VK-2026-000004 (Farg'ona → Markaziy ombor, 2 paddon, 328 032)           │
+│    • MODERATOR: hammasi → 1; status=NEW → 1, LOADING → 0;                    │
+│      orderingBranchId=Farg'ona → 1, boshqa → 0; SUPER_ADMIN → 200            │
+│    • 🔒 BRANCH_ADMIN `/admin/branch-orders` → 403                            │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-024                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-031 · Ta'minot buyurtmasi kartasi va holati ──────────────────────────┐
+┌─ [x] D-031 · Ta'minot buyurtmasi kartasi va holati ──────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET /admin/branch-orders/{id}`,                               │
 │               `PATCH /admin/branch-orders/{id}/status`                       │
@@ -1260,11 +1488,35 @@
 │    • Karta: buyurtmachi filial, mahsulotlar, summa, holat tarixi             │
 │    • Holat o'zgartirish — yana `allowedNextStatuses` dan (G8)                │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `/supply-orders/:id` (`supplyOrders.review`): sarlavha (raqam, holat,   │
+│      filial → markaziy ombor, jami), buyurtmachi va yetkazib beruvchi,       │
+│      mahsulotlar (snapshot narx), yetkazib berish, to'lov, holat tarixi      │
+│    • Holat tugmalari — `OrderStatusActions` QAYTA ishlatildi, faqat          │
+│      endpoint boshqa (`/admin/branch-orders/{id}/status`); G8 bir xil        │
+│    • Refaktor: D-025 kartasidagi mahsulotlar jadvali, yetkazib berish,       │
+│      holat tarixi `features/orders/OrderDetailParts.tsx` ga ko'chdi —        │
+│      ikkala karta bir xil ko'rinadi. `OrderStatusActions` endi hook emas,    │
+│      sahifa chaqirgan mutatsiyani oladi (lint: hook qiymat bo'lmasin)        │
+│    • Ogohlantirish matnlari "mijoz" emas "buyurtmachi" — ikkala holatga mos  │
+│    • Ta'minot DTO'sida `changedBy` yo'q — tarixda "kim" ko'rsatilmaydi       │
+│    • build/lint/test toza (228)                                              │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali, VK-2026-000004 da):               │
+│    • Karta: Farg'ona → Markaziy ombor, olib ketish, next=[LOADING,           │
+│      CANCELLED]; mijoz buyurtmasi ID si bu yo'lda → 404                      │
+│    • MODERATOR NEW→SEARCHING_TRANSPORT → 400 (olib ketish yo'li);            │
+│      NEW→LOADING izoh bilan → 200; SUPER_ADMIN LOADING→DELIVERED → 200,      │
+│      next=[]; DELIVERED→CANCELLED → 400 "yakuniy"                            │
+│    • 🔒 BRANCH_ADMIN `PATCH /admin/branch-orders/…` → 403                    │
+│    • Filial tomoni (`GET /branch-orders/{id}`) izohli tarixni ko'radi        │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-030                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-032 · Filial sifatida ta'minot buyurtmasi berish ─────────────────────┐
+┌─ [x] D-032 · Filial sifatida ta'minot buyurtmasi berish ─────────────────────┐
 │                                                                              │
 │  Endpointlar: `POST,GET /branch-orders`, `GET /branch-orders/{id}`           │
 │                                                                              │
@@ -1279,6 +1531,36 @@
 │                                                                              │
 │  🔒 Faqat BRANCH_ADMIN va MANAGER                                            │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Ta'minot buyurtmalari" filial ko'zida: o'z yuborgan buyurtmalari       │
+│      (`GET /branch-orders`, holat filtri, sahifalash) + "Markazdan           │
+│      buyurtma" tugmasi. Filial — tokendan (G5), filtr/formada YO'Q           │
+│    • `/supply-orders/new` (`supplyOrders.create`): mahsulot qidiruvi →       │
+│      qatorlar (paddon 1…100 000, bir mahsulot bir marta, 50 tagacha),        │
+│      qabul qilish: olib ketish | yetkazib berish (viloyat + transport —      │
+│      ochiq `/regions`, `/transport-types`), izoh; saqlanmagan o'zgarish      │
+│      ogohlantirishi. Yuborilgach kartaga o'tadi                              │
+│    • 🔒 Forma narx/summa yubormaydi va ko'rsatmaydi (G1, ❓ 2) — summa       │
+│      kartada chiqadi. 409/404/400 matni formada                              │
+│    • `/supply-orders/:id` bitta URL, ikki tomon: markaz — boshqaruv          │
+│      kartasi (D-031), filial — faqat o'qish kartasi (`/branch-orders/{id}`)  │
+│    • create.test.ts (5 test) — build/lint/test toza (233)                    │
+│                                                                              │
+│    ⚠ Markaziy omborlar bir nechta bo'lsa forma tanlov ko'rsatadi, LEKIN      │
+│      BRANCH_ADMIN `/admin/branches` da faqat O'Z filialini ko'radi —         │
+│      markaziy omborlar ro'yxati unga kelmaydi. Hozir markaz bitta            │
+│      (backend o'zi aniqlaydi), shuning uchun ta'sir yo'q. Ikkinchi markaz    │
+│      ochilsa — backendga "faol markaziy omborlar" ochiq ro'yxati kerak.      │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • MANAGER: 99 999 paddon → 409 "Omborda yetarli emas"; faqat viloyat →    │
+│      400 "birga yuborilishi kerak"; Farg'ona + Fura → VK-2026-000005,        │
+│      jami 4 164 016 (yo'l kira 4 000 000), Fura × 1                          │
+│    • O'z ro'yxati → 2 ta; status=DELIVERED → 1                               │
+│    • 🔒 MODERATOR `POST /branch-orders` → 403; Andijon filial admini         │
+│      Farg'ona buyurtmasini → 404                                             │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-031                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1291,7 +1573,7 @@
 ║          tushadi (xodim huquqi noto'g'ri berilsa).                           ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-033 · Filiallar (Branch) CRUD ────────────────────────────────────────┐
+┌─ [x] D-033 · Filiallar (Branch) CRUD ────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/branches`,                                    │
 │               `GET,PATCH,DELETE /admin/branches/{id}`,                       │
@@ -1307,11 +1589,41 @@
 │  🔒 Yaratish/o'chirish — faqat SUPER_ADMIN; tahrirlash — filial adminiga     │
 │    ham (faqat o'ziniki)                                                      │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Ro'yxat: bino surati, nom + shahar, turi, manzil + ish vaqti,           │
+│      telefonlar, holat (ochiq / yopilgan). Filtr: turi, holat (URL'da,       │
+│      backend filtri). Endpoint massiv qaytaradi — sahifalash yo'q            │
+│    • CENTRAL vizual ajratiladi: "Markaziy ombor" belgisi (ombor ikonkasi)    │
+│      va qator foni; RETAIL — "Do'kon filiali"                                │
+│    • `BranchFormModal`: turi (tahrirlashda qulf), nom, shahar, manzil,       │
+│      koordinata — SON bo'lib ketadi (vergul ham qabul), ish vaqti,           │
+│      telefonlar (har qatorda bittadan, 1…5), Telegram/Instagram (faqat       │
+│      https; bo'shatilsa `null`), tartib. PATCH — faqat o'zgargan maydonlar   │
+│    • Bino surati — tahrirlash oynasida, yuklash jarayoni ko'rinadi;          │
+│      10 MB oldindan tekshiriladi, tur esa backendda (fayl mazmunidan)        │
+│    • 🔒 "Yangi filial" va yopish/qayta ochish — faqat SUPER_ADMIN.           │
+│      Tahrirlash — BRANCH_ADMIN va MODERATOR ga faqat O'Z filialida:          │
+│      kontakt bo'lmagan maydonlar qulflangan va so'rovga TUSHMAYDI            │
+│      (aks holda backend butun so'rovni 403 qilardi)                          │
+│    • branch-form.test.ts (6 test) — build/lint/test toza (239)               │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SUPER_ADMIN 5 ta; type=CENTRAL → 1; MODERATOR → faqat markaz;           │
+│      MANAGER → faqat Farg'ona                                                │
+│    • BRANCH_ADMIN yaratish → 403; http:// telegram → 400                     │
+│    • SUPER_ADMIN "Vodiy Kafel — Sinov (D-033)" yaratdi → PNG surat           │
+│      yuklandi; matnli "png" → 400 → yopildi → isActive=false filtrida        │
+│      chiqdi → qayta ochildi → yana yopildi (lokal bazada YOPIQ qoldi)        │
+│    • BRANCH_ADMIN o'z filiali telegramUrl → 200; nomi → 403 "faqat           │
+│      kontaktni tahrirlaydi"; boshqa filial → 404. Farg'ona telegram          │
+│      havolasi sinovdan keyin seed qiymatiga qaytarildi                       │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-034 · Hamkorlar (Partner) CRUD ───────────────────────────────────────┐
+┌─ [x] D-034 · Hamkorlar (Partner) CRUD ───────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/partners`,                                    │
 │               `PATCH,DELETE /admin/partners/{id}`,                           │
@@ -1321,11 +1633,40 @@
 │    • Ro'yxat + yaratish/tahrirlash, logo yuklash, tartib                     │
 │                                                                              │
 │  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Ro'yxat (tartib bo'yicha): tartib raqami, logotip, nom, sayt            │
+│      havolasi (yangi oynada), "Yashirilgan" belgisi; holat filtri            │
+│    • Qo'shish: logotip MAJBURIY (drag & drop yoki tanlash, ko'rinishi,       │
+│      10 MB oldindan tekshiriladi, yuklash foizi tugmada), nom, sayt,         │
+│      tartib (standart — oxirgi + 1)                                          │
+│    • Tahrirlash: nom, sayt (bo'shatilsa `null`), tartib, "Saytda             │
+│      ko'rinsin"; logotip alohida — fayl tanlansa darhol almashtiriladi       │
+│    • Tartib: ↑/↓ — faqat o'zgargan hamkorlar PATCH qilinadi, raqamlar        │
+│      0,1,2… ga tekislanadi, oxirida bitta invalidatsiya. Filtr yoqilgan      │
+│      bo'lsa surish o'chiq (yashirilganlar bilan raqam to'qnashmasin)         │
+│    • Yashirish/ko'rsatish bir bosishda; o'chirish — tasdiq bilan,            │
+│      "vaqtincha uchun Yashirish" maslahati                                   │
+│    • Refaktor: galereyadagi fayl tanlash `ImageFilePicker` ga ajratildi      │
+│      (features/products) — galereya va hamkorlar bitta komponentda           │
+│    • 🔒 Yozish tugmalari faqat `partners.write` (SUPER_ADMIN)                │
+│    • partner-form.test.ts (5 test) — build/lint/test toza (244)              │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SUPER_ADMIN va MANAGER ro'yxati: 3 ta seed hamkor                       │
+│    • BRANCH_ADMIN yaratish → 403; logotipsiz → 400 "Fayl yuborilmadi"        │
+│    • SUPER_ADMIN sinov hamkori: PNG bilan yaratildi → sayt null +            │
+│      yashirildi (isActive=false filtrida chiqdi) → logo almashtirildi;       │
+│      matnli "png" → 400 → o'chirildi → takror → 404. Bazada qolmadi          │
+│    • MANAGER PATCH → 403                                                     │
+│    • Tartib: dashboard algoritmi bilan Belissimo ↑ → ochiq `/partners`       │
+│      da birinchi; keyin seed tartibi (1,2,3) qaytarildi                      │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-033                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-035 · Menejerlar CRUD ────────────────────────────────────────────────┐
+┌─ [x] D-035 · Menejerlar CRUD ────────────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/managers`, `PATCH /admin/managers/{id}`       │
 │                                                                              │
@@ -1338,11 +1679,39 @@
 │  🔒 SUPER_ADMIN va BRANCH_ADMIN. BRANCH_ADMIN faqat o'z filialiga            │
 │    menejer qo'sha oladi — forma `branchId` so'ramaydi (G5)                   │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Xodimlar" sahifasi: SUPER_ADMIN uchun "Menejerlar | Moderatorlar"      │
+│      tab'lari (`?view=`), BRANCH_ADMIN uchun faqat menejerlar                │
+│    • Ro'yxat: ism, telefon (login), Telegram (t.me havolasi), filial         │
+│      (faqat SUPER_ADMIN), faollik. Qidiruv, holat, filial filtri (SA)        │
+│    • Yaratish/tahrirlash — `StaffFormModal` (D-036 da qayta ishlatiladi):    │
+│      F.I.Sh., telefon (+998), Telegram username (@ olib tashlanadi,          │
+│      bo'shatilsa `null`), filial — faqat SA va faqat RETAIL.                 │
+│      409 (band telefon) — telefon maydoni ostida                             │
+│    • Vaqtinchalik parol — D-021 dagi `TemporaryPasswordDialog`; natija       │
+│      mutatsiya keshidan darhol tozalanadi (`gcTime: 0` + `reset`)            │
+│    • Faolsizlantirish/faollashtirish — tasdiq bilan, oqibati yozilgan        │
+│    • 🔒 BRANCH_ADMIN: filial maydoni va filtri UMUMAN yo'q (G5); URL'dagi    │
+│      `branchId` ham o'qilmaydi                                               │
+│    • Biriktirish mantig'i o'zgarmadi — BY_BRANCH (❓ B-043)                  │
+│    • staff-form.test.ts (5 test) — build/lint/test toza (249)                │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SA → 4 menejer; BA → faqat Farg'ona; search, branchId filtri            │
+│    • MANAGER, MODERATOR → 403                                                │
+│    • SA: CENTRAL filial → 400; filialsiz → 400; BA band telefon → 409        │
+│    • BA branchId'siz "Sinov menejer (D-035)" yaratdi → Farg'ona'ga           │
+│      tushdi, 12 belgili vaqtinchalik parol → shu parol bilan kirdi           │
+│    • BA boshqa filialga o'tkazish → 404; telegram null → 200;                │
+│      faolsizlantirdi → kira olmaydi (401); isActive=false filtrida chiqdi    │
+│    • Sinov menejeri lokal bazada FAOLSIZ holda qoldi (o'chirish yo'q)        │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-033                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-036 · Moderatorlar CRUD                                     🔒 ───────┐
+┌─ [x] D-036 · Moderatorlar CRUD                                     🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/moderators`,                                  │
 │               `PATCH,DELETE /admin/moderators/{id}`                          │
@@ -1354,6 +1723,28 @@
 │                                                                              │
 │  🔒 FAQAT SUPER_ADMIN. Boshqa rollarda bu bo'lim menyuda ko'rinmaydi.        │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Xodimlar → Moderatorlar" tab'i (faqat SUPER_ADMIN ko'radi; boshqa      │
+│      rolda tab ham, `?view=moderators` ham ochilmaydi)                       │
+│    • D-035 dagi `StaffSection` + `StaffFormModal` qayta ishlatildi —         │
+│      faqat endpoint va filial ro'yxati boshqa                                │
+│    • Forma va filtr FAQAT CENTRAL filiallarni taklif qiladi (B-057);         │
+│      ustun nomi "Markaziy ombor"                                             │
+│    • Faolsizlantirish — `DELETE /admin/moderators/{id}` (soft, tarix         │
+│      saqlanadi), qaytarish — `PATCH { isActive: true }`                      │
+│    • Vaqtinchalik parol — xuddi menejerdagidek bir marta ko'rsatiladi        │
+│    • build/lint/test toza (249)                                              │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SUPER_ADMIN → 1 seed moderator; 🔒 BRANCH_ADMIN va MODERATOR → 403;     │
+│      BRANCH_ADMIN yaratish → 403                                             │
+│    • RETAIL filialga yaratish ham, o'tkazish ham → 400                       │
+│    • SA "Sinov moderator (D-036)" markazga yaratdi (12 belgili parol) →      │
+│      telegram qo'shildi → DELETE → kira olmaydi (401) → PATCH bilan          │
+│      qaytarildi → yana DELETE; isActive=false filtrida chiqdi                │
+│    • Sinov moderatori lokal bazada FAOLSIZ holda qoldi                       │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-035                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1365,7 +1756,7 @@
 ║  Maqsad: yo'l kira matritsasi. Tarif YAGONA EMAS — uch o'lchamli.            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-037 · Viloyatlar (Region) CRUD ───────────────────────────────────────┐
+┌─ [x] D-037 · Viloyatlar (Region) CRUD ───────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/regions`, `PATCH,DELETE /admin/regions/{id}`  │
 │                                                                              │
@@ -1376,11 +1767,32 @@
 │  ❓ Viloyatlarning yakuniy ro'yxati mijozdan hali kelmagan (9-savol) —       │
 │    lekin CRUD bor, ish to'xtamaydi                                           │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Yetkazib berish" sahifasi tab'lari: Tariflar (D-039) | Viloyatlar |    │
+│      Transport turlari (D-038); bo'lim va holat filtri URL'da                │
+│    • Viloyatlar: tartib, nom, holat; qo'shish/tahrirlash (nom ≤100 —         │
+│      noyob, 409 nom maydoni ostida; tartib — standart oxirgi + 1),           │
+│      o'chirish (soft, `DELETE`) va qaytarish (`PATCH isActive: true`)        │
+│    • Umumiy `DictionarySection` + `dictionary.ts` — D-038 transport          │
+│      turlari shu komponentda (faqat sig'im maydoni qo'shiladi)               │
+│    • Viloyat o'zgarsa `regions` + `tariffs` invalidatsiya                    │
+│    • 🔒 Yozish tugmalari faqat `delivery.write` (SUPER_ADMIN);               │
+│      boshqa xodimlar faqat ko'radi                                           │
+│    • dictionary.test.ts (4 test) — build/lint/test toza (253)                │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SUPER_ADMIN va MANAGER → 5 seed viloyat; MANAGER yaratish → 403         │
+│    • Band nom (yaratish ham, qayta nomlash ham) → 409 "Bu nom band"          │
+│    • "Sinov viloyat (D-037)" yaratildi → nom/tartib o'zgardi → DELETE →      │
+│      ochiq `/regions` da ko'rinmaydi, isActive=false filtrida bor →          │
+│      qaytarildi → yana o'chirildi (lokal bazada O'CHIQ holda qoldi)          │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-038 · Transport turlari CRUD ─────────────────────────────────────────┐
+┌─ [x] D-038 · Transport turlari CRUD ─────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/transport-types`,                             │
 │               `PATCH,DELETE /admin/transport-types/{id}`                     │
@@ -1392,11 +1804,32 @@
 │    Frontendda ham ro'yxat qo'lda yozilmaydi, API'dan olinadi.                │
 │                                                                              │
 │  🔒 Yozish — faqat SUPER_ADMIN                                               │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Yetkazib berish → Transport turlari" tab'i — D-037 dagi                │
+│      `DictionarySection` qayta ishlatildi, qo'shimcha "Sig'imi" ustuni       │
+│      va maydoni (1…1000 paddon, butun)                                       │
+│    • Nom ≤60 (noyob, 409 nom ostida), tartib; o'chirish (soft) va qaytarish  │
+│    • Tahrirlash oynasida ogohlantirish: sig'im o'zgarsa faqat YANGI          │
+│      hisoblarga ta'sir qiladi — eski buyurtmalardagi mashina soni o'zgarmaydi│
+│    • Ro'yxat HARDCODE EMAS: qo'lda buyurtma (D-028) va ta'minot (D-032)      │
+│      formalari transport turlarini API'dan oladi                             │
+│    • `transportTypes` + `tariffs` invalidatsiya                              │
+│    • 🔒 Yozish faqat `delivery.write` (SUPER_ADMIN)                          │
+│    • build/lint/test toza (259; sig'im testlari dictionary.test.ts da)       │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SA va BRANCH_ADMIN → Fura/20, Vagon/60; BRANCH_ADMIN yaratish → 403     │
+│    • "Fura" nomi → 409; sig'im 1001 → 400                                    │
+│    • "Sinov transport (D-038)" 8 → 10 paddon → DELETE → ochiq ro'yxatda      │
+│      yo'q, isActive=false da bor → qaytarildi → yana o'chirildi              │
+│      (lokal bazada O'CHIQ holda qoldi)                                       │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-037                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-039 · Tarif matritsasi                                      🔒 ───────┐
+┌─ [x] D-039 · Tarif matritsasi                                      🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `GET,PUT /admin/tariffs`, `PATCH /admin/tariffs/{id}/price`    │
 │                                                                              │
@@ -1408,6 +1841,30 @@
 │                                                                              │
 │  🔒 SUPER_ADMIN va BRANCH_ADMIN (o'z filiali uchun)                          │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • "Yetkazib berish → Tariflar" — matritsa: qator — faol viloyat, ustun    │
+│      — faol transport turi (sig'imi bilan), katak — bitta transport uchun    │
+│      yo'l kira. Nofaol tarif "Nofaol" belgisi bilan xira                     │
+│    • To'ldirilmagan (yoki nofaol) kataklar sariq fonda + tepada "N ta        │
+│      yo'nalishda faol tarif yo'q" ogohlantirishi (bo'sh tarif = hisob xatosi)│
+│    • Filial: SUPER_ADMIN tanlaydi; BRANCH_ADMIN — tokendan, tanlov YO'Q      │
+│      (G5). Filialning BARCHA tariflari olinadi (sahifalar bo'ylab)           │
+│    • "Tahrirlash" rejimi — barcha kataklar inline input (pul formatida);     │
+│      "Saqlash" — faqat o'zgargan va yangi kataklar `PUT /admin/tariffs`      │
+│      (ommaviy), oxirida bitta invalidatsiya. Mavjud tarifni bo'shatish,      │
+│      nol/manfiy, 2 dan ortiq kasr — katak ostida xato, so'rov ketmaydi       │
+│    • 🔒 Tahrirlash tugmasi faqat `tariffs.write` (SA, BRANCH_ADMIN)          │
+│    • tariffs.test.ts (4 test) — build/lint/test toza (263)                   │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • BRANCH_ADMIN branchId'siz → Farg'ona 10 tarif (5 viloyat × 2            │
+│      transport — to'liq); MANAGER ko'radi; SA branchId=Andijon → 10          │
+│    • 🔒 BRANCH_ADMIN branchId=Andijon: o'qish ham, PUT ham → 404             │
+│    • MANAGER PUT → 403; narx 0 → 400; SA branchId'siz → 400                  │
+│    • BRANCH_ADMIN Farg'ona/Farg'ona/Fura 4 000 000 → 4 250 000,50 →          │
+│      SA bilan asl 4 000 000 qaytarildi                                       │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-038                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1418,7 +1875,7 @@
 ║  EPIC 8 — SOZLAMALAR                                                         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-040 · Sozlamalar sahifasi ────────────────────────────────────────────┐
+┌─ [x] D-040 · Sozlamalar sahifasi ────────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,PATCH /admin/settings`                                    │
 │                                                                              │
@@ -1435,6 +1892,31 @@
 │                                                                              │
 │  🔒 Ko'rish — SUPER_ADMIN va BRANCH_ADMIN; o'zgartirish — faqat SUPER_ADMIN  │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Uchta karta — har kalit o'z maydoni bilan:                              │
+│        «Kam qoldi» chegarasi — butun 0…1 000 000 paddon                      │
+│        Filial admini chegirma chegarasi — 0…100 % (vergul ham)               │
+│        Bank rekvizitlari — tashkilot, bank, MFO (5), hisob (20), INN (9);    │
+│        "olib tashlash" (`null`) — tasdiq bilan                               │
+│    • "Standart qiymat" (`isDefault`) va "Saytda ochiq" (`isPublic`)          │
+│      belgilari, oxirgi o'zgarish vaqti, kalit nomi                           │
+│    • Qoidalar backend `setting-definitions.ts` bilan AYNAN bir xil; 400      │
+│      matni maydon ostida. Frontend yangi kalit YARATMAYDI                    │
+│    • O'zgarish darhol kuchga kiradi — `settings` + `productStocks` +         │
+│      `products` invalidatsiya (chegara zaxira holatini o'zgartiradi).        │
+│      D-019 dagi `useDiscountLimit` bilan bitta kesh kaliti                   │
+│    • 🔒 BRANCH_ADMIN — faqat ko'radi (qiymatlar matn ko'rinishida,           │
+│      "faqat bosh administrator o'zgartiradi" izohi)                          │
+│    • settings.test.ts (5 test) — build/lint/test toza (268)                  │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali):                                  │
+│    • SA va BRANCH_ADMIN o'qiydi (3 kalit); MANAGER → 403;                    │
+│      BRANCH_ADMIN PATCH → 403                                                │
+│    • 2.5 paddon, 101 %, 4 raqamli MFO, noma'lum kalit → 400 (o'zbekcha matn) │
+│    • SA: chegara 25, foiz 7.5, rekvizit nomi o'zgardi → ochiq                │
+│      `/settings/public` da darhol ko'rindi → uchala asl qiymat qaytarildi    │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1446,7 +1928,7 @@
 ║  Maqsad: panelni haqiqiy ishga topshirishga tayyorlash.                      ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-041 · Bosh sahifa (KPI)                                   ❓ 🆕 ──────┐
+┌─ [x] D-041 · Bosh sahifa (KPI)                                   ❓ 🆕 ──────┐
 │                                                                              │
 │  ❗ MUAMMO: backendda statistika endpointi UMUMAN YO'Q. `/admin/dashboard`,   │
 │    `/admin/stats` — yo'q (tekshirildi: openapi.json, 92 yo'l).               │
@@ -1467,11 +1949,40 @@
 │    • Har kartochka bosilganda tegishli ro'yxatga FILTR bilan o'tadi          │
 │    • Rol bo'yicha farq: MODERATOR ga ta'minot buyurtmalari ko'rsatiladi      │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17) — A varianti:                                      │
+│    • Salomlashuv (ism, rol) + ko'rsatkich kartochkalari. Har kartochka       │
+│      ro'yxatning `total` ini `limit=1` bilan oladi va AYNAN o'sha filtr      │
+│      bilan ro'yxatni ochadi (son va ro'yxat farq qilmaydi)                   │
+│    • Rol bo'yicha (`features/home/kpi.ts` — ruxsatlar jadvalidan):           │
+│        hamma — Yangi, Tezkor, To'lanmagan buyurtmalar; Faol mijozlar,        │
+│                 Qarzdorlar                                                   │
+│        MANAGER — qo'shimcha "Menga biriktirilgan"                            │
+│        SA, MODERATOR — "Yangi ta'minot buyurtmalari" (markaz)                │
+│        BRANCH_ADMIN, MANAGER — "Markazga yuborilgan" (filial)                │
+│    • Tezkor amallar: Qo'lda buyurtma, Markazdan buyurtma, Zaxira holati      │
+│    • Sonlar har 60 s fonda yangilanadi; kalitlar domen ostida —              │
+│      buyurtma/mijoz o'zgarsa son ham yangilanadi                             │
+│    • kpi.test.ts (2 test) — build/lint/test toza (270)                       │
+│                                                                              │
+│    🆕 api/task.txt B-063: `GET /admin/dashboard/stats` (son + summa +         │
+│      dinamika) va `product-stocks` ga `stockStatus` filtri. Filtr yo'qligi   │
+│      sababli "kam qolgan mahsulotlar" kartochkasi QILINMADI — hammasini      │
+│      yuklab sanash G10 ni buzardi; sahifada shu haqda izoh va "Zaxira        │
+│      holati" havolasi bor.                                                   │
+│                                                                              │
+│  Tekshirildi (haqiqiy backend, API orqali, kartochkalar so'rovi bilan):      │
+│    • SUPER_ADMIN: yangi 2, tezkor 1, to'lanmagan 3, faol mijoz 5,            │
+│      qarzdor 1, ta'minot (markaz) 1                                          │
+│    • MODERATOR: yangi 1, to'lanmagan 2, faol mijoz 1 (agent), markaz 1       │
+│    • BRANCH_ADMIN: hammasi o'z filialidan (1 tadan), ta'minot (filial) 1     │
+│    • MANAGER: yuqoridagi + "menga biriktirilgan" 5                           │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi.                                        │
 │  Bog'liq: D-024, D-030                                                       │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-042 · Xato, yuklanish va bo'sh holatlar ──────────────────────────────┐
+┌─ [x] D-042 · Xato, yuklanish va bo'sh holatlar ──────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Global `ErrorBoundary` — oq ekran o'rniga tushunarli sahifa             │
@@ -1485,11 +1996,34 @@
 │  ⚠ 404 ni "ruxsat yo'q" deb ko'rsatish MUMKIN EMAS — backend ataylab 404     │
 │    qaytaradi (api/CLAUDE.md §6). UI uni "fosh qilib" qo'ymasligi kerak.      │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Global xato chegarasi — `RouteErrorPage` (react-router `errorElement`): │
+│        – har panel sahifasiga: yiqilsa xato SHU sahifa o'rnida, yon menyu    │
+│          va yuqori panel saqlanadi                                           │
+│        – ildizga: layout'ning o'zi yiqilsa ham oq ekran yo'q                 │
+│        – yangi deploydan keyin eski chunk topilmasa → "yangi versiya         │
+│          chiqdi, sahifani yangilang" (dasturchi xatosi deb qo'rqitmaydi)     │
+│        – stack/ichki matn foydalanuvchiga ko'rsatilmaydi (faqat dev konsol)  │
+│    • Tarmoq yo'qolganda banner (`OfflineBanner`, login sahifasida ham);      │
+│      ulanish qaytsa o'zi yo'qoladi, so'rovlar qayta yuboriladi               │
+│    • Holatlar auditi: `isPending` ishlatilgan BARCHA sahifa/komponentda      │
+│      xato holati ham bor (skript bilan tekshirildi); ro'yxatlarda skelet,    │
+│      bo'sh holat va "Qayta urinish" D-008 `DataTable`/`ErrorState` orqali    │
+│    • Xato turlari (D-008 `errorMessage` da, tekshirildi): 401 → refresh      │
+│      yoki login; 403 → rol sahifasi / "ruxsatingiz yo'q"; 404 → "Topilmadi…  │
+│      sizga ko'rinmaydi" (ruxsat yo'q DEMAYDI); 400 → forma maydoni yoki      │
+│      forma ostida (har forma `setError`); 5xx → umumiy matn + `requestId`    │
+│      (`ErrorState` va toast'da)                                              │
+│    • NotFoundPage statik import (xato sahifasi ham ishlatadi)                │
+│    • route-error.test.ts (3 test) — build/lint/test toza (273)               │
+│  ⚠ Brauzerda qo'lda bosib ko'rilmadi (offline banner va xato sahifasi        │
+│    ham) — faqat mantiq testlari.                                             │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-043 · Matnlar va enum lug'ati ────────────────────────────────────────┐
+┌─ [x] D-043 · Matnlar va enum lug'ati ────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Bitta lug'at fayli: enum qiymati → o'zbekcha matn                       │
@@ -1503,11 +2037,35 @@
 │  ⚠ i18n kutubxonasi KERAK EMAS — panel faqat o'zbekcha. Lekin matn kod       │
 │    ichida tarqalmasligi kerak (G7).                                          │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `shared/lib/labels.ts` — YAGONA lug'at, manba `api/docs/enums.md`.      │
+│      Qo'shildi: BranchType, ContractStatus, NotificationType; narx qoidasi   │
+│      domen/doira/tur matnlari pricing-rules'dan shu yerga ko'chdi (eski      │
+│      nomlar re-export). Jami: OrderStatus (+ amal matni), OrderSource,       │
+│      OrderingType, PaymentStatus, PaymentMethod, StockStatus,                │
+│      AccountTransactionType, UserRole, BranchType, ContractStatus,           │
+│      NotificationType, ProductSurface, MediaType, Pricing* (3 ta)            │
+│    • Barcha kalit turlari `schema.d.ts` dan (`Schema<…>['field']`) —         │
+│      qo'lda yozilgan literal tur qolmadi; yangi enum qiymati → TYPE xatosi   │
+│    • 🛡 labels.test.ts: 17 ta lug'at `api/openapi.json` dagi enum bilan       │
+│      AYNAN solishtiriladi (backend qiymat qo'shsa/olib tashlasa — test       │
+│      yiqiladi), bo'sh matn ham tekshiriladi                                  │
+│    • `commonText` — umumiy matnlar (Saqlash, Bekor qilish, Tasdiqlash,       │
+│      Qayta urinish, Yuklanmoqda…, Tanlang…, Hammasi, Tozalash, kutilmagan    │
+│      xato); `shared/ui` standart matnlari (ConfirmDialog, ErrorState,        │
+│      FilterBar, SelectField) va `errorMessage` shundan oladi                 │
+│    • Filiallar sahifasi va formasi filial turi matnini lug'atdan oladi       │
+│    • i18n kutubxonasi qo'shilmadi (panel faqat o'zbekcha)                    │
+│    • build/lint/test toza (274)                                              │
+│    ⚠ Sahifalarning o'ziga xos matnlari (sarlavha, izoh) joyida qoldi —       │
+│      ular enum emas va bir martalik; umumiy tugma matnlari ham ba'zi         │
+│      formalarda to'g'ridan-to'g'ri yozilgan (keyingi tozalashda almashtirsa bo'ladi).│
 │  Bog'liq: D-042                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-044 · Responsive va klaviatura ───────────────────────────────────────┐
+┌─ [x] D-044 · Responsive va klaviatura ───────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Asosiy maqsad — noutbuk/desktop (1280px+). Menejer telefonda            │
@@ -1519,11 +2077,32 @@
 │      modal'da Esc, qidiruvga fokus (`/`)                                     │
 │    • Fokus ko'rinishi o'chirilmaydi, `aria-label` lar joyida                 │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Layout breakpoint'lari (`useMediaQuery`, Tailwind bilan bir xil):       │
+│        ≥1024px — yon menyu xodim tanlagandek (ochiq/yig'ilgan, saqlanadi)    │
+│        768–1023px — menyu doim yig'ilgan (ikonkalar), yig'ish tugmasi yo'q   │
+│        <768px — menyu yashirin; yuqori panelda ☰ → ustiga chiqadigan menyu   │
+│        (fon bosilsa / Esc / sahifa almashsa yopiladi)                        │
+│    • Kontent chekkasi telefonda kichraydi (p-4), yuqori panel ixchamlashdi;  │
+│      jadvallar `DataTable` ichida gorizontal scroll (D-008 dan)              │
+│    • Klaviatura:                                                             │
+│        `/` — sahifadagi qidiruvga fokus (matn yozilayotganda ishlamaydi;     │
+│            `aria-keyshortcuts="/"`)                                          │
+│        jadval — ↑/↓, Home/End qatorlar orasida fokus, Enter — ochish         │
+│        modal — Esc (native `<dialog>`, D-008); forma Tab tartibi DOM bo'yicha│
+│        "Asosiy kontentga o'tish" havolasi (Tab bosilganda ko'rinadi)         │
+│    • Fokus ko'rinishi global `:focus-visible` (D-002) — o'chirilmagan;       │
+│      ikonkali tugmalarda `aria-label` bor (IconButton majburiy qiladi)       │
+│    • keyboard.test.ts (2 test) — build/lint/test toza (276)                  │
+│  ⚠ Brauzerda (turli ekran kengligida) qo'lda tekshirilmadi — panel login     │
+│    talab qiladi. Telefondagi ustki menyuda fokus tuzog'i yo'q (Esc va fon    │
+│    bilan yopiladi) — kerak bo'lsa `<dialog>` ga o'tkazish mumkin.            │
 │  Bog'liq: D-043                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-045 · Unit va komponent testlari ─────────────────────────────────────┐
+┌─ [x] D-045 · Unit va komponent testlari ─────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Vitest + Testing Library + MSW (API'ni mock qilish)                     │
@@ -1537,11 +2116,38 @@
 │        – Buyurtma holati tugmalari `allowedNextStatuses` dan qurilishi       │
 │        – Forma validatsiyasi (narx satr, MFO 5 raqam)                        │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Qo'shildi (devDependencies): @testing-library/react, /dom,              │
+│      /user-event, msw, jsdom. Unit testlar `node` muhitida qoldi;            │
+│      komponent testi fayl boshida `// @vitest-environment jsdom`             │
+│    • `src/test/msw.ts` — `mockApi.get/post/put/patch/delete(yo'l, data)`:    │
+│      javob turi `DataOf<yo'l, metod>` (schema.d.ts). 🛡 Tekshirildi:          │
+│      `status: 'OOPS'` yozilgan mock → TS2322, build yiqiladi.                │
+│      `apiError()` — backend xato formati (G3) bilan                          │
+│    • `src/test/setup-component.tsx` — `setupComponentTests()` (MSW,          │
+│      `<dialog>` polyfill, sessiya tokeni, tozalash; kutilmagan so'rov →      │
+│      test yiqiladi) va `renderRoute()` (yangi QueryClient + router + toast)  │
+│    • Komponent testlari:                                                     │
+│        – `<OrderStatusActions>`: tugmalar faqat allowedNextStatuses dan;     │
+│          yakuniy holatda tugma yo'q; bekor qilishda sabab majburiy va        │
+│          PATCH tanasi; 409 matni oynada qoladi                               │
+│        – `<OrderDetailPage>`: snapshot narx izohi, xaridor havolasi;         │
+│          🔒 BRANCH_ADMIN naqdni tasdiqlaydi, karta to'lovini — yo'q;         │
+│          🔒 MANAGER'da tasdiqlash/biriktirish tugmasi yo'q; 404 →            │
+│          "Topilmadi" ("ruxsat" so'zi chiqmaydi)                              │
+│        🛡 Tekshirildi: `isManuallyConfirmable` ataylab buzilganda test yiqildi│
+│    • Task ro'yxatidagi qolgan qamrov ALLAQACHON bor edi (unit): API          │
+│      qatlami (`{data}`, ApiError, 401 → bitta refresh) — client.test,        │
+│      auth.test; rollar menyusi — navigation/permissions.test; lug'at —       │
+│      labels.test (openapi.json bilan); pul/sana — format.test; forma         │
+│      validatsiyasi (narx satr, MFO 5 raqam) — prices/settings.test           │
+│    • Jami: 51 fayl, 284 test — build/lint/test toza                          │
 │  Bog'liq: D-044                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-046 · E2E testlar (asosiy oqimlar) ───────────────────────────────────┐
+┌─ [x] D-046 · E2E testlar (asosiy oqimlar) ───────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Playwright, haqiqiy backendga qarshi (`vodiy-kafel-test` bazasi,        │
@@ -1560,11 +2166,49 @@
 │    10. 🔒 MANAGER zaxira sahifasini ochadi → maydonlar disabled              │
 │    11. Token eskirganda avtomatik yangilanadi, ish uzilmaydi                 │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Playwright (@playwright/test, Chromium) — `pnpm e2e`. Konfiguratsiya    │
+│      ikki serverni o'zi ko'taradi:                                           │
+│        – `e2e/start-api.mjs`: `vodiy-kafel-test` bazasiga migrate deploy +   │
+│          seed + build → API 3001-portda. 🔒 DATABASE_URL "vodiy-kafel-test"  │
+│          bo'lmasa to'xtaydi (dev bazasi tozalanib ketmaydi)                  │
+│        – dashboard vite 5175-portda, `VITE_API_URL` → 3001                   │
+│      Dev serverlar (3000, 5174) va dev bazasi ishlatilmaydi                  │
+│    • Bir martalik tayyorgarlik: `createdb vodiy-kafel-test`,                 │
+│      `pnpm exec playwright install chromium` (config izohida yozilgan)       │
+│    • Ssenariylar (11/11):                                                    │
+│        01-super-admin.spec.ts — 1 kirish/bosh sahifa, 2 mahsulot yaratish →  │
+│          ro'yxatda, 3 filial narxi (har yurishda noyob narx), 4 mijoz →      │
+│          parol faqat bir marta (✕, "Yopish", Esc — "saqladim"siz yopilmaydi; │
+│          parol sahifada, localStorage/sessionStorage va URL'da qolmaydi),    │
+│          5 qo'lda buyurtma → summa backenddan, 6 faqat ruxsat etilgan        │
+│          holat tugmalari (olib ketish yo'lida mashina qidirish yo'q),        │
+│          7 to'lov tasdig'i → mijoz hisobida SHU buyurtma bo'yicha To'lov     │
+│          yozuvi, 11 keshlanmagan so'rovga 401 → BITTA refresh → sahifa       │
+│          ishlashda davom etadi                                               │
+│        02-branch-roles.spec.ts — 8 BRANCH_ADMIN: Xodimlar bor, Moderatorlar  │
+│          tab'i va "Yangi moderator" yo'q; 9 begona (Andijon) mijoz kartasi   │
+│          URL orqali → "Topilmadi", "ruxsat" so'zi va nomi chiqmaydi;         │
+│          10 MANAGER: zaxira maydonlari disabled, "Saqlash" yo'q              │
+│    • ⚠ Backend auth cheklovi (10 so'rov/daqiqa, B-049): testlar ketma-ket,   │
+│      har rol bir marta kiradi, sahifalar orasida menyu orqali yuriladi;      │
+│      ikkinchi fayl oldidan 61 s kutiladi; "Juda ko'p so'rov" chiqsa login    │
+│      kutib qayta urinadi. Butun to'plam ~1,6 daqiqa                          │
+│    • 9-ssenariy: taskda "begona filial narxi URL'i" — narx uchun alohida     │
+│      sahifa yo'q, shuning uchun begona filial MIJOZ kartasi ishlatildi       │
+│    • `e2e/` va `playwright.config.ts` `tsconfig.node.json` ga qo'shildi —    │
+│      `pnpm build` ularni ham tip-tekshiradi; test-results `.gitignore` da    │
+│                                                                              │
+│  Tekshirildi: `pnpm e2e` serverlarsiz holatdan ikki marta to'liq yurgizildi  │
+│    — 11 passed (1,6 min); build/lint/unit test toza (284).                   │
+│    Yo'lda topilgan narsalar ilova xatosi EMAS edi (test kutish vaqti, pul    │
+│    formatidagi ingichka bo'shliq U+202F) — testlar tuzatildi.                │
 │  Bog'liq: D-045                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-047 · Build, muhit va deploy ─────────────────────────────────────────┐
+┌─ [x] D-047 · Build, muhit va deploy ─────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `.env.example` va muhit o'zgaruvchilari hujjatlashtiriladi              │
@@ -1575,29 +2219,70 @@
 │    • CORS: backend `APP_URL` ga dashboard domeni qo'shilishi kerakligi       │
 │      eslatiladi (bu — api/ tomondagi sozlama)                                │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • `.env.example` — production misoli va CORS eslatmasi; README'da         │
+│      muhit o'zgaruvchilari jadvali (`VITE_API_URL` — build paytida           │
+│      o'rnatiladi, brauzerga chiqadi, maxfiy kalit yozilmaydi)                │
+│    • Production build: marshrut darajasida chunk bo'lish (D-003 dan) —       │
+│      68 JS chunk. `pnpm size` (`scripts/check-bundle.mjs`) gzip              │
+│      chegaralarini tekshiradi va oshsa xato bilan chiqadi: kirish ≤ 130 KB,  │
+│      boshqa chunk ≤ 60 KB, JS jami ≤ 400 KB. Hozir: kirish 86,7 KB,          │
+│      jami 283 KB ✅                                                           │
+│    • `vercel.json` — SPA rewrite (`/assets`, `/fonts`, `favicon.svg`         │
+│      dan tashqari hammasi → index.html, storefront'dagi kabi), `/assets`     │
+│      uchun immutable kesh, xavfsizlik sarlavhalari (nosniff,                 │
+│      X-Frame-Options DENY, Referrer-Policy, Permissions-Policy)              │
+│    • README qayta yozildi: stack, baza → backend → dashboard tartibi,        │
+│      seed hisoblari, buyruqlar (`size`, `e2e`), `pnpm api:types` oqimi,      │
+│      testlar turlari, deploy va tuzilma                                      │
+│    • CORS: taskda "APP_URL" deyilgan, lekin backend kodi (app-config         │
+│      .service.ts) `CORS_ORIGINS` ni o'qiydi — README va .env.example         │
+│      to'g'ri o'zgaruvchini ko'rsatadi; production'da `*` qoldirilmaydi       │
+│    • oxlint: `scripts/**`, `e2e/**` da `console` ruxsat (CLI chiqishi)       │
+│    • build/lint/test/size toza                                               │
+│  ⚠ Haqiqiy Vercel deploy qilinmadi (hisob/domen yo'q) — konfiguratsiya       │
+│    JSON sifatida tekshirildi.                                                │
 │  Bog'liq: D-046                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-048 · Xavfsizlik yakuniy tekshiruvi                          🔒 ──────┐
+┌─ [x] D-048 · Xavfsizlik yakuniy tekshiruvi                          🔒 ──────┐
 │                                                                              │
 │  Tekshiriladi:                                                               │
-│    [ ] Token `localStorage` da saqlanishi qayta ko'rildi (D-006 qarori)      │
-│    [ ] Vaqtinchalik parol hech qayerda saqlanmaydi (kesh, log, URL)          │
-│    [ ] Hech bir sahifa `branchId` ni formadan yubormaydi (G5)                │
-│    [ ] Rolga ko'ra yashirilgan sahifa URL orqali ham ochilmaydi              │
+│    [x] Token `localStorage` da saqlanishi qayta ko'rildi (D-006 qarori)      │
+│    [x] Vaqtinchalik parol hech qayerda saqlanmaydi (kesh, log, URL)          │
+│    [x] Hech bir sahifa `branchId` ni formadan yubormaydi (G5)                │
+│    [x] Rolga ko'ra yashirilgan sahifa URL orqali ham ochilmaydi              │
 │        (ochilsa ham backend 403/404 beradi — ikkalasi tekshiriladi)          │
-│    [ ] 404 "ruxsat yo'q" deb ko'rsatilmaydi                                  │
-│    [ ] Foydalanuvchi kiritgan matn `dangerouslySetInnerHTML` ga tushmaydi    │
-│    [ ] Chiqishda barcha kesh tozalanadi (keyingi foydalanuvchi eski          │
+│    [x] 404 "ruxsat yo'q" deb ko'rsatilmaydi                                  │
+│    [x] Foydalanuvchi kiritgan matn `dangerouslySetInnerHTML` ga tushmaydi    │
+│    [x] Chiqishda barcha kesh tozalanadi (keyingi foydalanuvchi eski          │
 │        ma'lumotni ko'rmaydi)                                                 │
-│    [ ] `.env` da maxfiy kalit yo'q (VITE_ prefiksi HAMMASINI brauzerga       │
+│    [x] `.env` da maxfiy kalit yo'q (VITE_ prefiksi HAMMASINI brauzerga       │
 │        chiqaradi — bu yerga faqat API manzili yoziladi)                      │
-│    [ ] Bog'liqliklarda ma'lum zaiflik yo'q (`pnpm audit`)                    │
-│    [ ] Backend xato javobidagi `message` foydalanuvchiga ko'rsatilganda      │
+│    [x] Bog'liqliklarda ma'lum zaiflik yo'q (`pnpm audit`)                    │
+│    [x] Backend xato javobidagi `message` foydalanuvchiga ko'rsatilganda      │
 │        ichki ma'lumot (stack, SQL) chiqmasligi tekshirildi                   │
 │                                                                              │
 │  Natija: `docs/security-checklist.md` — dalillari bilan                      │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17) — natija: `docs/security-checklist.md`             │
+│    • 10 bandning hammasi dalil bilan tekshirildi (kod joyi, test yoki        │
+│      haqiqiy backend javobi); yuqoridagi ro'yxat [x] qilindi                 │
+│    • Tekshiruvda yopilgan kamchiliklar:                                      │
+│        – chiqishda kesh tozalanishi testlanmagan edi → session.test.ts       │
+│          (so'rov va mutatsiya keshi `tokenStore.clear()` dan keyin bo'sh)    │
+│        – `dist` ga `.env` dagi localhost API manzili yoziladi →              │
+│          vite.config.ts production build'da ogohlantiradi                    │
+│    • `branchId` yuboriladigan barcha joylar jadvali — faqat SUPER_ADMIN      │
+│      yoki API'dan kelgan qiymat; filial xodimida formada yo'q                │
+│    • Barcha karta/yaratish marshrutlari `RequireRole` ichida (skript bilan); │
+│      backend 403/404 rollar kesimida API orqali tasdiqlangan                 │
+│    • `pnpm audit` — zaiflik yo'q; `innerHTML`/`dangerouslySetInnerHTML` — 0  │
+│    • Ochiq tavsiyalar (bloklamaydi): refresh token → httpOnly cookie         │
+│      (backend), CSP sarlavhasi, production'da `CORS_ORIGINS` aniq domenlar   │
+│    • build/lint/test toza (52 fayl, 285 test)                                │
 │  Bog'liq: D-047                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -1657,26 +2342,27 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 48
-  Tugadi       : 20
-  Jarayonda    : 1
+  Tugadi       : 48
+  Jarayonda    : 0
   Bloklangan   : 0
 
   Epic bo'yicha:
     EPIC 0  Poydevor .................  8 / 8    [████████]   ✓ D-001 … D-008
     EPIC 1  Katalog ..................  7 / 7    [███████]   ✓ D-009 … D-015
-    EPIC 2  Narx va zaxira ...........  3 / 4    [███·]      ✓ D-016 … D-018 · D-019 D-022 ni kutadi
-    EPIC 3  Mijoz va moliya ..........  2 / 4    [██··]      ✓ D-020, D-021 · ~ D-022
-    EPIC 4  Buyurtmalar ..............  0 / 6    [······]
-    EPIC 5  Markaziy ombor ...........  0 / 3    [···]
-    EPIC 6  Filial/Hamkor/Xodim ......  0 / 4    [····]
-    EPIC 7  Yetkazib berish ..........  0 / 3    [···]
-    EPIC 8  Sozlamalar ...............  0 / 1    [·]
-    EPIC 9  Bosh sahifa va sifat .....  0 / 8    [········]
+    EPIC 2  Narx va zaxira ...........  4 / 4    [████]      ✓ D-016 … D-019
+    EPIC 3  Mijoz va moliya ..........  4 / 4    [████]      ✓ D-020 … D-023
+    EPIC 4  Buyurtmalar ..............  6 / 6    [██████]    ✓ D-024 … D-029
+    EPIC 5  Markaziy ombor ...........  3 / 3    [███]       ✓ D-030 … D-032
+    EPIC 6  Filial/Hamkor/Xodim ......  4 / 4    [████]      ✓ D-033 … D-036
+    EPIC 7  Yetkazib berish ..........  3 / 3    [███]       ✓ D-037 … D-039
+    EPIC 8  Sozlamalar ...............  1 / 1    [█]         ✓ D-040
+    EPIC 9  Bosh sahifa va sifat .....  8 / 8    [████████]  ✓ D-041 … D-048
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  D-022 · Mijoz kartasi → keyin D-019
-                 (D-019 "Bog'liq: D-022" — mijoz kartasidan keyin qaytiladi)
+  KEYINGI TASK:  yo'q — dashboard'dagi 48 taskning hammasi 2026-09-17 da yopildi.
+                 Qolgani: brauzerda qo'lda ko'rik (tasklarda ⚠ bilan belgilangan),
+                 api/task.txt B-062, B-063 va security-checklist tavsiyalari.
 
-  Backend TAYYOR (api/task.txt: 55/58, faqat B-050 bloklangan) — ya'ni
-  bu ro'yxatdagi hech bir task backendni kutmaydi. Boshlash mumkin.
+  Backend TAYYOR (api/task.txt: 58/63, B-050 bloklangan, B-062 va B-063
+  ochiq) — hech bir task backendni kutmaydi (ikkalasi yaxshilash).
   ──────────────────────────────────────────────────────────────────────────

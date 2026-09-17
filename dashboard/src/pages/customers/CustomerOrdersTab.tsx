@@ -4,8 +4,8 @@ import { DateText, MoneyText, StatusBadge } from '@/shared/ui';
 
 /**
  * "Buyurtmalar" tab (D-022): oxirgi 10 ta (kartadan). ⚠ `GET /admin/orders`
- * da `customerId` filtri yo'q — to'liq ro'yxatga login bo'yicha qidiruv
- * bilan o'tiladi.
+ * da `customerId` filtri yo'q — to'liq ro'yxatga KOMPANIYA NOMI bo'yicha
+ * qidiruv bilan o'tiladi (backend `search` login'ni qidirmaydi — D-024).
  */
 export default function CustomerOrdersTab() {
   const c = useCustomerOutlet();
@@ -13,7 +13,7 @@ export default function CustomerOrdersTab() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-medium">Oxirgi buyurtmalar</h3>
-        <Link to={`/orders?search=${encodeURIComponent(c.login)}`} className="text-sm text-muted hover:text-fg hover:underline">
+        <Link to={`/orders?search=${encodeURIComponent(c.companyName)}`} className="text-sm text-muted hover:text-fg hover:underline">
           Barcha buyurtmalar →
         </Link>
       </div>

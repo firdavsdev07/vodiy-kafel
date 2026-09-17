@@ -20,22 +20,8 @@ export const SCOPES_BY_DOMAIN = {
   TRANSPORT: ['ROUTE', 'ALL'],
 } as const satisfies Record<PricingDomain, readonly PricingScope[]>;
 
-export const domainLabel = {
-  PRODUCT: 'Mahsulot narxi',
-  TRANSPORT: 'Yo‘l kira',
-} as const satisfies Record<PricingDomain, string>;
-
-export const scopeLabel = {
-  PRODUCT: 'Aynan shu mahsulotga',
-  FACTORY: 'Shu zavodning barcha mahsulotiga',
-  ROUTE: 'Aynan shu yo‘nalishga',
-  ALL: 'Umumiy — barchasiga',
-} as const satisfies Record<PricingScope, string>;
-
-export const typeLabel = {
-  FIXED: 'Aniq narx (so‘m)',
-  PERCENT: 'Foiz',
-} as const satisfies Record<PricingValueType, string>;
+// Matnlar — yagona lug'atda (D-043); eski nomlar shu fayl foydalanuvchilari uchun
+export { pricingDomainLabel as domainLabel, pricingScopeLabel as scopeLabel, pricingValueTypeLabel as typeLabel } from '@/shared/lib/labels';
 
 /**
  * Narx zanjiri — ENG ANIQ qoida yutadi (api/CLAUDE.md qoida 11).

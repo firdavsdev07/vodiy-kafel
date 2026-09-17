@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 import { errorMessage, errorRequestId } from '@/shared/lib/error-message';
+import { commonText } from '@/shared/lib/labels';
 import { Button } from './Button';
 
 /**
@@ -32,7 +33,7 @@ export function ErrorState({
       )}
       {onRetry && (
         <Button size="sm" onClick={onRetry} pending={retrying}>
-          Qayta urinish
+          {commonText.retry}
         </Button>
       )}
     </div>

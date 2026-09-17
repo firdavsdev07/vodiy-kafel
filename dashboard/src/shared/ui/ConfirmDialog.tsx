@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { commonText } from '@/shared/lib/labels';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -13,8 +14,8 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmText = 'Tasdiqlash',
-  cancelText = 'Bekor qilish',
+  confirmText = commonText.confirm,
+  cancelText = commonText.cancel,
   danger = false,
   pending = false,
   error,

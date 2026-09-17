@@ -2,9 +2,13 @@ import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 're
 import { createBrowserRouter, type RouteObject } from 'react-router';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { RequireRole } from '@/features/auth/RequireRole';
+import RouteErrorPage from '@/pages/error/RouteErrorPage';
+// Kichik va xato sahifasi ham ishlatadi — alohida chunk shart emas
+import NotFoundPage from '@/pages/not-found/NotFoundPage';
 import { AppLayout } from './layout/AppLayout';
 import { RootLayout } from './layout/RootLayout';
-import { PERMISSIONS } from '@/shared/lib/permissions';
+import { PERMISSIONS, rolesForAny } from '@/shared/lib/permissions';
+import { useCan } from '@/features/auth/hooks';
 import { NAV_SECTIONS, type SectionId } from './navigation';
 
 /**
@@ -39,12 +43,18 @@ const CustomerProfileTab = lazy(() => import('@/pages/customers/CustomerProfileT
 const CustomerAccountTab = lazy(() => import('@/pages/customers/CustomerAccountTab'));
 const CustomerPricingTab = lazy(() => import('@/pages/customers/CustomerPricingTab'));
 const CustomerOrdersTab = lazy(() => import('@/pages/customers/CustomerOrdersTab'));
-const NotFoundPage = lazy(() => import('@/pages/not-found/NotFoundPage'));
+const SupplyOrderDetailPage = lazy(() => import('@/pages/supply-orders/SupplyOrderDetailPage'));
+const BranchSupplyOrderDetailPage = lazy(() => import('@/pages/supply-orders/BranchSupplyOrderDetailPage'));
+const SupplyOrderCreatePage = lazy(() => import('@/pages/supply-orders/SupplyOrderCreatePage'));
+const OrderCreatePage = lazy(() => import('@/pages/orders/OrderCreatePage'));
+const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 
 export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
+    // Oxirgi to'siq: layout'ning o'zi yiqilsa ham oq ekran bo'lmaydi (D-042)
+    errorElement: <RouteErrorPage />,
     children: [
       {
         path: 'login',
@@ -121,11 +131,61 @@ export const routes: RouteObject[] = [
               { path: 'orders', element: <CustomerOrdersTab /> },
             ],
           },
+          // Qo'lda buyurtma — telefon / Telegram (D-028)
+          {
+            path: 'orders/new',
+            element: (
+              <RequireRole roles={PERMISSIONS['orders.manage']}>
+                <OrderCreatePage />
+              </RequireRole>
+            ),
+            handle: { title: 'Yangi buyurtma' },
+          },
+          // Buyurtma kartasi (D-025) — ro'yxatdan va mijoz kartasidan kiriladi
+          {
+            path: 'orders/:id',
+            element: (
+              <RequireRole roles={PERMISSIONS['orders.manage']}>
+                <OrderDetailPage />
+              </RequireRole>
+            ),
+            handle: { title: 'Buyurtma' },
+          },
+          // Ta'minot buyurtmasi: markaz — karta + holat (D-031); do'kon filiali —
+          // yangi buyurtma va o'z buyurtmasi kartasi (D-032). Rollar kesishmaydi.
+          {
+            path: 'supply-orders/new',
+            element: (
+              <RequireRole roles={PERMISSIONS['supplyOrders.create']}>
+                <SupplyOrderCreatePage />
+              </RequireRole>
+            ),
+            handle: { title: 'Markazdan buyurtma' },
+          },
+          {
+            path: 'supply-orders/:id',
+            element: (
+              <RequireRole roles={rolesForAny('supplyOrders.review', 'supplyOrders.create')}>
+                <SupplyOrderDetailRoute />
+              </RequireRole>
+            ),
+            handle: { title: 'Ta’minot buyurtmasi' },
+          },
           { path: '*', element: <NotFoundPage />, handle: { title: 'Sahifa topilmadi' } },
-        ],
+          // Sahifa yiqilsa — xato shu sahifa o'rnida, yon menyu va yuqori panel saqlanadi (D-042)
+        ].map(withErrorElement),
       },
     ],
   },
 ];
+
+function withErrorElement(route: RouteObject): RouteObject {
+  return { ...route, errorElement: <RouteErrorPage /> } as RouteObject;
+}
+
+/** Bir URL, ikki tomon: markaz xodimi — boshqaruv kartasi, do'kon filiali — o'qish kartasi. */
+function SupplyOrderDetailRoute() {
+  return useCan('supplyOrders.review') ? <SupplyOrderDetailPage /> : <BranchSupplyOrderDetailPage />;
+}
 
 export const router = createBrowserRouter(routes);

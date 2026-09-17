@@ -1,25 +1,29 @@
-import { orderStatusLabel, paymentStatusLabel, stockStatusLabel } from '@/shared/lib/labels';
+import { orderStatusLabel, paymentStatusLabel, stockStatusLabel, transactionTypeLabel } from '@/shared/lib/labels';
 import {
   orderStatusTone,
   paymentStatusTone,
   stockStatusTone,
   toneClasses,
+  transactionTypeTone,
   type OrderStatus,
   type PaymentStatus,
   type StockStatus,
   type Tone,
+  type TransactionType,
 } from '@/shared/lib/status-tone';
 
 const kinds = {
   order: { tone: orderStatusTone, label: orderStatusLabel },
   payment: { tone: paymentStatusTone, label: paymentStatusLabel },
   stock: { tone: stockStatusTone, label: stockStatusLabel },
+  transaction: { tone: transactionTypeTone, label: transactionTypeLabel },
 } as const;
 
 interface ValueOf {
   order: OrderStatus;
   payment: PaymentStatus;
   stock: StockStatus;
+  transaction: TransactionType;
 }
 
 export type StatusKind = keyof ValueOf;

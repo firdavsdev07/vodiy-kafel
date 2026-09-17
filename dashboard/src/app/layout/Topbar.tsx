@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LogOut, Store } from 'lucide-react';
+import { LogOut, Menu, Store } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useLogout, useProfile } from '@/features/auth/hooks';
 import { api } from '@/shared/api';
@@ -8,7 +8,7 @@ import { queryKeys } from '@/shared/query';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
 
 /** Yuqori panel: sahifa sarlavhasi, filial, xodim, rejim, chiqish (D-003, D-006). */
-export function Topbar({ title }: { title: string }) {
+export function Topbar({ title, onOpenMenu }: { title: string; /** Telefonda — menyuni ochish (☰) */ onOpenMenu?: () => void }) {
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const logout = useLogout();
@@ -28,8 +28,20 @@ export function Topbar({ title }: { title: string }) {
       : (branch.data?.name ?? '…');
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b border-line bg-bg/90 px-6 backdrop-blur">
-      <h1 className="truncate text-md font-semibold">{title}</h1>
+    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur md:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        {onOpenMenu && (
+          <button
+            type="button"
+            onClick={onOpenMenu}
+            aria-label="Menyuni ochish"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-fg"
+          >
+            <Menu size={17} aria-hidden />
+          </button>
+        )}
+        <h1 className="truncate text-md font-semibold">{title}</h1>
+      </div>
       <div className="flex items-center gap-3">
         {branchText && (
           <span className="hidden items-center gap-1.5 rounded-md bg-surface-muted px-2.5 py-1 text-xs text-muted sm:inline-flex">

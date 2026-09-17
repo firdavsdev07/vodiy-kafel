@@ -4,6 +4,7 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import type { SortOrder } from '@/shared/lib/list-params';
 import { dataTableFeatures, type DataTableColumn } from './data-table';
+import { nextIndex } from '@/shared/lib/keyboard';
 import { ErrorState } from './ErrorState';
 
 export interface DataTableSort {
@@ -36,6 +37,7 @@ export function DataTable<T extends RowData>({
   skeletonRows = 8,
   footer,
   caption,
+  rowClassName,
 }: {
   columns: readonly DataTableColumn<T>[];
   data: readonly T[] | undefined;
@@ -56,6 +58,8 @@ export function DataTable<T extends RowData>({
   footer?: ReactNode;
   /** Ekran o'quvchi uchun jadval nomi */
   caption?: string;
+  /** Qatorni vizual ajratish (masalan tezkor buyurtma). Rang yagona signal bo'lmasin — katakda matn/belgi ham bo'lsin */
+  rowClassName?: (row: T) => string;
 }) {
   const navigate = useNavigate();
   const sorting: SortingState = sort?.sortBy
@@ -99,6 +103,17 @@ export function DataTable<T extends RowData>({
     } else onRowClick?.(row);
   };
 
+  // Klaviatura (D-044): Enter — ochish; ↑/↓, Home/End — qatorlar orasida fokus
+  const onRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, row: T) => {
+    if (event.key === 'Enter') return openRow(row, event);
+    const current = event.currentTarget;
+    const siblings = Array.from(current.parentElement?.querySelectorAll<HTMLTableRowElement>('tr[tabindex]') ?? []);
+    const target = nextIndex(event.key, siblings.indexOf(current), siblings.length);
+    if (target === null) return;
+    event.preventDefault();
+    siblings[target]?.focus();
+  };
+
   const headerGroups = table.getHeaderGroups();
   const columnCount = table.getAllLeafColumns().length;
   const rows = table.getRowModel().rows;
@@ -139,9 +154,9 @@ export function DataTable<T extends RowData>({
       <tr
         key={row.id}
         onClick={clickable ? (e) => openRow(row.original, e) : undefined}
-        onKeyDown={clickable ? (e) => e.key === 'Enter' && openRow(row.original, e) : undefined}
+        onKeyDown={clickable ? (e) => onRowKeyDown(e, row.original) : undefined}
         tabIndex={clickable ? 0 : undefined}
-        className={`border-b border-line last:border-0 ${clickable ? 'cursor-pointer hover:bg-surface-muted focus-visible:bg-surface-muted' : ''}`}
+        className={`border-b border-line last:border-0 ${clickable ? 'cursor-pointer hover:bg-surface-muted focus-visible:bg-surface-muted' : ''} ${rowClassName?.(row.original) ?? ''}`}
       >
         {row.getAllCells().map((cell) => (
           <td key={cell.id} className={`px-4 py-2.5 ${alignClass(cell.column.columnDef.meta?.align)}`}>

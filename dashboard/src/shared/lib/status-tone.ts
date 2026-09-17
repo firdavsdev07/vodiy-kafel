@@ -10,8 +10,12 @@ import type { Schema } from '@/shared/api/types';
 export type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 export type OrderStatus = Schema<'AdminOrderListItemDto'>['status'];
+export type OrderSource = Schema<'AdminOrderListItemDto'>['source'];
+export type OrderingType = Schema<'AdminOrderListItemDto'>['orderingType'];
+export type PaymentMethod = Schema<'AdminOrderPaymentDto'>['method'];
 export type PaymentStatus = Schema<'OrderPaymentDto'>['status'];
 export type StockStatus = Schema<'ProductStockSummaryDto'>['stockStatus'];
+export type TransactionType = Schema<'AccountTransactionAdminDto'>['type'];
 
 export const orderStatusTone = {
   NEW: 'info',
@@ -35,6 +39,16 @@ export const stockStatusTone = {
   LOW: 'warning',
   OUT_OF_STOCK: 'danger',
 } as const satisfies Record<StockStatus, Tone>;
+
+/**
+ * Hisob harakati (D-023): qarz — ogohlantirish, to'lov — yaxshi, tuzatish —
+ * neytral (ishorasi summadan ko'rinadi).
+ */
+export const transactionTypeTone = {
+  DEBT: 'warning',
+  PAYMENT: 'success',
+  ADJUSTMENT: 'neutral',
+} as const satisfies Record<TransactionType, Tone>;
 
 /** Ohang → Tailwind klasslari (tokenlar styles.css da). */
 export const toneClasses: Record<Tone, { badge: string; dot: string }> = {

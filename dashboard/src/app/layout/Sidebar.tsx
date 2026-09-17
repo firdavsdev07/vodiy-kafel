@@ -5,7 +5,9 @@ import { useProfile } from '@/features/auth/hooks';
 
 interface SidebarProps {
   collapsed: boolean;
-  onToggle: () => void;
+  /** Yo'q bo'lsa — yig'ish tugmasi ko'rsatilmaydi (planshetda menyu doim yig'ilgan) */
+  onToggle?: () => void;
+  toggleLabel?: string;
 }
 
 /**
@@ -13,7 +15,7 @@ interface SidebarProps {
  * bo'limlargina (D-007). Profil kelmaguncha skelet: yopiq bo'lim bir lahza
  * ham ko'rinib qolmasin. Yig'ilganda faqat ikonkalar.
  */
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, toggleLabel }: SidebarProps) {
   const role = useProfile().data?.role;
   const groups = role ? navGroupsForRole(role) : [];
 
@@ -66,16 +68,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ))}
       </nav>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label={collapsed ? 'Menyuni ochish' : 'Menyuni yig‘ish'}
-        aria-expanded={!collapsed}
-        className="flex h-11 items-center gap-3 border-t border-line px-5 text-sm text-muted hover:text-fg"
-      >
-        {collapsed ? <PanelLeftOpen size={17} aria-hidden /> : <PanelLeftClose size={17} aria-hidden />}
-        {!collapsed && <span>Yig‘ish</span>}
-      </button>
+      {onToggle && (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={toggleLabel ?? (collapsed ? 'Menyuni ochish' : 'Menyuni yig‘ish')}
+          aria-expanded={!collapsed}
+          className="flex h-11 items-center gap-3 border-t border-line px-5 text-sm text-muted hover:text-fg"
+        >
+          {collapsed ? <PanelLeftOpen size={17} aria-hidden /> : <PanelLeftClose size={17} aria-hidden />}
+          {!collapsed && <span>{toggleLabel ?? 'Yig‘ish'}</span>}
+        </button>
+      )}
     </aside>
   );
 }

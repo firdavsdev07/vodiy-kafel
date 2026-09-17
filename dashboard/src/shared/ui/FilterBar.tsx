@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
+import { commonText } from '@/shared/lib/labels';
 import { Button } from './Button';
 
 export const SEARCH_DEBOUNCE_MS = 350;
@@ -41,7 +42,7 @@ export function FilterBar({
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={onReset}>
           <X size={14} aria-hidden />
-          Tozalash
+          {commonText.reset}
         </Button>
       )}
       {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
@@ -80,6 +81,8 @@ function SearchInput({
       <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" aria-hidden />
       <input
         type="search"
+        data-page-search
+        aria-keyshortcuts="/"
         value={draft}
         placeholder={placeholder}
         onChange={(e) => setDraft(e.target.value)}
@@ -95,7 +98,7 @@ export function FilterSelect<V extends string>({
   value,
   onChange,
   options,
-  allLabel = 'Hammasi',
+  allLabel = commonText.all,
   loading = false,
 }: {
   label: string;
@@ -116,7 +119,7 @@ export function FilterSelect<V extends string>({
         onChange={(e) => onChange((e.target.value || undefined) as V | undefined)}
         className="h-9 min-w-40 disabled:opacity-60 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
       >
-        <option value="">{loading ? 'Yuklanmoqda…' : allLabel}</option>
+        <option value="">{loading ? commonText.loading : allLabel}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

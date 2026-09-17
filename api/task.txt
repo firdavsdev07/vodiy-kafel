@@ -2345,6 +2345,59 @@
 │  Bog'liq: B-013 (seed); dashboard D-007 (RBAC sinovi shuni kutadi)           │
 └──────────────────────────────────────────────────────────────────────────────┘
 
+┌─ [ ] B-062 · Moderator biriktirish uchun xodim tanlay olmaydi     🆕 ─────────┐
+│                                                                              │
+│  TOPILDI: dashboard D-027 (2026-09-17).                                      │
+│                                                                              │
+│  Muammo: `PATCH /admin/orders/{id}/assign` MODERATOR ga ochiq, lekin         │
+│  nomzodlar ro'yxati yo'q: `GET /admin/managers` — faqat SUPER_ADMIN va       │
+│  BRANCH_ADMIN (@Roles). Ya'ni moderator markaziy ombor buyurtmasini          │
+│  boshqa xodimga biriktira olmaydi — faqat O'ZIGA (id tokendan ma'lum).       │
+│  Qo'shimcha: `ASSIGNABLE_ROLES` = MANAGER, BRANCH_ADMIN, MODERATOR,          │
+│  `/admin/managers` esa faqat MANAGER qaytaradi — BRANCH_ADMIN ni hech        │
+│  kim ro'yxatdan tanlay olmaydi.                                              │
+│                                                                              │
+│  Nima qilinadi (taklif):                                                     │
+│    • `GET /admin/orders/{id}/assignable-staff` — buyurtma FILIALINING        │
+│      faol xodimlari, aynan `ASSIGNABLE_ROLES` bo'yicha (bitta manba).        │
+│      @Roles = assign bilan bir xil; begona filial — 404                      │
+│    • openapi:export → dashboard `pnpm api:types`                             │
+│                                                                              │
+│  Dashboard hozir: SUPER_ADMIN/BRANCH_ADMIN — `/admin/managers?branchId=`;    │
+│  MODERATOR — faqat "o'zimga biriktirish". Endpoint chiqqach                  │
+│  `features/orders/assign.ts` bitta manbaga o'tadi.                           │
+│  ⚠ Xulq-atvor o'zgarmaydi — faqat o'qish endpointi qo'shiladi.               │
+│  Bog'liq: B-030, B-043; dashboard D-027                                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] B-063 · Bosh sahifa statistikasi va zaxira holati filtri    🆕 ──────────┐
+│                                                                              │
+│  TOPILDI: dashboard D-041 (2026-09-17). ❓ dashboard 3-savol.                │
+│                                                                              │
+│  Muammo: statistika endpointi yo'q. Dashboard bosh sahifasi har              │
+│  kartochka uchun alohida `GET …?limit=1` yuborib `total` ni oladi —          │
+│  5–7 so'rov, faqat SON (summa, kunlik/oylik dinamika yo'q).                  │
+│  Qo'shimcha: `GET /admin/product-stocks` da `stockStatus` filtri yo'q —      │
+│  "kam qolgan mahsulotlar" sonini hammasini yuklamasdan olib bo'lmaydi        │
+│  (dashboard G10 buni taqiqlaydi), shuning uchun kartochka ko'rsatilmaydi.    │
+│                                                                              │
+│  Nima qilinadi (taklif):                                                     │
+│    • `GET /admin/dashboard/stats` — bitta so'rovda: yangi / tezkor /         │
+│      to'lanmagan buyurtmalar, bugungi va oylik buyurtma soni + summa,        │
+│      kam qolgan / tugagan mahsulotlar, qarzdor mijozlar                      │
+│    • 🔒 Filial izolyatsiyasi `BranchScopeService` orqali; SUPER_ADMIN        │
+│      uchun ixtiyoriy `branchId`                                              │
+│    • `GET /admin/product-stocks` ga `stockStatus` filtri (LOW,               │
+│      OUT_OF_STOCK) — chegara hisobi bilan bir xil (effectiveThreshold)       │
+│    • openapi:export → dashboard `pnpm api:types`                             │
+│                                                                              │
+│  Dashboard hozir: A varianti (`features/home/kpi.ts`) — endpoint             │
+│  chiqqach bitta so'rovga o'tadi, kartochkalar o'zgarmaydi.                   │
+│  ⚠ Mavjud xulq-atvor o'zgarmaydi — faqat o'qish qo'shiladi.                  │
+│  Bog'liq: B-030, B-054; dashboard D-041                                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  MIJOZDAN JAVOB KUTILAYOTGAN SAVOLLAR (bloklangan tasklar)                   ║
@@ -2372,9 +2425,9 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 61  (B-016 bekor; B-051...B-061 qo‘shildi — filial
+  Jami tasklar : 63  (B-016 bekor; B-051...B-063 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator +
-                 dashboard ishida topilgan uchta xato: B-059, B-060, B-061)
+                 dashboard ishida topilganlar: B-059 … B-063)
   Tugadi       : 58
   Jarayonda    : 0
   Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
@@ -2394,14 +2447,14 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat ....................  7 / 8    [███████·]  (B-059, B-060,
-                                                            B-061 qo‘shildi)
+    EPIC 11 Sifat ....................  7 / 10   [███████···] (B-059 … B-063
+                                                            qo‘shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  yo'q — backendda ochiq task qolmadi.
-                 Dashboard'ni kutayotgan hamma narsa (B-059 turlar,
-                 B-060 coverUrl, B-061 seed telefoni) 2026-09-17 da yopildi.
-                 Navbat dashboard'da: D-022 (mijoz kartasi) dan davom etadi.
+  KEYINGI TASK:  B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
+                 B-063 · Bosh sahifa statistikasi + zaxira holati filtri
+                 (ikkalasi dashboard ishida topildi; dashboard ularni
+                 KUTMAYDI — vaqtinchalik yechimlar bilan ishlaydi)
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
