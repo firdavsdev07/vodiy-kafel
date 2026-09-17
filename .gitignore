@@ -1,0 +1,101 @@
+# =============================================
+# Vodiy Kafel Monorepo — Root .gitignore
+# =============================================
+
+# -------------------- Dependencies --------------------
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# -------------------- Build output --------------------
+dist/
+build/
+dist-ssr/
+*.tsbuildinfo
+
+# -------------------- Environment variables --------------------
+.env
+.env.local
+.env.test
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# -------------------- Logs --------------------
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# -------------------- OS --------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# -------------------- IDE / Editor --------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# -------------------- Tests / Coverage --------------------
+coverage/
+.nyc_output/
+
+# -------------------- Runtime --------------------
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# -------------------- Diagnostic reports --------------------
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# -------------------- Prisma --------------------
+api/generated/
+prisma/*.js
+prisma/*.d.ts
+prisma/*.js.map
+
+# -------------------- Uploads --------------------
+uploads/
+uploads-e2e/
+
+# -------------------- Temp --------------------
+.temp/
+.tmp/
+*.local
+tmp/
+
+# -------------------- AI / Claude --------------------
+.claude/
+CLAUDE.md
+AGENTS.md
+
+
+# -------------------- Miscellaneous --------------------
+*.tgz
+*.tar.gz
+*.zip

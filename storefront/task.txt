@@ -1,0 +1,1083 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║           V O D I Y   K A F E L   —   S T O R E F R O N T                    ║
+║                     TASK RO'YXATI  (v1.0)                                    ║
+║                                                                              ║
+║   Stack : React 19 + Vite + Tailwind v4 + GSAP + Lenis (R3F — o'chiriladi)   ║
+║   Manba : mavjud kod auditi (2026-09-17) + api/openapi.json + Notion TZ      ║
+║   Doira : OCHIQ SAYT (chakana mijoz va mehmon). Admin panel — dashboard/.    ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ISHLASH TARTIBI                                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  1. Tasklar YUQORIDAN PASTGA ketma-ket. Bittada — bitta task.
+  2. [ ] → [~] (jarayonda) → [x] (tugadi).  Bloklangan bo'lsa → [!]
+  3. Har task tugagach: `pnpm build` + `pnpm lint` o'tishi SHART, hamda
+     o'zgargan ekran UCH kenglikda ko'z bilan tekshiriladi:
+     375px (telefon) · 900px (planshet/kichik noutbuk) · 1440px (desktop)
+  4. "Bog'liq" maydonidagi tasklar tugamagan bo'lsa — boshlanmaydi.
+  5. Backendda o'zgarish kerak bo'lsa — bu yerda qilinmaydi: `api/task.txt`
+     ga yangi task qo'shiladi va shu task bloklanadi.
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  BELGILAR                                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  [ ] bajarilmagan    [~] jarayonda    [x] tugadi    [!] bloklangan
+  🔒 huquqiy/xavfsizlik    ❓ qaror kerak    🆕 backendda task talab qiladi
+  📱 mobil muammo          ⚖️ litsenziya masalasi
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  AUDIT — 2026-09-17 (kod + brauzer, taxmin emas)                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Sayt ochildi va uch kenglikda tekshirildi. Topilganlar tasklarga
+  aylantirildi. Eng og'ir beshtasi:
+
+  1. 📱 MOBIL HEROda kompozitsiya BUZILGAN — salom pufagi yigitdan ~250px
+     yuqorida osilib qolgan (tumshug'i bo'shliqqa qaragan), yigit ekran
+     pastidan kesilgan, "2026 SELECTION" matni uning ustiga tushgan,
+     "OVOZ" tugmasi ko'kragini to'sib turadi.
+
+  2. MAYDA YOZUV o'lchandi: BOSH SAHIFANING O'ZIDA 14px dan kichik 22 ta
+     matn bor. `type-label` (12px + 0.22em harf oralig'i) butun saytda
+     ishlatiladi — TELEFON RAQAMI ham 12px, asosiy hero tugmasi 13px,
+     kirish ekranida esa 8px va hatto 6px matn bor.
+
+  3. KURSOR kechikishi sun'iy: `cursor: none` bilan HAQIQIY kursor
+     o'chirilgan, o'rniga 0.1s (nuqta) va 0.5s (halqa) kechikadigan
+     GSAP nusxasi chizilmoqda. Sichqoncha "sekin" tuyulishining sababi —
+     aynan shu, kompyuter sekinligi emas.
+
+  4. O'LIK KOD: butun 3D quyi tizimi (`src/three/*`, Stage, HeroSculpture,
+     MaterialSlab, MarbleMaterial) HECH QAYERDA import qilinmagan, lekin
+     `three` + `@react-three/*` hamon `package.json` da, `public/models/`
+     da 836 KB o'lik fayl yotibdi. Marquee, SceneBoundary, enquiry.js ham
+     ishlatilmaydi. (Bundle'ga kirmaydi — Vite tashlab yuboradi — lekin
+     o'rnatish, kod o'qish va texnik xizmatni og'irlashtiradi.)
+
+  5. ⚖️ BARCHA 43 TA MAHSULOT RASMI — Marazzi (Italiya) kompaniyasining
+     mualliflik huquqi himoyasidagi surati. Buni `ASSETS.md` ning o'zi
+     yozib qo'ygan: "commercial site oldidan ruxsat oling yoki
+     almashtiring". Sayt shu rasmlar bilan EFIRGA CHIQA OLMAYDI.
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  GLOBAL QOIDALAR                                                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  G1. CHAKANA MIJOZDA HISOB YO'Q
+      Ro'yxatdan o'tish, kirish, savatcha, checkout — YO'Q (api/CLAUDE.md §4).
+      Ochiq katalogda NARX ham, aniq zaxira soni ham KO'RSATILMAYDI —
+      faqat `AVAILABLE` / `UNAVAILABLE`. Bu — backend qoidasi, buzilmaydi.
+
+  G2. MA'LUMOT — API'DAN, MOCK'DAN EMAS
+      `src/data/*.js` vaqtinchalik. EPIC 5 tugagach mahsulot, filial,
+      hamkor, galereya — hammasi `api/` dan keladi. Yangi mock qo'shilmaydi.
+
+  G3. UCH KENGLIK — BIR XIL DARAJADA
+      375 / 900 / 1440. Mobil "ishlaydi" emas, DESKTOP BILAN BIR XIL
+      darajada chiroyli bo'lishi kerak (mijoz talabi, 2026-09-17).
+
+  G4. HARAKAT — SILLIQ VA TEZ
+      Animatsiya javob berishni SEKINLASHTIRMAYDI. Kursor, scroll va hover
+      16ms ichida javob beradi. Effekt uchun tezlik qurbon qilinmaydi.
+
+  G5. HARF O'LCHAMI — MINIMUM
+      Asosiy matn ≥ 16px. Ikkilamchi/label ≥ 13px. Bundan kichik matn
+      faqat dekorativ bo'lishi mumkin va MA'LUMOT tashimasligi kerak.
+      Telefon raqami, manzil, CTA — hech qachon 16px dan kichik emas.
+
+  G6. REDUCED MOTION — HURMAT QILINADI
+      `prefers-reduced-motion` yoqilganda: Lenis o'chadi, GSAP reveal'lari
+      yakuniy holatda ko'rsatiladi, kursor native holiga qaytadi.
+
+  G7. RASM — O'ZIMIZNIKI YOKI LITSENZIYALANGAN
+      Har bir rasm `ASSETS.md` da manbasi bilan yoziladi. Manbasi
+      noma'lum yoki begona kompaniyaniki bo'lsa — EFIRGA CHIQMAYDI.
+
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 0 — TOZALASH VA POYDEVOR                                               ║
+║  Maqsad: keraksizni olib tashlash va API'ga ulanishga tayyorgarlik.          ║
+║          Bu epicsiz qolgan ish eski yukni ortmoqlab yuradi.                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-001 · O'lik kodni va o'lik bog'liqliklarni olib tashlash ─────────────┐
+│                                                                              │
+│  TOPILDI (import izlab tekshirildi — hech qayerda ishlatilmaydi):            │
+│    • `src/three/` — BUTUN papka: Stage.jsx, HeroScene/HeroSculpture.jsx,     │
+│      MaterialScene/MaterialSlab.jsx, materials/MarbleMaterial.js             │
+│    • `src/components/ui/Marquee.jsx`, `SceneBoundary.jsx`                    │
+│    • `src/lib/enquiry.js`                                                    │
+│    • `public/models/` — 836 KB (ceramic-vase.glb 417 KB + vase/)             │
+│    • `public/icons.svg` — hech qayerda ishlatilmaydi                         │
+│    • `.ceramic-stage` CSS qoidalari (faqat o'lik SceneBoundary ishlatadi)    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Yuqoridagilar o'chiriladi                                               │
+│    • `package.json` dan: `three`, `@react-three/fiber`, `@react-three/drei`  │
+│    • `ASSETS.md` yangilanadi — hozir u "Stage.jsx ishlatadi" deb yozadi,     │
+│      bu ENDI TO'G'RI EMAS (doc drift)                                        │
+│    • `DESIGN.md` ham: unda hero'da "CC0 ceramic GLB" deyilgan, aslida        │
+│      endi u yerda salom beruvchi yigit surati turibdi                        │
+│                                                                              │
+│  ⚠ Bundle hajmi O'ZGARMAYDI (Vite ularni allaqachon tashlab yuboryapti,      │
+│    build 477 KB). Foyda boshqa: `pnpm install` yengillashadi, kod o'qish     │
+│    chalkashmaydi, yangi dasturchi yo'q 3D sahnani qidirib vaqt yo'qotmaydi.  │
+│                                                                              │
+│  ❓ Agar 3D kelajakda QAYTA kerak bo'lsa — o'chirishdan oldin ayting,        │
+│    git tarixida qoladi, lekin `package.json` dan chiqarish kerak baribir.    │
+│                                                                              │
+│  Natija: faqat haqiqatan ishlatiladigan kod qoladi                           │
+│  Bog'liq: —                                                                  │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-002 · Marshrut bo'yicha kod bo'linishi (code splitting) ──────────────┐
+│                                                                              │
+│  TOPILDI: `pnpm build` → BITTA `index.js` fayl, 477 KB (gzip 153 KB).        │
+│  Ya'ni bosh sahifaga kirgan odam Catalog, ProductDetail, About, Contact,     │
+│  Categories — HAMMASINI yuklab oladi, ochmasa ham.                           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `App.jsx` dagi sahifalar `React.lazy` + `<Suspense>` ga o'tkaziladi     │
+│    • GSAP ScrollTrigger va Lenis — faqat kerak bo'lganda yuklanadi           │
+│    • `build.rollupOptions.manualChunks` bilan vendor ajratiladi              │
+│    • Suspense fallback — bo'sh ekran emas, sayt ohangidagi skelet            │
+│                                                                              │
+│  Maqsad: birinchi ekran uchun JS ≤ 150 KB (gzip ≤ 55 KB)                     │
+│  Bog'liq: S-001                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-003 · Shriftlar: TTF → WOFF2 ─────────────────────────────────────────┐
+│                                                                              │
+│  TOPILDI: `public/fonts/` da 4 ta Manrope TTF, JAMI 384 KB                   │
+│  (har biri ~95 KB). `index.html` faqat `manrope-400` ni preload qiladi,      │
+│  lekin CSS baribir to'rttasini ham so'raydi.                                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • WOFF2 ga o'tkaziladi — taxminan 384 KB → ~110 KB (≈70% kamayadi)        │
+│    • `font-display: swap` saqlanadi (bor)                                    │
+│    • Haqiqatan kerakli og'irliklar aniqlanadi — hozir 400/500/600/700        │
+│      to'rttasi yuklanadi; 500 yoki 600 dan biri yetishi mumkin               │
+│    • Faqat lotin + o'zbek belgilari uchun subset qilinadi                    │
+│    • OFL litsenziyasi (`OFL.txt`) joyida qoladi — SIL OFL talabi             │
+│                                                                              │
+│  Bog'liq: S-002                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-004 · Muhit va API qatlami ───────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `.env.example`: `VITE_API_URL=http://localhost:3000/api/v1`             │
+│    • `src/shared/api/` — yupqa `fetch` wrapper:                              │
+│        – `{ data, meta }` o'ramini OCHADI (backend hamma javobni shunday     │
+│          qaytaradi — `api/docs/error-codes.md`)                              │
+│        – xatoni `ApiError` ga aylantiradi (statusCode, message, requestId)   │
+│        – `AbortSignal` qo'llab-quvvatlaydi (sahifa almashsa so'rov bekor)    │
+│    • ⚠ TOKEN YO'Q — ochiq katalog autentifikatsiya talab qilmaydi (G1).      │
+│      `Authorization` sarlavhasi bu paketda UMUMAN ishlatilmaydi              │
+│    • Server holati uchun yengil yechim: `useSyncExternalStore` yoki kichik   │
+│      kesh. ⚠ TanStack Query SHART EMAS — bu ochiq, asosan o'qish uchun       │
+│      sayt; dashboard'dan farqli, bu yerda mutatsiya deyarli yo'q             │
+│                                                                              │
+│  Bog'liq: S-002                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 1 — TIPOGRAFIKA VA O'QILISHI                                           ║
+║  Maqsad: mijozning "juda mayda yozuv" shikoyati. O'lchab tasdiqlandi.        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-005 · Tipografika shkalasini qayta qurish ────────────────────────────┐
+│                                                                              │
+│  O'LCHANDI (bosh sahifa, 900px kenglik) — 14px dan kichik 22 ta matn:        │
+│                                                                              │
+│    8.4px  — `®` belgisi                                                      │
+│    10px   — "Assalomu alaykum — xush kelibsiz" (`hero-drag`)                 │
+│    12px   — `type-label` — BUTUN SAYT BO'YLAB, jumladan:                     │
+│               · TELEFON RAQAMI  "+998 91 129 66 66"  ← konversiya elementi!  │
+│               · "Vodiy Kafel®" logotipi, "Menyu" tugmasi                     │
+│               · "Butun katalog", "Xaritada ko'rish" — CTA havolalar          │
+│               · Ish vaqti, footer, bo'lim raqamlari                          │
+│    13px   — `hero-link` "Kolleksiyalarni ko'rish" ← asosiy hero CTA          │
+│                                                                              │
+│    Kirish ekranida bundan ham yomon (`index.css`):                           │
+│       `.entry-top` 9px · `.entry-eyebrow` 8px · `.entry-bottom p` 8px        │
+│       va MOBILDA `.entry-bottom p` → 6px                                     │
+│                                                                              │
+│  ⚠ Muammo faqat o'lchamda emas: `type-label` da `letter-spacing: 0.22em`     │
+│    + `text-transform: uppercase`. 12px BOSH HARF + keng oraliq — bu          │
+│    o'lchamdagi eng qiyin o'qiladigan kombinatsiya.                           │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Shkala qayta quriladi (`--text-label: 0.75rem` → ≥ 0.8125rem/13px)      │
+│    • Ma'lumot tashiydigan matn ≥ 13px, asosiy matn ≥ 16px (G5)               │
+│    • Telefon, manzil, CTA — ≥ 16px va `type-label` dan CHIQARILADI           │
+│    • 6px va 8px matnlar butunlay olib tashlanadi                             │
+│    • `letter-spacing` kichik o'lchamlarda kamaytiriladi                      │
+│    • Mobilda alohida shkala — desktopdagi "nozik" o'lcham mobilda ishlamaydi │
+│                                                                              │
+│  Natija: 14px dan kichik MA'LUMOTLI matn saytda qolmaydi                     │
+│  Bog'liq: S-001                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-006 · Kontrast va o'qilish auditi ────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Palitra kontrast bo'yicha tekshiriladi — `clay` (#71685E) `bone`        │
+│      (#EEECE5) ustida ≈ 5:1 (AA o'tadi), lekin `stone` (#D8D3C8) ustida      │
+│      ≈ 2.9:1 — AA dan PAST. Qayerda shunday juftlik borligi topiladi         │
+│    • Rasm ustidagi matn: gradient/qoplama bilan kafolatlangan kontrast       │
+│    • Fokus ko'rinishi: hozir `:focus-visible { outline: 2px solid            │
+│      currentColor; outline-offset: 6px }` — och fonda ko'rinmay qolishi      │
+│      mumkin, tekshiriladi                                                    │
+│    • Qator uzunligi 75 belgidan oshmasligi                                   │
+│                                                                              │
+│  Natija: hujjatlashtirilgan kontrast jadvali (`DESIGN.md` ga)                │
+│  Bog'liq: S-005                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 2 — HERO VA SALOM BERUVCHI YIGIT                                       ║
+║  Maqsad: mijoz aniq ko'rsatgan kamchilik — kesilish va o'ngga surilish.      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-007 · Greeter kompozitsiyasi — kesilish va o'ngga surilish ───────────┐
+│                                                                              │
+│  TOPILDI (900×700 da ko'z bilan tasdiqlandi):                                │
+│    • Yigit ekran pastidan QATTIQ kesilgan — oyoqlari yo'q, pastdagi          │
+│      18% gradient niqob yetarli emas                                         │
+│    • O'ng tomonga shunchalik surilganki, yelkasi ekrandan chiqib ketgan      │
+│    • Pastga tushirish tugmasi (dumaloq strelka) uning orqasida qolgan        │
+│    • "ASSALOMU ALAYKUM — XUSH KELIBSIZ" matni qo'liga tushgan                │
+│    • "OVOZ O'CHIQ" suzuvchi tugmasi ko'kragida turibdi (S-013)               │
+│                                                                              │
+│  SABABI (`src/styles/index.css:76-80`):                                      │
+│      .hero-greeter { top:112px; right:2.5vw; width:min(47vw,610px);          │
+│                      height:calc(100svh - 112px); min-height:560px;          │
+│                      overflow:hidden }                                       │
+│      .hero-greeter img { right:0; bottom:-12%; width:82% }                   │
+│    `bottom:-12%` rasmni idishdan pastga chiqaradi, `overflow:hidden`         │
+│    esa uni qaychilab tashlaydi. `min-height:560px` past ekranda              │
+│    `calc(100svh-112px)` bilan urishadi.                                      │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Kadrlash qayta o'ylanadi: yigit BELIDAN yuqorisi ko'rinadigan,          │
+│      ataylab qo'yilgan kesim (tasodifiy emas) yoki to'liq sig'adigan         │
+│      kompozitsiya. `bottom:-12%` + `overflow:hidden` juftligi yo'qotiladi    │
+│    • O'ng chekka: `right` qiymati kontent maydoni bilan hisoblanadi,         │
+│      yelka hech qachon ekrandan chiqmaydi                                    │
+│    • Pastki gradient niqob kuchaytiriladi yoki butunlay olib tashlanadi      │
+│    • Yigit va hero-bottom elementlari BIR-BIRINI TO'SMAYDI — z-index va      │
+│      joylashuv qayta chiziladi                                               │
+│                                                                              │
+│  Tekshirish: 375 / 768 / 900 / 1024 / 1280 / 1440 / 1920 — hammasida         │
+│  Bog'liq: S-005                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-008 · Oraliq kengliklar (768–1280px) — "yo'q joy" ────────────────────┐
+│                                                                              │
+│  TOPILDI: `index.css` da FAQAT `max-width: 767px` breakpointi bor.           │
+│  768px dan 1280px gacha bo'lgan oraliqda desktop kompozitsiyasi              │
+│  shunchaki siqiladi — planshet, kichik noutbuk, yarim ekran brauzer          │
+│  hammasi shu "yo'q joy" ga tushadi. Aynan mijoz aytgan "ekran                │
+│  kichraysa" holati shu.                                                      │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Breakpoint tizimi kiritiladi: 480 / 768 / 1024 / 1280                   │
+│    • Hero: 768–1024 oralig'i uchun ALOHIDA kompozitsiya (matn va yigit       │
+│      yonma-yon emas, balki ustma-ust yoki boshqa nisbatda)                   │
+│    • `hero-copy { max-width: 60% }` — oraliqda 60% juda tor, qayta           │
+│      hisoblanadi                                                             │
+│    • `.hero-object-label`, `.hero-bottom`, `.hero-swatch` — oraliqda         │
+│      qayerga tushishi aniq belgilanadi                                       │
+│                                                                              │
+│  Bog'liq: S-007                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-009 · 📱 Mobil hero — pufak va yigit bog'lanishi ─────────────────────┐
+│                                                                              │
+│  TOPILDI (375×812 da):                                                       │
+│    • "Assalomu alaykum!" pufagi y≈980px da, yigitning boshi y≈1230px da      │
+│      — ORASIDA ~250px BO'SHLIQ. Pufakning tumshug'i hech kimga               │
+│      qaramaydi, bo'shliqqa ishora qiladi                                     │
+│    • Yigit ekran pastidan kesilgan va o'ngga surilgan                        │
+│    • "2026 SELECTION / Tabiiy ohang" matni uning ustiga tushib, o'qib        │
+│      bo'lmaydigan holga kelgan                                               │
+│    • Hero balandligi `min-height: 1050px` — telefon ekranining ~1.3 barobari │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Pufak yigitning boshiga BOG'LANADI (bitta kompozitsion blok),           │
+│      ikkisi hech qachon ajralmaydi                                           │
+│    • Mobil uchun hero qayta chiziladi: sarlavha → yigit+pufak → CTA,         │
+│      aniq ketma-ketlikda, ustma-ust tushmasdan                               │
+│    • `min-height: 1050px` olib tashlanadi — kontent balandlikni o'zi         │
+│      belgilaydi                                                              │
+│    • Swatch va telefon bloki yigit bilan urishmaydigan joyga o'tadi          │
+│                                                                              │
+│  Bog'liq: S-007, S-011                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 3 — 📱 RESPONSIVE DIZAYN                                               ║
+║  Maqsad: mijoz: "desktop yaxshi, mobil juda yomon, joziba yo'qolgan".        ║
+║          Mobil — ikkinchi darajali emas, teng darajada chiroyli bo'ladi.     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-010 · Breakpoint va tartib tizimi ────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Yagona breakpoint to'plami: 480 / 768 / 1024 / 1280 (S-008)             │
+│    • Bir marta belgilangan gutter/spacing shkalasi — hozir har joyda         │
+│      o'z qiymati (`5vw`, `6vw`, `7vw`, `clamp(1.25rem,4vw,4.5rem)`)          │
+│    • `svh`/`dvh` ishlatilishi tekshiriladi — mobil brauzer paneli            │
+│      ochilib-yopilganda sakrash bo'lmasligi uchun                            │
+│    • Gorizontal scroll HECH QAYERDA bo'lmasligi (hozir `body` da             │
+│      `overflow-x: hidden` bor — bu muammoni YASHIRADI, tuzatmaydi:           │
+│      sabab topilib, o'zi tuzatiladi)                                         │
+│                                                                              │
+│  Bog'liq: S-008                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-011 · 📱 Mobil hero qayta dizayni ────────────────────────────────────┐
+│                                                                              │
+│  S-009 dagi muammolar asosida hero mobil uchun QAYTA chiziladi —             │
+│  desktop tartibini siqish emas, alohida kompozitsiya.                        │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Bitta ekranga sig'adigan, aniq ierarxiyali kompozitsiya                 │
+│    • Sarlavha o'lchami mobil uchun qayta hisoblanadi                         │
+│    • Yigit — kompozitsiyaning bir qismi, tasodifiy kesilgan rasm emas        │
+│    • Pastga tushirish ishorasi ko'rinadigan joyda                            │
+│                                                                              │
+│  Bog'liq: S-009, S-010                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-012 · 📱 Mobil katalog va mahsulot sahifasi ──────────────────────────┐
+│                                                                              │
+│  TOPILDI (375px, `/catalog`):                                                │
+│    • Filtr tugmalari qatori gorizontal chiqib ketgan — "KERAMIKA" yarim      │
+│      kesilgan, davomi ko'rinmaydi va scroll qilish mumkinligi bilinmaydi     │
+│    • "OVOZ O'CHIQ" tugmasi mahsulot nomini ("Calacatta Natural") to'sgan     │
+│    • Mahsulot meta matnlari ("01 / MARBLE STUDY" va "MARMAR EFFEKT")         │
+│      tor ekranda bir-biriga tiqilgan                                         │
+│    • Bitta ustun, juda baland kartochkalar — ko'p scroll, kam mahsulot       │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Filtr qatori: scroll ko'rsatkichi (fade/strelka) yoki o'ralib           │
+│      tushadigan chiplar; aktiv filtr har doim ko'rinadi                      │
+│    • Mobilda 2 ustunli grid varianti sinaladi                                │
+│    • Mahsulot kartochkasi meta qismi qayta joylashtiriladi                   │
+│    • Mahsulot sahifasi: galereya, xususiyatlar jadvali, CTA — mobil uchun    │
+│                                                                              │
+│  Bog'liq: S-010                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-013 · Suzuvchi elementlar kontentni to'smasligi ──────────────────────┐
+│                                                                              │
+│  TOPILDI: "OVOZ O'CHIQ" tugmasi `position: fixed` va HAR SAHIFADA            │
+│  kontentni to'sadi — hero'da yigitning ko'kragida, katalogda mahsulot        │
+│  nomining ustida. Suzuvchi navigatsiya (`.floating-nav`) ham shunga yaqin.   │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Suzuvchi elementlar uchun "xavfsiz zona" belgilanadi                    │
+│    • Kontent konteynerlariga mos `padding-bottom` beriladi                   │
+│    • Mobilda ovoz tugmasi menyuga ko'chiriladi yoki kichraytiriladi          │
+│    • `env(safe-area-inset-bottom)` hisobga olinadi (iPhone)                  │
+│                                                                              │
+│  Bog'liq: S-012                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-014 · 📱 Mobil menyu va navigatsiya ──────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • To'liq ekranli menyu mobilda tekshiriladi: ochilish/yopilish,           │
+│      scroll qulfi, orqaga tugmasi bilan yopilishi                            │
+│    • Menyu ochiqligida fon scroll qilinmasligi (Lenis bilan ziddiyat         │
+│      bo'lmasligi — `lenis-stopped` klassi bor, ishlashi tekshiriladi)        │
+│    • Fokus tuzog'i (focus trap) va `Esc` bilan yopish                        │
+│    • Joriy sahifa menyuda belgilanadi                                        │
+│                                                                              │
+│  Bog'liq: S-013                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-015 · Touch maqsadlari va mobil qulaylik ─────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Barcha bosiladigan element ≥ 44×44px (hozir 12px matnli havolalar       │
+│      bor — barmoq bilan tegish qiyin)                                        │
+│    • Hover'ga BOG'LIQ ma'lumot bo'lmasligi — telefonda hover yo'q            │
+│    • `:active` holati sezilarli bo'lishi (bosildi degan javob)               │
+│    • Formalarda to'g'ri `inputmode`/`autocomplete` (telefon, email)          │
+│                                                                              │
+│  Bog'liq: S-014                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 4 — HARAKAT, TEZLIK VA GSAP                                            ║
+║  Maqsad: mijoz: "sichqoncha sekin, silliq va tez bo'lishi kerak" +           ║
+║          "GSAP imkoniyatlarini yanada rivojlantirish kerak".                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-016 · Kursor kechikishini yo'qotish ──────────────────────────────────┐
+│                                                                              │
+│  SABAB TOPILDI — kompyuter sekin emas, kechikish ATAYLAB qo'yilgan:          │
+│    • `index.css`: `html[data-cursor='on'] *  { cursor: none !important }`    │
+│      — HAQIQIY kursor butunlay o'chirilgan                                   │
+│    • `Cursor.jsx`: uning o'rniga chiziladigan nusxa GSAP `quickTo` bilan     │
+│      kechikadi — nuqta 0.1s (`ease:'none'`), halqa 0.5s (`power3.out`)       │
+│    → Foydalanuvchi ko'radigan yagona kursor 100ms orqada suzadi.             │
+│      Aynan shu "sekin" hissini beradi.                                       │
+│                                                                              │
+│  Nima qilinadi (bir nechta yo'l, bittasi tanlanadi):                         │
+│    A) Nuqta kechikishi 0 ga tushiriladi — nuqta AYNAN kursor joyida,         │
+│       faqat halqa ortda suzadi (eng kam o'zgarish, katta samara)             │
+│    B) Nuqta umuman olib tashlanadi, native kursor QAYTARILADI, faqat         │
+│       halqa qo'shimcha effekt sifatida qoladi                                │
+│    C) Custom kursor butunlay olib tashlanadi                                 │
+│    → Tavsiya: A yoki B. Native kursor har doim 0ms — uni yengib              │
+│      bo'lmaydi, faqat unga qo'shimcha qilish mumkin.                         │
+│                                                                              │
+│  Qo'shimcha: `pointerover` hodisasida HAR SAFAR `closest('[data-cursor]')`   │
+│  chaqiriladi — bu DOM bo'ylab yuqoriga yurish, har harakatda. Keshlanadi.    │
+│                                                                              │
+│  ⚠ Touch qurilmada kursor allaqachon o'chirilgan (`useIsTouch`) — to'g'ri.   │
+│                                                                              │
+│  Bog'liq: S-002                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-017 · Scroll silliqligi (Lenis) sozlash ──────────────────────────────┐
+│                                                                              │
+│  Hozir (`src/lib/lenis.js`): `duration: 1.15`, eksponensial easing,          │
+│  `smoothWheel: true`, `syncTouch: false`.                                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `duration` sinab ko'riladi — 1.15s "og'ir" tuyulishi mumkin;            │
+│      0.8–1.0 oralig'i tezroq va baribir silliq                               │
+│    • Scroll javob berishi o'lchanadi (g'ildirak → harakat boshlanishi)       │
+│    • Mobilda Lenis KERAKMI — hozir `syncTouch:false`, ya'ni telefonda        │
+│      native scroll ishlaydi. Shuni saqlash tavsiya etiladi (native           │
+│      momentum har doim yaxshiroq)                                            │
+│    • `prefersReducedMotion` da Lenis umuman ishga tushmaydi — bor, saqlanadi │
+│                                                                              │
+│  Bog'liq: S-016                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-018 · GSAP/ScrollTrigger ishlashini optimallashtirish ────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Barcha ScrollTrigger'lar ro'yxatga olinadi; sahifa almashganda          │
+│      `kill()` qilinishi tekshiriladi (aks holda to'planib boradi)            │
+│    • `will-change` faqat animatsiya paytida qo'yiladi — doimiy               │
+│      `will-change` xotira yeydi (hozir `Cursor.jsx` da doimiy)               │
+│    • Faqat `transform` va `opacity` animatsiya qilinadi (layout emas)        │
+│    • `ScrollTrigger.refresh()` rasm yuklangach chaqirilishi — aks holda      │
+│      trigger nuqtalari noto'g'ri joyda qoladi                                │
+│    • Bir vaqtda ishlayotgan animatsiyalar soni cheklanadi                    │
+│                                                                              │
+│  O'lchov: scroll paytida 60 FPS (Performance panelida tasdiqlanadi)          │
+│  Bog'liq: S-017                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-019 · GSAP imkoniyatlarini kengaytirish (yangi effektlar) ────────────┐
+│                                                                              │
+│  Mijoz talabi: "GSAP dan yanada yaxshiroq, kerakli imkoniyatlarini           │
+│  rivojlantirish kerak".                                                      │
+│                                                                              │
+│  Hozir bor: `useReveal` (ScrollTrigger reveal), `useParallax`,               │
+│  kirish ekrani sekvensiyasi, `r-line`/`r-fade`/`r-clip`/`r-zoom`.            │
+│                                                                              │
+│  Qo'shilishi mumkin (har biri alohida baholanadi, hammasi emas):             │
+│    • Sahifalararo o'tish (page transition) — hozir keskin almashadi          │
+│    • Mahsulot rasmiga bosganda silliq kengayish (Flip plugin)                │
+│    • Matn bo'yicha harf/so'z darajasida reveal (SplitText — PULLIK,          │
+│      ❓ qarang: bepul muqobil — qo'lda `<span>` ga bo'lish)                  │
+│    • Gorizontal kolleksiya lentasi uchun yaxshiroq scroll bog'lanishi        │
+│    • Kursor yaqinlashganda tugmalarning magnit effekti                       │
+│    • Rasmlar uchun ketma-ket (stagger) paydo bo'lish                         │
+│                                                                              │
+│  ⚠ QOIDA: har bir yangi effekt G4 ga bo'ysunadi — tezlikni                   │
+│    sekinlashtirsa, effekt olib tashlanadi. Avval S-016..S-018 tugaydi        │
+│    (tez poydevor), keyin effekt qo'shiladi.                                  │
+│                                                                              │
+│  ⚠ GSAP litsenziyasi: standart plaginlar bepul, lekin SplitText,             │
+│    MorphSVG kabilari Club GreenSock talab qiladi — tanlashdan oldin          │
+│    tekshiriladi.                                                             │
+│                                                                              │
+│  Bog'liq: S-018                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-020 · Reduced motion va past quvvatli qurilmalar ─────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `prefers-reduced-motion` da: Lenis o'chadi (bor), GSAP reveal'lari      │
+│      yakuniy holatda (bor), kursor native holiga qaytadi (YO'Q — qo'shiladi) │
+│    • Past quvvatli qurilma aniqlansa (`navigator.hardwareConcurrency`,       │
+│      `deviceMemory`) og'ir effektlar o'chiriladi                             │
+│    • Batareya tejash rejimi hisobga olinadi                                  │
+│                                                                              │
+│  Bog'liq: S-019                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 5 — BACKENDGA ULASH                                                    ║
+║  Maqsad: mock ma'lumotdan haqiqiy API'ga o'tish. Eng katta blok.             ║
+║          Backend TAYYOR — `api/openapi.json`, 92 endpoint.                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-021 · ❓ QAROR: kategoriya / kolleksiya / finish — backendda YO'Q ────┐
+│                                                                              │
+│  ⚠ BU TASK BOSHQA HAMMASINI BELGILAYDI — birinchi hal qilinadi.              │
+│                                                                              │
+│  TOPILDI — storefront ma'lumot tuzilishi backend bilan MOS EMAS:             │
+│                                                                              │
+│    Storefront mock'da bor          | Backend API'da                          │
+│    --------------------------------|---------------------------------        │
+│    `category` (8 ta: marmar-effekt,| YO'Q. Eng yaqini — `factory`            │
+│     tosh-effekt, keramogranit,     | (zavod) va `surface` (FAQAT             │
+│     keramika, devor/pol-uchun,     | ikki qiymat: POL | DEVOR)               │
+│     premium, outdoor)              |                                         │
+│    `collection` (Marble Study,     | YO'Q                                    │
+│     Earth Collection, Atelier…)    |                                         │
+│    `finish` (Polished, Satin,      | YO'Q                                    │
+│     Matte, Glossy, Structured)     |                                         │
+│    `thickness` (9mm / 20mm)        | YO'Q                                    │
+│    `size` — satr "120 × 60"        | `size` — OBYEKT (ProductSizeRefDto)     │
+│                                                                              │
+│    Backendda bor, saytda ko'rsatilmaydi: `sqmPerPallet`,                     │
+│    `weightPerPallet`, `availability` (AVAILABLE|UNAVAILABLE)                 │
+│                                                                              │
+│  ⚠ Saytda BUTUN BOSHLI ikkita sahifa (`/categories`,                         │
+│    `/categories/:slug`) shu mavjud bo'lmagan `category` ustiga qurilgan.     │
+│                                                                              │
+│  Uch yo'l:                                                                   │
+│    A) Sayt IA'si backendga moslashtiriladi: "Kategoriyalar" → "Zavodlar"     │
+│       (`/factories`) + "Pol / Devor" (`surface`). Backendga tegilmaydi,      │
+│       lekin marketing tuzilishi yo'qoladi                                    │
+│    B) 🆕 Backendga `Category` (va ehtimol `collection`, `finish`) modeli     │
+│       qo'shiladi — `api/task.txt` ga yangi task. To'g'riroq, lekin           │
+│       backend ishini talab qiladi va admin panelga ham CRUD kerak            │
+│    C) Aralash: `surface` + `factory` dan "virtual" kategoriya yasaladi       │
+│                                                                              │
+│    → Tavsiya: B, lekin bu MIJOZ QARORI — kategoriyalar marketing uchunmi     │
+│      yoki shunchaki mock uchun o'ylab topilganmi, shuni aniqlash kerak.      │
+│                                                                              │
+│  Bog'liq: S-004                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-022 · Katalog → `GET /products` ──────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /products`                                                   │
+│    Query: `page`, `limit`, `sortBy`, `sortOrder`, `factoryId`, `sizeId`,     │
+│           `surface`, `search`                                                │
+│    Javob (`ProductListItemResponseDto`): `id`, `name`, `slug`, `factory`,    │
+│           `size`, `surface`, `color`, `sqmPerPallet`, `weightPerPallet`,     │
+│           `primaryImageUrl`, `availability`                                  │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `src/data/products.js` o'rniga API chaqiruvi                            │
+│    • Sahifalash — `meta` dagi `total`/`totalPages` bilan ("ko'proq           │
+│      yuklash" yoki sahifa raqamlari)                                         │
+│    • 🔒 NARX YO'Q, ZAXIRA SONI YO'Q — faqat `availability` (G1)              │
+│    • Saralash: `name`, `createdAt`, `viewCount` (narx bo'yicha YO'Q —        │
+│      narx `Product` da emas)                                                 │
+│                                                                              │
+│  ⚠ `color`, `primaryImageUrl`, `description` OpenAPI'da `object` bo'lib      │
+│    chiqmoqda — bu `api` B-059 xatosi (nullable maydonlar turini              │
+│    yo'qotgan). Dashboard ham shunga duch kelgan. B-059 tugagach              │
+│    qayta tekshiriladi.                                                       │
+│                                                                              │
+│  Bog'liq: S-021                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-023 · Mahsulot sahifasi → `GET /products/{slug}` ─────────────────────┐
+│                                                                              │
+│  Endpointlar:                                                                │
+│    `GET /products/{slug}`          — `ProductDetailResponseDto`              │
+│                                       (+ `description`, `media[]`)           │
+│    `GET /products/{slug}/similar`  — o'xshash mahsulotlar                    │
+│    `POST /products/{slug}/view`    — ko'rishlar hisoblagichi                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mahsulot sahifasi API'dan to'ldiriladi                                  │
+│    • `media[]` — galereya (IMAGE / IMAGE_360 / VIDEO_360 turlari bor,        │
+│      `api/docs/enums.md`). 360° media uchun ko'rish komponenti kerak         │
+│    • O'xshash mahsulotlar bloki                                              │
+│    • `POST .../view` — sahifa ochilganda BIR MARTA (har renderda emas)       │
+│    • Mahsulot topilmasa → 404 sahifasi                                       │
+│    • Texnik xususiyatlar: o'lcham, sirt, zavod, m²/paddon, kg/paddon         │
+│                                                                              │
+│  Bog'liq: S-022                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-024 · Filtrlar → haqiqiy `factory` / `size` / `surface` ──────────────┐
+│                                                                              │
+│  Endpointlar: `GET /factories`, `GET /sizes`                                 │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Filtr ro'yxatlari API'dan olinadi (qo'lda yozilmaydi)                   │
+│    • Tanlangan filtr URL query'ga yoziladi — havola ulashilsa saqlanadi      │
+│    • Qidiruv `search` parametriga ulanadi (debounce bilan)                   │
+│    • Natija yo'q holati aniq ko'rsatiladi                                    │
+│                                                                              │
+│  Bog'liq: S-022, S-021                                                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-025 · Filiallar → `GET /branches` ────────────────────────────────────┐
+│                                                                              │
+│  Endpointlar: `GET /branches`, `GET /branches/{id}`                          │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Filiallar ro'yxati va xaritasi API'dan (manzil, telefon, ish vaqti,     │
+│      koordinata)                                                             │
+│    • ⚠ Public `/branches` FAQAT `RETAIL` filiallarni qaytaradi —             │
+│      markaziy ombor mijozga ko'rinmaydi (api/CLAUDE.md §5). Saytda           │
+│      "filial turi" degan tushuncha UMUMAN bo'lmaydi                          │
+│    • ❓ Xarita provayderi hali tanlanmagan (api 10-savol: Yandex/2GIS)       │
+│                                                                              │
+│  Bog'liq: S-004                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-026 · Hamkorlar → `GET /partners` ────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /partners`                                                   │
+│  Nima qilinadi: hamkor logotiplari API'dan, `src/data/company.js` dan emas   │
+│  Bog'liq: S-025                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-027 · Galereya → `GET /gallery` ──────────────────────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /gallery`                                                    │
+│  Nima qilinadi:                                                              │
+│    • Loyiha galereyasi API'dan (sarlavha, rasm, bog'langan mahsulotlar)      │
+│    • Galereyadan mahsulot sahifasiga o'tish                                  │
+│  Bog'liq: S-026                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-028 · Sayt sozlamalari → `GET /settings/public` ──────────────────────┐
+│                                                                              │
+│  Endpoint: `GET /settings/public`                                            │
+│  Nima qilinadi:                                                              │
+│    • Admin paneldan boshqariladigan ochiq sozlamalar saytga tortiladi        │
+│    • Hozir `isPublic` belgisi bilan ochiladigan yagona kalit —               │
+│      `payment.requisites` (bank rekvizitlari). Saytda kerakmi —              │
+│      ❓ aniqlanadi (ehtimol faqat shartnoma bo'yicha ishlaydiganlar uchun)   │
+│    • Telefon, manzil, ijtimoiy tarmoqlar sozlamada YO'Q — ular hozircha      │
+│      `src/data/company.js` da. 🆕 Kerak bo'lsa `api/task.txt` ga task        │
+│                                                                              │
+│  Bog'liq: S-025                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-029 · Buyurtmani kuzatish → `GET /orders/{orderNumber}/track` ────────┐
+│                                                                              │
+│  Endpoint: `GET /orders/{orderNumber}/track` — OCHIQ, token talab qilmaydi   │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Saytda "Buyurtmani kuzatish" sahifasi: buyurtma raqami kiritiladi       │
+│      → holati ko'rsatiladi                                                   │
+│    • Holat nomlari `api/docs/enums.md` dagi o'zbekcha matnlar bilan          │
+│    • 🔒 Faqat holat ko'rsatiladi — summa, mijoz ma'lumoti EMAS               │
+│                                                                              │
+│  ⚠ Bu — saytda HOZIR UMUMAN YO'Q sahifa, lekin backendda tayyor turibdi      │
+│    va chakana mijoz uchun foydali (hisobsiz ishlaydi).                       │
+│                                                                              │
+│  Bog'liq: S-028                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-030 · ❓ Kontakt formasi — demo'dan haqiqiyga ────────────────────────┐
+│                                                                              │
+│  TOPILDI: `Contact.jsx` da forma bor, lekin ochiq yozilgan:                  │
+│    "Bu forma hozircha demo rejimida — ma'lumot hech qayerga [bormaydi]"      │
+│                                                                              │
+│  ⚠ Backendda ochiq "murojaat/lead" endpointi YO'Q. `POST /orders`            │
+│    faqat optom mijoz tokeni bilan ishlaydi; chakana mijozda hisob yo'q (G1). │
+│                                                                              │
+│  Uch yo'l:                                                                   │
+│    A) 🆕 `api/task.txt` ga yangi task: `POST /leads` (ism, telefon,          │
+│       xabar) → admin panelda ko'rinadi. Eng to'g'ri yo'l                     │
+│    B) Forma Telegram'ga yuboradigan qilinadi (bot orqali)                    │
+│    C) Forma olib tashlanib, o'rniga telefon raqami va Telegram havolasi      │
+│       qo'yiladi (eng sodda, darhol ishlaydi)                                 │
+│                                                                              │
+│    → Tavsiya: hozircha C, keyin A. Chunki ishlamaydigan forma —              │
+│      ishonchni yo'qotadi: odam yozadi, javob kelmaydi.                       │
+│                                                                              │
+│  Bog'liq: S-028                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-031 · Yuklanish, xato va bo'sh holatlar ──────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Har bir API chaqiruvi uchun: skelet (yuklanmoqda), xato ("qayta         │
+│      urinish" tugmasi bilan), bo'sh natija                                   │
+│    • Skelet saytning o'z ohangida — kulrang to'rtburchak emas                │
+│    • Backend o'chiq bo'lsa sayt OQ EKRAN bermaydi, tushunarli xabar beradi   │
+│    • 404: mahsulot/kategoriya topilmasa                                      │
+│    • Tarmoq yo'qolganda banner                                               │
+│                                                                              │
+│  Bog'liq: S-023                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-032 · Rasmlar API'dan (`/uploads/...`) va optimallashtirish ──────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mahsulot rasmlari backend `/uploads/...` manzilidan olinadi             │
+│    • `SmartImage` kengaytiriladi: `loading="lazy"`, `decoding="async"`,      │
+│      aniq `width`/`height` (layout sakrashini oldini olish)                  │
+│    • `srcset`/`sizes` — telefon 3.5 MB rasm yuklab olmasligi kerak           │
+│    • Rasm yuklanmasa — o'rin egallovchi (placeholder)                        │
+│    • ⚠ Backend hozir rasm o'lchamlarini o'zgartirmaydi (resize yo'q) —       │
+│      katta rasm yuklansa, o'sha katta holda keladi. 🆕 Kerak bo'lsa          │
+│      `api/task.txt` ga task (thumbnail generatsiyasi)                        │
+│                                                                              │
+│  Bog'liq: S-031                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 6 — ⚖️ HUQUQIY VA KONTENT                                            ║
+║  Maqsad: sayt efirga chiqishi uchun hal qilinishi SHART bo'lgan narsalar.    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-033 · 🔒 ⚖️ Marazzi rasmlarini almashtirish — BLOKLOVCHI ───────────┐
+│                                                                              │
+│  ⚠ SAYT SHU HOLDA EFIRGA CHIQA OLMAYDI.                                      │
+│                                                                              │
+│  TOPILDI (`ASSETS.md` ning O'ZI yozib qo'ygan):                              │
+│    `public/images/materials/` — 43 ta rasm, 3.5 MB, manbasi:                 │
+│    Marazzi Marbleplay va Marazzi Mystone Travertino kolleksiyalari.          │
+│                                                                              │
+│    ASSETS.md dan aynan: mualliflik huquqi Marazzi'da qoladi, CC0 emas,       │
+│    tijoriy tarqatishga ruxsat yo'q, va tijoriy sayt chiqarishdan oldin       │
+│    ruxsat olish yoki almashtirish kerak.                                     │
+│                                                                              │
+│    Ular Vodiy Kafel'ning haqiqiy mahsulotini ham ko'rsatmaydi —              │
+│    mahsulot nomlari va xususiyatlari ham o'ylab topilgan.                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Haqiqiy mahsulot suratlari olinadi (yoki litsenziyalanadi)              │
+│    • Ular admin panel orqali yuklanadi → sayt API'dan oladi (S-032)          │
+│    • Marazzi rasmlari va `image-assets.json`/`sources.json` o'chiriladi      │
+│    • `ASSETS.md` yangilanadi                                                 │
+│                                                                              │
+│  ⚠ Bu — DIZAYN emas, HUQUQIY masala. Mijoz bilan muhokama qilinishi          │
+│    shart: suratga olish kimning zimmasida va qachon.                         │
+│                                                                              │
+│  Bog'liq: S-032                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-034 · ⚖️ `audio.mp3` litsenziyasi aniqlanmagan ─────────────────────┐
+│                                                                              │
+│  TOPILDI: `public/audio.mp3` — 1.5 MB, `src/lib/sound.js` uni fon            │
+│  musiqasi sifatida aylantirib chaladi.                                       │
+│                                                                              │
+│  ⚠ Lekin `ASSETS.md` da: "Original Web Audio sine/triangle tones...          │
+│    **No downloaded music**" deyilgan — bu 1.5 MB faylga ZID.                 │
+│    Ya'ni faylning manbasi va litsenziyasi HUJJATLASHTIRILMAGAN.              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Fayl qayerdan olingani aniqlanadi                                       │
+│    • Litsenziya tozami — tekshiriladi, `ASSETS.md` ga yoziladi               │
+│    • Tiniq bo'lmasa — olib tashlanadi yoki litsenziyali bilan almashtiriladi │
+│    • 1.5 MB katta — hajmi kamaytiriladi yoki faqat ovoz yoqilganda yuklanadi │
+│                                                                              │
+│  Bog'liq: S-033                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-035 · Kontent: o'ylab topilgan matnlarni almashtirish ────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Mahsulot nomlari va tavsiflari — haqiqiysi (API'dan, S-022)             │
+│    • "20 yildan ortiq tajriba", "50 000+ mijoz", "EST. 2006" / "EST. 2008"   │
+│      ⚠ `index.html` da 2008, saytda 2006 — ZIDDIYAT, aniqlanadi              │
+│    • Telefon, manzil, ish vaqti — mijozdan tasdiqlanadi                      │
+│    • Kolleksiya nomlari ("Atelier 2026", "Marble Study") — haqiqiymi         │
+│      yoki mock uchun o'ylab topilganmi (S-021 bilan bog'liq)                 │
+│                                                                              │
+│  Bog'liq: S-034                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 7 — SEO VA ULASHISH                                                    ║
+║  Maqsad: sayt Google'da topilishi kerak — u marketing sayti, uning           ║
+║          borligining sababi shu.                                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-036 · Sahifaga xos meta va Open Graph ────────────────────────────────┐
+│                                                                              │
+│  TOPILDI: `index.html` da BITTA statik `<title>` va `<description>`.         │
+│  Har bir sahifa (katalog, mahsulot, kategoriya) AYNAN SHU sarlavha           │
+│  bilan ko'rinadi. `Meta.jsx` — SEO komponenti EMAS, u label/value            │
+│  ko'rsatadigan UI komponenti (nomi chalg'itadi).                             │
+│                                                                              │
+│  Yo'q: `og:title`, `og:description`, `og:image`, `twitter:card`,             │
+│        `canonical`, `og:locale`                                              │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Har sahifa uchun dinamik `<title>` va `<meta>` (React 19 da             │
+│      `<title>` komponent ichida ishlaydi — kutubxona shart emas)             │
+│    • Mahsulot sahifasi: nom + zavod + o'lcham sarlavhada                     │
+│    • Telegram/WhatsApp'ga havola tashlanganda chiroyli kartochka             │
+│      chiqishi uchun `og:image`                                               │
+│    • `Meta.jsx` boshqa nomga o'tkaziladi (masalan `SpecRow.jsx`)             │
+│                                                                              │
+│  Bog'liq: S-023                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-037 · `robots.txt` va `sitemap.xml` ──────────────────────────────────┐
+│                                                                              │
+│  TOPILDI: `public/` da ikkalasi ham YO'Q.                                    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `robots.txt`                                                            │
+│    • `sitemap.xml` — build paytida mahsulot va kategoriya ro'yxatidan        │
+│      avtomatik generatsiya qilinadi (API'dan olib)                           │
+│    • Google Search Console'ga qo'shish yo'riqnomasi README'ga                │
+│                                                                              │
+│  Bog'liq: S-036                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-038 · ❓ QAROR: SPA'ni qidiruv tizimlari ko'radimi ───────────────────┐
+│                                                                              │
+│  ⚠ MUAMMO: sayt — toza SPA. Qidiruv roboti `/catalog` yoki                   │
+│    `/product/calacatta-oro` ni so'raganda BO'SH HTML oladi, kontent          │
+│    faqat JS ishlagach paydo bo'ladi. Google buni odatda uddalaydi,           │
+│    lekin kechikadi va boshqa robotlar (Telegram, Facebook, Yandex)           │
+│    ko'pincha UMUMAN ko'rmaydi — ulashilgan havola bo'sh ko'rinadi.           │
+│                                                                              │
+│  Uch yo'l:                                                                   │
+│    A) Prerender (`vite-plugin-prerender` yoki build paytida statik           │
+│       HTML) — sayt hajmi kichik, mahsulotlar kam o'zgaradi, mos keladi       │
+│    B) SSR ga o'tish (Next.js / Remix) — katta qayta yozish, hozirgi          │
+│       GSAP/Lenis kompozitsiyasini qayta qurish kerak                         │
+│    C) Hech narsa qilinmaydi — faqat Google'ga tayaniladi                     │
+│                                                                              │
+│    → Tavsiya: A. Katalog kichik (o'nlab mahsulot), kontent kam               │
+│      o'zgaradi — prerender arzon va yetarli.                                 │
+│                                                                              │
+│  Bog'liq: S-037                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-039 · Structured data (Schema.org) ───────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `LocalBusiness` — kompaniya, manzil, ish vaqti, telefon                 │
+│    • `Product` — har mahsulot uchun (narxsiz — narx ochiq emas, G1)          │
+│    • `BreadcrumbList` — navigatsiya zanjiri                                  │
+│    • `ImageObject` — galereya                                                │
+│                                                                              │
+│  ⚠ Narx bo'lmagani uchun `Offer` to'liq bo'lmaydi — bu normal,               │
+│    `availability` ko'rsatiladi.                                              │
+│                                                                              │
+│  Bog'liq: S-038                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  EPIC 8 — SIFAT VA YAKUNIY TAYYORGARLIK                                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ [ ] S-040 · Qulaylik (a11y) auditi ─────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Klaviatura bilan butun saytni aylanib chiqish (menyu, katalog,          │
+│      filtr, galereya) — tuzoq qolmasligi                                     │
+│    • Fokus ko'rinishi hamma joyda (S-006)                                    │
+│    • `alt` matnlari — dekorativ rasmlarda bo'sh, mazmunlisida ma'noli        │
+│    • Sarlavha ierarxiyasi (h1 → h2 → h3), har sahifada bitta h1              │
+│    • Skip-link ("kontentga o'tish")                                          │
+│    • Ekran o'quvchisi bilan sinov                                            │
+│    • `aria-live` — filtr natijasi o'zgarganda e'lon qilinishi                │
+│                                                                              │
+│  Bog'liq: S-015                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-041 · Testlar ────────────────────────────────────────────────────────┐
+│                                                                              │
+│  TOPILDI: butun paketda BITTA test fayli — `tests/sound.test.js`             │
+│  (`node --test` bilan ishlaydi).                                             │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Vitest o'rnatiladi                                                      │
+│    • API qatlami: `{ data }` ochilishi, xato aylantirilishi (S-004)          │
+│    • Filtr → query parametrlari to'g'ri yig'ilishi                           │
+│    • Enum → o'zbekcha matn lug'ati to'liqligi                                │
+│    • Reduced motion holatida animatsiya o'chishi                             │
+│    • Asosiy sahifalar renderi (smoke test)                                   │
+│                                                                              │
+│  Bog'liq: S-031                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-042 · Tezlik byudjeti va Lighthouse ──────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Lighthouse o'lchovi (mobil, sekin 4G) — boshlang'ich holat yozib        │
+│      olinadi, keyin maqsad qo'yiladi                                         │
+│    • Byudjet: birinchi ekran JS ≤ 150 KB, LCP ≤ 2.5s, CLS ≤ 0.1,             │
+│      INP ≤ 200ms                                                             │
+│    • Rasm hajmi (hozir 3.6 MB) nazorat ostiga olinadi                        │
+│    • Build'da byudjetdan oshsa ogohlantirish                                 │
+│                                                                              │
+│  Bog'liq: S-041                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-043 · Xato chegarasi va barqarorlik ──────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `ErrorBoundary` — bitta komponent yiqilsa butun sayt oq ekran           │
+│      bo'lib qolmasligi                                                       │
+│    • Animatsiya yoki audio xatosi sahifani buzmasligi                        │
+│    • Konsolda xato qolmasligi (tekshiriladi)                                 │
+│                                                                              │
+│  Bog'liq: S-042                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] S-044 · Deploy va muhit ────────────────────────────────────────────────┐
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • `.env.example` va muhit o'zgaruvchilari hujjatlashtiriladi              │
+│    • Vercel: `vercel.json` bor (SPA rewrite) — prerender qo'shilsa           │
+│      (S-038) qayta ko'riladi                                                 │
+│    • ⚠ Backend `CORS_ORIGINS` ga sayt domeni qo'shilishi kerak —             │
+│      hozir `*` turibdi (bu `api/` tomondagi ish, eslatib qo'yiladi)          │
+│    • `README.md` yangilanadi: API bilan birga ishga tushirish tartibi        │
+│    • Rasm va API manzillari production'da to'g'riligi tekshiriladi           │
+│                                                                              │
+│  Bog'liq: S-043                                                              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  QAROR KUTILAYOTGAN SAVOLLAR                                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ❓ 1. KATEGORIYA / KOLLEKSIYA / FINISH                          → S-021
+        Backendda yo'q. Saytning ikkita sahifasi shunga qurilgan.
+        Mijozdan: bular marketing uchun kerakmi yoki mock uchun
+        o'ylab topilganmi? Kerak bo'lsa — backendga model qo'shiladi.
+
+  ❓ 2. KONTAKT FORMASI QAYERGA BORADI?                           → S-030
+        Hozir hech qayerga (demo). Backendda ochiq "murojaat"
+        endpointi yo'q. Telegram? Yangi `POST /leads`? Yoki forma
+        umuman olib tashlanib, telefon qoldiriladimi?
+
+  ❓ 3. QIDIRUV TIZIMLARI UCHUN PRERENDER KERAKMI?                → S-038
+        Hozir toza SPA — ulashilgan havola bo'sh ko'rinadi.
+        Tavsiya: prerender (arzon, yetarli).
+
+  ❓ 4. MAHSULOT SURATLARI KIM TOMONIDAN OLINADI?                 → S-033
+        ⚖️ Hozirgilari Marazzi'niki — tijoriy foydalanishga ruxsat YO'Q.
+        Bu SAYTNI EFIRGA CHIQISHDAN TO'XTATADI. Suratga olish
+        rejasi va muddati kerak.
+
+  ❓ 5. 3D (R3F) KELAJAKDA KERAKMI?                               → S-001
+        Hozir butunlay o'lik kod. O'chirilsa `package.json` yengillashadi.
+        Keyin kerak bo'lsa git tarixidan qaytariladi.
+
+  ❓ 6. KURSOR: QAYSI YO'L?                                       → S-016
+        A) nuqta kechikishsiz + halqa suzadi  B) native kursor qaytadi
+        C) custom kursor olib tashlanadi. Tavsiya: A yoki B.
+
+  ❓ 7. SAYT TELEFON/MANZILNI QAYERDAN OLADI?                     → S-028
+        Hozir `src/data/company.js` da qattiq yozilgan. Admin
+        paneldan boshqarilishi kerakmi? Unda backendga sozlama kaliti
+        qo'shiladi (🆕 `api/task.txt`).
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  UMUMIY HOLAT                                                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Jami tasklar : 44
+  Tugadi       : 0
+  Jarayonda    : 0
+  Bloklangan   : 0
+
+  Epic bo'yicha:
+    EPIC 0  Tozalash va poydevor ......  0 / 4   [····]
+    EPIC 1  Tipografika ..............  0 / 2    [··]
+    EPIC 2  Hero va greeter ..........  0 / 3    [···]
+    EPIC 3  Responsive ...............  0 / 6    [······]
+    EPIC 4  Harakat va GSAP ..........  0 / 5    [·····]
+    EPIC 5  Backendga ulash ..........  0 / 12   [············]
+    EPIC 6  Huquqiy va kontent .......  0 / 3    [···]
+    EPIC 7  SEO ......................  0 / 4    [····]
+    EPIC 8  Sifat ....................  0 / 5    [·····]
+
+  ──────────────────────────────────────────────────────────────────────────
+  KEYINGI TASK:  S-001 · O'lik kodni va o'lik bog'liqliklarni olib tashlash
+
+  ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
+    rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,
+    qolgan hamma ish esa bemalol davom etaveradi.
+
+  ⚠ EPIC 5 (backendga ulash) S-021 qaroriga bog'liq — avval o'sha
+    savolga javob olinadi, keyin 11 ta task ketma-ket bajariladi.
+  ──────────────────────────────────────────────────────────────────────────
