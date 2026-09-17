@@ -69,6 +69,14 @@ export interface ApiClientConfig {
    * birlashtirish — shu funksiya zimmasida (session.ts).
    */
   refreshAccessToken?: () => Promise<boolean>;
+  /** Fayl yuklash (progress) uchun — testda soxta XHR beriladi. */
+  createXhr?: () => XMLHttpRequest;
+}
+
+export interface UploadOptions {
+  signal?: AbortSignal;
+  /** 0…1 — yuborilgan qism (server javobini kutish bunga kirmaydi) */
+  onProgress?: (fraction: number) => void;
 }
 
 /**
@@ -156,6 +164,11 @@ export function createApiClient(config: ApiClientConfig) {
       }
     };
 
+    return withAuthRetry(attempt, isAuthEntry);
+  }
+
+  /** 401 → refresh → so'rov BIR MARTA qayta; javob ok bo'lmasa ApiError. fetch ham, XHR ham shu yerdan. */
+  async function withAuthRetry(attempt: () => Promise<Response>, isAuthEntry: boolean) {
     let response = await attempt();
     if (
       response.status === 401 &&
@@ -168,6 +181,39 @@ export function createApiClient(config: ApiClientConfig) {
 
     if (!response.ok) throw ApiError.fromResponse(response, await readBody(response));
     return response;
+  }
+
+  /**
+   * `fetch` yuklash jarayonini bermaydi — fayl uchun XHR. Natija `Response`
+   * ga aylantiriladi, qolgani (refresh, xato formati) oddiy so'rov bilan bir xil.
+   */
+  function xhrAttempt(url: string, body: FormData, options: UploadOptions) {
+    return () =>
+      new Promise<Response>((resolve, reject) => {
+        // Yuborilmagan XHR da abort() hech qanday hodisa chiqarmaydi — promise osilib qolardi
+        if (options.signal?.aborted) {
+          reject(new DOMException('Yuklash bekor qilindi', 'AbortError'));
+          return;
+        }
+        const xhr = (config.createXhr ?? (() => new XMLHttpRequest()))();
+        xhr.open('POST', url);
+        const token = config.getAccessToken?.();
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) options.onProgress?.(event.loaded / event.total);
+        };
+        xhr.onload = () =>
+          resolve(
+            new Response(xhr.status === 204 ? null : xhr.responseText, {
+              status: xhr.status,
+              headers: { 'content-type': xhr.getResponseHeader('content-type') ?? '' },
+            }),
+          );
+        xhr.onerror = () => reject(ApiError.network(new Error('XHR error')));
+        xhr.onabort = () => reject(new DOMException('Yuklash bekor qilindi', 'AbortError'));
+        options.signal?.addEventListener('abort', () => xhr.abort(), { once: true });
+        xhr.send(body);
+      });
   }
 
   async function json(method: HttpMethod, path: string, options?: RawOptions) {
@@ -198,6 +244,20 @@ export function createApiClient(config: ApiClientConfig) {
     ): Promise<WithMeta<DataOf<P, 'get'>>> {
       const result = await json('get', path, options as RawOptions);
       return result as WithMeta<DataOf<P, 'get'>>;
+    },
+
+    /** Fayl yuklash (multipart) — yuklash jarayoni `onProgress` orqali (D-013). */
+    async upload<P extends PathsWith<'post'>>(
+      path: P,
+      options: { body: FormData } & UploadOptions &
+        (HasPathParams<P> extends true ? { params: PathParamsOf<P, 'post'> } : { params?: never }),
+    ): Promise<DataOf<P, 'post'>> {
+      const url = buildUrl(config.baseUrl, path, options.params);
+      const response = await withAuthRetry(xhrAttempt(url, options.body, options), false);
+      const payload = await readBody(response);
+      return (typeof payload === 'object' && payload !== null && 'data' in payload
+        ? (payload as { data: unknown }).data
+        : undefined) as DataOf<P, 'post'>;
     },
 
     /** Fayl (PDF) — `{ data }` o'rami yo'q, Blob qaytadi. */

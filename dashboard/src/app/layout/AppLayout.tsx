@@ -1,23 +1,15 @@
 import { Suspense } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router';
-import { useHasSession } from '@/features/auth/hooks';
+import { Outlet } from 'react-router';
 import { usePersistentFlag } from '@/shared/lib/use-persistent-flag';
+import { PageLoading } from '@/shared/ui/PageLoading';
 import { Sidebar } from './Sidebar';
 import { usePageTitle } from './page-title';
 import { Topbar } from './Topbar';
 
-/** Umumiy layout: yon menyu + yuqori panel + kontent (D-003). */
+/** Umumiy layout: yon menyu + yuqori panel + kontent (D-003). Sessiya — `RequireAuth` (D-007). */
 export function AppLayout() {
   const [collapsed, toggleCollapsed] = usePersistentFlag('vk-dashboard-sidebar-collapsed', false);
   const title = usePageTitle();
-  const hasSession = useHasSession();
-  const location = useLocation();
-
-  // Sessiya yo'q / tugadi → kirish sahifasi, qaytish manzili saqlanadi.
-  // ⚠ D-007 da <RequireAuth> + <RequireRole> ga ajratiladi.
-  if (!hasSession) {
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
-  }
 
   return (
     <div className="flex min-h-dvh">
@@ -30,16 +22,6 @@ export function AppLayout() {
           </Suspense>
         </main>
       </div>
-    </div>
-  );
-}
-
-function PageLoading() {
-  return (
-    <div role="status" aria-live="polite" className="flex flex-col gap-3">
-      <span className="sr-only">Yuklanmoqda…</span>
-      <div className="h-8 w-56 animate-pulse rounded-md bg-surface-muted" />
-      <div className="h-64 animate-pulse rounded-lg bg-surface-muted" />
     </div>
   );
 }

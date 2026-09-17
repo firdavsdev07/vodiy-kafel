@@ -1,14 +1,22 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { NavLink } from 'react-router';
-import { APP_NAME, NAV_GROUPS } from '@/app/navigation';
+import { APP_NAME, navGroupsForRole } from '@/app/navigation';
+import { useProfile } from '@/features/auth/hooks';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-/** Yon menyu — NAV_GROUPS dan quriladi (D-003). Yig'ilganda faqat ikonkalar. */
+/**
+ * Yon menyu — NAV_GROUPS dan quriladi (D-003), xodim roliga ruxsat etilgan
+ * bo'limlargina (D-007). Profil kelmaguncha skelet: yopiq bo'lim bir lahza
+ * ham ko'rinib qolmasin. Yig'ilganda faqat ikonkalar.
+ */
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const role = useProfile().data?.role;
+  const groups = role ? navGroupsForRole(role) : [];
+
   return (
     <aside
       className={`sticky top-0 flex h-dvh shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-200 ${
@@ -25,7 +33,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       <nav aria-label="Asosiy menyu" className="flex-1 overflow-y-auto px-2 py-3">
-        {NAV_GROUPS.map((group) => (
+        {!role && <NavSkeleton />}
+        {groups.map((group) => (
           <div key={group.title} className="mb-4">
             {!collapsed && (
               <p className="mb-1 px-2 text-xs font-medium tracking-wide text-muted uppercase">
@@ -68,5 +77,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && <span>Yig‘ish</span>}
       </button>
     </aside>
+  );
+}
+
+function NavSkeleton() {
+  return (
+    <div aria-hidden className="flex flex-col gap-1.5 px-0.5">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="h-9 animate-pulse rounded-md bg-surface-muted" />
+      ))}
+    </div>
   );
 }

@@ -111,7 +111,7 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  EPIC 0 — POYDEVOR (Foundation)                                              ║
 ║  Maqsad: skelet. Bularsiz birorta sahifa yozilmaydi.                         ║
-║  Holat: 6 / 8 tugadi [██████··] — D-001…D-006 ✓                             ║
+║  Holat: 8 / 8 tugadi [████████] — EPIC 0 yopildi ✓                           ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 ┌─ [x] D-001 · TypeScript va loyiha tuzilishi ─────────────────────────────────┐
@@ -386,7 +386,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [~] D-007 · Rol asosida ko'rinish (RBAC)                           🔒 ──────┐
+┌─ [x] D-007 · Rol asosida ko'rinish (RBAC)                           🔒 ──────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `<RequireAuth>` — kirmaganni login sahifasiga yuboradi                  │
@@ -409,9 +409,35 @@
 │  Natija: har rol faqat o'ziga tegishlisini ko'radi                           │
 │  Bog'liq: D-006                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • shared/lib/permissions.ts — 30 ta ruxsat (`catalog.write`,              │
+│      `stock.write`, `prices.view` …), har biri qaysi endpoint `@Roles`       │
+│      idan olingani izohda. can(), hasRole(), rolesForAny().                  │
+│    • features/auth/RequireAuth.tsx — AppLayout dagi sessiya tekshiruvi       │
+│      shu yerga ko'chdi (qaytish manzili saqlanadi).                          │
+│    • features/auth/RequireRole.tsx — rol GET /auth/me dan. Profil            │
+│      kelmaguncha skelet (403 lahzaga ham chiqmaydi), yuklanmasa xato matni   │
+│      + "Qayta urinish"; keshdagi rol bo'lsa fon xatosi sahifani yopmaydi.    │
+│      Qaror mantig'i — features/auth/access.ts (sof funksiya, testlangan).    │
+│    • pages/forbidden/ForbiddenPage.tsx — 403. Faqat menyu bo'limlari         │
+│      uchun; aniq resurs baribir 404 → "topilmadi".                           │
+│    • navigation.ts — har bo'limda `roles`; routes.tsx har sahifani           │
+│      RequireRole bilan o'raydi (roli yetmasa chunk ham yuklanmaydi);         │
+│      Sidebar navGroupsForRole() — bo'sh guruh ham yashirinadi.               │
+│    • shared/ui/PageLoading.tsx — AppLayout dan ajratildi (qayta ishlatish).  │
+│    • Qarorlar: Narxlar — MODERATOR ga yopiq (backend GET ruxsat bersa        │
+│      ham, markaziy ombor chakana narx bilan ishlamaydi). Ta'minot            │
+│      buyurtmalari — 4 rolga (markaz qabul qiladi D-030 / filial              │
+│      yuboradi D-032). Xodimlar, Sozlamalar — SUPER_ADMIN, BRANCH_ADMIN.      │
+│    • 15 yangi test (jami 94). build/lint toza. Brauzerda mock auth server    │
+│      bilan: MANAGER /staff → 403, menyuda Xodimlar/Sozlamalar yo'q;          │
+│      MODERATOR /prices → 403, /stock ochiladi; BRANCH_ADMIN va SUPER_ADMIN   │
+│      /staff, /settings ochiladi; backend o'chiq → xato + qayta urinish →     │
+│      refresh rad etildi → /login. Haqiqiy backend: api/.env hali yo'q.       │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-008 · Umumiy UI komponentlar ─────────────────────────────────────────┐
+┌─ [x] D-008 · Umumiy UI komponentlar ─────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `DataTable` — TanStack Table ustida: server tomonda sahifalash,         │
@@ -432,6 +458,47 @@
 │  Natija: keyingi 40 ta task shu qismlardan yig'iladi                         │
 │  Bog'liq: D-005                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Kutubxonalar: @tanstack/react-table 9, react-hook-form 7, zod 4,        │
+│      @hookform/resolvers 5. Import — `@/shared/ui` (index.ts).               │
+│    • DataTable (v9 API: tableFeatures + useTable): manualSorting,            │
+│      `enableSorting: true` faqat ustun o'zi aytsa (asc → desc → yo'q),       │
+│      `size` → kenglik, `meta.align`/`meta.sortKey`, skelet, bo'sh holat,     │
+│      xato holati, fonda yangilanish xiralashadi, rowHref (Ctrl+bosish —      │
+│      yangi tab) / onRowClick, aria-sort. Ustunlar: tableColumns<T>().        │
+│    • Pagination: `1–20 / jami 57 ta`, pageRange [1,'…',9,10,11,'…',20],      │
+│      sahifadagi qatorlar 20/50/100.                                          │
+│    • shared/lib/list-params.ts + useListParams: page/limit/sortBy/sortOrder  │
+│      /filtrlar URL'da; filtr/saralash/limit o'zgarsa 1-sahifaga; limit≤100,  │
+│      ruxsatsiz sortBy va begona parametr o'qilmaydi; standartlar URL'ga      │
+│      yozilmaydi. FilterBar: qidiruv 350ms debounce, FilterSelect, Tozalash.  │
+│    • Forma: InputField, TextareaField, SelectField, CheckboxField,           │
+│      MoneyField (ekranda `1 234 567,5`, formada "1234567.5" satr),           │
+│      PhoneField (+998). Field — label/hint/xato aria bog'lanishi.            │
+│      Zod input≠output (transform) bilan ishlaydi. validation.ts: zMoney      │
+│      (backend @IsPositiveDecimalString bilan bir xil regex), zUzPhone,       │
+│      zRequiredText, zOptionalText — xabarlar o'zbekcha.                      │
+│    • LoginPage react-hook-form + zod ga o'tkazildi.                          │
+│    • Modal (native <dialog>: fokus tuzog'i, Esc, fon bosish; boshlang'ich    │
+│      fokus — data-autofocus), ConfirmDialog (fokus "Bekor qilish" da;        │
+│      so'rov ketayotganda yopilmaydi, tugma qayta bosilmaydi).                │
+│    • Toast: tashqi store (React'dan tashqarida ham `toast.error(err)`),      │
+│      xato 8s + requestId, takror xabar birlashadi, ko'pi bilan 4 ta.         │
+│    • StatusBadge kind=order|payment|stock + Badge; noma'lum qiymat           │
+│      neytral rangda xom matn bilan. labels.ts: holat lug'atlari (D-043).     │
+│    • MoneyText/DateText + format.ts: pul satr ustida guruhlanadi (Number     │
+│      yo'q), sana Intl bilan Asia/Tashkent `17.09.2026 14:05`.                │
+│    • ErrorState + error-message.ts: 404 "topilmadi" (ruxsat demaydi),        │
+│      5xx ichki tafsilotsiz, validatsiya ro'yxati qatorma-qator, requestId.   │
+│    • 32 yangi test (jami 126). build/lint toza. Brauzerda vaqtinchalik       │
+│      sinov sahifasi + mock API (57 mijoz) bilan: saralash, sahifa, limit,    │
+│      qidiruv debounce, bo'sh/xato holati (requestId), Tozalash, forma        │
+│      xatolari va yuborilgan qiymatlar, ConfirmDialog pending, Esc, toast,    │
+│      yorug'/qorong'i rejim. Sinov sahifasi o'chirildi.                       │
+│    • Tekshiruvda topilib tuzatildi: jadval darajasidagi enableSorting        │
+│      ustundagini bekor qilardi; ustun turi har xil qiymatli ustunlarni       │
+│      qabul qilmasdi; showModal fokusni X tugmaga qo'yardi.                   │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -440,9 +507,10 @@
 ║  EPIC 1 — KATALOG BOSHQARUVI                                                 ║
 ║  Maqsad: mahsulot, zavod, o'lcham, media. Eng oddiy CRUD — shu yerda         ║
 ║          D-008 komponentlari haqiqiy sinovdan o'tadi.                        ║
+║  Holat: 7 / 7 tugadi [███████] — EPIC 1 yopildi ✓                            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-009 · Zavodlar (Factory) CRUD ────────────────────────────────────────┐
+┌─ [x] D-009 · Zavodlar (Factory) CRUD ────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/factories`,                                   │
 │               `PATCH,DELETE /admin/factories/{id}`                           │
@@ -458,9 +526,39 @@
 │  Natija: birinchi to'liq CRUD sahifasi — namuna sifatida qoladi              │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Menyu: Katalog → "Zavodlar" (/factories), rol — catalog.view.           │
+│    • features/factories: api.ts (useFactories, useCreate/Update/Delete —     │
+│      invalidatsiya: factories + products), factory-form.ts (zod sxema        │
+│      backend DTO chegaralari bilan; toCreateBody; toUpdateBody — faqat       │
+│      O'ZGARGAN maydonlar), FactoryFormModal.                                 │
+│    • pages/factories/FactoriesPage: logo+nom, URL (slug), mahsulotlar        │
+│      soni, tartib, holat; "Jami N · faol M". SUPER_ADMIN: Yangi zavod,       │
+│      qatorni bosish/qalam — tahrirlash, o'chirish, qayta faollashtirish.     │
+│      Boshqa rollar — faqat ko'radi (tugmalar umuman chiqmaydi).              │
+│    • O'chirish = backendda soft delete (isActive:false). Tasdiqda: "N ta     │
+│      mahsulot ochiq katalogdan yashiriladi"; qaytarish PATCH isActive.       │
+│      (Task matnidagi "mahsuloti bor zavod o'chmasa" — backendda bunday       │
+│      rad etish yo'q; xato bo'lsa dialog ichida ko'rsatiladi.)                │
+│    • 409 (nom band) — xato "Nomi" maydoni ostida; 400 — forma ichida.        │
+│    • 🆕 useCan(permission) (features/auth/hooks), shared/ui/Thumb (rasm       │
+│      yuklanmasa bosh harflar), shared/lib/asset-url (/uploads → API origin). │
+│    • Ustunlar modul darajasida, qator amallari context orqali — keyingi      │
+│      CRUD sahifalar uchun namuna.                                            │
+│    • ⚠ GET /admin/factories sahifalanmaydi (G10 istisno — zavodlar oz).      │
+│    • ⚠ Logo yuklash endpointi yo'q (partners'da bor) — hozircha fayl         │
+│      yo'li/havola matn bilan. description/websiteUrl ni tozalab bo'lmaydi    │
+│      (UpdateFactoryDto null qabul qilmaydi) — formada izoh bor.              │
+│    • ⚠ api B-059 ga qo'shimcha yozildi: PATCH da sortOrder majburiy bo'lib   │
+│      generatsiya bo'lgan; turlar features/factories da vaqtincha override.   │
+│    • 7 yangi test (jami 133). build/lint toza. Brauzerda mock API bilan:     │
+│      bo'sh forma xatolari, band nom 409, yaratish, o'zgarmagan forma so'rov  │
+│      yubormaydi, tahrir (faqat description+sortOrder ketdi), o'chirish       │
+│      tasdig'i (pending), tiklash, rasm fallback, MANAGER — faqat o'qish.     │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-010 · O'lchamlar (ProductSize) CRUD ──────────────────────────────────┐
+┌─ [x] D-010 · O'lchamlar (ProductSize) CRUD ──────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/sizes`, `PATCH,DELETE /admin/sizes/{id}`      │
 │                                                                              │
@@ -472,9 +570,31 @@
 │  🔒 Yozish — faqat SUPER_ADMIN                                               │
 │  Bog'liq: D-009                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • ⚠ Task matni backendga mos emas edi: ProductSize da faqat eni/bo'yi     │
+│      (sm, butun 1–1000) va tartib bor. "Paddondagi m²" va og'irlik —         │
+│      MAHSULOT maydonlari (Product.sqmPerPallet, weightPerPallet) → D-012     │
+│      formasida, kalkulyator ogohlantirishi ham o'sha yerda bo'ladi.          │
+│    • Menyu: Katalog → "O'lchamlar" (/sizes).                                 │
+│    • features/sizes: api.ts, size-form.ts (zod = backend chegaralari,        │
+│      previewLabel — yozuv faqat ko'rsatiladi, yuborilmaydi; toUpdateBody —   │
+│      faqat o'zgarganlar), SizeFormModal.                                     │
+│    • Tahrirda eni/bo'yi o'zgarsa va mahsuloti bor bo'lsa — ogohlantirish:    │
+│      "N ta mahsulot katalogda '60x120' emas, '60x90' bo'lib ko'rinadi".      │
+│    • O'chirish — HAQIQIY (soft emas). Mahsuloti bor o'lchamda tugma          │
+│      aria-disabled: bosilsa sababi toast'da; backend 409 bo'lsa ham          │
+│      dialog ichida ko'rsatiladi. 409 (o'lcham bor) — forma ichida.           │
+│    • 🆕 shared/ui/IconButton (inactive — fokuslanadi, sababni aytadi).        │
+│    • ⚠ UpdateSizeDto.sortOrder ham majburiy generatsiya bo'lgan — api        │
+│      B-059 qo'shimchasiga yozildi, features/sizes da override.               │
+│    • 3 yangi test (jami 136). build/lint toza. Brauzerda mock API bilan:     │
+│      diapazon xatosi, dublikat 409, yaratish, tahrir ogohlantirishi (faqat   │
+│      heightCm yuborildi), bloklangan o'chirish, o'chirish, MODERATOR —       │
+│      faqat o'qish.                                                           │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-011 · Mahsulotlar ro'yxati va filtr ──────────────────────────────────┐
+┌─ [x] D-011 · Mahsulotlar ro'yxati va filtr ──────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /admin/products`                                             │
 │                                                                              │
@@ -489,9 +609,32 @@
 │  Natija: eng ko'p ishlatiladigan sahifa — tezligi muhim                      │
 │  Bog'liq: D-009, D-010                                                       │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • pages/products/ProductsPage: nom (+rang), zavod, o'lcham, sirt, zaxira  │
+│      (StatusBadge + N paddon), ko'rishlar, qo'shilgan sana, holat.           │
+│    • Filtrlar (URL'da): qidiruv (debounce), zavod, o'lcham (variantlar       │
+│      D-009/D-010 query keshidan; o'chirilgan zavod belgilanadi), sirt,       │
+│      holat. Saralash: nom, sana, ko'rishlar. Server sahifalash 20/50/100.    │
+│    • features/products/list.ts: toProductsQuery — URL satrlari turga         │
+│      keltiriladi, buzilgan qiymat (sortBy=price, surface=SHIFT) backendga    │
+│      ketmaydi. api.ts: keepPreviousData — sahifa almashganda jadval          │
+│      bo'shamaydi, eski qatorlar xira turadi.                                 │
+│    • 🐞 D-004 dagi tur xatosi topilib tuzatildi: ixtiyoriy `query?`           │
+│      maydoni `never` bo'lib chiqardi — HECH BIR endpointga tur bo'yicha      │
+│      query berib bo'lmasdi. client.test.ts ga ijobiy tekshiruv qo'shildi.    │
+│    • FilterSelect: `loading` — variantlar kelguncha URL qiymati yo'qolmaydi. │
+│    • labels.ts: surfaceLabel (Pol/Devor).                                    │
+│    • 🆕 api B-060 qo'shildi: ro'yxat javobida rasm yo'q (N+1 bo'lmasligi      │
+│      uchun `coverUrl` kerak). 🔁 "Rasm" ustuni B-060 dan keyin qo'shiladi.    │
+│    • Qator bosish (mahsulot kartasi) — D-012 da.                             │
+│    • 3 yangi test (jami 139). build/lint toza. Brauzerda mock API (137       │
+│      mahsulot) bilan: havoladan ochish (page=2, surface, sort) kirishdan     │
+│      keyin tiklanadi; zavod/holat/qidiruv filtrlari — har o'zgarishga        │
+│      bitta so'rov, sahifa 1 ga qaytadi; Tozalash saralashni saqlaydi.        │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-012 · Mahsulot yaratish va tahrirlash ────────────────────────────────┐
+┌─ [x] D-012 · Mahsulot yaratish va tahrirlash ────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `POST /admin/products`, `GET,PATCH,DELETE /admin/products/{id}`│
 │                                                                              │
@@ -509,9 +652,41 @@
 │                                                                              │
 │  Bog'liq: D-011                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Marshrutlar: /products/new (catalog.write), /products/:id (catalog      │
+│      .view) — tab'lar ichki marshrut: Asosiy | Media (D-013 joyi) |          │
+│      O'xshash (D-014 joyi) | Narxlar → /prices | Zaxira → /stock             │
+│      (Narxlar tab'i MODERATOR ga ko'rinmaydi). Ro'yxatda qator bosilsa       │
+│      kartaga, SUPER_ADMIN ga "Yangi mahsulot" tugmasi.                       │
+│    • features/products/ProductForm — yaratish ham, tahrir ham: nom, zavod    │
+│      (o'chirilgani belgilanadi), o'lcham, sirt, rang, tavsif + "Kalkulyator  │
+│      ma'lumotlari": 1 paddondagi m² (6,4), 1 paddon og'irligi kg (7,3).      │
+│      Bu ikkisi o'zgarsa ogohlantirish: yangi buyurtmalar hisobi o'zgaradi,   │
+│      eskilari yo'q (D-010 dan ko'chgan talab).                               │
+│    • product-form.ts: zod = backend DTO; toUpdateBody faqat o'zgarganlar,    │
+│      o'nlik qiymat bo'yicha ("43.2000" = "43.2" — normalizeDecimal).         │
+│    • Xatolar: 409 (nom+o'lcham band) — nom ostida; 400 — backend matni       │
+│      forma ichida (xabar backenddan ustun).                                  │
+│    • Saqlanmagan o'zgarish: useUnsavedChanges (useBlocker + beforeunload)    │
+│      + UnsavedChangesDialog — menyu, tab, orqaga; saqlangandan keyingi       │
+│      navigate bloklanmaydi (allowNavigation).                                │
+│    • Kartada: holat + zaxira badge, O'chirish (soft, tasdiq bilan) /         │
+│      Qayta faollashtirish. Boshqa rollar: forma faqat o'qish uchun.          │
+│    • 🆕 umumiy: zDecimal, DecimalField (MoneyField uning ustida), Tabs,       │
+│      UnsavedChangesDialog, shared/lib/use-unsaved-changes.                   │
+│    • ⚠ Task matnidan farq: slug QO'LDA o'zgartirilmaydi — backend uni        │
+│      nomdan yasaydi va keyin qulflaydi (katalog havolalari buzilmasin);      │
+│      formada URL ko'rsatiladi. "Faollik" — alohida tugma (DELETE/PATCH).     │
+│      color/description ni tozalab bo'lmaydi (backend null qabul qilmaydi).   │
+│    • 5 yangi test (jami 144). build/lint toza. Brauzerda mock API bilan:     │
+│      tahrir (faqat name+sqmPerPallet ketdi), kalkulyator ogohlantirishi,     │
+│      menyu/tab'dan chiqishda dialog (qolish/chiqish), yaratish → kartaga,    │
+│      409, o'chirish/tiklash, /products/nope → "Topilmadi" + requestId,       │
+│      MANAGER: faqat o'qish, /products/new → 403.                             │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-013 · Mahsulot media (rasm va 360°) ──────────────────────────────────┐
+┌─ [x] D-013 · Mahsulot media (rasm va 360°) ──────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/products/{id}/media`,                         │
 │               `PATCH /admin/products/{id}/media/order`,                      │
@@ -528,9 +703,34 @@
 │                                                                              │
 │  Bog'liq: D-012                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Mahsulot kartasi → "Media" tab'i (/products/:id/media).                 │
+│    • 🆕 api.upload (shared/api/client.ts): fetch progress bermagani uchun     │
+│      XHR; token, 401 → refresh → bir marta qayta, ApiError formati, bekor    │
+│      qilish (AbortError) — oddiy so'rov bilan bir xil yo'ldan.               │
+│    • MediaUploader: tanlash yoki drag & drop, bir nechta fayl — navbat       │
+│      bilan bittadan, har birida progress (role=progressbar) va bekor         │
+│      qilish; MP4 → avtomatik "360° video". Yuborishdan oldin faqat hajm      │
+│      (10 MB) va aniq nomuvofiqlik tekshiriladi — tur backendda MAZMUNIDAN    │
+│      aniqlanadi, uning xabari fayl ostida ko'rsatiladi. Tabdan chiqilsa      │
+│      ketayotgan yuklash bekor qilinadi. 413 — o'zbekcha matn.                │
+│    • MediaGrid: rasm/video ko'rinishi, tartib raqami, "Asosiy" belgisi       │
+│      (birinchi fayl oddiy rasm bo'lsa — backend qoidasi), ochish havolasi.   │
+│      Tartib: kartani sudrash YOKI ← → tugmalari (klaviatura); darhol         │
+│      ekranda (optimistik), xato bo'lsa eski tartib qaytadi + toast.          │
+│      PATCH ga BARCHA ID yuboriladi. O'chirish — tasdiq bilan.                │
+│    • Boshqa rollar: faqat ko'radi (yuklash, sudrash, tugmalar yo'q).         │
+│    • Tabs: vertikal scroll tugmalari chiqib qolgani tuzatildi.               │
+│    • 8 yangi test (jami 152): upload (soxta XHR — progress, refresh,         │
+│      xato, abort), precheck, tur taxmini, moveItem.                          │
+│    • Brauzerda mock API (multipart, fayl imzosi tekshiruvi) bilan: 6 fayl    │
+│      tashlandi — 3 PNG va MP4 yuklandi, soxta .jpg backend xatosi bilan      │
+│      qoldi, 11 MB yuborilmadi; sudrash, ← →, 500 da tartib qaytishi,         │
+│      o'chirish; MANAGER — faqat ko'rish.                                     │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-014 · O'xshash mahsulotlar ───────────────────────────────────────────┐
+┌─ [x] D-014 · O'xshash mahsulotlar ───────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/products/{id}/similar`                        │
 │                                                                              │
@@ -541,9 +741,27 @@
 │                                                                              │
 │  Bog'liq: D-012                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • Mahsulot kartasi → "O'xshash" tab'i (/products/:id/similar).            │
+│    • SimilarEditor: backend POST ro'yxatni TO'LIQ almashtiradi — shuning     │
+│      uchun qoralama: qidiruv (2+ harf, debounce, 10 natija) orqali           │
+│      qo'shish, ↑ ↓ bilan tartib, olib tashlash; "Saqlash" — bitta so'rov.    │
+│      Saqlanmagan qoralama bilan chiqishda ogohlantirish (D-012 naqshi).      │
+│    • O'zini o'ziga bog'lash: qidiruvda "shu mahsulot" (tugma yo'q) +         │
+│      addSimilar tekshiruvi; dublikat va 20 tadan ko'p (MAX_SIMILAR) —        │
+│      darhol sabab; backend 400 matni ham toast'da.                           │
+│    • O'chirilgan mahsulot belgilanadi (ochiq sahifada chiqmasligi aytiladi), │
+│      bog'lanish bir tomonlamaligi tushuntiriladi, nomi kartaga havola.       │
+│    • queryKeys.products.similar(id) — products.all prefiksi ostida.          │
+│    • 🆕 shared/lib: useDebouncedValue, move-item (media bilan umumiy).        │
+│    • Boshqa rollar: ro'yxat faqat ko'rinadi.                                 │
+│    • 2 yangi test (jami 154). build/lint toza. Brauzerda mock API bilan:     │
+│      qidiruv, qo'shish, tartib, olib tashlash, chiqish dialogi, saqlash      │
+│      (to'liq ID ro'yxati ketdi), MANAGER — faqat ko'rish.                    │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-015 · Loyiha galereyasi ──────────────────────────────────────────────┐
+┌─ [x] D-015 · Loyiha galereyasi ──────────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,POST /admin/gallery`, `PATCH,DELETE /admin/gallery/{id}`  │
 │                                                                              │
@@ -553,6 +771,32 @@
 │                                                                              │
 │  🔒 Yozish — faqat SUPER_ADMIN                                               │
 │  Bog'liq: D-013                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • ⚠ Task matnidan farq (backendga moslandi): yozuvda TAVSIF yo'q va       │
+│      BITTA bog'langan mahsulot bor ("mahsulotlar" emas): sarlavha ≤200,      │
+│      productId, tartib (sortOrder), holat. Rasmning o'zi tahrirlanmaydi —    │
+│      yangi rasm = yangi yozuv.                                               │
+│    • Menyu: Katalog → "Galereya" (/gallery). Kartalar to'ri (24 tadan),      │
+│      holat filtri URL'da, server sahifalash; yashirilgan — xira + belgi;     │
+│      bog'langan mahsulot kartasiga havola.                                   │
+│    • GalleryItemModal: rasm tanlash/tashlash + oldindan ko'rish, sarlavha,   │
+│      tartib, mahsulot (qidirib tanlash / olib tashlash), tahrirda holat.     │
+│      Yuklash progressi tugmada ("Yuklanmoqda 45%"), modal yopilsa bekor.     │
+│      PATCH: bo'shatilgan sarlavha → title:null, olib tashlangan mahsulot →   │
+│      productId:null (bu endpoint null qabul qiladi). 400/413 — forma ichida. │
+│    • Kartada: Yashirish/Ko'rsatish (isActive), Tahrirlash, O'chirish         │
+│      (butunlay — tasdiqda "vaqtincha uchun Yashirish" maslahati).            │
+│    • 🆕 features/products/ProductSearch — D-014 dan ajratildi, umumiy.        │
+│    • 🐞 Topilib tuzatildi (api.upload, D-013 dan): oldindan bekor qilingan    │
+│      signal bilan XHR yuborilmay, promise OSILIB qolardi (yuborilmagan XHR   │
+│      abort hodisa chiqarmaydi). Test soxta XHR'ni haqiqiyga moslab           │
+│      kuchaytirildi. Galereya formasida StrictMode controller'ni darhol       │
+│      bekor qilib qo'yardi — har yuborishda yangi controller.                 │
+│    • 4 yangi test (jami 158). build/lint toza. Brauzerda mock API bilan:     │
+│      faylsiz saqlash, soxta rasm → backend xatosi, yaratish (progress,       │
+│      sarlavha+mahsulot ketdi), tahrirda tozalash (null), yashirish, filtr,   │
+│      o'chirish, MANAGER — faqat ko'rish.                                     │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -564,7 +808,7 @@
 ║          Bu epicda har bir tugma kimga ko'rinishi alohida o'ylanadi.         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-016 · Filial narxlari jadvali                               🔒 ───────┐
+┌─ [x] D-016 · Filial narxlari jadvali                               🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `GET,PUT /admin/branch-products`,                              │
 │               `PATCH /admin/branch-products/{id}/price`                      │
@@ -582,9 +826,32 @@
 │                                                                              │
 │  Bog'liq: D-011                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • pages/prices/PricesPage (/prices): mahsulot (kartasiga havola), narx    │
+│      so'm/m², holat (Sotiladi/Sotilmaydi), yangilangan vaqt; server          │
+│      sahifalash; holat filtri; mahsulot filtri — kartadagi "Narxlar" tab'i   │
+│      `?productId=` bilan ochadi (chip, olib tashlash mumkin).                │
+│    • 🔒 G5: filial tanlagich FAQAT SUPER_ADMIN ga (URL'da, "Barcha            │
+│      filiallar" rejimida Filial ustuni). Filial admini/menejeri uchun        │
+│      `branchId` URL'dan umuman O'QILMAYDI va so'rovga qo'shilmaydi —         │
+│      tekshirildi: ?branchId=b2 bilan ochilganda so'rovda branchId yo'q.      │
+│    • PriceCell — joyida tahrir: Enter saqlaydi, Esc bekor; format            │
+│      "91 250,5" → "91250.5" satr (G6); zMoney(12,2) = backend; xato qator    │
+│      ostida qoladi. Toast: eski → yangi narx.                                │
+│    • 🔒 Begona yozuv PATCH → 404 → "Topilmadi…" (ruxsat yo'q DEMAYDI) —       │
+│      mock'da ssenariy bilan tekshirildi.                                     │
+│    • Holat almashtirish — PUT upsert joriy narx bilan (PATCH faqat narx).    │
+│      AddPriceModal — mahsulot qidirib tanlash + narx + holat; SUPER_ADMIN    │
+│      uchun filial tanlanmaguncha bloklangan (backend 400 ga yetmasin),       │
+│      filial admini uchun narx o'z filialiga (branchId yuborilmaydi).         │
+│    • Yozish: SUPER_ADMIN, BRANCH_ADMIN (prices.write); MANAGER faqat         │
+│      ko'radi; MODERATOR ga bo'lim yopiq (D-007).                             │
+│    • 3 yangi test (jami 161). build/lint toza. Brauzerda mock API (2 filial, │
+│      rolga qarab filtrlash) bilan yuqoridagi barcha ssenariylar.             │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-017 · Ommaviy narx yangilash                                🔒 ───────┐
+┌─ [x] D-017 · Ommaviy narx yangilash                                🔒 ───────┐
 │                                                                              │
 │  Endpoint: `PUT /admin/branch-products`                                      │
 │                                                                              │
@@ -597,9 +864,32 @@
 │                                                                              │
 │  Bog'liq: D-016                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • ⚠ Backendda OMMAVIY endpoint yo'q — `PUT /admin/branch-products`        │
+│      bittalik upsert. Shuning uchun har tanlangan narxga alohida             │
+│      `PATCH .../{id}/price` (branchId kerak emas — G5) ketma-ket ketadi.     │
+│      Yangi narx frontendda hisoblanadi (G1 dan istisno, faqat ko'rsatish     │
+│      va yuborish uchun) — BigInt tiyinlarda, Number ishlatilmaydi (G6).      │
+│      💡 Kelajakda backendga bulk endpoint (atomar) qo'shilsa yaxshi.          │
+│    • /prices: yozuvchilarga tanlash ustuni (sahifani tanlash —               │
+│      indeterminate), tanlov sahifalar orasida saqlanadi, filtr/filial        │
+│      o'zgarsa bo'shaydi. Panel: "N ta tanlandi · Narxni o'zgartirish".       │
+│    • BulkPriceModal: rejim — foizga (±, 2 xona) / summaga (±) / aniq narx    │
+│      → TASDIQ EKRANI MAJBURIY: nechta, qaysi filial(lar), eski → yangi       │
+│      jadval, 0/manfiyga tushadiganlar alohida (yuborilmaydi) → progress      │
+│      (oyna yopilmaydi) → natija: o'zgardi N / xato M + sabablar ro'yxati,    │
+│      "Xatolarni qayta urinish". Ro'yxat oxirida BIR MARTA yangilanadi.       │
+│    • features/prices/bulk-price.ts: applyBulk, validateBulkInput —           │
+│      yarmidan yuqoriga yumaloqlash, 0.1+0.2 va MAX_SAFE_INTEGER dan katta    │
+│      summalar testlangan.                                                    │
+│    • 4 yangi test (jami 165). build/lint toza. Brauzerda mock API bilan:     │
+│      2 sahifadan 4 ta tanlash, bo'sh qiymat xatosi, -88 000 → 2 tasi         │
+│      o'tkazib yuborildi, 2 PATCH (biri 404 → natijada "Topilmadi"),          │
+│      qayta urinish tugmasi, Esc yuborish paytida yopmaydi, tanlov tozalandi. │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-018 · Zaxira boshqaruvi                                     🔒 ───────┐
+┌─ [x] D-018 · Zaxira boshqaruvi                                     🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `GET,PUT /admin/product-stocks`                                │
 │                                                                              │
@@ -616,6 +906,26 @@
 │    aks holda filial admini "mening zaxiram" deb o'ylaydi.                    │
 │                                                                              │
 │  Bog'liq: D-011                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • pages/stock/StockPage (/stock): mahsulot (kartaga havola), paddonlar,   │
+│      holat (🟢🟡🔴 StatusBadge), «kam qoldi» chegarasi (son · global/           │
+│      o'ziniki), yangilangan (null → "Hali kiritilmagan"). Server sahifalash. │
+│      ⚠ "Filial" ustuni YO'Q; tepada doimiy banner: "Zaxira filialga          │
+│      bog'liq emas — markaziy ombordagi bitta umumiy son".                    │
+│    • PalletsCell: paddon soni doim maydon. SUPER_ADMIN/MODERATOR: qiymat     │
+│      o'zgarsa ✓/✕ chiqadi, Enter/Esc; YANGI son yuboriladi (farq emas),      │
+│      toast'da farq ("25 → 0 (-25 paddon)"). BRANCH_ADMIN/MANAGER: maydon     │
+│      `disabled`, sababi aria-describedby + title orqali (D-046 #10 uchun).   │
+│    • ThresholdModal: global sozlama (lowStockThreshold: null) yoki mahsulot  │
+│      uchun o'z chegarasi; PUT da `lowStockThreshold` faqat shu yerda ketadi. │
+│    • Mahsulot kartasidagi "Zaxira" tab'i `/stock?productId=` bilan ochadi.   │
+│    • features/stock/stock.ts: parsePallets (butun, 0…int4), toStockBody,     │
+│      palletDelta. Invalidatsiya: productStocks + products (holat badge).     │
+│    • 3 yangi test (jami 168). build/lint toza. Brauzerda mock API bilan:     │
+│      MANAGER — 20 ta maydon disabled, sabab bog'langan, tugmalar yo'q;       │
+│      MODERATOR — noto'g'ri qiymat, bir xil qiymatda tugma chiqmaydi, 25→0    │
+│      (holat "Tugagan"), Esc, chegara 30 ("Kam qoldi") va globalga qaytish.   │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -648,7 +958,7 @@
 ║  Maqsad: mijoz hisobini ochish, balans, qarz, to'lovni qo'lda kiritish.      ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] D-020 · Optom mijozlar ro'yxati ────────────────────────────────────────┐
+┌─ [x] D-020 · Optom mijozlar ro'yxati ────────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /admin/customers`                                            │
 │                                                                              │
@@ -663,9 +973,31 @@
 │                                                                              │
 │  Bog'liq: D-008                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • pages/customers/CustomersPage (/customers): kompaniya + login, mas'ul   │
+│      shaxs, telefon (+998 90 123 45 67, tel: havola), [filial — faqat        │
+│      SUPER_ADMIN], balans, holat (Faol/Bloklangan + "Parol                   │
+│      almashtirilmagan"), qo'shilgan sana. Server sahifalash.                 │
+│    • Filtrlar URL'da: qidiruv (login/kompaniya/telefon/INN, debounce),       │
+│      filial (faqat SUPER_ADMIN, RETAIL filiallar), holat, 🆕 balans           │
+│      (qarzdorlar / qarzi yo'q — backend `hasDebt` bor, qo'shildi).           │
+│    • 🔒 Filial admini uchun `branchId` URL'dan O'QILMAYDI va yuborilmaydi;    │
+│      frontendda qo'shimcha filtr yo'q — backend tokendan filtrlaydi.         │
+│    • BalanceText (shared/ui): musbat — QARZ (qizil + "qarz"), manfiy —       │
+│      AVANS (yashil + "avans"), 0 — xira; satr ustida (balanceKind, G6).      │
+│    • ⚠ Backend bu ro'yxatda sortBy ni qo'llamaydi (yangilari oldin) —        │
+│      saralash tugmalari yo'q.                                                │
+│    • 🆕 features/branches/api (useBranches) — prices bilan umumiy;            │
+│      shared/lib/format: formatUzPhone, balanceKind.                          │
+│    • Qator bosish (mijoz kartasi) — D-022 da.                                │
+│    • 4 yangi test (jami 172). build/lint toza. Brauzerda mock API bilan:     │
+│      BRANCH_ADMIN ?branchId=b2 — so'rovda yo'q, faqat o'z filiali;           │
+│      qarzdorlar filtri; SUPER_ADMIN — filial tanlagich/ustuni, b2 filtri;    │
+│      500 → qayta urinishlar davomida xira, keyin xato + requestId.           │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-021 · Mijoz yaratish va vaqtinchalik parol                  🔒 ───────┐
+┌─ [x] D-021 · Mijoz yaratish va vaqtinchalik parol                  🔒 ───────┐
 │                                                                              │
 │  Endpointlar: `POST /admin/customers`,                                       │
 │               `POST /admin/customers/{id}/reset-password`                    │
@@ -685,9 +1017,34 @@
 │                                                                              │
 │  Bog'liq: D-020                                                              │
 │                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                   │
+│    • /customers → "Yangi mijoz" (barcha xodim — backend ALL_STAFF):          │
+│      kompaniya, login (kompaniya nomidan taklif, kichik harf, backend        │
+│      LOGIN_PATTERN), INN (ixtiyoriy, 9 raqam), mas'ul shaxs, telefon         │
+│      (+998). 🔒 Filial — FAQAT SUPER_ADMIN (majburiy, RETAIL); filial         │
+│      xodimida maydon yo'q va branchId yuborilmaydi (G5).                     │
+│    • 409 (login band) — login ostida; 400/404 — forma ichida.                │
+│    • TemporaryPasswordDialog (shared/ui): login + parol yirik mono           │
+│      shriftda, "Parolni nusxalash" / "Login + parol", aniq ogohlantirish     │
+│      "bu oyna yopilgach parol qayta ko'rsatilmaydi". Esc, fon, X yopmaydi;   │
+│      "Yopish" — "Parolni saqladim / mijozga yetkazdim" belgisidan keyin.     │
+│    • Parolni tiklash (qator amali → tasdiq → shu ekran).                     │
+│    • 🔒 Parol: faqat sahifa komponenti holatida; mutatsiya `gcTime: 0` +      │
+│      mutateAsync dan keyin darhol `reset()` — MutationCache'da qolmaydi;     │
+│      toast/log/URL/localStorage'ga tushmaydi. Oyna yopilgach DOM'da ham      │
+│      yo'q (brauzerda tekshirildi).                                           │
+│    • InputField: chaqiruvchining onBlur'i react-hook-form'niki bilan         │
+│      birga ishlaydi (avval yutilib ketardi).                                 │
+│    • ⚠ Individual narx qoidalari (pricingRules) va menejer biriktirish       │
+│      yaratishda emas — mijoz kartasida (D-019, D-022).                       │
+│    • 4 yangi test (jami 176). build/lint toza. Brauzerda mock API bilan      │
+│      (MANAGER): bo'sh forma, login taklifi, INN xatosi, 409, yaratish →      │
+│      parol oynasi, Esc/fon yopmaydi, belgi → yopish, parol DOM'dan           │
+│      o'chdi; ro'yxatda yangi mijoz; parolni tiklash.                         │
+│                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] D-022 · Mijoz kartasi ──────────────────────────────────────────────────┐
+┌─ [~] D-022 · Mijoz kartasi ──────────────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,PATCH /admin/customers/{id}`,                             │
 │               `PATCH /admin/customers/{id}/active`                           │
@@ -1278,15 +1635,15 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 48
-  Tugadi       : 6
+  Tugadi       : 20
   Jarayonda    : 1
   Bloklangan   : 0
 
   Epic bo'yicha:
-    EPIC 0  Poydevor .................  6 / 8    [██████··]   ✓ D-001 … D-006 · ~ D-007
-    EPIC 1  Katalog ..................  0 / 7    [·······]
-    EPIC 2  Narx va zaxira ...........  0 / 4    [····]
-    EPIC 3  Mijoz va moliya ..........  0 / 4    [····]
+    EPIC 0  Poydevor .................  8 / 8    [████████]   ✓ D-001 … D-008
+    EPIC 1  Katalog ..................  7 / 7    [███████]   ✓ D-009 … D-015
+    EPIC 2  Narx va zaxira ...........  3 / 4    [███·]      ✓ D-016 … D-018 · D-019 D-022 ni kutadi
+    EPIC 3  Mijoz va moliya ..........  2 / 4    [██··]      ✓ D-020, D-021 · ~ D-022
     EPIC 4  Buyurtmalar ..............  0 / 6    [······]
     EPIC 5  Markaziy ombor ...........  0 / 3    [···]
     EPIC 6  Filial/Hamkor/Xodim ......  0 / 4    [····]
@@ -1295,7 +1652,8 @@
     EPIC 9  Bosh sahifa va sifat .....  0 / 8    [········]
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  D-007 · Rol asosida ko'rinish (RBAC)
+  KEYINGI TASK:  D-022 · Mijoz kartasi → keyin D-019
+                 (D-019 "Bog'liq: D-022" — mijoz kartasidan keyin qaytiladi)
 
   Backend TAYYOR (api/task.txt: 55/58, faqat B-050 bloklangan) — ya'ni
   bu ro'yxatdagi hech bir task backendni kutmaydi. Boshlash mumkin.

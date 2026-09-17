@@ -2228,8 +2228,37 @@
 │      (Setting.value, Notification.payload kabi erkin JSON — istisno)         │
 │    • `pnpm openapi:export` → dashboard'da `pnpm api:types`                   │
 │                                                                              │
+│  🆕 Qo'shimcha (dashboard D-009, 2026-09-17): `PartialType` ichidagi          │
+│    `@ApiPropertyOptional({ default: 0 })` openapi.json da `required` ga      │
+│    tushyapti → `UpdateFactoryDto.sortOrder: number` (majburiy) bo'lib        │
+│    chiqadi, PATCH turi noto'g'ri. Xuddi shu naqsh boshqa Update*Dto larda    │
+│    ham tekshirilsin — UpdateSizeDto.sortOrder da ham tasdiqlandi (D-010).    │
+│    Dashboard hozircha features/{factories,sizes} da override.                │
+│                                                                              │
 │  ⚠ Xulq-atvor O'ZGARMAYDI — faqat hujjat/tur.                                │
 │  Bog'liq: B-047, B-048; dashboard D-006, D-020+, D-024+                      │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [ ] B-060 · Admin mahsulot ro‘yxatida muqova rasmi              🆕 ─────────┐
+│                                                                              │
+│  TOPILDI: dashboard D-011 (2026-09-17).                                      │
+│                                                                              │
+│  Muammo: `GET /admin/products` javobida (ProductAdminResponseDto) rasm       │
+│  maydoni yo'q. Dashboard jadvalida "rasm" ustuni kerak (task D-011), lekin   │
+│  har qator uchun `GET /admin/products/{id}/media` chaqirish = N+1 so'rov.    │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • ProductAdminResponseDto ga `coverUrl: string | null` — birinchi IMAGE   │
+│      turidagi media (`sortOrder` bo'yicha), bo'lmasa `null`                  │
+│    • Prisma select'da `media: { where: { type: IMAGE }, orderBy:             │
+│      { sortOrder: 'asc' }, take: 1, select: { url: true } }` — bitta so'rov  │
+│    • Swagger: `@ApiProperty({ type: String, nullable: true })` (B-059 naqshi)│
+│    • Ochiq katalog ro'yxatida allaqachon shunday maydon bo'lsa — o'sha       │
+│      mantiq qayta ishlatiladi                                                │
+│                                                                              │
+│  ⚠ Xulq-atvor o'zgarmaydi, faqat maydon qo'shiladi.                          │
+│  Bog'liq: B-022 (media); dashboard D-011 (rasm ustuni shu task kutadi)       │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -2260,7 +2289,7 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 59  (B-016 bekor; B-051...B-059 qo‘shildi — filial
+  Jami tasklar : 60  (B-016 bekor; B-051...B-060 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator)
   Tugadi       : 55
   Jarayonda    : 0
@@ -2285,6 +2314,7 @@
 
   ──────────────────────────────────────────────────────────────────────────
   KEYINGI TASK:  B-059 · OpenAPI nullable turlar (dashboard uchun kerak)
+                 B-060 · Admin mahsulot ro'yxatida coverUrl (dashboard D-011)
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
