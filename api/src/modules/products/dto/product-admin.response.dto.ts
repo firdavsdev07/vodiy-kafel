@@ -78,6 +78,16 @@ export class ProductAdminResponseDto {
   @ApiProperty({ type: String, example: '32.5' })
   weightPerPallet!: string;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description:
+      'Jadval uchun muqova surati — birinchi `IMAGE` turidagi media ' +
+      '(`sortOrder` bo‘yicha). Surat yo‘q bo‘lsa `null`.',
+    example: '/uploads/products/lyuks-60x60-1.webp',
+  })
+  coverUrl!: string | null;
+
   @ApiProperty({ example: 0 })
   viewCount!: number;
 

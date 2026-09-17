@@ -39,6 +39,8 @@ describe('ProductsAdminService (B-021)', () => {
     factory: { id: 'f1', name: 'YONGXIN', slug: 'yongxin' },
     size: { id: 's1', label: '60x60', widthCm: 60, heightCm: 60 },
     stock: { stockPallets: 100, lowStockThreshold: null },
+    // B-060: ADMIN_SELECT muqova uchun bitta IMAGE oladi (`take: 1`)
+    media: [{ url: '/uploads/products/lyuks-60x60-1.webp' }],
     ...over,
   });
 
@@ -117,6 +119,32 @@ describe('ProductsAdminService (B-021)', () => {
         ][]
       )[0][0];
       expect(arg.select.branchProducts).toBeUndefined();
+    });
+
+    it('muqova surati javobda bor (B-060)', async () => {
+      const result = await service.findAll(new ProductAdminQueryDto());
+      expect(result.items[0].coverUrl).toBe(
+        '/uploads/products/lyuks-60x60-1.webp',
+      );
+    });
+
+    it('surati yo‘q mahsulotda muqova `null` (B-060)', async () => {
+      prisma.product.findMany.mockResolvedValueOnce([row({ media: [] })]);
+      const result = await service.findAll(new ProductAdminQueryDto());
+      expect(result.items[0].coverUrl).toBeNull();
+    });
+
+    it('muqova BITTA so‘rovda olinadi — N+1 yo‘q (B-060)', async () => {
+      await service.findAll(new ProductAdminQueryDto());
+      const arg = (
+        prisma.product.findMany.mock.calls as [
+          { select: { media?: { take?: number; where?: unknown } } },
+        ][]
+      )[0][0];
+      // Ro'yxat uchun har qator bo'yicha alohida media so'rovi bo'lmasin
+      expect(arg.select.media?.take).toBe(1);
+      // 360° material muqova bo'lolmaydi
+      expect(arg.select.media?.where).toEqual({ type: 'IMAGE' });
     });
 
     it('aniq zaxira soni va holati bor, Decimal satrga o‘giriladi', async () => {

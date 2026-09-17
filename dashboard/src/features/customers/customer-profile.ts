@@ -4,11 +4,7 @@ import { formatUzPhone } from '@/shared/lib/format';
 import { zRequiredText, zUzPhone } from '@/shared/lib/validation';
 
 export type CustomerDetail = Schema<'AdminCustomerDetailDto'>;
-/** ⚠ B-059: generatsiyada `inn`/`managerId` turi noto'g'ri — to'g'rilangan tur. */
-export type UpdateCustomerBody = Omit<Schema<'UpdateCustomerDto'>, 'inn' | 'managerId'> & {
-  inn?: string | null;
-  managerId?: string | null;
-};
+export type UpdateCustomerBody = Schema<'UpdateCustomerDto'>;
 
 /**
  * Mijoz profili (D-022). Login O'ZGARMAYDI. `inn: null` / `managerId: null` —

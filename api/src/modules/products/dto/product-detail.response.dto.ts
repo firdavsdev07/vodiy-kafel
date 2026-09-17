@@ -28,6 +28,7 @@ export class ProductMediaResponseDto {
  */
 export class ProductDetailResponseDto extends ProductListItemResponseDto {
   @ApiPropertyOptional({
+    type: String,
     example: 'Yuqori sifatli keramogranit, sirti silliq.',
     nullable: true,
   })

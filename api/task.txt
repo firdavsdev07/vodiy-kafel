@@ -2206,7 +2206,7 @@
 │  Bog'liq: B-049                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-059 · OpenAPI: nullable maydonlar turi yo‘qolgan         🆕 ──────────┐
+┌─ [x] B-059 · OpenAPI: nullable maydonlar turi yo‘qolgan         🆕 ──────────┐
 │                                                                              │
 │  TOPILDI: dashboard D-006 (2026-09-16), `pnpm api:types` natijasida.         │
 │                                                                              │
@@ -2235,12 +2235,37 @@
 │    ham tekshirilsin — UpdateSizeDto.sortOrder da ham tasdiqlandi (D-010).    │
 │    Dashboard hozircha features/{factories,sizes} da override.                │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                  │
+│    • Sabab aniqlandi: Swagger PLUGIN umuman ulanmagan (nest-cli.json da      │
+│      yo'q) — turlar `emitDecoratorMetadata` dan olinadi, u esa union         │
+│      uchun `design:type = Object` beradi. Ya'ni `string | null` da           │
+│      dekoratorda ANIQ `type:` bo'lishi SHART                                 │
+│    • 22 ta maydonga `type:` (kerak joyda `nullable: true` ham) qo'shildi     │
+│      — 28 emas, 22: qolgan 18 tasi `SomeDto | null` bo'lib, Nest ularni      │
+│      `allOf: [$ref]` bilan yozadi va `openapi-typescript` ni to'g'ri         │
+│      o'qiydi (tekshirildi) — ular XATO EMAS ekan                             │
+│    • Dashboard turida `Record<string, never>` 28 → 6 ga tushdi; qolgan       │
+│      6 tasi haqiqatan erkin JSON (Setting.value ×3, Notification.payload)    │
+│      va generator sarlavhasi (webhooks, $defs)                               │
+│    • `PartialType` + `default` muammosi: openapi.json TO'G'RI edi            │
+│      (`sortOrder` `required` da yo'q). Aybdor — `openapi-typescript`         │
+│      ning `--default-non-nullable` bayrog'i (v7 da standart YOQIQ).          │
+│      Loyihadagi 14 ta `default:` ning HAMMASI so'rov DTO'sida, demak         │
+│      bayroq dashboard `api:types` skriptida o'chirildi → `sortOrder?`        │
+│    • 🛡 Qo'riqchi test: `src/swagger/openapi-contract.spec.ts` —              │
+│      xossasiz `type: object` qolsa yiqiladi (eski faylda 22 tasini           │
+│      ushlagani tekshirildi). ⚠ U `openapi.json` ni O'QIYDI, qayta            │
+│      generatsiya qilmaydi — DTO o'zgargach `pnpm openapi:export` shart       │
+│    • Dashboard'dagi 7 ta vaqtinchalik override o'chirildi                    │
+│      (profile.ts, factory-form, size-form, customer-profile,                 │
+│      customer-form, auth/hooks, factories/api, customers/api)                │
 │  ⚠ Xulq-atvor O'ZGARMAYDI — faqat hujjat/tur.                                │
 │  Bog'liq: B-047, B-048; dashboard D-006, D-020+, D-024+                      │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-060 · Admin mahsulot ro‘yxatida muqova rasmi              🆕 ─────────┐
+┌─ [x] B-060 · Admin mahsulot ro‘yxatida muqova rasmi              🆕 ─────────┐
 │                                                                              │
 │  TOPILDI: dashboard D-011 (2026-09-17).                                      │
 │                                                                              │
@@ -2257,9 +2282,67 @@
 │    • Ochiq katalog ro'yxatida allaqachon shunday maydon bo'lsa — o'sha       │
 │      mantiq qayta ishlatiladi                                                │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                  │
+│    • `ProductAdminResponseDto.coverUrl: string | null` qo'shildi             │
+│    • `ADMIN_SELECT` ga `media: { where: { type: IMAGE },                     │
+│      orderBy: sortOrder, take: 1 }` — BITTA so'rov, N+1 yo'q                 │
+│    • Filtr ochiq katalogdagi `PRIMARY_IMAGE` bilan bir xil mantiq:           │
+│      360° material muqova bo'lolmaydi                                        │
+│    • 3 ta yangi test: muqova bor / surati yo'qda `null` /                    │
+│      `take: 1` + `where: IMAGE` (N+1 qaytib kelmasligi uchun)                │
+│    • Dashboard D-011 jadvaliga "Rasm" ustuni qo'shildi                       │
 │  ⚠ Xulq-atvor o'zgarmaydi, faqat maydon qo'shiladi.                          │
 │  Bog'liq: B-022 (media); dashboard D-011 (rasm ustuni shu task kutadi)       │
 │                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] B-061 · Seed: xodim telefoni noto‘g‘ri formatda        🐞 🆕 ───────────┐
+│                                                                              │
+│  TOPILDI: dashboard bilan RBAC ni sinab ko'rishda (2026-09-17).              │
+│                                                                              │
+│  Muammo: `prisma/seed.ts` filial xodimlari telefonini shablon bilan          │
+│  yasaydi va bitta raqam YETISHMAYDI:                                         │
+│      `+9989001100${i+1}`  →  +99890011001   (998 dan keyin 8 raqam)          │
+│      `+9989002200${i+1}`  →  +99890022001   (xuddi shunday)                  │
+│      `+9989033300${i+1}`  →  +99890333001   (mijozlar ham)                   │
+│  Haqiqiy O'zbekiston raqami — 998 dan keyin AYNAN 9 raqam.                   │
+│                                                                              │
+│  Natija: BRANCH_ADMIN va MANAGER (8 ta xodim) dashboard orqali               │
+│  UMUMAN kira olmaydi — telefon maydoni 9 raqam talab qiladi va so'rov        │
+│  backendga yetib ham bormaydi. Ya'ni rol cheklovlarini (D-007) haqiqiy       │
+│  hisob bilan sinab bo'lmaydi.                                                │
+│                                                                              │
+│  ⚠ Backend AYBDOR EMAS: `LOGIN_PHONE` ataylab keng (9–15 raqam,              │
+│    xalqaro raqam ham bo'lsin uchun) va `+99890011001` ni qabul qiladi.       │
+│    Xato faqat SEED MA'LUMOTIDA — u dialab bo'lmaydigan raqam yasagan.        │
+│                                                                              │
+│  Nima qilinadi:                                                              │
+│    • Shablonga yetishmayotgan nol qo'shiladi (8 → 9 raqam)                   │
+│    • `README.md` dagi test hisoblar jadvali yangilanadi                      │
+│    • Seed testi: yozilgan har bir telefon `^\+998\d{9}$` ga mos              │
+│      kelishi tekshiriladi — xato qaytib kelmasin                             │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                  │
+│    • Seed'ga `uzPhone(local)` yordamchisi qo'shildi — u `+998` qo'shadi      │
+│      va 9 raqam emasligini TEKSHIRADI, xato bo'lsa seed yiqiladi             │
+│    • Barcha 6 ta telefon (SUPER_ADMIN, MODERATOR, filial adminlari,          │
+│      menejerlar, optom mijozlar, agent) shu yordamchidan o'tkazildi          │
+│    • Qo'riqchi TEKIN keladi: `test/global-setup.ts` har `pnpm test:e2e`      │
+│      da seed'ni ishga tushiradi — xato raqam darhol yiqiladi                 │
+│    • `README.md` test hisoblar jadvali yangilandi                            │
+│                                                                              │
+│  Tekshirildi (haqiqiy hisob bilan, dashboard orqali):                        │
+│    • BRANCH_ADMIN (+998900110001) kirdi; yuqorida "Barcha filiallar"         │
+│      emas, "Vodiy Kafel — Farg'ona" ko'rsatildi                              │
+│    • MODERATOR (+998900000002) kirdi; menyuda 15 emas 12 band —              │
+│      Narxlar, Xodimlar, Sozlamalar YO'Q (D-007 kutgani aynan shu)            │
+│    • MODERATOR `/prices` ni URL orqali ochdi → 403 sahifasi                  │
+│    ⚠ Ya'ni D-007 (RBAC) endi HAQIQIY hisob bilan sinaladi — ilgari           │
+│      bu mumkin emas edi.                                                     │
+│  ⚠ Sxema ham, xulq-atvor ham o'zgarmaydi — faqat test ma'lumoti.             │
+│  Bog'liq: B-013 (seed); dashboard D-007 (RBAC sinovi shuni kutadi)           │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -2289,9 +2372,10 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 60  (B-016 bekor; B-051...B-060 qo‘shildi — filial
-                 izolyatsiya + narx zanjiri + transport tarif + moderator)
-  Tugadi       : 55
+  Jami tasklar : 61  (B-016 bekor; B-051...B-061 qo‘shildi — filial
+                 izolyatsiya + narx zanjiri + transport tarif + moderator +
+                 dashboard ishida topilgan uchta xato: B-059, B-060, B-061)
+  Tugadi       : 58
   Jarayonda    : 0
   Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
                  (B-044 — Didox.uz spike hamon ochiq, lekin ENDI hech narsani
@@ -2310,11 +2394,14 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat ....................  4 / 6    [████··]
+    EPIC 11 Sifat ....................  7 / 8    [███████·]  (B-059, B-060,
+                                                            B-061 qo‘shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  B-059 · OpenAPI nullable turlar (dashboard uchun kerak)
-                 B-060 · Admin mahsulot ro'yxatida coverUrl (dashboard D-011)
+  KEYINGI TASK:  yo'q — backendda ochiq task qolmadi.
+                 Dashboard'ni kutayotgan hamma narsa (B-059 turlar,
+                 B-060 coverUrl, B-061 seed telefoni) 2026-09-17 da yopildi.
+                 Navbat dashboard'da: D-022 (mijoz kartasi) dan davom etadi.
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)

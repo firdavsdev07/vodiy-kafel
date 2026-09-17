@@ -47,8 +47,7 @@ export function useCustomer(id: string) {
 export function useUpdateCustomer(id: string) {
   return useMutation({
     mutationFn: (body: UpdateCustomerBody) =>
-      // ⚠ B-059: inn/managerId turi generatsiyada noto'g'ri
-      api.patch('/admin/customers/{id}', { params: { id }, body: body as never }),
+      api.patch('/admin/customers/{id}', { params: { id }, body }),
     meta: { invalidates: [queryKeys.customers.all] },
   });
 }

@@ -61,7 +61,11 @@ export class ProductListItemResponseDto {
   @ApiProperty({ enum: ProductSurface, example: ProductSurface.POL })
   surface!: ProductSurface;
 
-  @ApiPropertyOptional({ example: 'Bej', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'Bej',
+    nullable: true,
+  })
   color!: string | null;
 
   @ApiProperty({
@@ -82,6 +86,7 @@ export class ProductListItemResponseDto {
   weightPerPallet!: string;
 
   @ApiPropertyOptional({
+    type: String,
     description:
       'Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati ' +
       '`GET /products/:slug` da keladi.',

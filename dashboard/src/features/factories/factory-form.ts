@@ -2,17 +2,9 @@ import { z } from 'zod';
 import type { Schema } from '@/shared/api';
 import { zOptionalText, zRequiredText } from '@/shared/lib/validation';
 
-/**
- * ⚠ VAQTINCHALIK (api B-059): generatsiyada `description`/`websiteUrl`
- * `Record<string, never>`, PATCH da `sortOrder` majburiy bo'lib chiqqan.
- * B-059 tuzatilgach `Schema<...>` ning o'zi ishlatiladi.
- */
-export type Factory = Omit<Schema<'FactoryAdminResponseDto'>, 'description' | 'websiteUrl'> & {
-  description: string | null;
-  websiteUrl: string | null;
-};
+export type Factory = Schema<'FactoryAdminResponseDto'>;
 export type CreateFactoryBody = Schema<'CreateFactoryDto'>;
-export type UpdateFactoryBody = Partial<Schema<'UpdateFactoryDto'>>;
+export type UpdateFactoryBody = Schema<'UpdateFactoryDto'>;
 
 /**
  * Zavod formasi (D-009). Chegaralar backend `CreateFactoryDto` bilan bir xil:

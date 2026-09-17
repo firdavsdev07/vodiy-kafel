@@ -38,6 +38,8 @@ export const queryKeys = {
   branchProducts: domainKeys('branch-products'),
   productStocks: domainKeys('product-stocks'),
   customers: domainKeys('customers'),
+  /** Mijozning individual narx qoidalari — GET /admin/customers/{id}/pricing-rules */
+  pricingRules: domainKeys('pricing-rules'),
   orders: domainKeys('orders'),
   /** Ta'minot buyurtmalari — GET /admin/branch-orders */
   supplyOrders: domainKeys('branch-orders'),

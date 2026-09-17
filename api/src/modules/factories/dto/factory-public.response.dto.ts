@@ -24,10 +24,16 @@ export class FactoryPublicResponseDto {
   logoUrl!: string;
 
   @ApiPropertyOptional({
+    nullable: true,
+    type: String,
     example: 'Xitoyning yirik keramogranit ishlab chiqaruvchisi',
   })
   description!: string | null;
 
-  @ApiPropertyOptional({ example: 'https://yongxin.example.com' })
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    example: 'https://yongxin.example.com',
+  })
   websiteUrl!: string | null;
 }

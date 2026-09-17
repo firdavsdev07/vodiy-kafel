@@ -1,17 +1,11 @@
 import type { Schema } from '@/shared/api/types';
 
-type GeneratedProfile = Schema<'UserProfileResponseDto'>;
-
-export type StaffRole = GeneratedProfile['role'];
-
 /**
- * ⚠ VAQTINCHALIK (api B-059): openapi.json da `string | null` maydonlar
- * `Record<string, never>` bo'lib chiqyapti. B-059 tuzatilgach
- * `StaffProfile = GeneratedProfile` bo'ladi va bu override o'chiriladi.
+ * Xodim profili — `GET /auth/me` (D-006).
+ *
+ * Tur to'g'ridan-to'g'ri generatsiyadan (G2). `branchId` SUPER_ADMIN da
+ * `null` — u barcha filiallarni ko'radi.
  */
-export type StaffProfile = Omit<GeneratedProfile, 'email' | 'branchId' | 'telegramUsername'> & {
-  email: string | null;
-  /** SUPER_ADMIN da `null` — barcha filiallar. */
-  branchId: string | null;
-  telegramUsername: string | null;
-};
+export type StaffProfile = Schema<'UserProfileResponseDto'>;
+
+export type StaffRole = StaffProfile['role'];

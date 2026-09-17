@@ -32,8 +32,8 @@ Swagger: `http://localhost:3000/api/docs` (`SWAGGER_ENABLED=true` bo'lsa).
 | -------------------- | --------------------- | ------------------------------------- |
 | Xodim (telefon bilan) | `+998900000001`       | `SUPER_ADMIN`                         |
 | Xodim                 | `+998900000002`       | `MODERATOR` (markaziy ombor)          |
-| Xodim                 | `+99890011001`        | `BRANCH_ADMIN` — Farg'ona             |
-| Xodim                 | `+99890022001`        | `MANAGER` — Farg'ona                  |
+| Xodim                 | `+998900110001`        | `BRANCH_ADMIN` — Farg'ona             |
+| Xodim                 | `+998900220001`        | `MANAGER` — Farg'ona                  |
 | Optom mijoz (login bilan) | `fargona-optom`   | Farg'ona Qurilish MChJ                |
 | Optom mijoz           | `andijon-optom`       | Andijon Qurilish MChJ                 |
 | Optom mijoz           | `namangan-optom`      | Namangan Qurilish MChJ                |

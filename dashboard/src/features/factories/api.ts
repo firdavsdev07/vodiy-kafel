@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api';
 import { queryKeys } from '@/shared/query';
-import type { CreateFactoryBody, Factory, UpdateFactoryBody } from './factory-form';
+import type { CreateFactoryBody, UpdateFactoryBody } from './factory-form';
 
 /**
  * Zavodlar (D-009). ⚠ `GET /admin/factories` SAHIFALANMAYDI — backend
@@ -11,9 +11,7 @@ import type { CreateFactoryBody, Factory, UpdateFactoryBody } from './factory-fo
 export function useFactories() {
   return useQuery({
     queryKey: queryKeys.factories.lists(),
-    // ⚠ B-059 gacha: nullable maydonlar turi noto'g'ri generatsiya qilingan
-    queryFn: async ({ signal }) =>
-      (await api.get('/admin/factories', { signal })) as unknown as Factory[],
+    queryFn: ({ signal }) => api.get('/admin/factories', { signal }),
   });
 }
 

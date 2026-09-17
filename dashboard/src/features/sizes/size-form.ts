@@ -3,8 +3,7 @@ import type { Schema } from '@/shared/api';
 
 export type Size = Schema<'SizeAdminResponseDto'>;
 export type CreateSizeBody = Schema<'CreateSizeDto'>;
-/** ⚠ VAQTINCHALIK (api B-059): generatsiyada PATCH `sortOrder` majburiy bo'lib chiqqan. */
-export type UpdateSizeBody = Partial<Schema<'UpdateSizeDto'>>;
+export type UpdateSizeBody = Schema<'UpdateSizeDto'>;
 
 /** Backend `CreateSizeDto`: MIN_SIDE_CM = 1, MAX_SIDE_CM = 1000 (butun sm). */
 export const MIN_SIDE_CM = 1;

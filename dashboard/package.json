@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "api:types": "pnpm --package=openapi-typescript@7.13.0 --package=typescript@5.9.3 dlx openapi-typescript ../api/openapi.json -o src/shared/api/schema.d.ts"
+    "api:types": "pnpm --package=openapi-typescript@7.13.0 --package=typescript@5.9.3 dlx openapi-typescript ../api/openapi.json --default-non-nullable false -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

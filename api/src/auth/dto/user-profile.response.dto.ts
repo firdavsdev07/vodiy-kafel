@@ -16,6 +16,7 @@ export class UserProfileResponseDto {
   phone!: string;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'admin@vodiykafel.uz',
     nullable: true,
     description: 'Ixtiyoriy — kiritilmagan bo‘lsa `null`',
@@ -29,6 +30,7 @@ export class UserProfileResponseDto {
   role!: UserRole;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'cmtyomomq0001ofm24t896smr',
     nullable: true,
     description:
@@ -36,6 +38,10 @@ export class UserProfileResponseDto {
   })
   branchId!: string | null;
 
-  @ApiPropertyOptional({ example: 'alisher_k', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'alisher_k',
+    nullable: true,
+  })
   telegramUsername!: string | null;
 }

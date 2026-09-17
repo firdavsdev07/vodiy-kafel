@@ -91,6 +91,7 @@ export class CreateCustomerDto {
   companyName!: string;
 
   @ApiPropertyOptional({
+    type: String,
     example: '301234567',
     nullable: true,
     description: 'INN — 9 raqam (Didox.uz shartnomalari uchun kerak bo‘ladi)',
@@ -121,6 +122,7 @@ export class CreateCustomerDto {
   branchId?: string;
 
   @ApiPropertyOptional({
+    type: String,
     nullable: true,
     description:
       'Biriktiriladigan xodim (shu filialning faol menejeri/admini). ' +

@@ -10473,7 +10473,7 @@
             "example": "+998900000001"
           },
           "email": {
-            "type": "object",
+            "type": "string",
             "example": "admin@vodiykafel.uz",
             "nullable": true,
             "description": "Ixtiyoriy — kiritilmagan bo‘lsa `null`"
@@ -10493,13 +10493,13 @@
             "example": "BRANCH_ADMIN"
           },
           "branchId": {
-            "type": "object",
+            "type": "string",
             "example": "cmtyomomq0001ofm24t896smr",
             "nullable": true,
             "description": "Xodim filiali. `SUPER_ADMIN` da `null` — u barcha filiallarni ko‘radi."
           },
           "telegramUsername": {
-            "type": "object",
+            "type": "string",
             "example": "alisher_k",
             "nullable": true
           }
@@ -11078,7 +11078,7 @@
             "example": "\"Qurilish Invest\" MChJ"
           },
           "inn": {
-            "type": "object",
+            "type": "string",
             "example": "301234567",
             "nullable": true,
             "description": "INN — 9 raqam (Didox.uz shartnomalari uchun kerak bo‘ladi)"
@@ -11096,7 +11096,7 @@
             "description": "Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY."
           },
           "managerId": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "description": "Biriktiriladigan xodim (shu filialning faol menejeri/admini). Berilmasa va yaratuvchi menejer bo‘lsa — o‘zi biriktiriladi."
           },
@@ -11124,7 +11124,7 @@
             "example": "\"Qurilish Invest\" MChJ"
           },
           "inn": {
-            "type": "object",
+            "type": "string",
             "example": "301234567",
             "nullable": true,
             "description": "INN — 9 raqam (Didox.uz shartnomalari uchun kerak bo‘ladi)"
@@ -11142,7 +11142,7 @@
             "description": "Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY."
           },
           "managerId": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "description": "Biriktiriladigan xodim (shu filialning faol menejeri/admini). Berilmasa va yaratuvchi menejer bo‘lsa — o‘zi biriktiriladi."
           }
@@ -12040,11 +12040,13 @@
             "example": "/uploads/factories/yongxin.png"
           },
           "description": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "example": "Xitoyning yirik keramogranit ishlab chiqaruvchisi"
           },
           "websiteUrl": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "example": "https://yongxin.example.com"
           }
         },
@@ -12076,11 +12078,13 @@
             "example": "/uploads/factories/yongxin.png"
           },
           "description": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "example": "Xitoyning yirik keramogranit ishlab chiqaruvchisi"
           },
           "websiteUrl": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "example": "https://yongxin.example.com"
           },
           "sortOrder": {
@@ -12409,7 +12413,7 @@
             "example": "POL"
           },
           "color": {
-            "type": "object",
+            "type": "string",
             "example": "Bej",
             "nullable": true
           },
@@ -12424,7 +12428,7 @@
             "example": "1250.5"
           },
           "primaryImageUrl": {
-            "type": "object",
+            "type": "string",
             "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
@@ -12546,7 +12550,7 @@
             "example": "POL"
           },
           "color": {
-            "type": "object",
+            "type": "string",
             "example": "Bej",
             "nullable": true
           },
@@ -12561,7 +12565,7 @@
             "example": "1250.5"
           },
           "primaryImageUrl": {
-            "type": "object",
+            "type": "string",
             "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
@@ -12576,7 +12580,7 @@
             "example": "AVAILABLE"
           },
           "description": {
-            "type": "object",
+            "type": "string",
             "example": "Yuqori sifatli keramogranit, sirti silliq.",
             "nullable": true
           },
@@ -12681,6 +12685,12 @@
           "weightPerPallet": {
             "type": "string",
             "example": "32.5"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Jadval uchun muqova surati — birinchi `IMAGE` turidagi media (`sortOrder` bo‘yicha). Surat yo‘q bo‘lsa `null`.",
+            "example": "/uploads/products/lyuks-60x60-1.webp"
           },
           "viewCount": {
             "type": "number",
@@ -13498,7 +13508,7 @@
             ]
           },
           "orderNumber": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "VK-2026-000001"
           },
@@ -15596,12 +15606,12 @@
             }
           },
           "telegramUrl": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "https://t.me/vodiykafel_fargona"
           },
           "instagramUrl": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "https://instagram.com/vodiykafel"
           },
@@ -15668,12 +15678,12 @@
             }
           },
           "telegramUrl": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "https://t.me/vodiykafel_fargona"
           },
           "instagramUrl": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "https://instagram.com/vodiykafel"
           },
@@ -15935,7 +15945,7 @@
             "description": "Kirish logini — noyob, faqat raqamlar (boshida + mumkin)"
           },
           "telegramUsername": {
-            "type": "object",
+            "type": "string",
             "example": "vk_fargona",
             "nullable": true,
             "description": "Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)"

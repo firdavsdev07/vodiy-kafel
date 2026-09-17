@@ -104,7 +104,17 @@ export function SelectField<T extends FieldValues, TOut extends FieldValues = T>
   className,
   options,
   placeholder = 'Tanlang…',
-}: BaseProps<T, TOut> & { options: readonly SelectOption[]; placeholder?: string }) {
+  onValueChange,
+}: BaseProps<T, TOut> & {
+  options: readonly SelectOption[];
+  placeholder?: string;
+  /**
+   * Tanlov o'zgargandan KEYIN chaqiriladi — bog'liq maydonlarni tozalash
+   * uchun (masalan domen almashsa doirani qayta qo'yish). Effekt bilan
+   * emas, aynan hodisada qilinadi: ortiqcha render zanjiri bo'lmaydi.
+   */
+  onValueChange?: (value: string) => void;
+}) {
   const { field, fieldState } = useController<T, FieldPath<T>, TOut>({ control, name, disabled });
   return (
     <Field label={label} hint={hint} error={fieldState.error?.message} required={required} className={className}>
@@ -113,6 +123,10 @@ export function SelectField<T extends FieldValues, TOut extends FieldValues = T>
           {...a11y}
           {...field}
           value={(field.value as string | undefined) ?? ''}
+          onChange={(e) => {
+            field.onChange(e);
+            onValueChange?.(e.target.value);
+          }}
           className={controlClass(Boolean(fieldState.error), 'h-9 px-2')}
         >
           <option value="" disabled={required}>

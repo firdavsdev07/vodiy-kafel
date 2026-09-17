@@ -19,7 +19,11 @@ export class ContractResponseDto {
   @ApiProperty({ enum: ContractStatus })
   status!: ContractStatus;
 
-  @ApiPropertyOptional({ nullable: true, example: 'VK-2026-000001' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'VK-2026-000001',
+  })
   orderNumber!: string | null;
 
   @ApiProperty({ example: '2026-09-16T10:00:00.000Z' })

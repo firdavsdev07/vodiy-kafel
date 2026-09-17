@@ -16,13 +16,21 @@ import {
   Pagination,
   StatusBadge,
   tableColumns,
+  Thumb,
   type DataTableColumn,
 } from '@/shared/ui';
 
 const col = tableColumns<ProductListItem>();
 
-// 🔁 "Rasm" ustuni — api B-060 (ro'yxatda coverUrl) tayyor bo'lgach qo'shiladi
 const columns: DataTableColumn<ProductListItem>[] = [
+  // Muqova — `coverUrl` (api B-060). Rasm yo'q bo'lsa Thumb bosh harflarni
+  // ko'rsatadi, buzilgan rasm belgisi chiqmaydi.
+  col.display({
+    id: 'cover',
+    size: 56,
+    header: () => <span className="sr-only">Rasm</span>,
+    cell: ({ row }) => <Thumb src={row.original.coverUrl} name={row.original.name} alt="" />,
+  }),
   col.accessor('name', {
     header: 'Mahsulot',
     size: 260,

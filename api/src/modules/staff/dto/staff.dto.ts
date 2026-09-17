@@ -65,6 +65,7 @@ export class CreateStaffDto {
   phone!: string;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'vk_fargona',
     nullable: true,
     description: 'Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)',

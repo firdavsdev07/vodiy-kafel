@@ -11,7 +11,7 @@ import {
 } from '../../common/dto/paginated-response.dto';
 import { ProductSortField, SortOrder } from '../../common/enums';
 import { slugify } from '../../common/utils';
-import { Prisma, PrismaService } from '../../prisma';
+import { MediaType, Prisma, PrismaService } from '../../prisma';
 import { AppEvent, type ProductActivatedEvent } from '../notifications/events';
 import type {
   CreateProductDto,
@@ -42,6 +42,15 @@ const ADMIN_SELECT = {
   factory: { select: { id: true, name: true, slug: true } },
   size: { select: { id: true, label: true, widthCm: true, heightCm: true } },
   stock: { select: { stockPallets: true, lowStockThreshold: true } },
+  // Jadvaldagi muqova (B-060). `take: 1` — ro'yxat uchun N+1 so'rov
+  // bo'lmasin; 360° materiallar muqova bo'lolmaydi, shuning uchun
+  // `type: IMAGE` filtri (ochiq katalogdagi `PRIMARY_IMAGE` bilan bir xil).
+  media: {
+    where: { type: MediaType.IMAGE },
+    orderBy: { sortOrder: 'asc' },
+    take: 1,
+    select: { url: true },
+  },
 } as const;
 
 type AdminRow = Prisma.ProductGetPayload<{ select: typeof ADMIN_SELECT }>;
@@ -249,11 +258,12 @@ export class ProductsAdminService {
     row: AdminRow,
     globalThreshold: number,
   ): ProductAdminResponseDto {
-    const { stock, sqmPerPallet, weightPerPallet, ...rest } = row;
+    const { stock, sqmPerPallet, weightPerPallet, media, ...rest } = row;
     return {
       ...rest,
       sqmPerPallet: sqmPerPallet.toString(),
       weightPerPallet: weightPerPallet.toString(),
+      coverUrl: media[0]?.url ?? null,
       stock: this.stocks.summarize(stock, globalThreshold),
     };
   }

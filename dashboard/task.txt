@@ -1044,7 +1044,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [~] D-022 · Mijoz kartasi ──────────────────────────────────────────────────┐
+┌─ [x] D-022 · Mijoz kartasi ──────────────────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET,PATCH /admin/customers/{id}`,                             │
 │               `PATCH /admin/customers/{id}/active`                           │
@@ -1056,6 +1056,28 @@
 │    • "Parol almashtirishi kerak" holati ko'rinadi (mijoz hali birinchi       │
 │      kirishni qilmagan bo'lsa)                                               │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (2026-09-17):                                                  │
+│    • `CustomerLayout` — sarlavha (kompaniya, login, filial, telefon,         │
+│      holat belgisi), balans, "Parolni tiklash" va "Bloklash" amallari        │
+│    • "Parol almashtirishi kerak" ogohlantirishi — mijoz hali                 │
+│      vaqtinchalik parol bilan kirmagan bo'lsa ko'rinadi                      │
+│    • Tab'lar: Profil | Hisob | Narx qoidalari | Buyurtmalar.                 │
+│      "Narx qoidalari" faqat `pricingRules.manage` ruxsati borga              │
+│    • Profil formasi: kompaniya, INN, mas'ul shaxs, telefon, filial,          │
+│      menejer. Login O'ZGARMAYDI (mijoz shu bilan kiradi)                     │
+│    • Bloklash/faollashtirish — tasdiq oynasi bilan                           │
+│    • Buyurtmalar tab'i: oxirgi 10 ta; to'liq ro'yxatga login bo'yicha        │
+│      qidiruv bilan o'tiladi (`GET /admin/orders` da `customerId`             │
+│      filtri yo'q — shuning uchun `search`)                                   │
+│                                                                              │
+│  Brauzerda tekshirildi (haqiqiy backend):                                    │
+│    • Karta ochildi — balans 3 369 600 so'm qarz (qizil), "Faol"              │
+│      belgisi, parol ogohlantirishi joyida                                    │
+│    • Profil tahrirlandi → "Profil saqlandi" → bazada tasdiqlandi             │
+│                                                                              │
+│  ⚠ "Hisob" va "Narx qoidalari" tab'lari hozircha o'rin egallovchi —          │
+│    ular ALOHIDA tasklar (D-023 va D-019), shu yerda emas.                    │
 │  Bog'liq: D-021                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘

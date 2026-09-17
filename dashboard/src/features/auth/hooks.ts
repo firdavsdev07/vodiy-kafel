@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 import { api } from '@/shared/api';
-import { tokenStore, type StaffProfile } from '@/shared/auth';
+import { tokenStore } from '@/shared/auth';
 import { can, type Permission } from '@/shared/lib/permissions';
 import { queryKeys } from '@/shared/query';
 import { session } from './session';
@@ -19,9 +19,7 @@ export function useProfile() {
   const hasSession = useHasSession();
   return useQuery({
     queryKey: queryKeys.me,
-    queryFn: async ({ signal }) =>
-      // ⚠ B-059 gacha: generatsiya qilingan tur nullable maydonlarda noto'g'ri
-      (await api.get('/auth/me', { signal })) as unknown as StaffProfile,
+    queryFn: ({ signal }) => api.get('/auth/me', { signal }),
     enabled: hasSession,
     staleTime: 5 * 60_000,
   });

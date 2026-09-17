@@ -2220,7 +2220,7 @@ export interface components {
              * @description Ixtiyoriy — kiritilmagan bo‘lsa `null`
              * @example admin@vodiykafel.uz
              */
-            email?: Record<string, never> | null;
+            email?: string | null;
             /** @example Alisher Karimov */
             fullName: string;
             /**
@@ -2232,9 +2232,9 @@ export interface components {
              * @description Xodim filiali. `SUPER_ADMIN` da `null` — u barcha filiallarni ko‘radi.
              * @example cmtyomomq0001ofm24t896smr
              */
-            branchId?: Record<string, never> | null;
+            branchId?: string | null;
             /** @example alisher_k */
-            telegramUsername?: Record<string, never> | null;
+            telegramUsername?: string | null;
         };
         SettingPublicDto: {
             /**
@@ -2487,7 +2487,7 @@ export interface components {
              * @description INN — 9 raqam (Didox.uz shartnomalari uchun kerak bo‘ladi)
              * @example 301234567
              */
-            inn?: Record<string, never> | null;
+            inn?: string | null;
             /** @example Aliyev Vali */
             contactName: string;
             /** @example +998901234567 */
@@ -2495,7 +2495,7 @@ export interface components {
             /** @description Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY. */
             branchId?: string;
             /** @description Biriktiriladigan xodim (shu filialning faol menejeri/admini). Berilmasa va yaratuvchi menejer bo‘lsa — o‘zi biriktiriladi. */
-            managerId?: Record<string, never> | null;
+            managerId?: string | null;
             /**
              * @description 🆕 (TZ 3.14) Maxsus narxlar — mijoz bilan BIRGA yaratiladi (bittasi xato bo‘lsa mijoz ham yaratilmaydi). Bo‘sh — bazaviy filial narxi.
              *
@@ -2510,7 +2510,7 @@ export interface components {
              * @description INN — 9 raqam (Didox.uz shartnomalari uchun kerak bo‘ladi)
              * @example 301234567
              */
-            inn?: Record<string, never> | null;
+            inn?: string | null;
             /** @example Aliyev Vali */
             contactName?: string;
             /** @example +998901234567 */
@@ -2518,7 +2518,7 @@ export interface components {
             /** @description Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY. */
             branchId?: string;
             /** @description Biriktiriladigan xodim (shu filialning faol menejeri/admini). Berilmasa va yaratuvchi menejer bo‘lsa — o‘zi biriktiriladi. */
-            managerId?: Record<string, never> | null;
+            managerId?: string | null;
         };
         SetCustomerActiveDto: {
             /** @description `false` — mijoz kira olmaydi va buyurtma bera olmaydi (tarix saqlanadi) */
@@ -2772,7 +2772,7 @@ export interface components {
              */
             capacityPallets: number;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
         };
         UpdateTransportTypeDto: {
             /**
@@ -2786,7 +2786,7 @@ export interface components {
              */
             capacityPallets?: number;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
             /** @description `false` — tanlovda ko‘rinmaydi */
             isActive?: boolean;
         };
@@ -2809,7 +2809,7 @@ export interface components {
              */
             name: string;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
         };
         UpdateRegionDto: {
             /**
@@ -2818,7 +2818,7 @@ export interface components {
              */
             name?: string;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
             /** @description `false` — tanlovda ko‘rinmaydi */
             isActive?: boolean;
         };
@@ -2893,9 +2893,9 @@ export interface components {
             /** @example /uploads/factories/yongxin.png */
             logoUrl: string;
             /** @example Xitoyning yirik keramogranit ishlab chiqaruvchisi */
-            description?: Record<string, never>;
+            description?: string | null;
             /** @example https://yongxin.example.com */
-            websiteUrl?: Record<string, never>;
+            websiteUrl?: string | null;
         };
         FactoryAdminResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
@@ -2910,9 +2910,9 @@ export interface components {
             /** @example /uploads/factories/yongxin.png */
             logoUrl: string;
             /** @example Xitoyning yirik keramogranit ishlab chiqaruvchisi */
-            description?: Record<string, never>;
+            description?: string | null;
             /** @example https://yongxin.example.com */
-            websiteUrl?: Record<string, never>;
+            websiteUrl?: string | null;
             /**
              * @description Vitrinada chiqish tartibi (kichik son — oldinroq)
              * @example 10
@@ -2957,7 +2957,7 @@ export interface components {
              * @description Vitrinada chiqish tartibi. Kichik son — oldinroq.
              * @default 0
              */
-            sortOrder: number;
+            sortOrder?: number;
         };
         UpdateFactoryDto: {
             /** @example YONGXIN */
@@ -2977,7 +2977,7 @@ export interface components {
              * @description Vitrinada chiqish tartibi. Kichik son — oldinroq.
              * @default 0
              */
-            sortOrder: number;
+            sortOrder?: number;
             /** @description Zavodni qayta faollashtirish yoki o‘chirish. `DELETE` endpointi ham shu maydonni `false` qiladi — o‘chirilgan zavodni qaytarish uchun shu yerdan `true` yuboriladi. */
             isActive?: boolean;
         };
@@ -3054,7 +3054,7 @@ export interface components {
              * @description Filtr ro‘yxatida chiqish tartibi
              * @default 0
              */
-            sortOrder: number;
+            sortOrder?: number;
         };
         UpdateSizeDto: {
             /**
@@ -3071,7 +3071,7 @@ export interface components {
              * @description Filtr ro‘yxatida chiqish tartibi
              * @default 0
              */
-            sortOrder: number;
+            sortOrder?: number;
         };
         ProductFactoryRefDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
@@ -3109,7 +3109,7 @@ export interface components {
              */
             surface: "POL" | "DEVOR";
             /** @example Bej */
-            color?: Record<string, never> | null;
+            color?: string | null;
             /**
              * @description 1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).
              * @example 1.44
@@ -3124,7 +3124,7 @@ export interface components {
              * @description Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.
              * @example /uploads/products/lyuks-1.jpg
              */
-            primaryImageUrl?: Record<string, never> | null;
+            primaryImageUrl?: string | null;
             /**
              * @description 🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.
              * @example AVAILABLE
@@ -3179,7 +3179,7 @@ export interface components {
              */
             surface: "POL" | "DEVOR";
             /** @example Bej */
-            color?: Record<string, never> | null;
+            color?: string | null;
             /**
              * @description 1 paddondagi m². O‘nlik son SATR ko‘rinishida keladi — u pul hisobiga kiradi va `float` ga aylantirilsa aniqlik yo‘qolardi (CLAUDE.md qoida 7).
              * @example 1.44
@@ -3194,7 +3194,7 @@ export interface components {
              * @description Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.
              * @example /uploads/products/lyuks-1.jpg
              */
-            primaryImageUrl?: Record<string, never> | null;
+            primaryImageUrl?: string | null;
             /**
              * @description 🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.
              * @example AVAILABLE
@@ -3202,7 +3202,7 @@ export interface components {
              */
             availability: "AVAILABLE" | "UNAVAILABLE";
             /** @example Yuqori sifatli keramogranit, sirti silliq. */
-            description?: Record<string, never> | null;
+            description?: string | null;
             /** @description Suratlar va 360° materiallar — ko‘rsatish tartibida. */
             media: components["schemas"]["ProductMediaResponseDto"][];
         };
@@ -3249,6 +3249,11 @@ export interface components {
             sqmPerPallet: string;
             /** @example 32.5 */
             weightPerPallet: string;
+            /**
+             * @description Jadval uchun muqova surati — birinchi `IMAGE` turidagi media (`sortOrder` bo‘yicha). Surat yo‘q bo‘lsa `null`.
+             * @example /uploads/products/lyuks-60x60-1.webp
+             */
+            coverUrl?: string | null;
             /** @example 0 */
             viewCount: number;
             /**
@@ -3517,7 +3522,7 @@ export interface components {
              * @default IMAGE
              * @enum {string}
              */
-            type: "IMAGE" | "IMAGE_360" | "VIDEO_360";
+            type?: "IMAGE" | "IMAGE_360" | "VIDEO_360";
             /**
              * Format: binary
              * @description Fayl: JPG, PNG, WEBP yoki MP4, 10 MB gacha
@@ -3614,7 +3619,7 @@ export interface components {
              * @description Ko‘rsatish tartibi (kichik — oldinroq)
              * @default 0
              */
-            sortOrder: number;
+            sortOrder?: number;
             /**
              * Format: binary
              * @description Rasm: JPG, PNG yoki WEBP, 10 MB gacha
@@ -3641,7 +3646,7 @@ export interface components {
             /** @enum {string} */
             status: "DRAFT" | "SENT" | "SIGNED";
             /** @example VK-2026-000001 */
-            orderNumber?: Record<string, never> | null;
+            orderNumber?: string | null;
             /**
              * Format: date-time
              * @example 2026-09-16T10:00:00.000Z
@@ -4012,7 +4017,7 @@ export interface components {
             /** @description Hisobsiz xaridor uchun filial — faqat SUPER_ADMIN beradi. Xodim uchun har doim o‘z filiali; mijozda — mijozning filiali. */
             branchId?: string;
             /** @default false */
-            isUrgent: boolean;
+            isUrgent?: boolean;
         };
         SetOrderUrgentDto: {
             /** @example true */
@@ -4408,11 +4413,11 @@ export interface components {
              */
             phones: string[];
             /** @example https://t.me/vodiykafel_fargona */
-            telegramUrl?: Record<string, never> | null;
+            telegramUrl?: string | null;
             /** @example https://instagram.com/vodiykafel */
-            instagramUrl?: Record<string, never> | null;
+            instagramUrl?: string | null;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
         };
         UpdateBranchDto: {
             /** @example Vodiy Kafel — Farg‘ona */
@@ -4434,11 +4439,11 @@ export interface components {
              */
             phones?: string[];
             /** @example https://t.me/vodiykafel_fargona */
-            telegramUrl?: Record<string, never> | null;
+            telegramUrl?: string | null;
             /** @example https://instagram.com/vodiykafel */
-            instagramUrl?: Record<string, never> | null;
+            instagramUrl?: string | null;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
             /** @description Faqat SUPER_ADMIN. `false` — filial yopiladi (soft delete) */
             isActive?: boolean;
         };
@@ -4479,7 +4484,7 @@ export interface components {
             /** @example https://knauf.uz */
             websiteUrl?: string;
             /** @default 0 */
-            sortOrder: number;
+            sortOrder?: number;
             /**
              * Format: binary
              * @description Logotip: JPG, PNG yoki WEBP, 10 MB gacha
@@ -4542,7 +4547,7 @@ export interface components {
              * @description Mijoz bilan bog‘lanish havolasi uchun (TZ 3.12)
              * @example vk_fargona
              */
-            telegramUsername?: Record<string, never> | null;
+            telegramUsername?: string | null;
             /** @description Filial. Filial admini uchun e’tiborsiz — har doim O‘Z filiali (boshqasi 404). SUPER_ADMIN uchun majburiy. */
             branchId?: string;
         };

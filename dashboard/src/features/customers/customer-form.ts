@@ -49,8 +49,7 @@ export function toCreateCustomerBody(v: CustomerFormValues, isSuperAdmin: boolea
     companyName: v.companyName,
     contactName: v.contactName,
     phone: v.phone,
-    // ⚠ B-059: generatsiyada `inn` turi noto'g'ri (Record<string, never>)
-    ...(v.inn ? { inn: v.inn as unknown as CreateCustomerBody['inn'] } : {}),
+    ...(v.inn ? { inn: v.inn } : {}),
     ...(isSuperAdmin && v.branchId ? { branchId: v.branchId } : {}),
   };
 }

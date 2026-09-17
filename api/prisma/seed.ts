@@ -19,6 +19,26 @@ const D = (v: Prisma.Decimal.Value) => new Prisma.Decimal(v);
 /** Barcha seed hisoblari uchun bitta dev parol. */
 const DEV_PAROL = 'Parol123!';
 
+/**
+ * Test telefon raqami: `+998` va AYNAN 9 ta raqam.
+ *
+ * ⚠ Nega tekshiruv bor (B-061): ilgari raqamlar shablon bilan to'g'ridan-
+ *   to'g'ri yozilardi va bittasida nol yetishmay qolgan edi —
+ *   `+99890011001` (998 dan keyin 8 raqam). Backend uni qabul qilaverardi
+ *   (`LOGIN_PHONE` ataylab keng), lekin bu dialab bo'lmaydigan raqam va
+ *   dashboard kirish formasi uni rad etardi: filial admini va menejer
+ *   panelga UMUMAN kira olmasdi. Endi seed shunday raqam yozolmaydi.
+ */
+function uzPhone(local: string): string {
+  if (!/^\d{9}$/.test(local)) {
+    throw new Error(
+      `Seed: "+998${local}" — O'zbekiston raqami 998 dan keyin 9 ta raqam ` +
+        `bo'lishi kerak (hozir ${local.length} ta)`,
+    );
+  }
+  return `+998${local}`;
+}
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
@@ -119,7 +139,7 @@ async function main() {
   // ─── Xodimlar (TZ 3.7.2 rollar ierarxiyasi) ──────────────────────────────
   const boshAdmin = await prisma.user.create({
     data: {
-      phone: '+998900000001',
+      phone: uzPhone('900000001'),
       email: 'admin@vodiykafel.uz',
       passwordHash: hash,
       fullName: 'Bosh admin',
@@ -129,7 +149,7 @@ async function main() {
   });
   const moderator = await prisma.user.create({
     data: {
-      phone: '+998900000002',
+      phone: uzPhone('900000002'),
       passwordHash: hash,
       fullName: 'Ombor moderatori',
       role: 'MODERATOR',
@@ -145,7 +165,7 @@ async function main() {
   for (const [i, f] of retail.entries()) {
     const a = await prisma.user.create({
       data: {
-        phone: `+9989001100${i + 1}`,
+        phone: uzPhone(`90011000${i + 1}`),
         passwordHash: hash,
         fullName: `${f.city} filial admini`,
         role: 'BRANCH_ADMIN',
@@ -154,7 +174,7 @@ async function main() {
     });
     const m = await prisma.user.create({
       data: {
-        phone: `+9989002200${i + 1}`,
+        phone: uzPhone(`90022000${i + 1}`),
         passwordHash: hash,
         fullName: `${f.city} menejeri`,
         role: 'MANAGER',
@@ -475,7 +495,7 @@ async function main() {
         companyName: `${f.city} Qurilish MChJ`,
         inn: `30${1000000 + i}`,
         contactName: `${f.city} rahbari`,
-        phone: `+9989033300${i + 1}`,
+        phone: uzPhone(`90333000${i + 1}`),
         branchId: f.id,
         managerId: xodimlar[f.id].menejer,
         createdByUserId: xodimlar[f.id].admin,
@@ -493,7 +513,7 @@ async function main() {
       companyName: 'Navoiy Agent MChJ',
       inn: '301999999',
       contactName: 'Agent',
-      phone: '+998933999999',
+      phone: uzPhone('933999999'),
       branchId: markaz.id,
       createdByUserId: moderator.id,
       account: { create: {} },

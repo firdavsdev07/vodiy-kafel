@@ -94,6 +94,7 @@ export class CreateBranchDto {
   phones!: string[];
 
   @ApiPropertyOptional({
+    type: String,
     nullable: true,
     example: 'https://t.me/vodiykafel_fargona',
   })
@@ -104,6 +105,7 @@ export class CreateBranchDto {
   telegramUrl?: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     nullable: true,
     example: 'https://instagram.com/vodiykafel',
   })
