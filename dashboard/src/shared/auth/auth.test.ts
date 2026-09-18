@@ -70,14 +70,15 @@ function fakeApi(post: (path: string, options?: unknown) => Promise<unknown>) {
 }
 
 describe('session', () => {
-  it('login → tokenlar saqlanadi', async () => {
+  it('login → tokenlar saqlanadi, `/auth/login` chaqiriladi (2026-09-18: yagona)', async () => {
     const store = createTokenStore(memoryStorage());
-    const api = fakeApi(async () => pair(1));
+    const api = fakeApi(async () => ({ ...pair(1), actorType: 'USER', mustChangePassword: false }));
     await createSession({ api, store }).login({ phone: '+998900000001', password: 'p' });
-    expect(api.post).toHaveBeenCalledWith('/auth/admin/login', {
+    expect(api.post).toHaveBeenCalledWith('/auth/login', {
       body: { phone: '+998900000001', password: 'p' },
     });
     expect(store.getAccessToken()).toBe('a1');
+    expect(store.getActorType()).toBe('staff');
   });
 
   it('parallel refresh — BITTA so‘rov', async () => {
@@ -186,32 +187,43 @@ describe('aktor turi (D-049) — xodim va optom mijoz ajratiladi', () => {
   });
 });
 
-describe('optom mijoz kirishi (D-049)', () => {
-  it('`/auth/wholesale/login` chaqiriladi va aktor `customer` bo‘ladi', async () => {
+/**
+ * 🆕 2026-09-18 (mijoz talabi): "nega optom mijoz ham telefon+parol bilan,
+ * bitta login sahifadan kirmaydi?" — endi kiradi. Ikkita alohida endpoint
+ * (`/auth/admin/login` login-satr bilan, `/auth/wholesale/login`) o'rniga
+ * BITTA `/auth/login` — kim ekanini javobdagi `actorType` aytadi.
+ */
+describe('optom mijoz kirishi — yagona `/auth/login` (2026-09-18)', () => {
+  it('`actorType: CUSTOMER` — aktor `customer` deb saqlanadi', async () => {
     const store = createTokenStore(memoryStorage());
     const api = {
-      post: vi.fn().mockResolvedValue({ ...pair(1), mustChangePassword: false }),
+      post: vi
+        .fn()
+        .mockResolvedValue({ ...pair(1), actorType: 'CUSTOMER', mustChangePassword: false }),
     } as unknown as ApiClient;
     const session = createSession({ api, store });
 
-    const result = await session.loginWholesale({ login: 'Fargona-Optom', password: 'p' });
+    const result = await session.login({ phone: '+998933000001', password: 'p' });
 
-    expect(api.post).toHaveBeenCalledWith('/auth/wholesale/login', {
-      body: { login: 'Fargona-Optom', password: 'p' },
+    expect(api.post).toHaveBeenCalledWith('/auth/login', {
+      body: { phone: '+998933000001', password: 'p' },
     });
     expect(store.getActorType()).toBe('customer');
+    expect(result.actorType).toBe('CUSTOMER');
     expect(result.mustChangePassword).toBe(false);
   });
 
   it('vaqtinchalik parol bayrog‘i qaytariladi (⚠ `/auth/me` mijozga 401 beradi)', async () => {
     const store = createTokenStore(memoryStorage());
     const api = {
-      post: vi.fn().mockResolvedValue({ ...pair(1), mustChangePassword: true }),
+      post: vi
+        .fn()
+        .mockResolvedValue({ ...pair(1), actorType: 'CUSTOMER', mustChangePassword: true }),
     } as unknown as ApiClient;
     const session = createSession({ api, store });
     await expect(
-      session.loginWholesale({ login: 'x', password: 'p' }),
-    ).resolves.toEqual({ mustChangePassword: true });
+      session.login({ phone: '+998933000001', password: 'p' }),
+    ).resolves.toEqual({ actorType: 'CUSTOMER', mustChangePassword: true });
   });
 
   it('parol almashgach YANGI tokenlar saqlanadi (eskisi hamon to‘silgan)', async () => {
@@ -219,12 +231,12 @@ describe('optom mijoz kirishi (D-049)', () => {
     const api = {
       post: vi
         .fn()
-        .mockResolvedValueOnce({ ...pair(1), mustChangePassword: true })
+        .mockResolvedValueOnce({ ...pair(1), actorType: 'CUSTOMER', mustChangePassword: true })
         .mockResolvedValueOnce({ ...pair(2), mustChangePassword: false }),
     } as unknown as ApiClient;
     const session = createSession({ api, store });
 
-    await session.loginWholesale({ login: 'x', password: 'temp' });
+    await session.login({ phone: '+998933000001', password: 'temp' });
     await session.changeWholesalePassword({ oldPassword: 'temp', newPassword: 'New123!' });
 
     expect(store.getAccessToken()).toBe('a2');

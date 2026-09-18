@@ -90,11 +90,17 @@ describe('CustomersAdminService (B-036)', () => {
       customerAccount: { fields: { totalPaid: 'FIELD_REF' } },
       branch: { findUnique: jest.fn().mockResolvedValue({ isActive: true }) },
       user: {
-        findUnique: jest.fn().mockResolvedValue({
-          branchId: 'fargona',
-          role: UserRole.MANAGER,
-          isActive: true,
-        }),
+        // `assertAssignable` (select: branchId/role/isActive) va 🆕
+        // `assertPhoneNotStaff` (select: faqat `id`) BIR XIL funksiyani
+        // chaqiradi — select shakli bo'yicha ajratamiz, aks holda
+        // menejer tayinlash mocki "bu raqam xodimda bor" deb o'qiladi.
+        findUnique: jest
+          .fn()
+          .mockImplementation((args: { select: Record<string, unknown> }) =>
+            Object.keys(args.select).length === 1 && args.select.id
+              ? null // default: bu telefon xodimda YO'Q
+              : { branchId: 'fargona', role: UserRole.MANAGER, isActive: true },
+          ),
       },
     };
 
@@ -304,6 +310,27 @@ describe('CustomersAdminService (B-036)', () => {
         ConflictException,
       );
     });
+
+    it('🆕 telefon band (P2002, `phone` maydoni) — aniq xabar bilan 409', async () => {
+      prisma.customer.create.mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('unique', {
+          code: 'P2002',
+          clientVersion: 'test',
+          meta: { target: ['phone'] },
+        }),
+      );
+      await expect(service.create(fargonaAdmin, dto())).rejects.toMatchObject({
+        message: 'Bu telefon raqam bilan boshqa mijoz bor',
+      });
+    });
+
+    it('🆕 2026-09-18: telefon allaqachon XODIMDA bor — 409, mijoz yozilmaydi', async () => {
+      prisma.user.findUnique.mockImplementationOnce(() => ({ id: 'staff-1' }));
+      await expect(service.create(fargonaAdmin, dto())).rejects.toMatchObject({
+        message: 'Bu telefon raqam bilan xodim hisobi bor',
+      });
+      expect(prisma.customer.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('update / setActive', () => {
@@ -328,6 +355,33 @@ describe('CustomersAdminService (B-036)', () => {
         where: { id: 'c1' },
         data: { inn: null, phone: '+998' },
       });
+    });
+
+    it('🆕 2026-09-18: yangi telefon XODIMDA bor — 409, saqlanmaydi', async () => {
+      prisma.user.findUnique.mockImplementationOnce(() => ({ id: 'staff-1' }));
+      await expect(
+        service.update(fargonaAdmin, 'c1', { phone: '+998900000009' }),
+      ).rejects.toMatchObject({
+        message: 'Bu telefon raqam bilan xodim hisobi bor',
+      });
+      expect(prisma.customer.update).not.toHaveBeenCalled();
+    });
+
+    it('🆕 telefon o‘zgarmasa (joriysi bilan bir xil) — xodim bilan solishtirilmaydi', async () => {
+      // requireInScope() ning qisqa select'i (`branchId`+`managerId`) —
+      // demo maqsadida shu yerda `phone` ni ham qaytaramiz.
+      prisma.customer.findUnique.mockImplementationOnce(
+        (args: { select: Record<string, unknown> }) =>
+          'orders' in args.select
+            ? detailRow
+            : {
+                branchId: 'fargona',
+                managerId: 'm-old',
+                phone: '+998901234567',
+              },
+      );
+      await service.update(fargonaAdmin, 'c1', { phone: '+998901234567' });
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('🔒 boshqa filial mijozini o‘chirib bo‘lmaydi — 404', async () => {

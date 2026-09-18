@@ -198,6 +198,13 @@ export class CustomersAdminService {
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await this.authService.hashPassword(temporaryPassword);
 
+    // 🆕 2026-09-18: `phone` endi mijozning kirish raqami ham (`POST
+    // /auth/login`). `@unique` bazada faqat `customers` jadvali ICHIDA
+    // himoyalaydi — xodim (`users`) bilan to'qnashuvni DASTUR darajasida
+    // tekshiramiz, aks holda ikkala hisob ham shu raqam bilan yaratilib,
+    // qaysi biri kirishini aniqlab bo'lmay qolardi.
+    await this.assertPhoneNotStaff(dto.phone.trim());
+
     let id: string;
     try {
       ({ id } = await this.prisma.customer.create({
@@ -252,21 +259,32 @@ export class CustomersAdminService {
       managerId = null;
     }
 
-    await this.prisma.customer.update({
-      where: { id: customerId },
-      data: {
-        ...(dto.companyName !== undefined && {
-          companyName: dto.companyName.trim(),
-        }),
-        ...(dto.inn !== undefined && { inn: dto.inn }),
-        ...(dto.contactName !== undefined && {
-          contactName: dto.contactName.trim(),
-        }),
-        ...(dto.phone !== undefined && { phone: dto.phone.trim() }),
-        ...(branchChanged && { branchId }),
-        ...(managerId !== undefined && { managerId }),
-      },
-    });
+    const phone = dto.phone?.trim();
+    if (phone !== undefined && phone !== current.phone) {
+      await this.assertPhoneNotStaff(phone);
+    }
+
+    try {
+      await this.prisma.customer.update({
+        where: { id: customerId },
+        data: {
+          ...(dto.companyName !== undefined && {
+            companyName: dto.companyName.trim(),
+          }),
+          ...(dto.inn !== undefined && { inn: dto.inn }),
+          ...(dto.contactName !== undefined && {
+            contactName: dto.contactName.trim(),
+          }),
+          ...(phone !== undefined && { phone }),
+          ...(branchChanged && { branchId }),
+          ...(managerId !== undefined && { managerId }),
+        },
+      });
+    } catch (error) {
+      // ⚠ Avval bu yerda try/catch YO'Q edi — `phone` unikal bo'lmagani
+      // uchun to'qnashuv umuman mumkin emas edi. Endi mumkin (2026-09-18).
+      throw this.mapUniqueError(error);
+    }
     return this.findOne(actor, customerId);
   }
 
@@ -293,7 +311,7 @@ export class CustomersAdminService {
   private async requireInScope(actor: Actor | undefined, customerId: string) {
     const customer = await this.prisma.customer.findUnique({
       where: { id: customerId },
-      select: { branchId: true, managerId: true },
+      select: { branchId: true, managerId: true, phone: true },
     });
     if (!customer) throw new NotFoundException(CUSTOMER_NOT_FOUND);
     this.branchScope.assertWithinScope(
@@ -365,13 +383,39 @@ export class CustomersAdminService {
     };
   }
 
+  /**
+   * `phone` @unique 2026-09-18 da qo'shildi — endi ikki xil maydon
+   * to'qnashishi mumkin, shuning uchun `error.meta.target` bo'yicha
+   * ANIQ qaysi biri ekanini ajratamiz (Prisma buni P2002 da beradi).
+   */
   private mapUniqueError(error: unknown): unknown {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'
     ) {
+      const target = (error.meta?.target as string[] | undefined) ?? [];
+      if (target.includes('phone')) {
+        return new ConflictException('Bu telefon raqam bilan boshqa mijoz bor');
+      }
       return new ConflictException('Bu login band — boshqasini tanlang');
     }
     return error;
+  }
+
+  /**
+   * 🆕 2026-09-18: telefon endi mijozning kirish credential'i ham
+   * (`POST /auth/login`), shuning uchun xodim (`users`) bilan bir xil
+   * raqamda BO'LMASLIGI kerak — aks holda qaysi hisob kirishini
+   * aniqlab bo'lmay qoladi. `users.phone` @unique, lekin bu — boshqa
+   * jadval, DB bitta so'rov bilan ikkalasini birga tekshirolmaydi.
+   */
+  private async assertPhoneNotStaff(phone: string): Promise<void> {
+    const staff = await this.prisma.user.findUnique({
+      where: { phone },
+      select: { id: true },
+    });
+    if (staff) {
+      throw new ConflictException('Bu telefon raqam bilan xodim hisobi bor');
+    }
   }
 }

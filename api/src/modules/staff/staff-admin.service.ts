@@ -110,6 +110,10 @@ export class StaffAdminService {
   ): Promise<StaffCreatedDto> {
     const branchId = this.branchScope.requireBranchId(actor, dto.branchId);
     await this.assertBranch(kind, branchId);
+    // 🆕 2026-09-18: mijoz endi shu raqam bilan ham kirishi mumkin
+    // (`POST /auth/login`) — ikkalasi bir xil bo'lsa, kim kirishini
+    // aniqlab bo'lmay qoladi.
+    await this.assertPhoneNotCustomer(dto.phone);
 
     // Admin o'zi yozgan parol ustun; bo'sh bo'lsa — tizim yaratadi (B-066).
     const temporaryPassword = dto.password ?? generateTemporaryPassword();
@@ -142,6 +146,9 @@ export class StaffAdminService {
       // Filial xodimi boshqa filialni bersa — 404 (resolve ichida).
       branchId = this.branchScope.requireBranchId(actor, dto.branchId);
       await this.assertBranch(kind, branchId);
+    }
+    if (dto.phone !== undefined && dto.phone !== current.phone) {
+      await this.assertPhoneNotCustomer(dto.phone);
     }
 
     const row = await this.unique(
@@ -215,10 +222,10 @@ export class StaffAdminService {
     actor: Actor | undefined,
     kind: StaffKind,
     id: string,
-  ): Promise<{ branchId: string }> {
+  ): Promise<{ branchId: string; phone: string }> {
     const user = await this.prisma.user.findFirst({
       where: { id, role: STAFF_KINDS[kind].role },
-      select: { branchId: true },
+      select: { branchId: true, phone: true },
     });
     // Boshqa rol (masalan admin ID si) ham — "topilmadi".
     if (!user?.branchId)
@@ -228,7 +235,7 @@ export class StaffAdminService {
       user.branchId,
       STAFF_KINDS[kind].notFound,
     );
-    return { branchId: user.branchId };
+    return { branchId: user.branchId, phone: user.phone };
   }
 
   private async assertBranch(kind: StaffKind, branchId: string): Promise<void> {
@@ -255,6 +262,23 @@ export class StaffAdminService {
         throw new ConflictException('Bu telefon raqam bilan xodim bor');
       }
       throw error;
+    }
+  }
+
+  /**
+   * 🆕 2026-09-18: xodim telefoni endi optom mijoz bilan bir xil bo'lishi
+   * mumkin emas — ikkalasi ham `POST /auth/login` orqali shu raqam bilan
+   * kiradi (bitta umumiy login sahifasi). `customers.phone` @unique, lekin
+   * bu boshqa jadval — DB bitta so'rov bilan ikkalasini birga
+   * tekshirolmaydi, shuning uchun dastur darajasida.
+   */
+  private async assertPhoneNotCustomer(phone: string): Promise<void> {
+    const customer = await this.prisma.customer.findUnique({
+      where: { phone },
+      select: { id: true },
+    });
+    if (customer) {
+      throw new ConflictException('Bu telefon raqam bilan mijoz hisobi bor');
     }
   }
 }

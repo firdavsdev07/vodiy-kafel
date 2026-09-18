@@ -81,7 +81,7 @@ export class CustomersService {
   ): Promise<ResetPasswordResponseDto> {
     const customer = await this.prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, login: true, branchId: true },
+      select: { id: true, phone: true, branchId: true },
     });
 
     // Mavjud emas va "begona filial" — foydalanuvchi uchun BIR XIL javob.
@@ -106,7 +106,9 @@ export class CustomersService {
 
     return {
       temporaryPassword,
-      login: customer.login,
+      // 2026-09-18: mijoz endi TELEFON bilan kiradi, login satri bilan
+      // emas — admin buni aynan mijozga aytadigan qilib qaytaramiz.
+      phone: customer.phone,
       mustChangePassword: true,
     };
   }

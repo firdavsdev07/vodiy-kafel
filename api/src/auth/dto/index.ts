@@ -1,5 +1,7 @@
 export * from './admin-login.dto';
 export * from './wholesale-login.dto';
+export * from './login.dto';
+export * from './login.response.dto';
 export * from './change-password.dto';
 export * from './refresh-token.dto';
 export * from './auth-tokens.response.dto';

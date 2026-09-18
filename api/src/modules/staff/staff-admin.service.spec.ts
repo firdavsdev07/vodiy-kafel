@@ -15,6 +15,7 @@ describe('StaffAdminService', () => {
   let service: StaffAdminService;
   let user: Record<string, jest.Mock>;
   let branch: { findUnique: jest.Mock };
+  let customer: { findUnique: jest.Mock };
 
   const staff = (role: UserRole, branchId: string | null): Actor => ({
     id: 'u1',
@@ -38,7 +39,9 @@ describe('StaffAdminService', () => {
   beforeEach(() => {
     user = {
       findMany: jest.fn().mockResolvedValue([row]),
-      findFirst: jest.fn().mockResolvedValue({ branchId: 'fargona' }),
+      findFirst: jest
+        .fn()
+        .mockResolvedValue({ branchId: 'fargona', phone: row.phone }),
       create: jest.fn().mockResolvedValue(row),
       update: jest.fn().mockResolvedValue(row),
     };
@@ -47,8 +50,11 @@ describe('StaffAdminService', () => {
         .fn()
         .mockResolvedValue({ type: BranchType.RETAIL, isActive: true }),
     };
+    // 🆕 2026-09-18: `assertPhoneNotCustomer` — default holatda hech kim
+    // shu raqamda emas (aks holda create/update har doim 409 berardi).
+    customer = { findUnique: jest.fn().mockResolvedValue(null) };
     service = new StaffAdminService(
-      { user, branch } as unknown as PrismaService,
+      { user, branch, customer } as unknown as PrismaService,
       {
         hashPassword: (p: string) => Promise.resolve(`hash(${p})`),
       } as unknown as AuthService,
@@ -157,6 +163,18 @@ describe('StaffAdminService', () => {
         service.create(fargonaAdmin, 'MANAGER', dto),
       ).rejects.toBeInstanceOf(ConflictException);
     });
+
+    it('🆕 2026-09-18: telefon allaqachon OPTOM MIJOZDA bor — 409, xodim yozilmaydi', async () => {
+      customer.findUnique.mockResolvedValueOnce({ id: 'customer-1' });
+      await expect(
+        service.create(fargonaAdmin, 'MANAGER', dto),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(customer.findUnique).toHaveBeenCalledWith({
+        where: { phone: dto.phone },
+        select: { id: true },
+      });
+      expect(user.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('tahrirlash', () => {
@@ -196,6 +214,27 @@ describe('StaffAdminService', () => {
           data: { telegramUsername: null, isActive: false },
         }),
       );
+    });
+
+    it('🆕 telefon o‘zgarmasa — mijoz bilan to‘qnashuv TEKSHIRILMAYDI', async () => {
+      await service.update(fargonaAdmin, 'MANAGER', 'm1', {
+        phone: row.phone, // aynan hozirgisi bilan bir xil
+      });
+      expect(customer.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('🆕 2026-09-18: yangi telefon OPTOM MIJOZDA bor — 409, saqlanmaydi', async () => {
+      customer.findUnique.mockResolvedValueOnce({ id: 'customer-1' });
+      await expect(
+        service.update(fargonaAdmin, 'MANAGER', 'm1', {
+          phone: '+998933000009',
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(customer.findUnique).toHaveBeenCalledWith({
+        where: { phone: '+998933000009' },
+        select: { id: true },
+      });
+      expect(user.update).not.toHaveBeenCalled();
     });
   });
 

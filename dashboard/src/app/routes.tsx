@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
-import { createBrowserRouter, type RouteObject } from 'react-router';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { RequireCustomer } from '@/features/auth/RequireCustomer';
 import { RequireRole } from '@/features/auth/RequireRole';
@@ -53,7 +53,6 @@ const OrderCreatePage = lazy(() => import('@/pages/orders/OrderCreatePage'));
 const OrderDetailPage = lazy(() => import('@/pages/orders/OrderDetailPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 // ── Optom mijoz kabineti (EPIC 10) ──
-const CustomerLoginPage = lazy(() => import('@/pages/login/CustomerLoginPage'));
 const CustomerPasswordPage = lazy(() => import('@/pages/login/CustomerPasswordPage'));
 const CabinetCatalogPage = lazy(() => import('@/pages/kabinet/CatalogPage'));
 const CabinetProductPage = lazy(() => import('@/pages/kabinet/ProductPage'));
@@ -82,17 +81,11 @@ export const routes: RouteObject[] = [
         handle: { title: 'Kirish' },
       },
       {
-        // ⚠ `/kabinet` ostida, lekin `RequireCustomer` DAN TASHQARIDA —
-        //   aks holda kirish sahifasining o'zi kirishni talab qilardi.
+        // 🆕 2026-09-18: alohida mijoz kirish sahifasi YO'Q ENDI — bitta
+        // umumiy `/login` bor (xodim ham, mijoz ham shu yerdan). Eski
+        // havola/xatcho'p buzilmasin uchun shunchaki qayta yo'naltiradi.
         path: 'kabinet/kirish',
-        element: (
-          <Suspense fallback={null}>
-            <AuthShell>
-              <CustomerLoginPage />
-            </AuthShell>
-          </Suspense>
-        ),
-        handle: { title: 'Optom kabinet — kirish' },
+        element: <Navigate to="/login" replace />,
       },
       {
         // ⚠ `RequireCustomer` DAN TASHQARIDA emas, lekin kabinet ichida ham

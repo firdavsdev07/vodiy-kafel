@@ -471,6 +471,124 @@ describe('AuthService (B-015, B-017)', () => {
     });
   });
 
+  /**
+   * 🆕 2026-09-18 (mijoz talabi) · YAGONA login — xodim va optom mijoz
+   * bitta endpointdan, telefon + parol bilan kiradi.
+   */
+  describe('login (yagona, 2026-09-18)', () => {
+    const activeCustomer = {
+      id: 'customer-1',
+      passwordHash: '',
+      branchId: 'branch-1',
+      isActive: true,
+      mustChangePassword: false,
+    };
+
+    it('xodim telefoni — `actorType: USER`, token`da rol bor', async () => {
+      findUnique.mockResolvedValue({ ...activeUser, passwordHash });
+
+      const result = await service.login({
+        phone: '+998900000001',
+        password: PASSWORD,
+      });
+
+      expect(result.actorType).toBe('USER');
+      expect(result.mustChangePassword).toBe(false);
+      expect(decodeAccess(result.accessToken)).toMatchObject({
+        sub: 'user-1',
+        type: 'USER',
+        role: 'BRANCH_ADMIN',
+        branchId: 'branch-1',
+      });
+    });
+
+    it('mijoz telefoni (xodimda topilmagach) — `actorType: CUSTOMER`', async () => {
+      findUnique.mockResolvedValue(null); // xodimda yo'q
+      customerFindUnique.mockResolvedValue({ ...activeCustomer, passwordHash });
+
+      const result = await service.login({
+        phone: '+998933000001',
+        password: PASSWORD,
+      });
+
+      expect(result.actorType).toBe('CUSTOMER');
+      expect(decodeAccess(result.accessToken)).toMatchObject({
+        sub: 'customer-1',
+        type: 'CUSTOMER',
+        branchId: 'branch-1',
+      });
+      // 🔒 mijoz tokenida rol yo'q — xodim endpointlariga o'tolmasin
+      expect(decodeAccess(result.accessToken).role).toBeUndefined();
+    });
+
+    it('mijozning vaqtinchalik paroli — javobda ham, tokenda ham', async () => {
+      findUnique.mockResolvedValue(null);
+      customerFindUnique.mockResolvedValue({
+        ...activeCustomer,
+        passwordHash,
+        mustChangePassword: true,
+      });
+
+      const result = await service.login({
+        phone: '+998933000001',
+        password: PASSWORD,
+      });
+
+      expect(result.mustChangePassword).toBe(true);
+      expect(decodeAccess(result.accessToken).mustChangePassword).toBe(true);
+    });
+
+    it('🔒 xodim TOPILGAN, parol xato — mijoz jadvali UMUMAN so‘ralmaydi', async () => {
+      findUnique.mockResolvedValue({ ...activeUser, passwordHash });
+
+      await expect(
+        service.login({ phone: '+998900000001', password: 'xato' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(customerFindUnique).not.toHaveBeenCalled();
+    });
+
+    it('🔒 hech qayerda yo‘q, xodimda o‘chirilgan, mijozda parol xato — BIR XIL xabar', async () => {
+      const messages: string[] = [];
+      const cases: Array<() => void> = [
+        () => {
+          findUnique.mockResolvedValue(null);
+          customerFindUnique.mockResolvedValue(null);
+        },
+        () => {
+          findUnique.mockResolvedValue({
+            ...activeUser,
+            passwordHash,
+            isActive: false,
+          });
+        },
+        () => {
+          findUnique.mockResolvedValue(null);
+          customerFindUnique.mockResolvedValue({
+            ...activeCustomer,
+            passwordHash,
+          });
+        },
+      ];
+
+      for (const setup of cases) {
+        setup();
+        try {
+          await service.login({
+            phone: '+998900000001',
+            password: setup === cases[2] ? 'xato' : PASSWORD,
+          });
+          throw new Error('401 kutilgan edi');
+        } catch (error) {
+          expect(error).toBeInstanceOf(UnauthorizedException);
+          messages.push((error as UnauthorizedException).message);
+        }
+      }
+
+      expect(new Set(messages).size).toBe(1);
+    });
+  });
+
   describe('changeWholesalePassword', () => {
     const customerToken: TokenPayload = {
       sub: 'customer-1',

@@ -27,7 +27,14 @@ import {
 } from '../../accounts/dto';
 import { CreatePricingRuleDto } from '../../pricing/dto';
 
-const PHONE_PATTERN = /^\+?[\d\s()-]{9,25}$/;
+/**
+ * 🆕 2026-09-18: bu maydon endi MIJOZNING LOGINI ham (`POST /auth/login`
+ * shu bo'yicha qidiradi) — shuning uchun xodim telefoni bilan AYNAN bir
+ * xil qat'iy formatda (`staff.dto.ts` dagi `LOGIN_PHONE`), bo'sh joy va
+ * qavssiz. Avval bu yerda faqat ko'rsatiladigan kontakt bo'lgani uchun
+ * yumshoqroq naqsh yetarli edi — endi emas: kirishda ANIQ moslik kerak.
+ */
+const PHONE_PATTERN = /^\+?\d{9,15}$/;
 const LOGIN_PATTERN = /^[a-z0-9][a-z0-9._-]{2,63}$/;
 const INN_PATTERN = /^\d{9}$/;
 
@@ -107,7 +114,13 @@ export class CreateCustomerDto {
   @MaxLength(150)
   contactName!: string;
 
-  @ApiProperty({ example: '+998901234567' })
+  @ApiProperty({
+    example: '+998901234567',
+    description:
+      '🆕 Mijozning KIRISH raqami ham shu — `POST /auth/login` shu ' +
+      'bo‘yicha qidiradi (xodim bilan bitta umumiy login sahifasi). ' +
+      'Bazadagi noyob, qat’iy formatda saqlanadi.',
+  })
   @IsString()
   @Matches(PHONE_PATTERN, { message: 'Telefon raqami noto‘g‘ri' })
   phone!: string;

@@ -165,7 +165,12 @@ model Customer {
   /// Soliq to'lovchi raqami — Didox.uz shartnomalari shu asosda (B-044).
   inn         String?
   contactName String  @map("contact_name")
-  phone       String
+  /// 🆕 2026-09-18 (mijoz talabi): endi bu MIJOZNING LOGINI ham —
+  /// `POST /auth/login` shu maydon bo'yicha qidiradi (xodim bilan bir xil
+  /// eshik, bitta login sahifasi). Shuning uchun `User.phone` kabi noyob.
+  /// `login` maydoni saqlanib qoladi (ko'rinish/qidiruv uchun), lekin
+  /// autentifikatsiyada endi ishlatilmaydi.
+  phone String @unique
 
   /// MAJBURIY: mijoz shu filialning narxini ko'radi va buyurtmani unga beradi
   /// (CLAUDE.md qoida 5). Odatda RETAIL, lekin markazga biriktirilgan

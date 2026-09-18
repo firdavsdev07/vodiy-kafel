@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
 
 /**
- * Kirish sahifalarining umumiy qobig'i (D-049) — xodim (`/login`) va
- * optom mijoz (`/kabinet/kirish`) uchun bir xil: logotip, tema tugmasi,
- * markazdagi karta.
+ * Kirish sahifalarining umumiy qobig'i (D-049) — `/login` (2026-09-18 dan
+ * xodim VA mijoz uchun umumiy) va `/kabinet/parol` uchun bir xil: logotip,
+ * tema tugmasi, markazdagi karta.
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   return (

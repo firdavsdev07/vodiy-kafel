@@ -78,7 +78,10 @@ function CreateCustomerForm({
       create.reset();
       if (!result) return;
       toast.success(`“${result.customer.companyName}” hisobi ochildi`);
-      onCreated({ login: result.customer.login, password: result.temporaryPassword });
+      // 2026-09-18: mijoz endi TELEFON bilan kiradi (`POST /auth/login`),
+      // `login` esa faqat ko'rinish/qidiruv uchun qoldi — admin mijozga
+      // aynan shu (telefon) ni aytishi kerak, `login` slug'ini emas.
+      onCreated({ login: result.customer.phone, password: result.temporaryPassword });
     } catch (error) {
       create.reset();
       if (error instanceof ApiError && error.statusCode === 409) {

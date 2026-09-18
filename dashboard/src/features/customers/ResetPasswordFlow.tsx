@@ -26,7 +26,9 @@ export function useResetPasswordFlow() {
       const result = await mutation.mutateAsync(target.id);
       mutation.reset();
       setTarget(null);
-      if (result) setCredentials({ login: result.login, password: result.temporaryPassword });
+      // 2026-09-18: mijoz TELEFON bilan kiradi — `TemporaryPasswordDialog`
+      // prop shakli generik ("login" — kiritiladigan identifikator degani).
+      if (result) setCredentials({ login: result.phone, password: result.temporaryPassword });
     } catch (error) {
       mutation.reset();
       toast.error(error);

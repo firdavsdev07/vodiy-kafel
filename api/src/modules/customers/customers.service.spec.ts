@@ -18,7 +18,7 @@ describe('CustomersService (B-017)', () => {
 
   const customerInBranch1 = {
     id: 'customer-1',
-    login: 'fargona-optom',
+    phone: '+998933000001',
     branchId: 'branch-1',
   };
 
@@ -59,7 +59,7 @@ describe('CustomersService (B-017)', () => {
 
     const result = await service.resetPassword(actor(), 'customer-1');
 
-    expect(result.login).toBe('fargona-optom');
+    expect(result.phone).toBe('+998933000001');
     expect(result.temporaryPassword).toHaveLength(12);
     expect(result.mustChangePassword).toBe(true);
 

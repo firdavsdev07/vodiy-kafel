@@ -6,8 +6,9 @@ import { useActorType, useCustomerProfile, useHasSession, useMustChangePassword 
  * Kabinet marshrutlari — faqat optom mijoz sessiyasi bilan (D-049).
  *
  * Ikki xil rad etish, ikki xil manzil:
- *   • sessiya umuman yo'q  → `/kabinet/kirish` (qaytish manzili saqlanadi)
- *   • sessiya XODIMniki    → `/` (xodim bosh sahifasi). Uni kabinet kirish
+ *   • sessiya umuman yo'q  → `/login` (qaytish manzili saqlanadi; 2026-09-18
+ *     dan buyon xodim va mijoz UMUMIY kirish sahifasi ishlatadi)
+ *   • sessiya XODIMniki    → `/` (xodim bosh sahifasi). Uni kirish
  *     sahifasiga yuborish xato bo'lardi: u allaqachon kirgan, faqat boshqa
  *     eshikdan.
  *   • vaqtinchalik parol  → `/kabinet/parol` (D-050). Backend bu holatda
@@ -36,7 +37,7 @@ export function RequireCustomer({ children }: { children: ReactNode }) {
   if (!hasSession) {
     return (
       <Navigate
-        to="/kabinet/kirish"
+        to="/login"
         replace
         state={{ from: location.pathname + location.search }}
       />

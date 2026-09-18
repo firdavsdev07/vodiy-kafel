@@ -20,6 +20,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Kirish — telefon va parol (xodim VA optom mijoz)
+         * @description 🆕 2026-09-18 (mijoz talabi): YAGONA login sahifasi. Xodim ham, optom (B2B) mijoz ham AYNAN shu endpoint orqali, telefon + parol bilan kiradi — dashboard bitta forma ko'rsatadi.
+         *
+         *     Javobdagi `actorType` kim ekanini bildiradi: `USER` — xodim panelga, `CUSTOMER` — kabinetga yo'naltiriladi.
+         *
+         *     ⚠ `mustChangePassword: true` — bu optom mijozning vaqtinchalik paroli. Xodimda bu tushuncha yo'q, har doim `false`.
+         *
+         *     Eski `/auth/admin/login` va `/auth/wholesale/login` ham ishlaydi (orqaga moslik) — lekin dashboard endi FAQAT shu yerga murojaat qiladi.
+         */
+        post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/admin/login": {
         parameters: {
             query?: never;
@@ -34,6 +60,8 @@ export interface paths {
          * @description Telefon va parol bilan kirish. Muvaffaqiyatli javobda access va refresh tokenlar keladi.
          *
          *     Rol va filial tokenning ichida bo‘ladi — ularni so‘rovda yuborish kerak emas va yuborilsa ham e’tiborga olinmaydi.
+         *
+         *     ⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ga murojaat qiladi (xodim va mijoz — bitta login sahifasi). Bu endpoint orqaga moslik uchun qoldi.
          */
         post: operations["AuthController_adminLogin"];
         delete?: never;
@@ -58,6 +86,8 @@ export interface paths {
          *     Login katta-kichik harfga sezgir emas.
          *
          *     ⚠ Javobdagi `mustChangePassword: true` — bu vaqtinchalik parol. Mijoz `/auth/wholesale/change-password` dan boshqa hech qayerga o‘tolmaydi (403), shuning uchun frontend darhol parol almashtirish oynasini ko‘rsatishi kerak.
+         *
+         *     ⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ga (telefon bilan) murojaat qiladi. Bu endpoint orqaga moslik uchun qoldi.
          */
         post: operations["AuthController_wholesaleLogin"];
         delete?: never;
@@ -2316,6 +2346,35 @@ export interface components {
              */
             requestId?: string;
         };
+        LoginResponseDto: {
+            /** @description Access token. `Authorization: Bearer <token>` sarlavhasida. */
+            accessToken: string;
+            /** @description Refresh token. Muddati tugaganda `/auth/refresh` ga. */
+            refreshToken: string;
+            /**
+             * @description Kim kirdi — xodim (`USER`) yoki optom mijoz (`CUSTOMER`).
+             * @example USER
+             * @enum {string}
+             */
+            actorType: "USER" | "CUSTOMER";
+            /**
+             * @description Vaqtinchalik parol hali almashtirilmagan. Xodimda bu tushuncha yo‘q — har doim `false`. Mijozda `true` bo‘lsa boshqa hamma endpoint 403 (`PasswordChangeRequiredGuard`).
+             * @example false
+             */
+            mustChangePassword: boolean;
+        };
+        LoginDto: {
+            /**
+             * @description Telefon raqami — xodim ham, optom mijoz ham shu bilan kiradi.
+             * @example +998900000001
+             */
+            phone: string;
+            /**
+             * @description Parol
+             * @example Parol123!
+             */
+            password: string;
+        };
         AuthTokensResponseDto: {
             /**
              * @description Access token. `Authorization: Bearer <token>` sarlavhasida yuboriladi.
@@ -2674,7 +2733,10 @@ export interface components {
             inn?: string | null;
             /** @example Aliyev Vali */
             contactName: string;
-            /** @example +998901234567 */
+            /**
+             * @description 🆕 Mijozning KIRISH raqami ham shu — `POST /auth/login` shu bo‘yicha qidiradi (xodim bilan bitta umumiy login sahifasi). Bazadagi noyob, qat’iy formatda saqlanadi.
+             * @example +998901234567
+             */
             phone: string;
             /** @description Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY. */
             branchId?: string;
@@ -2697,7 +2759,10 @@ export interface components {
             inn?: string | null;
             /** @example Aliyev Vali */
             contactName?: string;
-            /** @example +998901234567 */
+            /**
+             * @description 🆕 Mijozning KIRISH raqami ham shu — `POST /auth/login` shu bo‘yicha qidiradi (xodim bilan bitta umumiy login sahifasi). Bazadagi noyob, qat’iy formatda saqlanadi.
+             * @example +998901234567
+             */
             phone?: string;
             /** @description Filial. Filial xodimi uchun e’tiborsiz — har doim O‘Z filiali (boshqasi berilsa 404). SUPER_ADMIN uchun MAJBURIY. */
             branchId?: string;
@@ -2715,10 +2780,10 @@ export interface components {
              */
             temporaryPassword: string;
             /**
-             * @description Parol tiklangan mijozning logini
-             * @example fargona-optom
+             * @description Mijozning kirish raqami — `POST /auth/login` shu bo‘yicha qidiradi (2026-09-18: mijoz endi login satri emas, telefon bilan kiradi).
+             * @example +998901234567
              */
-            login: string;
+            phone: string;
             /**
              * @description Har doim `true`: mijoz shu parol bilan kirgach uni almashtirishi shart.
              * @example true
@@ -5058,6 +5123,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginDto"];
+            };
+        };
+        responses: {
+            /** @description Kirish muvaffaqiyatli */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LoginResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Telefon raqam topilmadi, parol xato yoki hisob faol emas — uch holat uchun bir xil javob, xodim/mijoz ekani ham oshkor qilinmaydi. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Juda ko‘p urinish — biroz kutib qayta urining */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
             };
         };
     };

@@ -85,13 +85,12 @@ export function useCan(permission: Permission): boolean {
   return can(useProfile().data?.role, permission);
 }
 
+/**
+ * YAGONA kirish (2026-09-18) — telefon + parol. Xodim ham, optom mijoz
+ * ham shu bilan kiradi; kim ekani natijadagi `actorType` da keladi.
+ */
 export function useLogin() {
   return useMutation({ mutationFn: session.login });
-}
-
-/** Optom mijoz kirishi (D-049) — telefon emas, `login` satri. */
-export function useLoginWholesale() {
-  return useMutation({ mutationFn: session.loginWholesale });
 }
 
 /**

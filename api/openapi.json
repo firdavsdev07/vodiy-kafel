@@ -15,9 +15,75 @@
         ]
       }
     },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "🆕 2026-09-18 (mijoz talabi): YAGONA login sahifasi. Xodim ham, optom (B2B) mijoz ham AYNAN shu endpoint orqali, telefon + parol bilan kiradi — dashboard bitta forma ko'rsatadi.\n\nJavobdagi `actorType` kim ekanini bildiradi: `USER` — xodim panelga, `CUSTOMER` — kabinetga yo'naltiriladi.\n\n⚠ `mustChangePassword: true` — bu optom mijozning vaqtinchalik paroli. Xodimda bu tushuncha yo'q, har doim `false`.\n\nEski `/auth/admin/login` va `/auth/wholesale/login` ham ishlaydi (orqaga moslik) — lekin dashboard endi FAQAT shu yerga murojaat qiladi.",
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kirish muvaffaqiyatli",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LoginResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Telefon raqam topilmadi, parol xato yoki hisob faol emas — uch holat uchun bir xil javob, xodim/mijoz ekani ham oshkor qilinmaydi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Juda ko‘p urinish — biroz kutib qayta urining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kirish — telefon va parol (xodim VA optom mijoz)",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/admin/login": {
       "post": {
-        "description": "Telefon va parol bilan kirish. Muvaffaqiyatli javobda access va refresh tokenlar keladi.\n\nRol va filial tokenning ichida bo‘ladi — ularni so‘rovda yuborish kerak emas va yuborilsa ham e’tiborga olinmaydi.",
+        "description": "Telefon va parol bilan kirish. Muvaffaqiyatli javobda access va refresh tokenlar keladi.\n\nRol va filial tokenning ichida bo‘ladi — ularni so‘rovda yuborish kerak emas va yuborilsa ham e’tiborga olinmaydi.\n\n⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ga murojaat qiladi (xodim va mijoz — bitta login sahifasi). Bu endpoint orqaga moslik uchun qoldi.",
         "operationId": "AuthController_adminLogin",
         "parameters": [],
         "requestBody": {
@@ -83,7 +149,7 @@
     },
     "/api/v1/auth/wholesale/login": {
       "post": {
-        "description": "Login va parol bilan kirish. Ikkovini ham ADMIN yoki MENEJER beradi — mijoz o‘zi ro‘yxatdan o‘tolmaydi.\n\nLogin katta-kichik harfga sezgir emas.\n\n⚠ Javobdagi `mustChangePassword: true` — bu vaqtinchalik parol. Mijoz `/auth/wholesale/change-password` dan boshqa hech qayerga o‘tolmaydi (403), shuning uchun frontend darhol parol almashtirish oynasini ko‘rsatishi kerak.",
+        "description": "Login va parol bilan kirish. Ikkovini ham ADMIN yoki MENEJER beradi — mijoz o‘zi ro‘yxatdan o‘tolmaydi.\n\nLogin katta-kichik harfga sezgir emas.\n\n⚠ Javobdagi `mustChangePassword: true` — bu vaqtinchalik parol. Mijoz `/auth/wholesale/change-password` dan boshqa hech qayerga o‘tolmaydi (403), shuning uchun frontend darhol parol almashtirish oynasini ko‘rsatishi kerak.\n\n⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ga (telefon bilan) murojaat qiladi. Bu endpoint orqaga moslik uchun qoldi.",
         "operationId": "AuthController_wholesaleLogin",
         "parameters": [],
         "requestBody": {
@@ -10963,6 +11029,60 @@
           "timestamp"
         ]
       },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access token. `Authorization: Bearer <token>` sarlavhasida."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token. Muddati tugaganda `/auth/refresh` ga."
+          },
+          "actorType": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "CUSTOMER"
+            ],
+            "description": "Kim kirdi — xodim (`USER`) yoki optom mijoz (`CUSTOMER`).",
+            "example": "USER"
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "Vaqtinchalik parol hali almashtirilmagan. Xodimda bu tushuncha yo‘q — har doim `false`. Mijozda `true` bo‘lsa boshqa hamma endpoint 403 (`PasswordChangeRequiredGuard`).",
+            "example": false
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "actorType",
+          "mustChangePassword"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Telefon raqami — xodim ham, optom mijoz ham shu bilan kiradi.",
+            "example": "+998900000001",
+            "maxLength": 20
+          },
+          "password": {
+            "type": "string",
+            "description": "Parol",
+            "example": "Parol123!",
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "phone",
+          "password"
+        ]
+      },
       "AuthTokensResponseDto": {
         "type": "object",
         "properties": {
@@ -11725,7 +11845,8 @@
           },
           "phone": {
             "type": "string",
-            "example": "+998901234567"
+            "example": "+998901234567",
+            "description": "🆕 Mijozning KIRISH raqami ham shu — `POST /auth/login` shu bo‘yicha qidiradi (xodim bilan bitta umumiy login sahifasi). Bazadagi noyob, qat’iy formatda saqlanadi."
           },
           "branchId": {
             "type": "string",
@@ -11771,7 +11892,8 @@
           },
           "phone": {
             "type": "string",
-            "example": "+998901234567"
+            "example": "+998901234567",
+            "description": "🆕 Mijozning KIRISH raqami ham shu — `POST /auth/login` shu bo‘yicha qidiradi (xodim bilan bitta umumiy login sahifasi). Bazadagi noyob, qat’iy formatda saqlanadi."
           },
           "branchId": {
             "type": "string",
@@ -11804,10 +11926,10 @@
             "description": "Yangi vaqtinchalik parol. Faqat SHU javobda ko‘rinadi — saqlab qo‘ying va mijozga yetkazing.",
             "example": "Kp7mQx4rTn92"
           },
-          "login": {
+          "phone": {
             "type": "string",
-            "description": "Parol tiklangan mijozning logini",
-            "example": "fargona-optom"
+            "description": "Mijozning kirish raqami — `POST /auth/login` shu bo‘yicha qidiradi (2026-09-18: mijoz endi login satri emas, telefon bilan kiradi).",
+            "example": "+998901234567"
           },
           "mustChangePassword": {
             "type": "boolean",
@@ -11817,7 +11939,7 @@
         },
         "required": [
           "temporaryPassword",
-          "login",
+          "phone",
           "mustChangePassword"
         ]
       },

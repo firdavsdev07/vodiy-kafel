@@ -99,7 +99,7 @@ export function CabinetLayout() {
               disabled={logout.isPending}
               onClick={() =>
                 logout.mutate(undefined, {
-                  onSettled: () => navigate('/kabinet/kirish', { replace: true }),
+                  onSettled: () => navigate('/login', { replace: true }),
                 })
               }
               aria-label="Chiqish"

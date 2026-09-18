@@ -25,6 +25,8 @@ import {
   AdminLoginDto,
   AuthTokensResponseDto,
   ChangePasswordDto,
+  LoginDto,
+  LoginResponseDto,
   LogoutResponseDto,
   RefreshTokenDto,
   UserProfileResponseDto,
@@ -50,6 +52,33 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Post('login')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Kirish — telefon va parol (xodim VA optom mijoz)',
+    description:
+      '🆕 2026-09-18 (mijoz talabi): YAGONA login sahifasi. Xodim ham, ' +
+      'optom (B2B) mijoz ham AYNAN shu endpoint orqali, telefon + parol ' +
+      "bilan kiradi — dashboard bitta forma ko'rsatadi.\n\n" +
+      'Javobdagi `actorType` kim ekanini bildiradi: `USER` — xodim panelga, ' +
+      "`CUSTOMER` — kabinetga yo'naltiriladi.\n\n" +
+      '⚠ `mustChangePassword: true` — bu optom mijozning vaqtinchalik ' +
+      "paroli. Xodimda bu tushuncha yo'q, har doim `false`.\n\n" +
+      'Eski `/auth/admin/login` va `/auth/wholesale/login` ham ishlaydi ' +
+      '(orqaga moslik) — lekin dashboard endi FAQAT shu yerga murojaat ' +
+      'qiladi.',
+  })
+  @ApiDataResponse(LoginResponseDto, { description: 'Kirish muvaffaqiyatli' })
+  @ApiUnauthorizedResponse({
+    description:
+      'Telefon raqam topilmadi, parol xato yoki hisob faol emas — ' +
+      'uch holat uchun bir xil javob, xodim/mijoz ekani ham oshkor qilinmaydi.',
+    type: ApiErrorDto,
+  })
+  login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+    return this.authService.login(dto);
+  }
+
   @Post('admin/login')
   @HttpCode(200)
   @ApiOperation({
@@ -58,7 +87,10 @@ export class AuthController {
       'Telefon va parol bilan kirish. Muvaffaqiyatli javobda access va ' +
       'refresh tokenlar keladi.\n\n' +
       'Rol va filial tokenning ichida bo‘ladi — ularni so‘rovda yuborish ' +
-      'kerak emas va yuborilsa ham e’tiborga olinmaydi.',
+      'kerak emas va yuborilsa ham e’tiborga olinmaydi.\n\n' +
+      '⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ' +
+      'ga murojaat qiladi (xodim va mijoz — bitta login sahifasi). Bu ' +
+      'endpoint orqaga moslik uchun qoldi.',
   })
   @ApiDataResponse(AuthTokensResponseDto, {
     description: 'Kirish muvaffaqiyatli',
@@ -84,7 +116,10 @@ export class AuthController {
       '⚠ Javobdagi `mustChangePassword: true` — bu vaqtinchalik parol. ' +
       'Mijoz `/auth/wholesale/change-password` dan boshqa hech qayerga ' +
       'o‘tolmaydi (403), shuning uchun frontend darhol parol almashtirish ' +
-      'oynasini ko‘rsatishi kerak.',
+      'oynasini ko‘rsatishi kerak.\n\n' +
+      '⚠ 2026-09-18: dashboard endi bu yerga emas, umumiy `POST /auth/login` ' +
+      'ga (telefon bilan) murojaat qiladi. Bu endpoint orqaga moslik uchun ' +
+      'qoldi.',
   })
   @ApiDataResponse(WholesaleTokensResponseDto, {
     description: 'Kirish muvaffaqiyatli',

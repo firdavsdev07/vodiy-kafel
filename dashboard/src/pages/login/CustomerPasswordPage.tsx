@@ -65,7 +65,7 @@ export default function CustomerPasswordPage() {
     name: ['oldPassword', 'newPassword', 'repeat'],
   });
 
-  if (!hasSession) return <Navigate to="/kabinet/kirish" replace />;
+  if (!hasSession) return <Navigate to="/login" replace />;
   if (actorType !== 'customer') return <Navigate to="/" replace />;
   // Majburiyat yo'q va bu sahifa majburiyat uchun ochilmagan — kerak emas
   if (!needsNewPassword && !openedForChange) return <Navigate to="/kabinet" replace />;
@@ -77,7 +77,7 @@ export default function CustomerPasswordPage() {
     ),
   );
 
-  const serverError = change.isError ? loginErrorMessage(change.error, 'login') : null;
+  const serverError = change.isError ? loginErrorMessage(change.error, 'phone') : null;
 
   return (
     <form

@@ -84,6 +84,9 @@ export interface UploadOptions {
  * urinilmaydi va (eskirgan) access token yuborilmaydi.
  */
 const AUTH_ENTRY_PATHS = new Set([
+  '/auth/login',
+  // Eskilari orqaga moslik uchun backendda qoldi, frontend endi
+  // ularni chaqirmaydi — lekin shu ro'yxatda qolishi zararsiz.
   '/auth/admin/login',
   '/auth/wholesale/login',
   '/auth/refresh',

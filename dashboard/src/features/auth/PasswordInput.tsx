@@ -7,7 +7,7 @@ import { Field } from '@/shared/ui/form/Field';
 /**
  * Parol maydoni — ko'rsatish/yashirish tugmasi bilan (D-049).
  *
- * Xodim (`/login`) va optom mijoz (`/kabinet/kirish`) kirish sahifalarida
+ * Kirish (`/login`) va parol almashtirish (`/kabinet/parol`) sahifalarida
  * bir xil ishlatiladi. `maxLength={72}` — bcrypt shu chegaradan keyingi
  * belgilarni e'tiborga olmaydi, backend DTO'si ham shunday cheklaydi.
  */

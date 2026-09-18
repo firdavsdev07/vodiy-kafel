@@ -35,28 +35,22 @@ export function createSession(deps: { api: ApiClient; store: TokenStore }) {
     return inflight;
   }
 
-  async function login(credentials: { phone: string; password: string }): Promise<void> {
-    store.setTokens(await api.post('/auth/admin/login', { body: credentials }), 'staff');
-  }
-
   /**
-   * Optom (B2B) mijoz kirishi (D-049) — `POST /auth/wholesale/login`.
+   * YAGONA kirish (2026-09-18, mijoz talabi) — `POST /auth/login`.
+   * Telefon + parol: xodim ham, optom (B2B) mijoz ham AYNAN shu bilan,
+   * bitta formadan kiradi. Kim ekanini javobdagi `actorType` aytadi.
    *
-   * ⚠ XODIMDAN FARQI: telefon EMAS, `login` satri (masalan `fargona-optom`).
-   *   Mijoz o'zi ro'yxatdan o'tmaydi — login va parolni admin beradi.
-   *
-   * Javobdagi `mustChangePassword` QAYTARILADI, chunki `GET /auth/me`
-   * mijoz tokeni bilan 401 beradi (backend: "Faqat XODIM tokeni uchun").
-   * Ya'ni bu bayroqni boshqa hech qayerdan bilib bo'lmaydi — api B-065
-   * kelguncha uni chaqiruvchi eslab qolishi kerak.
+   * ⚠ TARIX: avval xodim `/auth/admin/login` (telefon), mijoz
+   *   `/auth/wholesale/login` (login satri) — ikki xil sahifadan kirardi.
+   *   Mijoz buni chalkash topdi: "nega bitta login sahifadan emas?".
+   *   Endi ikkalasi ham shu funksiyadan o'tadi.
    */
-  async function loginWholesale(credentials: {
-    login: string;
-    password: string;
-  }): Promise<{ mustChangePassword: boolean }> {
-    const tokens = await api.post('/auth/wholesale/login', { body: credentials });
-    store.setTokens(tokens, 'customer');
-    return { mustChangePassword: tokens.mustChangePassword };
+  async function login(
+    credentials: { phone: string; password: string },
+  ): Promise<{ actorType: 'USER' | 'CUSTOMER'; mustChangePassword: boolean }> {
+    const tokens = await api.post('/auth/login', { body: credentials });
+    store.setTokens(tokens, tokens.actorType === 'CUSTOMER' ? 'customer' : 'staff');
+    return { actorType: tokens.actorType, mustChangePassword: tokens.mustChangePassword };
   }
 
   /**
@@ -89,7 +83,7 @@ export function createSession(deps: { api: ApiClient; store: TokenStore }) {
     }
   }
 
-  return { refresh, login, loginWholesale, changeWholesalePassword, logout };
+  return { refresh, login, changeWholesalePassword, logout };
 }
 
 export type Session = ReturnType<typeof createSession>;

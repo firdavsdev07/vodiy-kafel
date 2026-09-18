@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { useActorType, useHasSession, useLogin } from '@/features/auth/hooks';
 import { loginErrorMessage } from '@/features/auth/login-error';
@@ -22,14 +22,31 @@ const loginSchema = z.object({
 type LoginInput = z.input<typeof loginSchema>;
 type LoginValues = z.output<typeof loginSchema>;
 
-/** Xodim kirishi — `POST /auth/admin/login` (D-006). Forma — react-hook-form + zod (D-008). */
+/**
+ * YAGONA kirish sahifasi (2026-09-18, mijoz talabi) — `POST /auth/login`.
+ * Telefon + parol: xodim ham, optom (B2B) mijoz ham AYNAN shu formadan
+ * kiradi. Kim ekanini javobdagi `actorType` aytadi va shunga qarab
+ * yo'naltiriladi.
+ *
+ * ⚠ TARIX: avval ikkita alohida sahifa bor edi — `/login` (xodim,
+ *   telefon) va `/kabinet/kirish` (mijoz, login satri). Mijoz buni
+ *   chalkash topdi ("nega optom mijoz ham telefon bilan, bitta
+ *   sahifadan kirmaydi?") va aynan shu ikkalasini birlashtirishni
+ *   so'radi — texnik to'siq yo'q edi, faqat oldingi qaror shunday edi.
+ */
 export default function LoginPage() {
   const hasSession = useHasSession();
   const actorType = useActorType();
   const navigate = useNavigate();
-  const from = (useLocation().state as LocationState | null)?.from ?? '/';
+  const from = (useLocation().state as LocationState | null)?.from;
   const login = useLogin();
   const errorId = useId();
+
+  // ⚠ POYGA: `login()` tokenni `onSuccess` dan OLDIN saqlaydi — jonli
+  //   `hasSession`/`actorType` ga qarasak, forma hali submit paytida ham
+  //   "allaqachon kirgan" deb o'zini yo'naltirib yuborishi mumkin edi.
+  //   MOUNT paytidagi holat olinadi: "bu sahifa ochilganda kim edim?".
+  const [already] = useState(() => ({ signedIn: hasSession, actorType }));
 
   const form = useForm<LoginInput, unknown, LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -37,12 +54,30 @@ export default function LoginPage() {
   });
   const [phone, password] = useWatch({ control: form.control, name: ['phone', 'password'] });
 
-  // Mijoz shu sahifaga tushib qolsa — uni kabinetiga qaytaramiz (D-049)
-  if (hasSession && actorType === 'customer') return <Navigate to="/kabinet" replace />;
-  if (hasSession && !login.isPending) return <Navigate to={from} replace />;
+  if (already.signedIn) {
+    // Allaqachon kirgan — realmiga mos joyga (kabinet vs xodim paneli).
+    const dest =
+      already.actorType === 'customer' ? '/kabinet' : (from ?? '/');
+    return <Navigate to={dest} replace />;
+  }
 
   const onSubmit = form.handleSubmit((values) =>
-    login.mutate(values, { onSuccess: () => navigate(from, { replace: true }) }),
+    login.mutate(values, {
+      onSuccess: ({ actorType: who, mustChangePassword }) => {
+        if (who === 'CUSTOMER') {
+          // Vaqtinchalik parol — boshqa hamma joy backendda 403 (D-050)
+          const dest = mustChangePassword
+            ? '/kabinet/parol'
+            : from?.startsWith('/kabinet')
+              ? from
+              : '/kabinet';
+          navigate(dest, { replace: true });
+          return;
+        }
+        // Xodim — mijoz uchun mo'ljallangan `from` ga tushib qolmasin
+        navigate(from && !from.startsWith('/kabinet') ? from : '/', { replace: true });
+      },
+    }),
   );
 
   const serverError = login.isError ? loginErrorMessage(login.error, 'phone') : null;
@@ -54,8 +89,10 @@ export default function LoginPage() {
       aria-describedby={serverError ? errorId : undefined}
       className="w-full max-w-sm rounded-lg border border-line bg-surface p-7 shadow-md"
     >
-      <h1 className="text-lg font-semibold">Boshqaruv paneliga kirish</h1>
-      <p className="mt-1 text-sm text-muted">Xodimlar uchun — telefon raqami bilan.</p>
+      <h1 className="text-lg font-semibold">Vodiy Kafelga kirish</h1>
+      <p className="mt-1 text-sm text-muted">
+        Telefon raqami va parol bilan — xodim ham, optom mijoz ham shu yerdan.
+      </p>
 
       <div className="mt-6 flex flex-col gap-4">
         <PhoneField
@@ -93,13 +130,6 @@ export default function LoginPage() {
       >
         {login.isPending ? 'Kirilmoqda…' : 'Kirish'}
       </Button>
-
-      <p className="mt-5 border-t border-line pt-4 text-center text-sm text-muted">
-        Optom mijozmisiz?{' '}
-        <Link to="/kabinet/kirish" className="font-medium text-fg underline underline-offset-2">
-          Kabinetga kirish
-        </Link>
-      </p>
     </form>
   );
 }

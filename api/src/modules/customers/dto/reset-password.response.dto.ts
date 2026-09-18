@@ -18,10 +18,13 @@ export class ResetPasswordResponseDto {
   temporaryPassword!: string;
 
   @ApiProperty({
-    description: 'Parol tiklangan mijozning logini',
-    example: 'fargona-optom',
+    description:
+      'Mijozning kirish raqami — `POST /auth/login` shu bo‘yicha ' +
+      'qidiradi (2026-09-18: mijoz endi login satri emas, telefon bilan ' +
+      'kiradi).',
+    example: '+998901234567',
   })
-  login!: string;
+  phone!: string;
 
   @ApiProperty({
     description:

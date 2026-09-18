@@ -13,6 +13,8 @@ import type {
   AdminLoginDto,
   AuthTokensResponseDto,
   ChangePasswordDto,
+  LoginDto,
+  LoginResponseDto,
   RefreshTokenDto,
   UserProfileResponseDto,
   WholesaleLoginDto,
@@ -193,6 +195,84 @@ export class AuthService {
         branchId: customer.branchId,
         mustChangePassword: customer.mustChangePassword,
       }),
+      mustChangePassword: customer.mustChangePassword,
+    };
+  }
+
+  /**
+   * Yagona kirish — telefon + parol, XODIM ham optom mijoz ham shu bilan
+   * kiradi (2026-09-18, mijoz talabi: "nega bitta login sahifadan emas").
+   *
+   * Avval `users.phone` bo'yicha qaraladi; topilmasa `customers.phone`
+   * bo'yicha. Ikkalasi ham bir xil raqamda BO'LOLMAYDI (`assertPhoneNot*`
+   * yaratish/tahrirlashda tekshiradi — customers-admin.service.ts,
+   * staff-admin.service.ts), shuning uchun bu yerda tartib ahamiyatsiz —
+   * ikkalasi birdan topilishi mumkin emas.
+   *
+   * 🔒 Javob har doim bir xil: "raqam yo'q" / "hisob o'chirilgan" /
+   *    "parol xato" — uchtasi ham shu matn, qaysi jadvalda ekani ham
+   *    oshkor qilinmaydi.
+   */
+  async login(dto: LoginDto): Promise<LoginResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { phone: dto.phone },
+      select: {
+        id: true,
+        passwordHash: true,
+        role: true,
+        branchId: true,
+        isActive: true,
+      },
+    });
+
+    if (user) {
+      const passwordMatches = await this.validatePassword(
+        dto.password,
+        user.passwordHash,
+      );
+      if (!user.isActive || !passwordMatches) {
+        throw new UnauthorizedException(INVALID_CREDENTIALS);
+      }
+      return {
+        ...this.generateTokens({
+          sub: user.id,
+          type: 'USER',
+          role: user.role,
+          branchId: user.branchId,
+        }),
+        actorType: 'USER',
+        mustChangePassword: false,
+      };
+    }
+
+    const customer = await this.prisma.customer.findUnique({
+      where: { phone: dto.phone },
+      select: {
+        id: true,
+        passwordHash: true,
+        branchId: true,
+        isActive: true,
+        mustChangePassword: true,
+      },
+    });
+
+    const passwordMatches = await this.validatePassword(
+      dto.password,
+      customer?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+
+    if (!customer || !customer.isActive || !passwordMatches) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS);
+    }
+
+    return {
+      ...this.generateTokens({
+        sub: customer.id,
+        type: 'CUSTOMER',
+        branchId: customer.branchId,
+        mustChangePassword: customer.mustChangePassword,
+      }),
+      actorType: 'CUSTOMER',
       mustChangePassword: customer.mustChangePassword,
     };
   }
