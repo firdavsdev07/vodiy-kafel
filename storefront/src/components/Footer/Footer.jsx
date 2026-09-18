@@ -95,10 +95,10 @@ export default function Footer() {
               ))}
             </ul>
             <div className="mt-8 flex flex-col gap-3">
-              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="type-label text-clay transition-colors hover:text-bone">
+              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="type-action text-clay transition-colors hover:text-bone">
                 Telegram ↗
               </a>
-              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="type-label text-clay transition-colors hover:text-bone">
+              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="type-action text-clay transition-colors hover:text-bone">
                 Instagram ↗
               </a>
             </div>

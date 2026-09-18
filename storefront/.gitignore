@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local muhit — .env.example dan nusxa olinadi, o‘zi commit qilinmaydi
+.env
+.env.*
+!.env.example

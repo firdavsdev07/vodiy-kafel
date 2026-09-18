@@ -20,7 +20,7 @@ export default function CollectionsSection() {
         <Link
           to="/catalog"
           data-cursor="Ochish"
-          className="group type-label flex items-center gap-3"
+          className="group type-action flex items-center gap-3"
         >
           Butun katalog
           <span className="h-px w-8 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-16" />
@@ -82,15 +82,15 @@ export default function CollectionsSection() {
                 <dl className="r-fade mt-5 flex flex-wrap gap-x-8 gap-y-3 border-t border-charcoal/15 pt-4">
                   <div>
                     <dt className="type-label text-clay">O‘lcham</dt>
-                    <dd className="mt-1.5 text-[0.95rem]">{product.size}</dd>
+                    <dd className="mt-1.5 type-meta">{product.size}</dd>
                   </div>
                   <div>
                     <dt className="type-label text-clay">Yuza</dt>
-                    <dd className="mt-1.5 text-[0.95rem]">{product.finish}</dd>
+                    <dd className="mt-1.5 type-meta">{product.finish}</dd>
                   </div>
                   <div>
                     <dt className="type-label text-clay">Toifa</dt>
-                    <dd className="mt-1.5 text-[0.95rem]">
+                    <dd className="mt-1.5 type-meta">
                       {categoryName(product.category)}
                     </dd>
                   </div>

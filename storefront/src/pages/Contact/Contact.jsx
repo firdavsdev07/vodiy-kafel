@@ -151,7 +151,7 @@ export default function Contact() {
                 className="w-full"
                 imgClassName="transition-transform duration-[1400ms] ease-[cubic-bezier(.16,1,.3,1)] hover:scale-[1.04]"
               />
-              <span className="mt-3 block type-label text-clay">Xaritada ko‘rish →</span>
+              <span className="mt-3 block type-action text-clay">Xaritada ko‘rish →</span>
             </a>
           </div>
 

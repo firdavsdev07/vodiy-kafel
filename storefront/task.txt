@@ -393,7 +393,7 @@
 │      • 1440px: kirish ekrani + `/catalog` ko'z bilan tekshirildi             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-004 · Muhit va API qatlami ───────────────────────────────────────────┐
+┌─ [x] S-004 · Muhit va API qatlami ───────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `.env.example`: `VITE_API_URL=http://localhost:3000/api/v1`             │
@@ -410,6 +410,81 @@
 │                                                                              │
 │  Bog'liq: S-002                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-18                                                    │
+│                                                                              │
+│    QO'SHILDI — `src/shared/api/`, 5 ta fayl. Butun qatlam Vite lib-build     │
+│    bilan alohida o'lchandi: 7.38 KB (gzip 3.00 KB).                          │
+│                                                                              │
+│      config.js       — `VITE_API_URL`, URL/query yig'ish, `assetUrl`         │
+│      api-error.js    — `ApiError`: statusCode, messages[], requestId, kind   │
+│      client.js       — `fetch` o'ramchisi, `{ data, meta }` ni ochadi        │
+│      query-store.js  — kalit = to'liq URL bo'lgan eng kichik kesh            │
+│      useApiQuery.js  — `useSyncExternalStore` ustidagi hook                  │
+│                                                                              │
+│    ── ⚠ TASK MATNIDAGI XATO TUZATILDI: SAHIFALASH `meta` DA EMAS ──          │
+│                                                                              │
+│      S-022 da "sahifalash `meta` dagi `total`/`totalPages` bilan" deb        │
+│      yozilgan edi. `openapi.json` va `api/src/common/dto/paginated-          │
+│      response.dto.ts` tekshirildi — u `data` NING ICHIDA keladi:             │
+│          { data: { items, total, page, limit, totalPages } }                 │
+│      `meta` esa hozircha BO'SH obyekt — backend uni zaxira sifatida          │
+│      qoldirgan. S-022 matni tuzatildi, `requestEnvelope` ikkalasini ham      │
+│      qaytaradi (`{ data, meta, requestId }`).                                │
+│                                                                              │
+│    ── TOKEN YO'Q (G1) ──                                                     │
+│                                                                              │
+│      `Authorization` so'zi butun qatlamda bir marta ham yozilmagan —         │
+│      faqat izohda, "yozilmaydi" deb. Kirish kerak bo'lgan hamma narsa        │
+│      `dashboard/` da.                                                        │
+│                                                                              │
+│    ── TASKDA YO'Q EDI, QO'SHILDI (sababi bilan) ──                           │
+│                                                                              │
+│      • TAYMER (15s). Taskda faqat `AbortSignal` bor edi. Lekin server        │
+│        javob bermay osilib qolsa, `fetch` cheksiz kutadi va foydalanuvchi    │
+│        aylanaverib turgan skeletni ko'radi — S-031 uchun aniq xato kerak.    │
+│        Taymer to'xtatgani bekor qilishdan FARQLANADI: birinchisi             │
+│        ko'rsatiladigan `ApiError`, ikkinchisi jim o'tadi.                    │
+│      • `assetUrl()` — `/uploads/...` global prefiksga kirmaydi               │
+│        (`api/src/main.ts`), shuning uchun manzilning domen qismi alohida     │
+│        hisoblanadi. S-032 shuni ishlatadi.                                   │
+│      • `VITE_CABINET_URL` — `.env.example` ga S-045 uchun oldindan.          │
+│      • `.gitignore`: `.env` va `.env.*` endi commit qilinmaydi               │
+│        (`.env.example` dan tashqari) — avval hech qaysi biri yopilmagan edi. │
+│                                                                              │
+│    ── QARORLAR ──                                                            │
+│                                                                              │
+│      • TanStack Query OLINMADI (taskdagi tavsiya bajarildi). Sabab —         │
+│        bu yerda mutatsiya yo'q: kerak bo'lgani bir marta so'rash, eslab      │
+│        qolish, React'ga xabar berish. Uchalasi 132 qatorda.                  │
+│      • Kesh kaliti — to'liq URL. Ya'ni `params` o'zgarsa so'rov o'zi         │
+│        yangilanadi, bir xil filtr ikkinchi marta so'ralmaydi.                │
+│        `buildQuery` kalitlarni saralaydi: `{a,b}` va `{b,a}` — bitta yozuv.  │
+│      • Bekor qilish DARHOL emas, 60ms dan keyin: StrictMode (dev) har bir    │
+│        effektni qo'shimcha bir marta yechib-ulaydi. Darhol bekor qilinsa,    │
+│        dev'da har bir so'rov ikki marta ketardi.                             │
+│      • `AbortError` `ApiError` ga AYLANTIRILMAYDI — bekor qilish xato emas,  │
+│        uni foydalanuvchiga ko'rsatish kerak emas (`isAbortError`).           │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓ (oxlint, xato yo'q)                  │
+│      • Vite lib-build: `VITE_API_URL` build'ga INLINE tushdi, chiqishda      │
+│        `import.meta.env` qolmadi (0 ta) — ya'ni prod manzili ishlaydi        │
+│      • 10 ta tekshiruv (`node --test`, mahalliy stub server, vaqtinchalik):  │
+│          `{ data }` ochilishi · sahifalash `data` ichidan · 204 → undefined  │
+│          404 → `ApiError` (message, requestId, `isNotFound`)                 │
+│          validatsiya MASSIVI → `messages[]` · 500 → `isRetryable`            │
+│          `AbortSignal` bekor qilishi · taymer to'xtatishi                    │
+│          kesh: bir vaqtdagi ikki so'rov BITTA fetch ga birlashishi,          │
+│          yangi natija qayta so'ralmasligi, `force` va invalidatsiya,         │
+│          holat havolasining barqarorligi (React ortiqcha render qilmaydi)    │
+│        ⚠ Bu tekshiruvlar REPOGA QO'SHILMADI — doimiy testlar S-041 ning      │
+│          ishi (vitest o'rnatiladi, hozir paketda test yugurtirgich yo'q).    │
+│      • Bundle O'ZGARMADI (477 KB emas — hozirgi 428 KB birinchi ekran):      │
+│        qatlamni hali hech kim import qilmaydi, u S-022 da yoqiladi.          │
+│                                                                              │
+│    Keyingi task uchun qoldirildi: endpoint funksiyalari (`getProducts` va    │
+│    hokazo) — ular S-022…S-029 da, o'z tasklari bilan birga yoziladi.         │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -419,7 +494,7 @@
 ║  Maqsad: mijozning "juda mayda yozuv" shikoyati. O'lchab tasdiqlandi.        ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-005 · Tipografika shkalasini qayta qurish ────────────────────────────┐
+┌─ [x] S-005 · Tipografika shkalasini qayta qurish ────────────────────────────┐
 │                                                                              │
 │  O'LCHANDI (bosh sahifa, 900px kenglik) — 14px dan kichik 22 ta matn:        │
 │                                                                              │
@@ -451,6 +526,89 @@
 │  Natija: 14px dan kichik MA'LUMOTLI matn saytda qolmaydi                     │
 │  Bog'liq: S-001                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-18                                                    │
+│                                                                              │
+│    ── ⚠ TASKNING ICHKI ZIDDIYATI: 13px MI, 14px MI? ──                       │
+│                                                                              │
+│      Task matnida `--text-label` uchun "≥ 0.8125rem/13px" deyilgan, lekin    │
+│      pastdagi "Natija" qatorida "14px dan kichik MA'LUMOTLI matn saytda      │
+│      qolmaydi" deb yozilgan — 13px bu shartni BUZADI.                        │
+│      Tanlov: 0.875rem (14px). Sabab — ikkalasi ham bajariladi va mijozning   │
+│      shikoyati aynan "mayda yozuv" edi, ya'ni chegarada turmagan ma'qul.     │
+│      G5 ham buzilmaydi (u 13px ni MINIMUM deb qo'ygan, maksimum emas).       │
+│                                                                              │
+│    ── SHKALA: OLDIN → HOZIR ──                                               │
+│                                                                              │
+│        --text-body    0.95rem (15.2px)  →  1rem (16px) dan boshlanadi        │
+│        --text-label   0.75rem (12px)    →  0.875rem (14px)                   │
+│        --text-action  (yo'q edi)        →  1rem (16px)      🆕 CTA/telefon    │
+│        --text-meta    (yo'q edi)        →  0.9375rem (15px) 🆕 qiymatlar      │
+│        tracking-label 0.22em            →  0.14em (mobilda 0.1em)            │
+│                                                                              │
+│      Yorliqning oraliqi ham qisqartirildi: muammo faqat o'lchamda emas edi — │
+│      12px BOSH HARF + 0.22em eng qiyin o'qiladigan juftlik (task auditi).    │
+│                                                                              │
+│    ── UCHTA YANGI UTILITY ──                                                 │
+│                                                                              │
+│      `type-action` (16px, 600) — bosiladigan narsa: telefon, «Butun katalog»,│
+│        «Xaritada ko'rish», «Kolleksiyalarni ko'rish», «Bog'lanish», Telegram,│
+│        Instagram. Hammasi `type-label` dan CHIQARILDI (taskning talabi).     │
+│      `type-meta` (15px) — o'lcham/yuza/toifa kabi QIYMATLAR. Avval ular      │
+│        uch xil qiymat bilan yozilgan edi: 0.9rem, 0.95rem, 0.98rem — endi    │
+│        bitta token (ProductGrid, Catalog, ProductDetail, Meta, Collections). │
+│      `type-label` — faqat HAQIQIY yorliq uchun qoldi (bo'lim raqami,         │
+│        "Telefon", "Ish vaqti"), 14px + zichroq oraliq.                       │
+│                                                                              │
+│    ── KIRISH EKRANI: 6px VA 8px MATNLAR YO'Q ──                              │
+│                                                                              │
+│      `.entry-top` 9px, `.entry-eyebrow` 8px (mobil 7px), `.entry-caption`    │
+│      8px, `.entry-bottom p` 8px (mobil 6px), `.entry-enter small` 9px —      │
+│      hammasi `var(--text-label)` (14px) ga o'tdi, oraliqlari kamaytirildi.   │
+│      Mobilda `.entry-bottom` endi USTUNGA tushadi: 14px matn va «Kashf       │
+│      eting» tugmasi 375px da yonma-yon sig'masdi.                            │
+│                                                                              │
+│    ── HERO ──                                                                │
+│                                                                              │
+│      `.hero-link` 13px → 16px (asosiy CTA edi), `.hero-object-label` va      │
+│      `.hero-swatch p` 12px → 15px, `.hero-drag` 10px → 15px va `type-label`  │
+│      sinfidan chiqarildi — u gap, yorliq emas: bosh harfga aylantirilishi    │
+│      ham, 0.22em oraliq ham noto'g'ri edi.                                   │
+│                                                                              │
+│    ── O'LCHANDI (taxmin emas) ──                                             │
+│                                                                              │
+│      Uch kenglikda (375 / 900 / 1440) sahifadagi HAR BIR ko'rinadigan matn   │
+│      tugunining `getComputedStyle().fontSize` i o'lchandi:                   │
+│                                                                              │
+│        OLDIN  (900px, bosh sahifa): 14px dan kichik 22 ta matn, eng          │
+│               kichigi 8.4px (®), `type-label` 12px — telefon ham shunda      │
+│        HOZIR  (375, 900, 1440 — uchalasida ham): 14px dan kichik             │
+│               MA'LUMOTLI matn 0 ta. Qolgani — faqat ikkita ® belgisi         │
+│               (11.2px va 12px), ular dekorativ va G5 ga ziddi emas           │
+│                                                                              │
+│      Gorizontal scroll: uchala kenglikda ham 0 (shkala kattalashsa ham       │
+│      hech narsa ekrandan chiqmadi). Katalog sahifasi ham shunday.            │
+│                                                                              │
+│      ⚠ Brauzer oynasini kerakli kenglikka o'zgartirib bo'lmadi (oyna         │
+│        boshqaruvchisi ruxsat bermadi), shuning uchun o'lchov headless        │
+│        Chrome + CDP orqali aniq viewport'da olindi. Skript vaqtinchalik      │
+│        (repoga qo'shilmadi) — doimiy vizual test S-041 ning ishi.            │
+│                                                                              │
+│    ── BOSHQA TASKLAR UCHUN KO'RILGANI (bu yerda TUZATILMADI) ──              │
+│                                                                              │
+│      • Telefon tugmasi past bo'yli ekranda (≈726px) hero-bottom ustiga       │
+│        chiqadi — suzuvchi element muammosi, S-013.                           │
+│      • 900px da `.hero-drag` yigit rasmiga tushadi (matn o'qiladi, lekin     │
+│        kompozitsiya buzuq) — "yo'q joy" oralig'i, S-008. Shu sababli         │
+│        uning `max-width` i 170→180px bilan cheklandi, 215px qilinmadi.       │
+│      • Katalogda filtr qatori 375px da kesilgan — S-012.                     │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓ (oxlint, xato yo'q)                  │
+│      • `.type-action`, `.type-meta` va `--text-label:.875rem` build CSS'ida  │
+│        borligi tasdiqlandi                                                   │
+│      • 375 / 900 / 1440 — kirish ekrani ham, bosh sahifa ham, katalog ham    │
+│        ko'z bilan ko'rildi: kesilgan yoki ustma-ust tushgan matn yo'q        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [ ] S-006 · Kontrast va o'qilish auditi ────────────────────────────────────┐
@@ -846,8 +1004,9 @@
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `src/data/products.js` o'rniga API chaqiruvi                            │
-│    • Sahifalash — `meta` dagi `total`/`totalPages` bilan ("ko'proq           │
-│      yuklash" yoki sahifa raqamlari)                                         │
+│    • Sahifalash — `data` ICHIDAGI `total`/`totalPages` bilan ("ko'proq       │
+│      yuklash" yoki sahifa raqamlari). ⚠ `meta` da EMAS — S-004 da            │
+│      tekshirildi, `meta` bo'sh keladi                                        │
 │    • 🔒 NARX YO'Q, ZAXIRA SONI YO'Q — faqat `availability` (G1)              │
 │    • Saralash: `name`, `createdAt`, `viewCount` (narx bo'yicha YO'Q —        │
 │      narx `Product` da emas)                                                 │
@@ -1325,13 +1484,13 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 45
-  Tugadi       : 3
+  Tugadi       : 5
   Jarayonda    : 0
   Bloklangan   : 0
 
   Epic bo'yicha:
-    EPIC 0  Tozalash va poydevor ......  3 / 4   [xxx·]
-    EPIC 1  Tipografika ..............  0 / 2    [··]
+    EPIC 0  Tozalash va poydevor ......  4 / 4   [xxxx]
+    EPIC 1  Tipografika ..............  1 / 2    [x·]
     EPIC 2  Hero va greeter ..........  0 / 3    [···]
     EPIC 3  Responsive ...............  0 / 6    [······]
     EPIC 4  Harakat va GSAP ..........  0 / 5    [·····]
@@ -1342,7 +1501,7 @@
     (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  S-004 · Muhit va API qatlami
+  KEYINGI TASK:  S-006 · Kontrast va o'qilish auditi
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,

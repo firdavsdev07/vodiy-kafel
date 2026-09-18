@@ -7,6 +7,12 @@
 @font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/manrope-600.woff2') format('woff2'); }
 @font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/manrope-700.woff2') format('woff2'); }
 
+/* Mobil shkala (S-005): kichik ekranda bosh harfli yorliq yanada zich
+   oraliq talab qiladi — aks holda ikki qatorga tushib ketadi. */
+@media (max-width: 767px) {
+  :root { --tracking-label: 0.1em; }
+}
+
 /* Contrast follows the section surface, including nested dark sections. */
 :where(.text-bone, .bg-ink, .bg-charcoal) { --color-clay: #c2b9ac; }
 :where(.bg-bone, .bg-stone) { --color-clay: #71685e; }
@@ -16,10 +22,10 @@
 /* Material study entrance: the same paper, stone and Manrope as the gallery. */
 .entry-screen { position: fixed; inset: 0; z-index: 200; overflow: hidden; color: #232321; background: #eeece5; isolation: isolate; }
 .entry-screen:focus { outline: none; }
-.entry-top { position: absolute; top: 5%; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; font-size: 9px; line-height: 1.9; letter-spacing: .1em; }
+.entry-top { position: absolute; top: 5%; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; font-size: var(--text-label); line-height: 1.7; letter-spacing: .08em; }
 .entry-top > span:last-child { text-align: right; }
 .entry-monogram { font-size: 28px; letter-spacing: -.08em; font-weight: 600; }
-.entry-monogram sup { margin-left: 6px; font-size: 10px; vertical-align: top; line-height: 2.8; }
+.entry-monogram sup { margin-left: 6px; font-size: 12px; vertical-align: top; line-height: 2.3; }
 .entry-muted { color: #71685e; }
 .entry-study { --sample-width: min(13vw, 180px, 23svh); position: absolute; z-index: 0; left: 50%; top: 13%; width: var(--sample-width); height: 30%; margin-left: calc(var(--sample-width) / -2); }
 .entry-study-axis { position: absolute; top: -10%; bottom: -11%; left: 50%; width: 1px; background: #d8d3c8; }
@@ -30,36 +36,34 @@
 .entry-sample img { width: 100%; height: 100%; object-fit: cover; }
 .entry-sample-edge { position: absolute; inset: 0; border-radius: inherit; border: 1px solid #ffffff65; background: linear-gradient(100deg, #fff3, transparent 20% 87%, #33271c30); box-shadow: inset -3px 0 1px #58473726; }
 .entry-caption { position: absolute; left: 7vw; top: 37%; display: flex; flex-direction: column; gap: 13px; }
-.entry-caption > span:first-child { font-size: 8px; letter-spacing: .18em; color: #71685e; }
-.entry-caption > span:last-child { font-size: 12px; line-height: 1.8; }
+.entry-caption > span:first-child { font-size: var(--text-label); letter-spacing: .12em; color: #71685e; }
+.entry-caption > span:last-child { font-size: var(--text-meta); line-height: 1.7; }
 .entry-heading { position: absolute; z-index: 1; top: 59%; left: 0; width: 100%; text-align: center; }
-.entry-eyebrow { font-size: 8px; letter-spacing: .25em; color: #71685e; margin-bottom: 8px; }
+.entry-eyebrow { font-size: var(--text-label); letter-spacing: .16em; color: #71685e; margin-bottom: 10px; }
 .entry-heading h1 { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
 .entry-word-mask { overflow: hidden; display: block; }
 .entry-word { display: block; }
 .entry-period { color: #777863; }
 .entry-bottom { position: absolute; bottom: 4%; left: 5vw; right: 5vw; display: flex; align-items: center; justify-content: space-between; padding-top: 20px; gap: 20px; }
 .entry-rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: #c9c2b5; transform-origin: left; }
-.entry-bottom p { font-size: 8px; line-height: 2; letter-spacing: .09em; }
+.entry-bottom p { font-size: var(--text-label); line-height: 1.75; letter-spacing: .08em; }
 .entry-enter { display: flex; align-items: center; gap: 25px; text-align: left; min-height: 58px; }
 .entry-enter > span:first-child { display: flex; flex-direction: column; gap: 4px; }
 .entry-enter > span:first-child > span { font-size: 21px; letter-spacing: -.045em; }
-.entry-enter small { font-size: 9px; color: #71685e; }
+.entry-enter small { font-size: var(--text-label); color: #71685e; }
 .entry-arrow { width: 54px; height: 54px; border: 1px solid #a69e90; border-radius: 50%; display: grid; place-items: center; font-size: 26px; transition: transform .35s, background .35s; }
 .entry-enter:hover .entry-arrow { transform: rotate(45deg); background: #d8d3c8; }
 @media (max-width: 767px) {
- .entry-top { left: 7vw; right: 7vw; font-size: 8px; }
+ .entry-top { left: 7vw; right: 7vw; }
  .entry-study { --sample-width: min(24vw, 140px); top: 23%; height: 27%; }
  .entry-caption { top: 15%; left: 7vw; }
  .entry-caption > span:last-child { display: none; }
  .entry-heading { top: 65%; }
  .entry-heading h1 { font-size: 13vw; }
- .entry-eyebrow { font-size: 7px; margin-bottom: 12px; }
- .entry-bottom { bottom: max(4%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; padding-top: 15px; }
- .entry-bottom p { font-size: 6px; }
+ .entry-eyebrow { margin-bottom: 12px; }
+ .entry-bottom { bottom: max(4%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; padding-top: 15px; flex-direction: column; align-items: flex-start; gap: 16px; }
  .entry-enter { gap: 12px; }
  .entry-enter > span:first-child > span { font-size: 17px; }
- .entry-enter small { font-size: 7px; }
  .entry-arrow { width: 44px; height: 44px; font-size: 24px; }
 }
 @media (max-height: 520px) and (min-width: 768px) {
@@ -94,13 +98,13 @@
 .hero-copy h1 { font-size: clamp(3.2rem, 6.5vw, 7.8rem); font-weight: 500; line-height: 1.1; letter-spacing: -.065em; }
 .hero-copy h1 span { color: #777863; }
 .hero-description { margin-top: 32px; color: #625d54; line-height: 1.85; }
-.hero-link { display: inline-flex; align-items: center; gap: 32px; border-bottom: 1px solid #766e5e; padding: 15px 0; margin-top: 24px; font-size: 13px; }
-.hero-object-label { position: absolute; right: 7vw; top: 125px; display: flex; flex-direction: column; gap: 8px; text-align: right; color: #665e53; font-size: 12px; }
+.hero-link { display: inline-flex; align-items: center; gap: 32px; border-bottom: 1px solid #766e5e; padding: 15px 0; margin-top: 24px; font-size: var(--text-action); font-weight: 600; letter-spacing: .04em; }
+.hero-object-label { position: absolute; right: 7vw; top: 125px; display: flex; flex-direction: column; gap: 8px; text-align: right; color: #665e53; font-size: var(--text-meta); }
 .hero-bottom { position: absolute; left: 5vw; right: 5vw; bottom: 75px; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .hero-swatch { display: flex; gap: 18px; align-items: center; }
 .hero-swatch img { width: 55px; height: 65px; object-fit: cover; }
-.hero-swatch p { font-size: 12px; margin-top: 6px; color: #71685e; }
-.hero-drag { max-width: 170px; font-size: 10px; line-height: 1.7; color: #71685e; }
+.hero-swatch p { font-size: var(--text-meta); margin-top: 6px; color: #71685e; }
+.hero-drag { max-width: 180px; font-size: var(--text-meta); line-height: 1.6; color: #71685e; }
 .hero-scroll { border: 1px solid #b9b0a2; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; }
 .has-entered .hero-copy { animation: gallery-enter 1s both; }
 @keyframes gallery-enter { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: none; } }
@@ -133,8 +137,14 @@
   --text-head: clamp(2.2rem, 7vw, 7rem);
   --text-sub: clamp(1.6rem, 4.2vw, 4rem);
   --text-editorial: clamp(1.4rem, 3.2vw, 3.1rem);
-  --text-body: clamp(0.95rem, 1.15vw, 1.12rem);
-  --text-label: 0.75rem;
+  --text-body: clamp(1rem, 1.15vw, 1.12rem);
+  --text-action: 1rem;
+  --text-meta: 0.9375rem;
+  --text-label: 0.875rem;
+
+  /* Bosh harf + keng oraliq kichik o'lchamda eng qiyin o'qiladigan
+     kombinatsiya (S-005 auditi). Oldin .22em edi. */
+  --tracking-label: 0.14em;
 }
 
 /* ------------------------------------------------------------------ *
@@ -273,9 +283,26 @@
 @utility type-label {
   font-size: var(--text-label);
   font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.22em;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
+}
+
+/* Ikkilamchi ma'lumot: o'lcham, yuza, toifa — yorliq emas, QIYMAT.
+   Shuning uchun bosh harfga aylantirilmaydi va oraliq ham keng emas. */
+@utility type-meta {
+  font-size: var(--text-meta);
+  line-height: 1.45;
+  letter-spacing: 0.005em;
+}
+
+/* Bosiladigan narsa: CTA, telefon, xaritaga havola. G5 bo'yicha ≥ 16px va
+   `type-label` dan CHIQARILADI — konversiya elementi mayda bo'lmaydi. */
+@utility type-action {
+  font-size: var(--text-action);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
 }
 
 /* ------------------------------------------------------------------ *

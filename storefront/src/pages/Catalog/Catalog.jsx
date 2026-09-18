@@ -110,7 +110,7 @@ export default function Catalog() {
                       </div>
                       <div className="shrink-0 text-right">
                         <div className="type-label text-clay">{categoryName(product.category)}</div>
-                        <div className="mt-3 text-[0.95rem]">
+                        <div className="mt-3 type-meta">
                           {product.size} · {product.finish}
                         </div>
                       </div>

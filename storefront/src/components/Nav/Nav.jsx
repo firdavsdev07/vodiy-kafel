@@ -20,7 +20,7 @@ export default function Nav({ open, onToggle }) {
           onClick={() => playTone('click')}
           className="pointer-events-auto absolute left-[clamp(1.25rem,4vw,4.5rem)] top-6 type-label md:top-8"
         >
-          Vodiy Kafel<sup className="text-[0.7em]">®</sup>
+          Vodiy Kafel<sup className="text-[0.8em]">®</sup>
         </Link>
 
         <button
@@ -52,7 +52,7 @@ export default function Nav({ open, onToggle }) {
         <a
           href={`tel:${company.contact.phoneHref[0]}`}
           data-cursor=""
-          className="pointer-events-auto absolute bottom-6 left-[clamp(1.25rem,4vw,4.5rem)] hidden type-label md:bottom-8 md:block"
+          className="pointer-events-auto absolute bottom-6 left-[clamp(1.25rem,4vw,4.5rem)] hidden type-action md:bottom-8 md:block"
         >
           {company.contact.phones[0]}
         </a>

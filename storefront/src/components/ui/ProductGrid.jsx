@@ -38,7 +38,7 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
               <h3 className="mt-3 text-[clamp(1.1rem,1.8vw,1.55rem)] font-semibold leading-none tracking-[-0.02em]">
                 {product.name}
               </h3>
-              <div className="mt-3 flex items-baseline justify-between gap-4 text-[0.9rem]">
+              <div className="mt-3 flex items-baseline justify-between gap-4 type-meta">
                 <span className="opacity-60">{categoryName(product.category)}</span>
                 <span>
                   {product.size} · {product.finish}

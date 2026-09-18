@@ -64,7 +64,7 @@ export default function ShowroomSection() {
                 target="_blank"
                 rel="noreferrer"
                 data-cursor="Ochish"
-                className="group type-label flex items-center gap-3 md:justify-end"
+                className="group type-action flex items-center gap-3 md:justify-end"
               >
                 Xaritada ko‘rish
                 <span className="h-px w-8 bg-bone transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-16" />

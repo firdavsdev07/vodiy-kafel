@@ -69,7 +69,7 @@ export default function ProductDetail() {
             {spec.map(([label, value]) => (
               <div key={label} className="border-t border-charcoal/12 pt-3">
                 <dt className="type-label text-clay">{label}</dt>
-                <dd className="mt-2 text-[0.98rem] leading-snug">{value}</dd>
+                <dd className="mt-2 type-meta">{value}</dd>
               </div>
             ))}
           </dl>
@@ -142,12 +142,12 @@ export default function ProductDetail() {
               <a
                 href={`tel:${company.contact.phoneHref[0]}`}
                 data-cursor=""
-                className="group type-label flex items-center gap-3"
+                className="group type-action flex items-center gap-3"
               >
                 Bog‘lanish
                 <span className="h-px w-10 bg-bone transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
               </a>
-              <Link to="/contact" data-cursor="" className="group type-label flex items-center gap-3 text-clay hover:text-bone">
+              <Link to="/contact" data-cursor="" className="group type-action flex items-center gap-3 text-clay hover:text-bone">
                 Manzil va ish vaqti
                 <span className="h-px w-10 bg-clay transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
               </Link>
