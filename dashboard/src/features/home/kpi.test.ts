@@ -5,10 +5,21 @@ const ids = (role: Parameters<typeof kpiCards>[0]) => kpiCards(role).map((c) => 
 
 describe('bosh sahifa ko‘rsatkichlari (D-041)', () => {
   it('rol bo‘yicha kartochkalar', () => {
-    expect(ids({ id: 'u', role: 'SUPER_ADMIN' })).toEqual(['new', 'urgent', 'unpaid', 'supply-review', 'customers', 'debtors']);
-    expect(ids({ id: 'u', role: 'MODERATOR' })).toEqual(['new', 'urgent', 'unpaid', 'supply-review', 'customers', 'debtors']);
-    expect(ids({ id: 'u', role: 'BRANCH_ADMIN' })).toEqual(['new', 'urgent', 'unpaid', 'supply-branch', 'customers', 'debtors']);
-    expect(ids({ id: 'u', role: 'MANAGER' })).toEqual(['mine', 'new', 'urgent', 'unpaid', 'supply-branch', 'customers', 'debtors']);
+    // 🆕 B-063: 'today' (barcha buyurtma huquqiga) va 'stock-low'/'stock-out'
+    //   (barcha xodimga, `stock.view` — ALL_STAFF) qo'shildi — statistika
+    //   endpointi kelgunga qadar bu ikkisi umuman ko'rsatib bo'lmasdi.
+    expect(ids({ id: 'u', role: 'SUPER_ADMIN' })).toEqual([
+      'new', 'urgent', 'unpaid', 'today', 'supply-review', 'stock-low', 'stock-out', 'customers', 'debtors',
+    ]);
+    expect(ids({ id: 'u', role: 'MODERATOR' })).toEqual([
+      'new', 'urgent', 'unpaid', 'today', 'supply-review', 'stock-low', 'stock-out', 'customers', 'debtors',
+    ]);
+    expect(ids({ id: 'u', role: 'BRANCH_ADMIN' })).toEqual([
+      'new', 'urgent', 'unpaid', 'today', 'supply-branch', 'stock-low', 'stock-out', 'customers', 'debtors',
+    ]);
+    expect(ids({ id: 'u', role: 'MANAGER' })).toEqual([
+      'mine', 'new', 'urgent', 'unpaid', 'today', 'supply-branch', 'stock-low', 'stock-out', 'customers', 'debtors',
+    ]);
     expect(kpiCards(undefined)).toEqual([]);
   });
 

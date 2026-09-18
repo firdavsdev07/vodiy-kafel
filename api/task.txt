@@ -2345,7 +2345,7 @@
 │  Bog'liq: B-013 (seed); dashboard D-007 (RBAC sinovi shuni kutadi)           │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-062 · Moderator biriktirish uchun xodim tanlay olmaydi     🆕 ─────────┐
+┌─ [x] B-062 · Moderator biriktirish uchun xodim tanlay olmaydi     🆕 ─────────┐
 │                                                                              │
 │  TOPILDI: dashboard D-027 (2026-09-17).                                      │
 │                                                                              │
@@ -2369,9 +2369,18 @@
 │  ⚠ Xulq-atvor o'zgarmaydi — faqat o'qish endpointi qo'shiladi.               │
 │  Bog'liq: B-030, B-043; dashboard D-027                                      │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (kod oldindan yozilgan edi, 2026-09-18 da tasdiqlandi)          │
+│                                                                              │
+│    • `GET /admin/orders/{id}/assignable-staff` — buyurtma FILIALINING        │
+│      faol xodimlari, `ASSIGNABLE_ROLES` bo'yicha (MANAGER, BRANCH_ADMIN,     │
+│      MODERATOR). Xulq-atvor taklif qilingandek: begona filial — 404.         │
+│    • Dashboard `features/orders/assign.ts` va `api.ts` shu endpointga        │
+│      o'tgan — eski "faqat o'zimga" chekloviga ehtiyoj qolmadi.               │
+│    • `openapi.json` yangilandi, `pnpm test` 647/647 o'tdi.                   │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] B-063 · Bosh sahifa statistikasi va zaxira holati filtri    🆕 ──────────┐
+┌─ [x] B-063 · Bosh sahifa statistikasi va zaxira holati filtri    🆕 ──────────┐
 │                                                                              │
 │  TOPILDI: dashboard D-041 (2026-09-17). ❓ dashboard 3-savol.                │
 │                                                                              │
@@ -2397,6 +2406,18 @@
 │  ⚠ Mavjud xulq-atvor o'zgarmaydi — faqat o'qish qo'shiladi.                  │
 │  Bog'liq: B-030, B-054; dashboard D-041                                      │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI (kod oldindan yozilgan edi, 2026-09-18 da tasdiqlandi)          │
+│                                                                              │
+│    • `GET /admin/dashboard/stats` — bitta so'rovda: yangi/tezkor/            │
+│      to'lanmagan/bugungi buyurtmalar (+ bugungi/oylik summa), kam            │
+│      qolgan/tugagan mahsulotlar, faol/qarzdor mijozlar.                      │
+│    • `GET /admin/product-stocks` ga `stockStatus` filtri (LOW,               │
+│      OUT_OF_STOCK) qo'shildi — `effectiveThreshold` bilan bir xil hisob.     │
+│    • Dashboard `features/home/kpi.ts` yangi endpointdan foydalanadi —        │
+│      2 ta yangi kartochka ('today', 'stock-low'/'stock-out') paydo           │
+│      bo'ldi. ⚠ `kpi.test.ts` yangi kartochkalarni kutmagan edi —             │
+│      2026-09-18 da tuzatildi (o'zi bug emas, test eskirgan edi).             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -2639,7 +2660,7 @@
     EPIC 9  Filial/Hamkor/Menejer ....  6 / 6    [██████]
     EPIC 10 Didox.uz .................  1 / 2    [█·]    (B-045 qilindi,
                                                             B-044 hamon ochiq)
-    EPIC 11 Sifat .................... 10 / 13   [██████████···] (B-059 … B-066)
+    EPIC 11 Sifat .................... 13 / 13   [█████████████] (B-059 … B-066 ✓)
 
   ──────────────────────────────────────────────────────────────────────────
   2026-09-18 DA BAJARILGANLAR (dashboard EPIC 10 ni yopish uchun):
@@ -2651,19 +2672,25 @@
     [x] B-066  Xodim paroli: yaratishda `password` + reset-password
                → dashboard D-061
 
-  KEYINGI TASK:  B-062 · Moderator uchun biriktiriladigan xodimlar ro'yxati
-                 B-063 · Bosh sahifa statistikasi + zaxira holati filtri
-                 (ikkalasi dashboard ishida topildi; dashboard ularni
-                 KUTMAYDI — vaqtinchalik yechimlar bilan ishlayapti)
+  2026-09-18 DA TASDIQLANGANLAR (Node 24.14 muhitda, teammate Node 22.22
+  da yozgan va sinamagan edi):
+
+    [x] B-062  `GET /admin/orders/{id}/assignable-staff` — kod bor edi,
+               endpoint openapi.json da, dashboard shunga o'tgan
+    [x] B-063  `GET /admin/dashboard/stats` + `stockStatus` filtri — kod
+               bor edi, dashboard shunga o'tgan
+    [x] `pnpm test` TO'LIQ ishga tushirildi: 647/647 o'tdi (B-064, B-066
+        testlari bilan birga) — avvalgi "ishga tushirilmagan" eslatmasi
+        endi ESKIRGAN, olib tashlandi.
+    [🐞] `dashboard/kpi.test.ts` yiqilgan edi — kod TO'G'RI (B-063 ikkita",
+        yangi kartochka qo'shgan: 'today', 'stock-low'/'stock-out'),
+        test ESKIRGAN edi. Test tuzatildi (bug emas, kutilgan o'zgarish).
+
+  KEYINGI TASK:  yo'q — backendda ochiq task qolmadi. Navbat dashboard'da:
+                 D-051 dan davom (kabinet, api B-065/B-064 endi tayyor).
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)
                  B-044 (Didox.uz spike) hamon mijoz javobini kutmoqda, lekin
                  hech narsani BLOKLAMAYDI — B-045 mock bilan bajarildi.
-
-  ⚠ MUHIT: bu mashinada Node 22.22 — `start:dev`, `build`, `lint`,
-    `openapi:export` ISHLAYDI, lekin `pnpm test` (jest) ishlamaydi:
-    jest ESM modulni `require` qila olmaydi, ≥24.9 kerak. B-064 va
-    B-066 ning unit testlari yozilgan, lekin ishga tushirilmagan —
-    Node 24 o'rnatilganda birinchi ish shu bo'lishi kerak.
   ──────────────────────────────────────────────────────────────────────────
