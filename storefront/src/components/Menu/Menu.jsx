@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { EASE, EASE_IN_OUT, gsap, prefersReducedMotion } from '@/animations/gsap'
+import { EASE, EASE_IN_OUT, gsapLoaded, loadGsap } from '@/animations/gsap'
+import { prefersReducedMotion } from '@/lib/motion'
 import SoundToggle from '@/components/Nav/SoundToggle'
 import SmartImage from '@/components/ui/SmartImage'
 import { company } from '@/data/company'
@@ -47,49 +48,65 @@ export default function Menu({ open, onClose }) {
     }
 
     if (prefersReducedMotion()) {
-      gsap.set(root, { autoAlpha: open ? 1 : 0 })
+      root.style.opacity = open ? '1' : '0'
+      root.style.visibility = open ? 'visible' : 'hidden'
+      root.style.pointerEvents = open ? 'auto' : 'none'
       return
     }
 
-    const items = listRef.current?.querySelectorAll('.menu-line') ?? []
-    const ctx = gsap.context(() => {
-      if (open) {
-        gsap.set(root, { autoAlpha: 1, pointerEvents: 'auto' })
-        gsap
-          .timeline()
-          .fromTo(
-            panelRef.current,
-            { clipPath: 'inset(0% 0% 100% 0%)' },
-            { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: EASE_IN_OUT },
-          )
-          .fromTo(
-            items,
-            { yPercent: 115 },
-            { yPercent: 0, duration: 1.05, ease: EASE, stagger: 0.07 },
-            '-=0.55',
-          )
-          .fromTo(
-            asideRef.current,
-            { autoAlpha: 0, y: 20 },
-            { autoAlpha: 1, y: 0, duration: 0.9, ease: EASE },
-            '-=0.6',
-          )
-      } else {
-        gsap
-          .timeline({
-            onComplete: () => gsap.set(root, { autoAlpha: 0, pointerEvents: 'none' }),
-          })
-          .to(items, { yPercent: -115, duration: 0.55, ease: EASE_IN_OUT, stagger: 0.035 })
-          .to(asideRef.current, { autoAlpha: 0, duration: 0.3 }, 0)
-          .to(
-            panelRef.current,
-            { clipPath: 'inset(100% 0% 0% 0%)', duration: 0.8, ease: EASE_IN_OUT },
-            '-=0.25',
-          )
-      }
-    }, root)
+    /* Yopiq menyu CSS bilan yashiringan (`opacity-0`), shuning uchun
+       birinchi OCHILGUNCHA bu yerda animatsiya qiladigan narsa yo'q —
+       GSAP ham so'ralmaydi (S-018). */
+    if (!open && !gsapLoaded()) return
 
-    return () => ctx.revert()
+    let cancelled = false
+    let ctx = null
+
+    void loadGsap().then(({ gsap }) => {
+      if (cancelled) return
+      const items = listRef.current?.querySelectorAll('.menu-line') ?? []
+      ctx = gsap.context(() => {
+        if (open) {
+          gsap.set(root, { autoAlpha: 1, pointerEvents: 'auto' })
+          gsap
+            .timeline()
+            .fromTo(
+              panelRef.current,
+              { clipPath: 'inset(0% 0% 100% 0%)' },
+              { clipPath: 'inset(0% 0% 0% 0%)', duration: 1, ease: EASE_IN_OUT },
+            )
+            .fromTo(
+              items,
+              { yPercent: 115 },
+              { yPercent: 0, duration: 1.05, ease: EASE, stagger: 0.07 },
+              '-=0.55',
+            )
+            .fromTo(
+              asideRef.current,
+              { autoAlpha: 0, y: 20 },
+              { autoAlpha: 1, y: 0, duration: 0.9, ease: EASE },
+              '-=0.6',
+            )
+        } else {
+          gsap
+            .timeline({
+              onComplete: () => gsap.set(root, { autoAlpha: 0, pointerEvents: 'none' }),
+            })
+            .to(items, { yPercent: -115, duration: 0.55, ease: EASE_IN_OUT, stagger: 0.035 })
+            .to(asideRef.current, { autoAlpha: 0, duration: 0.3 }, 0)
+            .to(
+              panelRef.current,
+              { clipPath: 'inset(100% 0% 0% 0%)', duration: 0.8, ease: EASE_IN_OUT },
+              '-=0.25',
+            )
+        }
+      }, root)
+    })
+
+    return () => {
+      cancelled = true
+      ctx?.revert()
+    }
   }, [open])
 
   return (

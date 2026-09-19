@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
-import { ScrollTrigger } from '@/animations/gsap'
+import { gsapLoaded } from '@/animations/gsap'
+import { prefersReducedMotion } from '@/lib/motion'
 import Cursor from '@/components/Cursor/Cursor'
 import Footer from '@/components/Footer/Footer'
 import Menu from '@/components/Menu/Menu'
@@ -26,6 +27,8 @@ export default function Layout() {
   const footerRef = useRef(null)
   const menuToggleRef = useRef(null)
   const wasMenuOpen = useRef(false)
+  const veilRef = useRef(null)
+  const firstRoute = useRef(true)
 
   useEffect(() => {
     initLenis()
@@ -73,15 +76,50 @@ export default function Layout() {
     wasMenuOpen.current = menuOpen
   }, [menuOpen])
 
+  /* Yangi sahifa mount bo'lgach trigger nuqtalari boshqa joyda —
+     qayta o'lchanadi. GSAP hali kelmagan bo'lsa qayta o'lchaydigan
+     narsaning o'zi yo'q, shuning uchun sinxron `gsapLoaded()`. */
   useEffect(() => {
     scrollToTop(true)
-    const id = window.setTimeout(() => ScrollTrigger.refresh(), 280)
+    const id = window.setTimeout(() => gsapLoaded()?.ScrollTrigger.refresh(), 280)
     return () => window.clearTimeout(id)
+  }, [location.pathname])
+
+  /* SAHIFALARARO O'TISH (S-019). Avval marshrut keskin almashardi:
+     eski sahifa o'chib, yangisi bir zumda paydo bo'lardi.
+
+     Parda — `<main>` ning O'ZIDA emas, ustidagi alohida qatlamda.
+     Ikki sabab: (1) `<main>` ga `opacity` bersak butun daraxt kompozitor
+     qatlamiga ko'chadi, parda esa bitta to'rtburchak; (2) `<main>` ga
+     `transform` bersak ichidagi ScrollTrigger o'lchovlari (pin-spacer)
+     o'tish paytida noto'g'ri hisoblanardi.
+
+     `useLayoutEffect` — bo'yashdan OLDIN. `useEffect` bo'lsa yangi
+     sahifa avval ko'rinib, keyin parda tushardi, ya'ni chaqnash. */
+  useLayoutEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false
+      return
+    }
+    const veil = veilRef.current
+    const gsap = gsapLoaded()?.gsap
+    // Birinchi yuklashda GSAP hali yo'q — o'tish ham kerak emas (G4)
+    if (!veil || !gsap || prefersReducedMotion()) return
+
+    veil.style.opacity = '1'
+    gsap.to(veil, { opacity: 0, duration: 0.55, ease: 'expo.out', overwrite: true })
   }, [location.pathname])
 
   return (
     <EntryContext.Provider value={entered}>
       <Cursor />
+      {/* z-140: menyu (150) va Nav (160) dan past — o'tish paytida ham
+          menyu tugmasi bosiladigan holda qoladi */}
+      <div
+        ref={veilRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-[140] bg-bone opacity-0"
+      />
       <Nav open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} toggleRef={menuToggleRef} />
       <Menu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
@@ -103,7 +141,7 @@ export default function Layout() {
             onDone={() => {
               setEntered(true)
               setGateOpen(false)
-              requestAnimationFrame(() => ScrollTrigger.refresh())
+              requestAnimationFrame(() => gsapLoaded()?.ScrollTrigger.refresh())
             }}
           />
         </Suspense>

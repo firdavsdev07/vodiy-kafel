@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import { useIsTouch } from '@/hooks/useMediaQuery'
+import { allowHeavyMotion } from '@/lib/motion'
 
 /**
  * Trailing accent ring — the native cursor does the actual pointing.
@@ -13,13 +14,19 @@ import { useIsTouch } from '@/hooks/useMediaQuery'
  * trail that grows over `[data-cursor]` targets — CSS `transition` on the
  * standalone `translate`/`scale` properties, no per-frame JS and no GSAP
  * in this component at all (`.cursor-ring` in index.css).
+ *
+ * S-020: `prefers-reduced-motion` da va zaif qurilmada halqa UMUMAN
+ * chizilmaydi — nativ kursorning o'zi qoladi. Avval reduced motion'da
+ * halqa qolib, faqat `transition` 0.01ms ga tushardi, ya'ni kursor
+ * ortidan sakrab yuradigan ikkinchi nuqta bo'lib ko'rinardi.
  */
 export default function Cursor() {
   const isTouch = useIsTouch()
   const ringRef = useRef(null)
+  const heavy = allowHeavyMotion()
 
   useEffect(() => {
-    if (isTouch) return
+    if (isTouch || !heavy) return
 
     const ring = ringRef.current
     if (!ring) return
@@ -46,10 +53,15 @@ export default function Cursor() {
       ring.style.scale = hovered ? (pressed ? '1.2' : '1.5') : pressed ? '0.75' : '1'
     }
 
+    /* `will-change` halqa EKRANDA bo'lgandagina (S-018). Avval u CSS'da
+       doimiy edi: sichqoncha hech qachon tegmagan sahifada ham (masalan
+       telefonga ulangan tashqi ekranda yoki odam boshqa oynada ishlayotgan
+       paytda) kompozitor qatlami yaratilib, xotirada turardi. */
     const onMove = (e) => {
       ring.style.translate = `${e.clientX}px ${e.clientY}px`
       if (!visible) {
         visible = true
+        ring.style.willChange = 'translate, scale'
         ring.style.opacity = '1'
       }
     }
@@ -57,6 +69,7 @@ export default function Cursor() {
     const onLeave = () => {
       visible = false
       ring.style.opacity = '0'
+      ring.style.willChange = ''
     }
 
     const onOver = (e) => {
@@ -91,9 +104,9 @@ export default function Cursor() {
       window.removeEventListener('pointerup', onUp)
       document.removeEventListener('mouseleave', onLeave)
     }
-  }, [isTouch])
+  }, [isTouch, heavy])
 
-  if (isTouch) return null
+  if (isTouch || !heavy) return null
 
   return (
     <div

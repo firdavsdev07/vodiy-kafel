@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { refreshScrollTriggers } from '@/animations/gsap'
 import { img, imgSrcSet } from '@/data/images'
 
 /**
@@ -57,7 +58,15 @@ export default function SmartImage({
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           decoding="async"
-          onLoad={() => setLoaded({ id, status: 'ready' })}
+          onLoad={() => {
+            setLoaded({ id, status: 'ready' })
+            /* `ratio` berilgan bo'lsa quti balandligi oldindan band
+               qilingan — rasm kelishi hech narsani surmaydi. Aks holda
+               sahifa balandligi o'zgaradi va ScrollTrigger nuqtalari
+               noto'g'ri joyda qoladi, shuning uchun qayta o'lchanadi
+               (S-018). Chaqiruvlar bitta kadrga yig'iladi. */
+            if (!ratio) refreshScrollTriggers()
+          }}
           onError={() => setLoaded({ id, status: 'error' })}
           className={[
             'absolute inset-0 h-full w-full object-cover',

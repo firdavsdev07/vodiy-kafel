@@ -147,11 +147,11 @@ export default function ProductDetail() {
                 className="group type-action flex items-center gap-3"
               >
                 Bog‘lanish
-                <span className="h-px w-10 bg-bone transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
+                <span className="block h-px w-10 origin-left bg-bone transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
               </a>
               <Link to="/contact" data-cursor="" className="group type-action flex items-center gap-3 text-clay hover:text-bone">
                 Manzil va ish vaqti
-                <span className="h-px w-10 bg-clay transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
+                <span className="block h-px w-10 origin-left bg-clay transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
               </Link>
             </div>
           </div>

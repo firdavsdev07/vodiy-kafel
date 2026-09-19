@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { gsap } from '@/animations/gsap'
+import { gsapLoaded, loadGsapNear } from '@/animations/gsap'
 import PageHeader from '@/components/ui/PageHeader'
 import SmartImage from '@/components/ui/SmartImage'
 import { categories } from '@/data/categories'
@@ -23,25 +23,50 @@ export default function Categories() {
     const preview = previewRef.current
     if (!list || !preview || isTouch) return
 
-    const xTo = gsap.quickTo(preview, 'x', { duration: 0.85, ease: 'power3' })
-    const yTo = gsap.quickTo(preview, 'y', { duration: 0.85, ease: 'power3' })
+    let detach = null
 
-    const onMove = (e) => {
-      const rect = list.getBoundingClientRect()
-      xTo(e.clientX - rect.left)
-      yTo(e.clientY - rect.top)
-    }
+    // Kursor ortidan yuradigan rasm — sof bezak, shuning uchun GSAP
+    // ro'yxat ekranga yaqinlashganda so'raladi (S-018).
+    const cancel = loadGsapNear(list, ({ gsap }) => {
 
-    list.addEventListener('pointermove', onMove)
+      const xTo = gsap.quickTo(preview, 'x', { duration: 0.85, ease: 'power3' })
+      const yTo = gsap.quickTo(preview, 'y', { duration: 0.85, ease: 'power3' })
+
+      const onMove = (e) => {
+        const rect = list.getBoundingClientRect()
+        xTo(e.clientX - rect.left)
+        yTo(e.clientY - rect.top)
+      }
+
+      // `will-change` faqat sichqoncha ro'yxat ustida bo'lganda (S-018)
+      const onEnter = () => preview.classList.add('is-animating')
+      const onLeave = () => preview.classList.remove('is-animating')
+
+      list.addEventListener('pointermove', onMove)
+      list.addEventListener('pointerenter', onEnter)
+      list.addEventListener('pointerleave', onLeave)
+
+      detach = () => {
+        list.removeEventListener('pointermove', onMove)
+        list.removeEventListener('pointerenter', onEnter)
+        list.removeEventListener('pointerleave', onLeave)
+        gsap.killTweensOf(preview)
+      }
+    })
+
     return () => {
-      list.removeEventListener('pointermove', onMove)
-      gsap.killTweensOf(preview)
+      cancel()
+      detach?.()
     }
   }, [isTouch])
 
   useEffect(() => {
     const preview = previewRef.current
     if (!preview || isTouch) return
+    // Sichqoncha ro'yxatga kirgan bo'lsa GSAP allaqachon yuklangan;
+    // kirmagan bo'lsa yashirish uchun animatsiyaning keragi yo'q.
+    const gsap = gsapLoaded()?.gsap
+    if (!gsap) return
     gsap.to(preview, {
       autoAlpha: hovered === null ? 0 : 1,
       scale: hovered === null ? 0.92 : 1,
@@ -72,7 +97,6 @@ export default function Categories() {
               ref={previewRef}
               aria-hidden="true"
               className="pointer-events-none absolute left-0 top-0 z-20 -ml-[13vw] -mt-[17vh] hidden w-[26vw] opacity-0 md:block"
-              style={{ willChange: 'transform' }}
             >
               {categories.map((cat, i) => (
                 <div

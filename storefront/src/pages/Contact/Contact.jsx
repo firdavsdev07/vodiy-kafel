@@ -182,7 +182,7 @@ export default function Contact() {
                   className="group relative mt-10 inline-flex items-center gap-3 type-label before:absolute before:-inset-4 before:content-['']"
                 >
                   Yana yozish
-                  <span className="h-px w-10 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
+                  <span className="block h-px w-10 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
                 </button>
               </div>
             ) : (
@@ -252,7 +252,7 @@ export default function Contact() {
                   className="group relative mt-2 flex w-fit items-center gap-4 type-label before:absolute before:-inset-4 before:content-[''] disabled:opacity-40"
                 >
                   {status === 'sending' ? 'Yuborilmoqda' : 'Yuborish'}
-                  <span className="h-px w-14 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-24" />
+                  <span className="block h-px w-14 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[1.714]" />
                 </button>
 
                 <p className="type-label max-w-[40ch] leading-relaxed text-clay">

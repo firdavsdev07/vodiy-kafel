@@ -2630,13 +2630,69 @@
 │  Bog'liq: B-043 (menejerlar), B-057 (moderatorlar)                           │
 │  Ochdi: dashboard D-061                                                      │
 └──────────────────────────────────────────────────────────────────────────────┘
+┌─ [ ] B-067 · Ochiq katalogda kategoriya yo‘q                     🆕 ──────────┐
+│                                                                              │
+│  KIM TOPDI: storefront S-021 (2026-09-19). Storefront'ning EPIC 5 dagi       │
+│             tasklari shu qarorni kutayotgan edi; mijoz 2026-09-19 da B       │
+│             yo'lini tanladi — kategoriya marketing uchun kerak, saqlanadi.   │
+│                                                                              │
+│  MUAMMO:                                                                     │
+│    Saytning butun navigatsiyasi KATEGORIYA ustiga qurilgan: ikkita           │
+│    sahifa (`/categories`, `/categories/:slug`), bosh sahifadagi              │
+│    gorizontal lenta va katalogdagi filtr qatori. Backendda esa bunday        │
+│    tushuncha umuman yo'q.                                                    │
+│                                                                              │
+│    Bugun `GET /products` filtrlari (openapi.json dan tasdiqlandi):           │
+│      `factoryId`   — zavod                                                   │
+│      `sizeId`      — o'lcham                                                 │
+│      `surface`     — FAQAT ikki qiymat: POL | DEVOR                          │
+│      `search`      — matn                                                    │
+│                                                                              │
+│    `surface` kategoriya o'rnini BOSA OLMAYDI: u mahsulot qayerga             │
+│    yopishtirilishini aytadi, mahsulot NIMA ekanini emas. "Marmar             │
+│    effekt" ham, "keramogranit" ham POL bo'lishi mumkin.                      │
+│                                                                              │
+│    `factory` ham bosa olmaydi: bitta zavod o'nlab turli yuza chiqaradi.      │
+│                                                                              │
+│  NIMA QILINADI:                                                              │
+│    • `Category` modeli: `id`, `slug`, `name`, `nameEn`, `tagline`,           │
+│      `description`, `coverMediaId`, `sortOrder`, `isActive`                  │
+│    • `Product.categoryId` — majburiymi yoki ixtiyoriymi, migratsiyada        │
+│      hal qilinadi (mavjud mahsulotlar uchun `null` ga ruxsat berib,          │
+│      keyin to'ldirish xavfsizroq)                                            │
+│    • Ochiq: `GET /categories`, `GET /categories/{slug}`                      │
+│    • `GET /products` ga `categoryId` (yoki `categorySlug`) filtri            │
+│    • `ProductListItemResponseDto` va `ProductDetailResponseDto` ga           │
+│      `category` ref qo'shiladi (`CategoryRefDto`)                            │
+│    • Admin CRUD: `GET/POST /admin/categories`,                               │
+│      `PATCH/DELETE /admin/categories/{id}`, muqova rasmi uchun               │
+│      `POST /admin/categories/{id}/image`                                     │
+│    • Seed: storefront'dagi sakkizta kategoriya (keramogranit,                │
+│      keramika, marmar-effekt, tosh-effekt, devor-uchun, pol-uchun,           │
+│      premium, outdoor) — nomi va tavsifi                                     │
+│      `storefront/src/data/categories.js` da tayyor turibdi                   │
+│                                                                              │
+│  ⚠ DIQQAT: `collection`, `finish`, `thickness` BU TASKDA YO'Q.               │
+│    Ular ham storefront mock'ida bor va backendda yo'q, lekin ular            │
+│    navigatsiyani ushlab turmaydi — faqat mahsulot kartochkasidagi            │
+│    matn. Ular alohida baholanadi (kerak bo'lsa alohida task).                │
+│                                                                              │
+│  BLOKLAYDI: storefront S-022 (katalogdagi kategoriya filtri),                │
+│             S-024 (filtrlar) va `/categories` sahifalari.                    │
+│             Qolgan storefront tasklari (S-023, S-025 … S-032) bu             │
+│             taskka BOG'LIQ EMAS va parallel ketaveradi.                      │
+│                                                                              │
+│  Bog'liq: B-017 (katalog), B-060 (mahsulot muqovasi)                         │
+│  So'radi: storefront S-021 (mijoz qarori, 2026-09-19)                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 66  (B-016 bekor; B-051...B-066 qo‘shildi — filial
+  Jami tasklar : 67  (B-016 bekor; B-051...B-066 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator +
                  dashboard ishida topilganlar: B-059 … B-063, optom mijoz
                  kabineti rejasidan chiqqan B-064/B-065, hamda mijoz
@@ -2686,8 +2742,10 @@
         yangi kartochka qo'shgan: 'today', 'stock-low'/'stock-out'),
         test ESKIRGAN edi. Test tuzatildi (bug emas, kutilgan o'zgarish).
 
-  KEYINGI TASK:  yo'q — backendda ochiq task qolmadi. Navbat dashboard'da:
-                 D-051 dan davom (kabinet, api B-065/B-064 endi tayyor).
+  KEYINGI TASK:  B-067 · Ochiq katalogda kategoriya yo'q
+                 (storefront S-021 qarori, 2026-09-19 — mijoz "kategoriya
+                 saqlansin" dedi; storefront EPIC 5 ning bir qismi shunga
+                 bog'liq)
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)

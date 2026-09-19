@@ -17,13 +17,18 @@ export default function IntroSection() {
         <span className="type-label text-clay">Est. {2026 - 20}</span>
       </div>
 
+      {/* `.r-word` (S-019): SplitText qatorlarga va so'zlarga o'zi bo'ladi,
+          har bir qatorga niqob qutisini o'zi yasaydi. Shuning uchun bu
+          yerda `line-mask`/`r-line` juftligi qo'lda yozilmaydi va qator
+          uzilishi ekran kengligiga qarab o'zgarsa ham niqob joyida
+          qoladi — avval `<br/>` qayerda yozilgan bo'lsa, o'sha yerda
+          uzilishga majbur edik. */}
       <h2 className="mt-[clamp(3rem,8vw,7rem)] type-head">
-        <span className="line-mask">
-          <span className="r-line">Yigirma yildan</span>
-        </span>
-        <span className="line-mask">
-          <span className="r-line">ortiq tajriba.</span>
-        </span>
+        {/* Bo'sh joylar ATAYLAB: `<br/>` matn emas, shuning uchun
+            `Yigirma yildan<br/>ortiq` ning `textContent` i "yildanortiq"
+            bo'lib qolardi — SplitText esa `aria-label` ni aynan shundan
+            yasaydi, ya'ni ekran o'quvchi qo'shilib ketgan so'zni o'qirdi. */}
+        <span className="r-word">Yigirma yildan <br /> ortiq tajriba.</span>
       </h2>
 
       <div className="mt-[clamp(3rem,9vw,8rem)] grid gap-10 md:grid-cols-12">

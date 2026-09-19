@@ -2,16 +2,19 @@ import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import { useEntered } from '@/lib/entryContext'
 import { MARBLE, img } from '@/data/images'
+import { useMagnetic } from '@/hooks/useMagnetic'
 
 export default function HeroSection() {
   const entered = useEntered()
+  // Saytning asosiy CTA'si — magnit effekt shu yerda eng ko'p ko'riladi (S-019)
+  const ctaRef = useMagnetic()
   return (
     <section id="hero" className={`hero-gallery ${entered ? 'has-entered' : ''}`}>
       <div className="hero-copy">
         <p className="type-label hero-eyebrow">01 / Materiallar galereyasi</p>
         <h1>Makon uchun.<br /><span>Did bilan.</span></h1>
         <p className="hero-description">Tabiatdan ilhomlangan yuzalar.<br />Yashash uchun yaratilgan makonlar.</p>
-        <Link to="/catalog" className="hero-link">Kolleksiyalarni ko‘rish <ArrowUpRight size={20} /></Link>
+        <Link to="/catalog" ref={ctaRef} className="hero-link">Kolleksiyalarni ko‘rish <ArrowUpRight size={20} /></Link>
       </div>
       <div className="hero-greeter" aria-label="Qo‘lini ko‘ksiga qo‘yib salom berayotgan o‘zbek yigiti">
         <div className="hero-greeting" role="note">Assalomu alaykum!<span aria-hidden="true" /></div>

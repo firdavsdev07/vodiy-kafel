@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
-import { ScrollTrigger, gsap, prefersReducedMotion } from '@/animations/gsap'
+import { loadGsapNear } from '@/animations/gsap'
+import { allowHeavyMotion } from '@/lib/motion'
 
 /** Scroll-linked vertical drift. `amount` is in pixels across the section. */
 export function useParallax(amount = 90) {
@@ -9,27 +10,37 @@ export function useParallax(amount = 90) {
 
   useEffect(() => {
     const el = ref.current
-    if (!el || prefersReducedMotion()) return
+    if (!el || !allowHeavyMotion()) return
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el,
-        { yPercent: -amount / 20 },
-        {
-          yPercent: amount / 20,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: el.parentElement ?? el,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
+    // Parallaks — sof bezak: GSAP element ekranga yaqinlashganda
+    // so'raladi, kelguncha element o'z joyida turadi (S-018).
+    const cancel = loadGsapNear(el, ({ gsap, ScrollTrigger }) => {
+      if (!ref.current) return
+
+      const ctx = gsap.context(() => {
+        gsap.fromTo(
+          el,
+          { yPercent: -amount / 20 },
+          {
+            yPercent: amount / 20,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: el.parentElement ?? el,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+              // `will-change` faqat bo'lim ekranda bo'lganda (S-018)
+              onToggle: (self) => el.classList.toggle('is-animating', self.isActive),
+            },
           },
-        },
-      )
-    }, el)
+        )
+      }, el)
 
-    ctxRef.current = ctx
-    ScrollTrigger.refresh()
+      ctxRef.current = ctx
+      ScrollTrigger.refresh()
+    })
+
+    return cancel
   }, [amount])
 
   // Cleanup in useLayoutEffect so GSAP reverts before React removes DOM

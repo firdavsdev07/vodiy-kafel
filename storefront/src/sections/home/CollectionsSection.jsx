@@ -23,7 +23,7 @@ export default function CollectionsSection() {
           className="group -my-3.5 flex items-center gap-3 py-3.5 type-action"
         >
           Butun katalog
-          <span className="h-px w-8 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-16" />
+          <span className="block h-px w-8 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
         </Link>
       </div>
 

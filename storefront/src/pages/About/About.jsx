@@ -177,7 +177,7 @@ export default function About() {
               className="group relative mt-8 inline-flex items-center gap-3 type-label before:absolute before:-inset-4 before:content-['']"
             >
               Aloqa sahifasi
-              <span className="h-px w-10 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />
+              <span className="block h-px w-10 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
             </Link>
           </div>
         </div>

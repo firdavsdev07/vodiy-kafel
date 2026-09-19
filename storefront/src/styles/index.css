@@ -37,6 +37,16 @@
 /* Material study entrance: the same paper, stone and Manrope as the gallery. */
 .entry-screen { position: fixed; inset: 0; z-index: 200; overflow: hidden; color: #232321; background: #eeece5; isolation: isolate; }
 .entry-screen:focus { outline: none; }
+/* GSAP endi asinxron keladi (S-018), lekin kirish sekvensiyasining
+   boshlang'ich holatini u o'rnatadi (`fromTo`). Shuning uchun qog'oz fon
+   darhol ko'rinadi, ANIMATSIYA QILINADIGAN qismlar esa GSAP tayyor
+   bo'lguncha (yoki yuklash bo'lmay qolguncha — `data-entry='in'`)
+   yashirin turadi. Busiz yakuniy kompozitsiya bir zum ko'rinib, keyin
+   qaytadan yig'ilardi. */
+.entry-screen:not([data-entry='in']) .entry-study,
+.entry-screen:not([data-entry='in']) .entry-detail,
+.entry-screen:not([data-entry='in']) .entry-heading,
+.entry-screen:not([data-entry='in']) .entry-rule { opacity: 0; }
 .entry-top { position: absolute; top: 5%; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; font-size: var(--text-label); line-height: 1.7; letter-spacing: .08em; }
 .entry-top > span:last-child { text-align: right; }
 .entry-monogram { font-size: 28px; letter-spacing: -.08em; font-weight: 600; }
@@ -322,10 +332,19 @@
     translate 0.5s cubic-bezier(0.16, 1, 0.3, 1),
     scale 0.35s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.25s ease-out;
-  will-change: translate, scale;
 }
-@media (prefers-reduced-motion: reduce) {
-  .cursor-ring { transition-duration: 0.01ms; }
+/* Kursor halqasining `prefers-reduced-motion` qoidasi OLIB TASHLANDI
+   (S-020): reduced motion'da `Cursor.jsx` halqani umuman chizmaydi,
+   ya'ni bu qoida hech qachon ishlamaydi. Avval halqa qolib, faqat
+   sekinligi 0.01ms ga tushardi — natijada kursor ortidan sakrab
+   yuradigan ikkinchi nuqta ko'rinardi. */
+
+/* `will-change` FAQAT harakat paytida (S-018). Doimiy `will-change`
+   elementni kompozitor qatlamiga ko'chirib, uni xotirada ushlab turadi —
+   ScrollTrigger'ning `onToggle`i yoki hodisa ishlovchisi shu klassni
+   qo'yib-olib, qatlamni kerak bo'lgandagina yaratadi. */
+.is-animating {
+  will-change: transform;
 }
 
 /* ------------------------------------------------------------------ *
@@ -420,21 +439,48 @@
      inline styles, which win over these rules once a reveal starts. */
   .r-line {
     display: block;
-    will-change: transform;
   }
 
   [data-reveal] .r-line {
     transform: translate3d(0, 110%, 0);
   }
 
+  /* `will-change` reveal TUGAGUNCHA yashaydi, keyin yo'qoladi (S-018).
+     Avval u `.r-line` ning o'zida, ya'ni sahifa umrining oxirigacha
+     turardi — bosh sahifada bu 30 dan ortiq keraksiz qatlam edi. */
+  [data-reveal]:not([data-reveal='in']) .r-line,
+  [data-reveal]:not([data-reveal='in']) .r-word,
+  [data-reveal]:not([data-reveal='in']) .r-zoom {
+    will-change: transform;
+  }
+
+  [data-reveal]:not([data-reveal='in']) .r-fade {
+    will-change: transform, opacity;
+  }
+
+  [data-reveal]:not([data-reveal='in']) .r-clip {
+    will-change: clip-path;
+  }
+
   [data-reveal='in'] .r-line {
     transform: none;
+  }
+
+  /* `.r-word` — SplitText niqoblari YASALGUNCHA matn ko'rinmaydi (S-019).
+     Niqoblar tayyor bo'lgach `useReveal` inline `opacity:1` qo'yadi va
+     yashirish ishini niqoblarning o'zi davom ettiradi. */
+  [data-reveal] .r-word {
+    display: block;
+    opacity: 0;
+  }
+
+  [data-reveal='in'] .r-word {
+    opacity: 1;
   }
 
   [data-reveal] .r-fade {
     opacity: 0;
     transform: translate3d(0, 1.25rem, 0);
-    will-change: transform, opacity;
   }
 
   [data-reveal='in'] .r-fade {
@@ -444,7 +490,6 @@
 
   [data-reveal] .r-clip {
     clip-path: inset(0 0 100% 0);
-    will-change: clip-path;
   }
 
   [data-reveal='in'] .r-clip {
@@ -455,7 +500,6 @@
      frame opens, so the reveal reads as a camera move. */
   [data-reveal] .r-zoom {
     transform: scale(1.14);
-    will-change: transform;
   }
 
   [data-reveal='in'] .r-zoom {
@@ -485,6 +529,12 @@
   [data-reveal] .r-fade {
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  /* `.r-word` (S-019) shu ro'yxatga S-020 da qo'shildi: JS umuman
+     ishlamay qolsa ham sarlavha ko'rinib tursin */
+  [data-reveal] .r-word {
+    opacity: 1 !important;
   }
 
   [data-reveal] .r-clip {

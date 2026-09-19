@@ -1420,7 +1420,7 @@
 │        0.01ms ga tushiriladi                                                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-017 · Scroll silliqligi (Lenis) sozlash ──────────────────────────────┐
+┌─ [x] S-017 · Scroll silliqligi (Lenis) sozlash ──────────────────────────────┐
 │                                                                              │
 │  Hozir (`src/lib/lenis.js`): `duration: 1.15`, eksponensial easing,          │
 │  `smoothWheel: true`, `syncTouch: false`.                                    │
@@ -1436,9 +1436,99 @@
 │                                                                              │
 │  Bog'liq: S-016                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── O'LCHOV USULI ──                                                       │
+│                                                                              │
+│      Brauzerda haqiqiy sahifada o'lchandi (taxmin emas): `wheel`             │
+│      hodisasi yuboriladi, har kadrda `scrollY` yoziladi. Uch son             │
+│      olinadi — harakat BOSHLANISHI, 90% ga yetish va oxirgi                  │
+│      hodisadan keyin TO'XTASH vaqti. Ikki holat: bitta g'ildirak             │
+│      tiki (100px) va 10 ta tik 30ms oralatib (tez aylantirish).              │
+│                                                                              │
+│    ── TOPILGANI: "OG'IRLIK" QUYRUQDA, JAVOBDA EMAS ──                        │
+│                                                                              │
+│      Harakat g'ildirakdan keyin 3–7ms da boshlanardi — ya'ni                 │
+│      G4 ("16ms ichida javob") allaqachon bajarilgan edi. Og'ir               │
+│      tuyulishining sababi — QUYRUQ: har bir yangi g'ildirak                  │
+│      hodisasi egri chiziqni QAYTA boshlaydi, shuning uchun tez               │
+│      aylantirganda to'xtash vaqti cho'zilib boraveradi.                      │
+│                                                                              │
+│    ── `duration` O'LCHOVLARI (bitta tik / 10 ta tik) ──                      │
+│                                                                              │
+│        1.15s (edi) : 90% 376ms / 541ms   to'xtash 575ms / 864ms              │
+│        1.00s       : 90% 329ms / 496ms   to'xtash 544ms / 749ms              │
+│        0.90s (⇐)   : 90% 298ms / 465ms   to'xtash 500ms / 707ms              │
+│        0.80s       : 90% 267ms / 434ms   to'xtash 440ms / 627ms              │
+│        0.70s       : 90% 233ms / 403ms   to'xtash 427ms / 543ms              │
+│                                                                              │
+│      TANLANDI: 0.9s. Taskda tavsiya qilingan 0.8–1.0 oralig'ining            │
+│      o'rtasi; quyruq 1.15s ga nisbatan ~18% qisqaradi, lekin                 │
+│      DESIGN.md §5 dagi "sekin, nazoratli" ohang saqlanadi.                   │
+│      0.7s tezroq, ammo harakat "kesilgandek" tugaydi.                        │
+│      Yangi qiymat sahifada qayta o'lchab tasdiqlandi: bitta tik              │
+│      493ms, 10 ta tik 707ms.                                                 │
+│                                                                              │
+│    ── QO'SHIMCHA 1: `anchors: true` ──                                       │
+│                                                                              │
+│      Hero'dagi pastga o'q (`<a href="#intro">`) — saytdagi yagona            │
+│      ichki langar havola. Lenis'ning `anchors` sozlamasi o'chiq              │
+│      bo'lgani uchun uni BRAUZER bajarardi: sahifa bir zumda                  │
+│      0 → 738px ga sakrardi, Lenis esa o'z holatini keyin,                    │
+│      native scroll hodisasi orqali tenglab olardi.                           │
+│      Ikki holat yonma-yon o'lchandi:                                         │
+│        `anchors:false` → 738px ga BIR ZUMDA sakrash                          │
+│        `anchors:true`  → 0 → 752px, ~670ms silliq suzish                     │
+│      Ikkinchisi tanlandi — bosilgandan 7ms keyin harakat                     │
+│      boshlanadi, ya'ni javob tezligi yo'qolmaydi.                            │
+│                                                                              │
+│    ── QO'SHIMCHA 2: `touchMultiplier` OLIB TASHLANDI ──                      │
+│                                                                              │
+│      `syncTouch:false` bo'lgani uchun barmoq harakati Lenis                  │
+│      ichida "native" tarmoqqa tushadi va `touchMultiplier`                   │
+│      (1.4) hech qachon ishlatilmaydi — lenis 1.3.26 kodida                   │
+│      tekshirildi. Chalg'ituvchi sozlama olib tashlandi,                      │
+│      o'rniga MOBILDA NIMA UCHUN Lenis ishlamasligi izohda                    │
+│      yozib qo'yildi. Telefon xulqi o'zgarmadi: brauzerning                   │
+│      o'z momentum-scroll'i, taskda tavsiya qilinganidek.                     │
+│                                                                              │
+│    ── QO'SHIMCHA 3: `lagSmoothing` QAYTARILADI ──                            │
+│                                                                              │
+│      `gsap.ticker.lagSmoothing(0)` — GLOBAL sozlama, lekin                   │
+│      `destroyLenis` uni tiklamas edi: Lenis ketgandan keyin                  │
+│      ham GSAP lag tekislashsiz qolardi. Endi standart                        │
+│      (500, 33) qaytariladi.                                                  │
+│                                                                              │
+│    ── QO'SHIMCHA 4: O'LIK EKSPORTLAR ──                                      │
+│                                                                              │
+│      `getLenis` va `scrollTo` hech qayerda import qilinmagan                 │
+│      (butun `src/` bo'yicha tekshirildi) — olib tashlandi.                   │
+│                                                                              │
+│    ── REDUCED MOTION: TEKSHIRILDI ──                                         │
+│                                                                              │
+│      `prefersReducedMotion` vaqtincha `true` ga majburlanib                  │
+│      sahifa qayta yuklandi: `<html>` da `lenis` klassi YO'Q,                 │
+│      `lenis` paketi umuman so'ralmaydi, scroll esa oddiy                     │
+│      native — `scrollBy(300)` bir zumda 300px (G6 ✓).                        │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Menyu ochiq — g'ildirak 0px suradi (qulf ishlaydi),                   │
+│        yopilgach yana 300px suradi                                           │
+│      • Marshrut almashganda `scrollToTop` yuqoriga qaytaradi                 │
+│        va Lenis yangi sahifa balandligini qayta o'lchaydi                    │
+│      • 375 / 900 kenglik: `lenis lenis-smooth` klasslari bor,                │
+│        haqiqiy g'ildirak bilan silliq suradi, gorizontal                     │
+│        scroll yo'q. ⚠ Brauzer oynasi bu seansda kichraytirilmadi             │
+│        (oyna o'lchamini o'zgartirib bo'lmadi) — shuning uchun                │
+│        ikkala kenglik AYNI kenglikdagi iframe ichida tekshirildi.            │
+│        O'zgarish CSS'ga yoki DOM'ga tegmaydi, faqat scroll                   │
+│        vaqtiga — shuning uchun tartib (layout) xavfi yo'q.                   │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-018 · GSAP/ScrollTrigger ishlashini optimallashtirish ────────────────┐
+┌─ [x] S-018 · GSAP/ScrollTrigger ishlashini optimallashtirish ────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Barcha ScrollTrigger'lar ro'yxatga olinadi; sahifa almashganda          │
@@ -1461,9 +1551,157 @@
 │     bo'lgani uchun ular kechiktirilsa — birinchi yukdan gzip ≈ 44 KB         │
 │     ketadi. Shart: GSAP kelguncha kontent YAKUNIY holatda ko'rinsin,         │
 │     aks holda matn bir zum ko'rinmay turadi (FOUC).                          │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── 1. GSAP BIRINCHI EKRANDAN CHIQDI (S-002 dan ko'chgan talab) ──         │
+│                                                                              │
+│      `src/animations/gsap.js` endi GSAP ni modul darajasida IMPORT           │
+│      QILMAYDI. Uning o'rniga ikkita kirish nuqtasi bor:                      │
+│        `loadGsap()`      — promise, birinchi chaqiruvda yuklaydi             │
+│        `gsapLoaded()`    — sinxron, kelmagan bo'lsa `null`                   │
+│        `loadGsapNear(el)`— element ekrandan 500px naridaligida yuklaydi      │
+│                                                                              │
+│      Sakkizta chaqiruvchi shu API ga o'tkazildi: `lenis.js`,                 │
+│      `Layout.jsx`, `Menu.jsx`, `Preloader.jsx`, `useReveal.js`,              │
+│      `useParallax.js`, `CategoriesSection.jsx`, `Categories.jsx`.            │
+│                                                                              │
+│      Har biri ATAYLAB tanlangan paytda so'raydi:                             │
+│        • reveal / parallaks / pin lenta — bo'lim ekranga yaqinlashganda      │
+│        • menyu — BIRINCHI ochilganda (yopiq menyu CSS bilan yashiringan)     │
+│        • Lenis + uning GSAP ticker'i — brauzer bo'shaganda                   │
+│          (`requestIdleCallback`), yoki odam aylantira boshlasa —             │
+│          qaysi biri oldin kelsa                                              │
+│                                                                              │
+│      BIRINCHI YUK (gzip, `dist/index.html` dagi `modulepreload`):            │
+│        edi    : 144.3 KB  (runtime 0.42 + vendor 4.46 + react 65.85          │
+│                            + router 14.29 + GSAP 44.35 + index 14.97)        │
+│        bo'ldi : 100.7 KB  — GSAP ro'yxatdan butunlay chiqdi                  │
+│        farq   : −43.6 KB  (−30%)                                             │
+│                                                                              │
+│    ── 2. FOUC QALQONI — "KONTENT GSAP NI KUTMAYDI" ──                        │
+│                                                                              │
+│      Shart shu edi: GSAP kelguncha matn YAKUNIY holatda ko'rinsin.           │
+│      CSS esa `[data-reveal]` ostidagi matnni yashirib turadi, ya'ni          │
+│      shunchaki kutish bo'sh sarlavha degani edi.                             │
+│                                                                              │
+│      Yechim `useReveal` ichida, ikki joyda tekshiriladi:                     │
+│        • mount paytida — bo'lim EKRANDA bo'lsa va GSAP hali yo'q             │
+│          bo'lsa, darhol `data-reveal='in'` (animatsiyasiz)                   │
+│        • GSAP kelgach — bo'lim shu orada ekranga kirib ulgurgan              │
+│          bo'lsa ham xuddi shunday                                            │
+│                                                                              │
+│      Natija (o'lchandi): ichki sahifalarda birinchi `[data-reveal]`          │
+│      (ya'ni `PageHeader` — ekranning eng tepasi) HAR DOIM `in`,              │
+│      hech qachon bo'sh turmaydi. Ekrandan pastdagilar esa odatdagidek        │
+│      animatsiya bilan chiqadi. Amalda: birinchi yuklashda tepa blok          │
+│      darhol ko'rinadi, sahifalar orasida yurganda (GSAP xotirada)            │
+│      hamma joyda animatsiya ishlaydi.                                        │
+│                                                                              │
+│      Kirish darvozasi ham shunday himoyalandi: `index.css` da                │
+│      `.entry-screen:not([data-entry='in'])` — qog'oz fon darhol              │
+│      ko'rinadi, animatsiya qilinadigan qismlar esa GSAP boshlang'ich         │
+│      holatni qo'ygandan keyin. Busiz yakuniy kompozitsiya bir zum            │
+│      ko'rinib, keyin qaytadan yig'ilardi.                                    │
+│                                                                              │
+│    ── 3. `will-change` — DOIMIYDAN VAQTINCHAGA ──                            │
+│                                                                              │
+│      Topilgani: `will-change` OLTI joyda doimiy edi. `.r-line` esa           │
+│      umuman shart qo'yilmagan holda — ya'ni sahifa ochilishidan              │
+│      yopilgunicha, animatsiya allaqachon tugagan bo'lsa ham.                 │
+│                                                                              │
+│      Endi:                                                                   │
+│        • `.r-line/.r-fade/.r-clip/.r-zoom` →                                 │
+│          `[data-reveal]:not([data-reveal='in'])` ostida. Reveal              │
+│          tugashi bilan `data-reveal='in'` qo'yiladi va qatlam yo'qoladi.     │
+│        • pin lenta va uning progress chizig'i → ScrollTrigger                │
+│          `onToggle` bilan `.is-animating` klassi                             │
+│        • `Categories` sahifasidagi kursor rasmi → `pointerenter`/            │
+│          `pointerleave`                                                      │
+│        • kursor halqasi (`Cursor.jsx`) → birinchi `pointermove` da           │
+│          yoqiladi, `mouseleave` da o'chiriladi                               │
+│                                                                              │
+│      Brauzerda tasdiqlandi:                                                  │
+│        reveal tugagan bo'lim  → `will-change: auto`                          │
+│        hali tugamaganlari     → `transform` / `transform, opacity` /         │
+│                                  `clip-path` (ya'ni kerak joyda bor)         │
+│        lenta pin holatida     → 2 ta `.is-animating`                         │
+│        lentadan chiqqach      → 0 ta                                         │
+│                                                                              │
+│    ── 4. `width` ANIMATSIYALARI → `scaleX` ──                                │
+│                                                                              │
+│      Sakkizta "hover'da cho'ziladigan chiziqcha" `transition-[width]`        │
+│      ishlatardi — bu har kadrda qayta tartiblash (layout). Hammasi           │
+│      `transition-transform` + `group-hover:scale-x-[...]` ga                 │
+│      o'tkazildi; `origin-left` bilan ko'rinish bir xil qoldi.                │
+│      LAYOUT KENGLIGI O'ZGARMADI (`w-10` `w-20` ga aylantirilmadi,            │
+│      balki joyida qolib, scaleX bilan cho'ziladi) — aks holda                │
+│      havolalarning qutisi kengayib, yonidagi matn surilardi.                 │
+│                                                                              │
+│    ── 5. RASM/SHRIFT KELGACH QAYTA O'LCHASH ──                               │
+│                                                                              │
+│      `refreshScrollTriggers()` — chaqiruvlari bitta kadrga yig'iladi         │
+│      (`refresh()` BARCHA triggerlarni qayta hisoblaydi, uni har bir          │
+│      rasm uchun chaqirish qimmat). Uch joydan chaqiriladi:                   │
+│        • `document.fonts.ready` — shrift matn balandligini o'zgartiradi      │
+│        • `window load` — sahifa to'liq yuklangach, bir marta                 │
+│        • `SmartImage` — FAQAT `ratio` berilmagan rasmlar uchun               │
+│          (`ratio` bo'lsa quti balandligi oldindan band, hech narsa           │
+│          surilmaydi — 17 ta chaqiruvdan 15 tasi shunday)                     │
+│                                                                              │
+│    ── 6. BIR VAQTDA ISHLAYDIGAN ANIMATSIYALAR ──                             │
+│                                                                              │
+│      `ScrollTrigger.config({ limitCallbacks: true,                           │
+│      ignoreMobileResize: true })` — birinchisi holat haqiqatan               │
+│      o'zgarmaguncha callback yubormaydi, ikkinchisi telefonda manzil         │
+│      paneli ko'rinib-yo'qolganda butun sahifani qayta o'lchashni             │
+│      to'xtatadi.                                                             │
+│                                                                              │
+│      10 marta sahifa almashtirib o'lchandi (yo'l: katalog →                  │
+│      kategoriyalar → biz haqimizda → aloqa, ikki marta + bosh sahifa):       │
+│        ScrollTrigger soni  : 0–1  (o'smaydi)                                 │
+│        jonli tween soni    : 2–4  (o'smaydi)                                 │
+│        `pin-spacer` qoldig'i: 0                                              │
+│      Reveal triggerlari `once:true` bilan o'zini o'chiradi, shuning          │
+│      uchun bosh sahifa oxirida ham faqat pin lenta qoladi.                   │
+│                                                                              │
+│    ── 7. O'LCHOV: SCROLL PAYTIDA FPS ──                                      │
+│                                                                              │
+│      Bosh sahifa bo'ylab (reveal'lar + pin qilingan gorizontal lenta         │
+│      + parallaks) haqiqiy g'ildirak bilan aylantirib, 3000 ta kadr           │
+│      oralig'i yozildi:                                                       │
+│        p50 6.9ms · p95 7.0ms · p99 7.1ms                                     │
+│        16.7ms dan uzun kadr: 2999 tadan 1 ta (eng uzuni 34.7ms)              │
+│      Ekran 144Hz (byudjet 6.94ms) — ya'ni sahifa 144 FPS ni ushlab           │
+│      turibdi, taskdagi 60 FPS talabidan ikki baravar yuqori.                 │
+│                                                                              │
+│    ── REDUCED MOTION (G6) ──                                                 │
+│                                                                              │
+│      `prefersReducedMotion` majburan `true` qilib tekshirildi:               │
+│        • GSAP ham, Lenis ham UMUMAN YUKLANMAYDI (0 ta so'rov)                │
+│        • olti reveal bo'limining hammasi `in` — matn joyida                  │
+│        • scroll oddiy native, `scrollBy(300)` bir zumda                      │
+│        • menyu ochiladi/yopiladi (inline `opacity`/`visibility` —            │
+│          avval bu yerda `gsap.set` ishlatilardi, ya'ni reduced               │
+│          motion'da ham GSAP kerak bo'lardi)                                  │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Kirish darvozasi (birinchi tashrif) — kompozitsiya joyida,            │
+│        "Kashf eting" ishlaydi; GSAP kelmasdan bosilsa darhol kiradi          │
+│      • Menyu ochish/yopish, marshrut almashuvi, pin lenta                    │
+│      • 375 / 900 kenglik: tartib o'zgarmagan, gorizontal scroll yo'q         │
+│        (iframe ichida — brauzer oynasi bu seansda ham kichraymadi)           │
+│                                                                              │
+│    ⚠ QOLDI (S-019 uchun): `transition-[opacity,transform]` va                │
+│      `transition-colors` kabilar tegilmadi — ular layout qo'zg'atmaydi.      │
+│      `clip-path` reveal'i ham qoldirildi: u kompozitor ishi emas,            │
+│      lekin `.r-clip` naqshining o'zagi — almashtirish DESIGN.md §5           │
+│      ni qayta ko'rib chiqishni talab qiladi.                                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-019 · GSAP imkoniyatlarini kengaytirish (yangi effektlar) ────────────┐
+┌─ [x] S-019 · GSAP imkoniyatlarini kengaytirish (yangi effektlar) ────────────┐
 │                                                                              │
 │  Mijoz talabi: "GSAP dan yanada yaxshiroq, kerakli imkoniyatlarini           │
 │  rivojlantirish kerak".                                                      │
@@ -1490,9 +1728,171 @@
 │                                                                              │
 │  Bog'liq: S-018                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── ❓ LITSENZIYA SAVOLI YOPILDI: SplitText BEPUL ──                        │
+│                                                                              │
+│      Taskdagi ogohlantirish ESKIRGAN. `node_modules/gsap` tekshirildi:       │
+│        o'rnatilgan versiya : 3.15.0                                          │
+│        litsenziya          : "Standard 'no charge' license"                  │
+│        README              : "Thanks to Webflow, GSAP is now 100% FREE       │
+│                               including ALL of the bonus plugins like        │
+│                               SplitText ... even for commercial use"         │
+│      Ya'ni Club GreenSock endi kerak emas, qo'lda `<span>` ga bo'lish        │
+│      (taskdagi bepul muqobil) ham kerak emas. SplitText ishlatildi.          │
+│                                                                              │
+│    ── OLTI TAKLIFDAN QAYSI BIRI OLINDI ──                                    │
+│                                                                              │
+│      1. Sahifalararo o'tish ................ ✅ qilindi                       │
+│      2. Mahsulot rasmiga bosganda Flip ..... ❌ rad etildi                    │
+│      3. SplitText bilan matn reveal ........ ✅ qilindi                       │
+│      4. Lentaning scroll bog'lanishi ....... ✅ qilindi (snap)                │
+│      5. Tugmalarning magnit effekti ........ ✅ qilindi                       │
+│      6. Rasmlar uchun stagger .............. ⏹ ALLAQACHON BOR                │
+│                                                                              │
+│    ── 1. SAHIFALARARO O'TISH (parda) ──                                      │
+│                                                                              │
+│      Avval marshrut keskin almashardi. Endi `Layout.jsx` da parda:           │
+│      marshrut o'zgarganda `opacity 1 → 0`, 0.55s, `expo.out`.                │
+│                                                                              │
+│      Uch qaror izohlanadi:                                                   │
+│        • Parda `<main>` ning O'ZIDA emas, ustidagi alohida qatlamda:         │
+│          (a) `<main>` ga opacity bersak butun daraxt kompozitor              │
+│          qatlamiga ko'chardi, parda esa bitta to'rtburchak;                  │
+│          (b) `<main>` ga transform bersak ichidagi ScrollTrigger             │
+│          o'lchovlari (pin-spacer) o'tish paytida buzilardi.                  │
+│        • `useLayoutEffect` — bo'yashdan OLDIN. `useEffect` bilan             │
+│          yangi sahifa avval ko'rinib, keyin parda tushardi (chaqnash).       │
+│        • CHIQISH animatsiyasi YO'Q. Uni qilish uchun eski sahifani           │
+│          animatsiya tugaguncha ekranda ushlab turish kerak — bu              │
+│          har bir o'tishga ~250ms kechikish qo'shardi, ya'ni G4 ni            │
+│          buzardi. Faqat KIRISH animatsiya qilinadi: kontent hech             │
+│          qachon kutib turmaydi.                                              │
+│        • Birinchi yuklashda parda ishlamaydi (GSAP hali yo'q) —              │
+│          bu ham ataylab: sahifa ochilishi sekinlashmasin.                    │
+│                                                                              │
+│      Tekshirildi: marshrut almashgach parda inline `opacity:1` bo'ladi,      │
+│      keyin 0 ga tushadi; `pointer-events:none`, `z-140` (menyu 150 va        │
+│      Nav 160 dan past, ya'ni o'tish paytida ham menyu bosiladi).             │
+│                                                                              │
+│    ── 3. SplitText: `.r-word` ──                                             │
+│                                                                              │
+│      `useReveal` ga yangi ibtidoiy qo'shildi:                                │
+│        `SplitText.create(el, { type:'lines,words', mask:'lines',             │
+│                                aria:'auto' })`                               │
+│      `mask:'lines'` har bir qatorga `overflow:clip` qutisini O'ZI            │
+│      yasaydi — ya'ni `<span class="line-mask"><span class="r-line">`         │
+│      juftligini qo'lda yozish kerak emas va qator uzilishi ekran             │
+│      kengligiga qarab siljisa ham niqob joyida qoladi.                       │
+│                                                                              │
+│      Ikki sarlavhaga qo'llandi (hammasiga emas): IntroSection'dagi           │
+│      "Yigirma yildan ortiq tajriba." va ShowroomSection'dagi                 │
+│      "Farg'ona showroom". Qolgan sarlavhalar `.r-line` da qoldi.             │
+│                                                                              │
+│      ⚠ QULAYLIK XATOSI TOPILDI VA TUZATILDI: `Farg'ona<br/>showroom`         │
+│        ning `textContent` i "Farg'onashowroom" — `<br/>` matn emas.          │
+│        SplitText `aria-label` ni aynan shundan yasaydi, ya'ni ekran          │
+│        o'quvchi qo'shilib ketgan so'zni o'qirdi. `<br/>` atrofiga            │
+│        ataylab bo'sh joy qo'yildi. Brauzerda tasdiqlandi:                    │
+│          avval : aria-label="Farg'onashowroom"                               │
+│          endi  : aria-label="Farg'ona  showroom"                             │
+│        Bo'lingan bo'laklar `aria-hidden="true"` — ekran o'quvchi             │
+│        faqat asl matnni o'qiydi.                                             │
+│                                                                              │
+│      O'lchandi: 2 qator, 4 (Intro) va 2 (Showroom) so'z, niqoblar            │
+│      `overflow:clip`, so'zlar 115% dan 0 ga chiqadi, tugagach                │
+│      `will-change` yana `auto` (S-018 tartibi buzilmadi).                    │
+│                                                                              │
+│      Narxi: `vendor-gsap` 113.45 → 120.64 KB (gzip 44.65 → 47.57,            │
+│      +2.9 KB). Bu bo'lak BIRINCHI YUKDA YO'Q (S-018), shuning uchun          │
+│      ochilish tezligiga ta'sir qilmaydi.                                     │
+│                                                                              │
+│    ── 4. LENTA SNAP ──                                                       │
+│                                                                              │
+│      Avval gorizontal lenta qayerda qo'yib yuborilsa o'sha yerda             │
+│      qolardi — ko'pincha ikki panel orasida. Endi eng yaqin panel            │
+│      chetiga yotib oladi.                                                    │
+│                                                                              │
+│      Panellar kengligi HAR XIL (ochilish 52vw, kategoriya 46vw,              │
+│      yakuniy 34vw), shuning uchun `1/n` kabi teng qadam ishlamaydi.          │
+│      Har bir panelning `offsetLeft` i progress'ga o'giriladi —               │
+│      `offsetLeft` tartib qiymati, lentaga qo'yilgan `x` transformdan         │
+│      ta'sirlanmaydi.                                                         │
+│                                                                              │
+│      Brauzerda o'lchandi (1536px):                                           │
+│        masofa        : 5447px, 10 panel                                      │
+│        hisoblangan   : 0 · 0.147 · 0.276 · 0.406 · 0.536 · 0.666 ·           │
+│                        0.795 · 0.925 · 1                                     │
+│        to'xtagan joy : progress 0.2764 → eng yaqin nuqta 0.276               │
+│        farq          : 0.0001                                                │
+│      Snap qisqa (`duration` 0.1–0.35s) — "tortib olish" emas,                │
+│      "joyiga qo'yish".                                                       │
+│                                                                              │
+│    ── 5. MAGNIT TUGMA (`useMagnetic`) ──                                     │
+│                                                                              │
+│      Saytning asosiy CTA'siga qo'llandi: hero'dagi "Kolleksiyalarni          │
+│      ko'rish". Sichqoncha yaqinlashganda tugma uning ortidan 14px            │
+│      gacha suriladi, chiqib ketganda joyiga qaytadi.                         │
+│                                                                              │
+│      G4 uchun qo'yilgan cheklovlar:                                          │
+│        • hodisalar FAQAT shu elementga ulanadi, `window` ga emas —           │
+│          sichqoncha tugma ustida bo'lmaganda umuman hisob yo'q               │
+│          (S-016 da aynan global `pointermove` muammo bo'lgan edi)            │
+│        • `quickTo` — har harakatda yangi tween yaratilmaydi                  │
+│        • `will-change` faqat kursor ustida turganda                          │
+│        • `(hover:hover) and (pointer:fine)` bo'lmasa umuman ulanmaydi        │
+│                                                                              │
+│      O'lchandi: kursor chetga chiqarilganda x=14, y=14 (aynan                │
+│      chegara), `is-animating` bor; kursor ketgach x=0, y=0, klass            │
+│      yo'q, `will-change: auto`.                                              │
+│                                                                              │
+│    ── 2. FLIP — RAD ETILDI (sabab bilan) ──                                  │
+│                                                                              │
+│      "Mahsulot rasmiga bosganda silliq kengayish" uchun avval                │
+│      KENGAYADIGAN JOY kerak — lightbox/galereya ko'rinishi. Saytda           │
+│      unday ekran yo'q. Ya'ni bu effekt emas, yangi FUNKSIYA:                 │
+│      yopish tugmasi, klaviatura bilan boshqaruv, fokus tutqichi,             │
+│      rasmning katta o'lchamdagi nusxasi. Alohida task bo'lishi               │
+│      kerak, S-019 doirasida emas.                                            │
+│                                                                              │
+│    ── 6. RASM STAGGER — ALLAQACHON BOR ──                                    │
+│                                                                              │
+│      `useReveal` `.r-clip` ni 0.12s, `.r-zoom` ni 0.12s kechikish            │
+│      bilan ketma-ket ochadi; `ProductGrid` dagi har bir `SmartImage`         │
+│      esa `.r-clip`/`.r-zoom` ni o'zi qo'yadi va `Catalog` butun              │
+│      ro'yxatni `useReveal({stagger:0.05})` ichiga o'raydi. Yangi             │
+│      kod yozilmadi — mavjud xulq tekshirildi.                                │
+│                                                                              │
+│    ── G4 TEKSHIRUVI: EFFEKTLAR SEKINLASHTIRDIMI? ──                          │
+│                                                                              │
+│      Eng og'ir joyda — pin qilingan lenta ichida, snap va                    │
+│      `will-change` qatlamlari faol holda — 654 ta kadr oralig'i:             │
+│        p50 6.9ms · p95 7.0ms · p99 16.6ms · eng uzuni 25.1ms                 │
+│        16.7ms dan uzun: 654 tadan 5 ta (0.8%)                                │
+│        33ms dan uzun  : 0 ta                                                 │
+│      Ekran 144Hz (byudjet 6.94ms). 60 FPS talabi bajarilgan,                 │
+│      hech bir effekt olib tashlanmadi.                                       │
+│                                                                              │
+│    ── REDUCED MOTION (G6) ──                                                 │
+│                                                                              │
+│      Majburan yoqib tekshirildi:                                             │
+│        • GSAP hamon 0 marta so'raladi                                        │
+│        • ikkala `.r-word` sarlavhasi ko'rinadi (`data-reveal='in'`,          │
+│          opacity 1, bo'linmagan) — ya'ni yangi CSS yashirib                  │
+│          qo'ymaydi                                                           │
+│        • parda 0 da qoladi, marshrut almashgandan keyin ham                  │
+│        • magnit umuman ulanmaydi                                             │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • GSAP hamon BIRINCHI YUKDA YO'Q (`modulepreload` da 4 ta               │
+│        bo'lak, `vendor-gsap` ular orasida emas) — S-018 yutug'i              │
+│        saqlandi; `index` bo'lagi 15.68 → 16.34 KB gzip (+0.66)               │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-020 · Reduced motion va past quvvatli qurilmalar ─────────────────────┐
+┌─ [x] S-020 · Reduced motion va past quvvatli qurilmalar ─────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `prefers-reduced-motion` da: Lenis o'chadi (bor), GSAP reveal'lari      │
@@ -1503,6 +1903,114 @@
 │                                                                              │
 │  Bog'liq: S-019                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── UCH DARAJALI HARAKAT BYUDJETI ──                                       │
+│                                                                              │
+│      Yangi fayl: `src/lib/motion.js`. Endi harakat qoidalari GSAP            │
+│      yuklagichidan AJRATILGAN — `@/animations/gsap` faqat GSAP ni            │
+│      yuklaydi, kim qanday effektga haqli ekanini `motion.js` hal             │
+│      qiladi. `prefersReducedMotion` shu yerga ko'chirildi (to'qqizta         │
+│      fayldagi import yangilandi).                                            │
+│                                                                              │
+│        to'liq  — hamma narsa                                                 │
+│        yengil  — HAR KADRDA ishlaydigan narsalar o'chadi:                    │
+│                  Lenis, pin+scrub lenta, parallaks, magnit tugma,            │
+│                  kursor halqasi. REVEAL'LAR QOLADI — ular                    │
+│                  `once:true`, bir marta ishlab o'zini o'chiradi va           │
+│                  saytning ohangini ushlab turadi                             │
+│        yo'q    — `prefers-reduced-motion`: GSAP ham, Lenis ham               │
+│                  umuman yuklanmaydi                                          │
+│                                                                              │
+│    ── 1. KURSOR NATIVE HOLIGA QAYTADI (taskdagi "YO'Q" bandi) ──             │
+│                                                                              │
+│      Task yozilganda kursor GSAP bilan chiziladigan nusxa edi. S-016         │
+│      da u allaqachon qayta yozilgan: nativ kursor qaytarilgan, halqa         │
+│      esa faqat bezak. Qolgan kamchilik shu edi — reduced motion'da           │
+│      halqa QOLARDI, faqat `transition` 0.01ms ga tushardi, ya'ni             │
+│      kursor ortidan sakrab yuradigan ikkinchi nuqta ko'rinardi.              │
+│                                                                              │
+│      Endi `Cursor.jsx` reduced motion'da va zaif qurilmada halqani           │
+│      UMUMAN chizmaydi (`return null`) — nativ kursorning o'zi qoladi.        │
+│      `index.css` dagi endi ishlamaydigan `@media (prefers-reduced-           │
+│      motion)` qoidasi olib tashlandi.                                        │
+│                                                                              │
+│    ── 2. ZAIF QURILMANI ANIQLASH ──                                          │
+│                                                                              │
+│      Chegaralar ATAYLAB QATTIQ: noto'g'ri "zaif" deb belgilash oddiy         │
+│      noutbukdan saytning yarmini olib qo'yadi.                               │
+│                                                                              │
+│        `hardwareConcurrency <= 2`  — 2 yadro. 4 ni chegara qilish            │
+│                                      XATO bo'lardi: o'rta darajadagi         │
+│                                      juda ko'p qurilma aynan 4 yadroli       │
+│        `deviceMemory <= 2`         — 2 GB (faqat Chromium'da bor)            │
+│        `connection.saveData`       — foydalanuvchi trafik tejashni           │
+│                                      yoqqan                                  │
+│        batareya past va quvvatda emas (quyida)                               │
+│                                                                              │
+│    ── 3. BATAREYA ──                                                         │
+│                                                                              │
+│      ⚠ Brauzerda "batareya tejash rejimi yoqilgan" degan                     │
+│        to'g'ridan-to'g'ri signal YO'Q — bunday API mavjud emas.              │
+│        Eng yaqin ishonchli belgi: `navigator.getBattery()` (faqat            │
+│        Chromium) orqali `level <= 0.2 && !charging`.                         │
+│                                                                              │
+│      `getBattery()` promise qaytaradi, shuning uchun natija modul            │
+│      yuklanganda so'raladi va keshlanadi; `levelchange` va                   │
+│      `chargingchange` ga obuna bo'linadi. Hammasi undan keyin mount          │
+│      bo'ladi (Lenis bo'sh vaqtda, reveal'lar scroll paytida), ya'ni          │
+│      javob o'z vaqtida yetib keladi.                                         │
+│                                                                              │
+│    ── ⚠ YO'L-YO'LAKAY TOPILGAN BUZILISH VA TUZATILGANI ──                    │
+│                                                                              │
+│      Lentani "zaif qurilmada pin qilmaymiz" deb qo'yish YETARLI              │
+│      EMAS ekan. `md:` klasslari CSS media so'rovi — ular JS qarorini         │
+│      bilmaydi. Natijada zaif DESKTOP da lenta gorizontal (6983px)            │
+│      holicha `overflow-hidden` ichida qotib qolardi va FAQAT                 │
+│      BIRINCHI panel ko'rinardi, qolgan sakkiztasiga yetib                    │
+│      bo'lmasdi.                                                              │
+│                                                                              │
+│      Shuning uchun `md:` tartib klasslari ham shartli qilindi                │
+│      (`stacked = isMobile || !heavy`): pin yo'q — gorizontal tartib          │
+│      ham yo'q, panellar telefondagi kabi ustma-ust yotadi.                   │
+│      Tekshirildi: `flex-direction: column`, `scrollWidth 1521 <=             │
+│      innerWidth 1536` (gorizontal scroll yo'q), progress chizig'i            │
+│      `display:none`.                                                         │
+│                                                                              │
+│      `heavy` `useState` initializer'i bilan bir marta hal qilinadi —         │
+│      batareya javobi kech kelib tartib o'rtada sakrab ketmasin.              │
+│                                                                              │
+│    ── O'LCHOVLAR (uchala daraja brauzerda tekshirildi) ──                    │
+│                                                                              │
+│      TO'LIQ (shu kompyuter: 16 yadro, 16 GB):                                │
+│        heavy=true · `<html class="lenis">` · kursor halqasi bor ·            │
+│        lenta gorizontal, progress chizig'i ko'rinadi                         │
+│                                                                              │
+│      YENGIL (`isLowPowerDevice` majburan `true`):                            │
+│        Lenis bo'lagi UMUMAN yuklanmaydi · `<html>` da klass yo'q ·           │
+│        `scrollBy(350)` bir zumda 350px · kursor halqasi yo'q ·               │
+│        `pin-spacer` yo'q · lenta ustma-ust                                   │
+│        LEKIN: GSAP yuklanadi va reveal'lar ishlaydi —                        │
+│        `data-reveal='in'`, `.r-word` ko'rinadi (ataylab shunday)             │
+│                                                                              │
+│      YO'Q (`prefersReducedMotion` majburan `true`, S-019 da):                │
+│        GSAP ham, Lenis ham 0 marta so'raladi · reveal'lar yakuniy            │
+│        holatda · parda 0 da qoladi · magnit ulanmaydi                        │
+│                                                                              │
+│      Ikki yadro bilan (`hardwareConcurrency` 2 ga o'zgartirilib):            │
+│        `isLowPowerDevice()` true, marshrut almashgach kursor halqasi         │
+│        yo'qoladi, magnit tugma qimirlamaydi                                  │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • To'liq darajaga qaytgandan keyin regressiya yo'q: Lenis,              │
+│        kursor halqasi, gorizontal lenta va progress chizig'i                 │
+│        joyida                                                                │
+│      • `.r-word` global reduced-motion ro'yxatiga qo'shildi                  │
+│        (`opacity: 1 !important`) — JS umuman ishlamay qolsa ham              │
+│        sarlavha ko'rinib tursin                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -1513,7 +2021,7 @@
 ║          Backend TAYYOR — `api/openapi.json`, 92 endpoint.                   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-021 · ❓ QAROR: kategoriya / kolleksiya / finish — backendda YO'Q ────┐
+┌─ [x] S-021 · ❓ QAROR: kategoriya / kolleksiya / finish — backendda YO'Q ────┐
 │                                                                              │
 │  ⚠ BU TASK BOSHQA HAMMASINI BELGILAYDI — birinchi hal qilinadi.              │
 │                                                                              │
@@ -1552,9 +2060,62 @@
 │                                                                              │
 │  Bog'liq: S-004                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ QAROR QABUL QILINDI — 2026-09-19                                          │
+│                                                                              │
+│    ── TANLANDI: B — BACKENDGA `Category` QO'SHILADI ──                       │
+│                                                                              │
+│      Mijoz javobi: kategoriyalar marketing uchun kerak, ular                 │
+│      saqlanadi. Ya'ni sayt IA'si o'zgarmaydi, backend unga moslashadi.       │
+│                                                                              │
+│    ── FAKTLAR QAYTA TASDIQLANDI (`api/openapi.json`, 2026-09-19) ──          │
+│                                                                              │
+│      `GET /products` filtrlari — faqat to'rttasi:                            │
+│        `factoryId` · `sizeId` · `surface` (POL | DEVOR) · `search`           │
+│      `ProductListItemResponseDto` maydonlari:                                │
+│        id, name, slug, factory, size, surface, color, sqmPerPallet,          │
+│        weightPerPallet, primaryImageUrl, availability                        │
+│      Ya'ni `category`, `collection`, `finish`, `thickness` — YO'Q,           │
+│      taskdagi tahlil to'g'ri edi.                                            │
+│                                                                              │
+│      NEGA `surface` YETARLI EMAS: u mahsulot qayerga                         │
+│      yopishtirilishini aytadi, mahsulot NIMA ekanini emas. "Marmar           │
+│      effekt" ham, "keramogranit" ham POL bo'lishi mumkin. `factory`          │
+│      ham bosa olmaydi — bitta zavod o'nlab turli yuza chiqaradi.             │
+│                                                                              │
+│    ── BACKENDGA TASK QO'SHILDI: B-067 ──                                     │
+│                                                                              │
+│      Qoida 5 ga binoan backend ishi bu yerda qilinmaydi.                     │
+│      `api/task.txt` ga `B-067 · Ochiq katalogda kategoriya yo'q`             │
+│      yozildi: `Category` modeli, `GET /categories`,                          │
+│      `/products?categoryId`, DTO'larga `category` ref, admin CRUD va         │
+│      seed (sakkizta kategoriya matni `src/data/categories.js` da             │
+│      tayyor). `api/task.txt` ning holat qismi ham yangilandi                 │
+│      (66 → 67, keyingi task B-067).                                          │
+│                                                                              │
+│      `collection` / `finish` / `thickness` B-067 ga KIRITILMADI:             │
+│      ular navigatsiyani ushlab turmaydi, faqat kartochkadagi matn.           │
+│      Kerak bo'lsa alohida baholanadi.                                        │
+│                                                                              │
+│    ── NIMA BLOKLANDI, NIMA BLOKLANMADI ──                                    │
+│                                                                              │
+│      Bu qaror EPIC 5 ning HAMMASINI to'xtatmaydi. Har bir task               │
+│      alohida tekshirildi:                                                    │
+│                                                                              │
+│        [!] S-022  Katalog — kategoriya filtri qatori B-067 ni kutadi         │
+│                   (qolgan qismi — ro'yxat, sahifalash — kutmaydi)            │
+│        [!] S-024  Filtrlar — `category` filtri B-067 ni kutadi               │
+│        [!] `/categories` va `/categories/:slug` sahifalari                   │
+│                                                                              │
+│        Bloklanmaganlar (parallel ketaveradi):                                │
+│        S-023 mahsulot sahifasi · S-025 filiallar · S-026 hamkorlar           │
+│        S-027 galereya · S-028 sozlamalar · S-029 buyurtma kuzatish           │
+│        S-030 kontakt · S-031 holatlar · S-032 rasmlar                        │
+│                                                                              │
+│  ⚠ S-022 va S-024 endi [!] — B-067 tugagach ochiladi.                        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-022 · Katalog → `GET /products` ──────────────────────────────────────┐
+┌─ [!] S-022 · Katalog → `GET /products` ──────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /products`                                                   │
 │    Query: `page`, `limit`, `sortBy`, `sortOrder`, `factoryId`, `sizeId`,     │
@@ -1602,7 +2163,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-024 · Filtrlar → haqiqiy `factory` / `size` / `surface` ──────────────┐
+┌─ [!] S-024 · Filtrlar → haqiqiy `factory` / `size` / `surface` ──────────────┐
 │                                                                              │
 │  Endpointlar: `GET /factories`, `GET /sizes`                                 │
 │                                                                              │
@@ -2045,29 +2606,31 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 45
-  Tugadi       : 16
+  Tugadi       : 21
   Jarayonda    : 0
-  Bloklangan   : 0
+  Bloklangan   : 2  (S-022, S-024 — api B-067 ni kutadi)
 
   Epic bo'yicha:
     EPIC 0  Tozalash va poydevor ......  4 / 4   [xxxx]
     EPIC 1  Tipografika ..............  2 / 2    [xx]
     EPIC 2  Hero va greeter ..........  3 / 3   [xxx]
     EPIC 3  Responsive ...............  6 / 6   [xxxxxx]
-    EPIC 4  Harakat va GSAP ..........  1 / 5    [x····]
-    EPIC 5  Backendga ulash ..........  0 / 12   [············]
+    EPIC 4  Harakat va GSAP ..........  5 / 5   [xxxxx]
+    EPIC 5  Backendga ulash ..........  1 / 12   [x!·!········]
     EPIC 6  Huquqiy va kontent .......  0 / 3    [···]
     EPIC 7  SEO ......................  0 / 4    [····]
     EPIC 8  Sifat ....................  0 / 5    [·····]
     (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  S-017 · Scroll silliqligi (Lenis) sozlash
+  KEYINGI TASK:  S-023 · Mahsulot sahifasi → `GET /products/{slug}`
+                 (S-022 va S-024 bloklangan — api B-067 ni kutadi)
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,
     qolgan hamma ish esa bemalol davom etaveradi.
 
-  ⚠ EPIC 5 (backendga ulash) S-021 qaroriga bog'liq — avval o'sha
-    savolga javob olinadi, keyin 11 ta task ketma-ket bajariladi.
+  ⚠ S-021 qarori QABUL QILINDI (2026-09-19, B yo'li): backendga
+    `Category` qo'shiladi → `api/task.txt` B-067. EPIC 5 ning faqat
+    S-022 va S-024 bloklandi, qolgan to'qqiztasi ketaveradi.
   ──────────────────────────────────────────────────────────────────────────

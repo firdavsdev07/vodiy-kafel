@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
-import { gsap, prefersReducedMotion } from '@/animations/gsap'
+import { gsapLoaded, loadGsap } from '@/animations/gsap'
+import { prefersReducedMotion } from '@/lib/motion'
 import { MARBLE, TRAVERTINE, img } from '@/data/images'
 import { startScroll, stopScroll } from '@/lib/lenis'
 import { markEntered } from '@/lib/session'
@@ -23,20 +24,42 @@ export default function Preloader({ onDone }) {
   useLayoutEffect(() => {
     stopScroll()
     const previous = document.activeElement
-    root.current.focus({ preventScroll: true })
-    const context = gsap.context(() => {
-      if (prefersReducedMotion()) return
-      intro.current = gsap.timeline({ defaults: { ease: 'power3.out' } })
-        .fromTo('.entry-sample', { x: 0, y: 0, xPercent: 0, yPercent: 45, rotation: 0, opacity: 0 },
-          { xPercent: i => samples[i].x, yPercent: i => samples[i].y, rotation: i => samples[i].angle, opacity: 1, duration: 1.65, stagger: { each: .06, from: 'center' } }, .1)
-        .fromTo('.entry-word', { yPercent: 110 }, { yPercent: 0, duration: 1.2, stagger: .12 }, .35)
-        .fromTo('.entry-detail', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7, stagger: .05 }, .55)
-        .fromTo('.entry-rule', { scaleX: 0 }, { scaleX: 1, duration: 1.3 }, .3)
-    }, root)
+    const el = root.current
+    el.focus({ preventScroll: true })
+
+    /* `data-entry='in'` — "endi ko'rsatsa bo'ladi" belgisi (index.css).
+       Reduced motion'da darhol qo'yiladi; aks holda GSAP boshlang'ich
+       holatni o'rnatgandan KEYIN, ya'ni kompozitsiya yig'ilgan holda
+       ko'rinib ketmaydi. */
+    if (prefersReducedMotion()) {
+      el.setAttribute('data-entry', 'in')
+      return () => {
+        startScroll()
+        previous?.focus?.({ preventScroll: true })
+      }
+    }
+
+    let cancelled = false
+    let context = null
+
+    void loadGsap().then(({ gsap }) => {
+      if (cancelled || !root.current) return
+      context = gsap.context(() => {
+        intro.current = gsap.timeline({ defaults: { ease: 'power3.out' } })
+          .fromTo('.entry-sample', { x: 0, y: 0, xPercent: 0, yPercent: 45, rotation: 0, opacity: 0 },
+            { xPercent: i => samples[i].x, yPercent: i => samples[i].y, rotation: i => samples[i].angle, opacity: 1, duration: 1.65, stagger: { each: .06, from: 'center' } }, .1)
+          .fromTo('.entry-word', { yPercent: 110 }, { yPercent: 0, duration: 1.2, stagger: .12 }, .35)
+          .fromTo('.entry-detail', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7, stagger: .05 }, .55)
+          .fromTo('.entry-rule', { scaleX: 0 }, { scaleX: 1, duration: 1.3 }, .3)
+      }, root)
+      root.current.setAttribute('data-entry', 'in')
+    }).catch(() => root.current?.setAttribute('data-entry', 'in'))
+
     return () => {
+      cancelled = true
       intro.current?.kill()
       exit.current?.kill()
-      context.revert()
+      context?.revert()
       startScroll()
       previous?.focus?.({ preventScroll: true })
     }
@@ -48,7 +71,10 @@ export default function Preloader({ onDone }) {
     setSoundEnabled(true)
     playTone('enter')
     const finish = () => { markEntered(); startScroll(); onDone() }
-    if (prefersReducedMotion()) { finish(); return }
+    // GSAP hali kelmagan bo'lsa kutib turilmaydi — darhol kiriladi
+    const loaded = gsapLoaded()
+    if (prefersReducedMotion() || !loaded) { finish(); return }
+    const { gsap } = loaded
     intro.current?.kill()
     const el = root.current
     exit.current = gsap.timeline({ onComplete: finish })
