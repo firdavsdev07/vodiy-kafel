@@ -20,7 +20,7 @@ export default function CollectionsSection() {
         <Link
           to="/catalog"
           data-cursor="Ochish"
-          className="group type-action flex items-center gap-3"
+          className="group -my-3.5 flex items-center gap-3 py-3.5 type-action"
         >
           Butun katalog
           <span className="h-px w-8 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-16" />

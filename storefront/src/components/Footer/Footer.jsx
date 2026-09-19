@@ -36,24 +36,34 @@ export default function Footer() {
           <div className="md:col-span-7">
             <div className="type-label text-clay">Telefon</div>
             <div className="mt-5 flex flex-col gap-2">
+              {/* Touch target ≥44px (S-015): padding moved onto the `<a>`
+                  itself (`-my-3`/`py-3` cancel out visually) — it can't
+                  live on the same element as `line-mask`, whose own
+                  `padding/margin-bottom` would collide with it, so the
+                  reveal clip mask moved to a plain inner wrapper. */}
               {company.contact.phones.map((phone, i) => (
                 <a
                   key={phone}
                   href={`tel:${company.contact.phoneHref[i]}`}
                   data-cursor=""
-                  className="line-mask group w-fit"
+                  className="group -my-3 block w-fit py-3"
                 >
-                  <span className="r-line type-sub block transition-colors duration-500 group-hover:text-clay">
-                    {phone}
+                  <span className="line-mask block">
+                    <span className="r-line type-sub block transition-colors duration-500 group-hover:text-clay">
+                      {phone}
+                    </span>
                   </span>
                 </a>
               ))}
             </div>
 
+            {/* Touch target ≥44px (S-015) — `py-2.5` replaces the old
+                `pb-1`; `-my-2.5` cancels the layout shift so neighboring
+                elements don't move. */}
             <a
               href={`mailto:${company.contact.email}`}
               data-cursor=""
-              className="r-fade mt-8 inline-block border-b border-bone/25 pb-1 text-[clamp(1rem,1.5vw,1.25rem)] transition-colors hover:border-bone/70 hover:text-clay"
+              className="r-fade -my-2.5 mt-8 inline-block border-b border-bone/25 py-2.5 text-[clamp(1rem,1.5vw,1.25rem)] transition-colors hover:border-bone/70 hover:text-clay"
             >
               {company.contact.email}
             </a>
@@ -86,7 +96,7 @@ export default function Footer() {
                   <Link
                     to={item.to}
                     data-cursor=""
-                    className="group flex items-baseline gap-3 transition-colors hover:text-clay"
+                    className="group -my-2.5 flex items-baseline gap-3 py-2.5 transition-colors hover:text-clay"
                   >
                     <span className="type-label text-clay">{item.index}</span>
                     <span>{item.label}</span>
@@ -95,10 +105,10 @@ export default function Footer() {
               ))}
             </ul>
             <div className="mt-8 flex flex-col gap-3">
-              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="type-action text-clay transition-colors hover:text-bone">
+              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Telegram ↗
               </a>
-              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="type-action text-clay transition-colors hover:text-bone">
+              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Instagram ↗
               </a>
             </div>

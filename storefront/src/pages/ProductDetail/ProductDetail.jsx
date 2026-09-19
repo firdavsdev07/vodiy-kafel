@@ -35,7 +35,9 @@ export default function ProductDetail() {
         className="relative z-10 edge pb-[clamp(2.5rem,6vw,4rem)] pt-[clamp(7rem,16vw,13rem)]"
       >
         <div className="flex items-baseline justify-between">
-          <Link to="/catalog" data-cursor="" className="type-label text-clay hover:text-charcoal">
+          {/* Touch target ≥44px (S-015): invisible `::before` extends the
+              hit area without changing the visible link's size/position. */}
+          <Link to="/catalog" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
             ← Katalog
           </Link>
           <span className="type-label text-clay">
@@ -161,7 +163,7 @@ export default function ProductDetail() {
         <section className="relative z-10 edge py-[clamp(5rem,12vw,10rem)]">
           <div className="hairline flex items-baseline justify-between pt-4 text-charcoal">
             <span className="type-label text-clay">Shunga o‘xshash</span>
-            <Link to="/catalog" data-cursor="" className="type-label text-clay hover:text-charcoal">
+            <Link to="/catalog" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
               Barchasi →
             </Link>
           </div>

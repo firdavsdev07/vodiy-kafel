@@ -66,8 +66,10 @@ export default function About() {
           </div>
 
           <div className="md:col-span-6 md:col-start-7">
-            <p className="r-fade">{company.story[1]}</p>
-            <p className="r-fade mt-6 text-clay">{company.story[2]}</p>
+            {/* Qator uzunligi 75 belgidan oshmasin (S-006) — cheklovsiz
+                6 ustunda 1920px da ≈106-108 belgi/qator chiqardi. */}
+            <p className="r-fade max-w-[54ch]">{company.story[1]}</p>
+            <p className="r-fade mt-6 max-w-[54ch] text-clay">{company.story[2]}</p>
           </div>
         </div>
 
@@ -172,7 +174,7 @@ export default function About() {
             <Link
               to="/contact"
               data-cursor="Ochish"
-              className="group mt-8 inline-flex items-center gap-3 type-label"
+              className="group relative mt-8 inline-flex items-center gap-3 type-label before:absolute before:-inset-4 before:content-['']"
             >
               Aloqa sahifasi
               <span className="h-px w-10 bg-charcoal transition-[width] duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:w-20" />

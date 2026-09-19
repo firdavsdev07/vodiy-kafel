@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { EASE, EASE_IN_OUT, gsap, prefersReducedMotion } from '@/animations/gsap'
+import SoundToggle from '@/components/Nav/SoundToggle'
 import SmartImage from '@/components/ui/SmartImage'
 import { company } from '@/data/company'
 import { BATH, INTERIOR, MARBLE, TILE, TRAVERTINE } from '@/data/images'
@@ -136,21 +137,32 @@ export default function Menu({ open, onClose }) {
                     <Link
                       to={item.to}
                       data-cursor=""
+                      aria-current={active ? 'page' : undefined}
                       onMouseEnter={() => {
                         setHovered(i)
                         playTone('hover')
                       }}
                       onClick={() => playTone('click')}
-                      className="menu-line group flex items-baseline gap-[clamp(1rem,3vw,3rem)] transition-opacity duration-500"
-                      style={{
-                        opacity: hovered === i || isTouch ? 1 : 0.34,
-                      }}
+                      className="menu-line group -my-1.5 flex items-baseline gap-[clamp(1rem,3vw,3rem)] py-1.5"
                     >
                       <span className="type-label w-8 shrink-0 text-clay">{item.index}</span>
-                      <span className="type-head">{item.label}</span>
-                      <span className="type-label hidden text-clay md:block">
-                        {active ? '— joriy' : item.en}
+                      {/* Faqat sarlavha xiralashadi — kichik matnlar (index, en)
+                          o'zgarmas qoladi: xira holatda ular AA kontrastdan (S-006)
+                          pastga tushib, o'qib bo'lmas edi. */}
+                      <span
+                        className="type-head transition-opacity duration-500"
+                        style={{ opacity: hovered === i || isTouch ? 1 : 0.42 }}
+                      >
+                        {item.label}
                       </span>
+                      {/* "— joriy" endi mobilda ham ko'rinadi (S-014) — avval
+                          `hidden md:block` ichida edi, ya'ni joriy sahifa
+                          FAQAT desktopda belgilanardi. */}
+                      {active ? (
+                        <span className="type-label text-clay">— joriy</span>
+                      ) : (
+                        <span className="type-label hidden text-clay md:block">{item.en}</span>
+                      )}
                     </Link>
                   </li>
                 )
@@ -187,6 +199,14 @@ export default function Menu({ open, onClose }) {
                 Instagram
               </a>
             </div>
+
+            {/* Mobile-only (S-013): the floating `SoundToggle` in `Nav.jsx`
+                is hidden below `md` — on a phone screen it had nowhere
+                fixed to sit without landing on top of *something* (the
+                hero photo, a product name, a spec value, all measured).
+                Menu already opens on every page, so it's a natural,
+                always-reachable home for it instead. */}
+            <SoundToggle className="text-bone md:hidden" />
           </div>
         </div>
       </div>

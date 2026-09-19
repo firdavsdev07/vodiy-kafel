@@ -611,7 +611,7 @@
 │        ko'z bilan ko'rildi: kesilgan yoki ustma-ust tushgan matn yo'q        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-006 · Kontrast va o'qilish auditi ────────────────────────────────────┐
+┌─ [x] S-006 · Kontrast va o'qilish auditi ────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Palitra kontrast bo'yicha tekshiriladi — `clay` (#71685E) `bone`        │
@@ -626,6 +626,56 @@
 │  Natija: hujjatlashtirilgan kontrast jadvali (`DESIGN.md` ga)                │
 │  Bog'liq: S-005                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── QANDAY TEKSHIRILDI ──                                                  │
+│                                                                              │
+│      Statik grep bilan emas — ishlayotgan dev serverda (localhost:5173)      │
+│      brauzer skripti orqali: har bir matn tugunining haqiqiy fon rangi       │
+│      (ota elementlar zanjiri bo'ylab) va WCAG nisbati hisoblandi. Home,      │
+│      Catalog, Categories, Category Detail, Product Detail, About,            │
+│      Contact, 404 va Menu overlay — barchasi tekshirildi.                    │
+│                                                                              │
+│    ── TOPILDI VA TUZATILDI (jonli xato, taxmin emas) ──                      │
+│                                                                              │
+│      1. `Menu.jsx` — sichqoncha turmagan menyu bandi butunlay 34%            │
+│         xira edi: sarlavha 2.74:1 (kerak ≥3.0), kichik yorliqlar 2.10:1      │
+│         (kerak ≥4.5) — deyarli o'qib bo'lmasdi. Xiralashtirish FAQAT         │
+│         katta sarlavhaga ko'chirildi (.42 → 3.61:1), kichik matn endi        │
+│         doim to'liq ko'rinadi.                                               │
+│      2. `Categories.jsx` — xuddi shu xato: nofaol qator 30% xira,            │
+│         sarlavha 2.0:1, tagline/indeks 1.46:1. Xiralashtirish FAQAT          │
+│         sarlavhaga (.5 → 3.56:1), tagline/indeks/nameEn — o'zgarmas.         │
+│      3. `index.css` — `.bg-stone` `.bg-bone` bilan bitta guruhda edi,        │
+│         ikkalasiga ham och `clay` (stone ustida 3.66:1, AA dan past)         │
+│         berardi. Hozircha `.bg-stone` ustida matn yo'q (SmartImage           │
+│         ramkasi xolos) — lekin "mina" edi. `.bg-stone` uchun alohida,        │
+│         quyuqroq token qo'shildi: `#5a534b` (5.07:1).                        │
+│      4. Qator uzunligi — `md:col-span-N` ga tayanib ch-cheklovsiz            │
+│         qolgan 3 ta paragraf 1920px da 75 belgidan oshgan edi:               │
+│         `CategoryDetail.jsx` (~90), `About.jsx` story[1] (~108) va           │
+│         story[2] (~106). Uchalasiga ham `max-w-[48–54ch]` qo'shildi —        │
+│         so'z-o'rash simulyatsiyasi bilan qayta o'lchandi: 62/69/73.          │
+│                                                                              │
+│    ── TEKSHIRILDI, MUAMMO TOPILMADI ──                                       │
+│                                                                              │
+│      • Rasm ustidagi matn — kartalarda matn rasm OSTIDA (qattiq              │
+│        bone fonda), Menu fon suratida matn qoplamaning eng quyuq             │
+│        tomonida turadi.                                                      │
+│      • Fokus halqasi (`outline: 2px solid currentColor`) — rangi             │
+│        elementning o'z (AA'dan o'tgan) matn rangi bilan bir xil,             │
+│        va offset tufayli hech qachon fotosurat ustiga tushmaydi.             │
+│      • `type-editorial` (katta) paragraflar — shrift o'zi qatorni            │
+│        45–52 belgigacha qisqartiradi, cheklov shart emas.                    │
+│                                                                              │
+│    Natija DESIGN.md ga yozildi ("Contrast va o'qilish auditi" bo'limi).      │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓ (oxlint)   • `node --test            │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Har uch tuzatish brauzerda qayta o'lchandi (yuqoridagi sonlar         │
+│        — TUZATILDI dan keyingi holat), vizual regressiya yo'q                │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -635,7 +685,7 @@
 ║  Maqsad: mijoz aniq ko'rsatgan kamchilik — kesilish va o'ngga surilish.      ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-007 · Greeter kompozitsiyasi — kesilish va o'ngga surilish ───────────┐
+┌─ [x] S-007 · Greeter kompozitsiyasi — kesilish va o'ngga surilish ───────────┐
 │                                                                              │
 │  TOPILDI (900×700 da ko'z bilan tasdiqlandi):                                │
 │    • Yigit ekran pastidan QATTIQ kesilgan — oyoqlari yo'q, pastdagi          │
@@ -667,9 +717,55 @@
 │  Tekshirish: 375 / 768 / 900 / 1024 / 1280 / 1440 / 1920 — hammasida         │
 │  Bog'liq: S-005                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── ILDIZ SABAB (aniqlandi, taxmin emas) ──                                │
+│                                                                              │
+│      Eski kod rasmni FOTONING o'z nisbatidan (900×1350) hisoblardi:          │
+│      `width:82%; height:auto; bottom:-N%`. Bu ramka balandligidan            │
+│      MUSTAQIL edi — mobil ramka (88vw × 500px, deyarli kvadrat)              │
+│      uchun 82% kenglik ≈610px balandlik berardi, ya'ni ramkadan              │
+│      110px baland. Manfiy `bottom` uni pastga surar, natijada                │
+│      rasmning YUQORI qismi (bosh) ramka chegarasidan CHIQIB,                 │
+│      `overflow:hidden` tomonidan kesilardi — oyoq emas, BOSH.                │
+│      («Assalomu alaykum» pufakchasi ham shu sababli "boshqa                  │
+│      joyda" ko'rinardi — u boshga qarab joylashgan, bosh esa                 │
+│      kesilgan edi.)                                                          │
+│                                                                              │
+│    ── TUZATISH ──                                                            │
+│                                                                              │
+│      `src/styles/index.css` — rasm endi `object-fit:cover` +                 │
+│      `object-position:68% 4%` bilan RAMKANING o'zini to'ldiradi              │
+│      (fotoning emas) — kesish doim YUQORIDAN emas, PASTDAN                   │
+│      boshlanadi, bosh hech qachon yo'qolmaydi. Mobil ramka                   │
+│      (deyarli kvadrat) uchun qo'shimcha `transform:scale(1.45)`              │
+│      (xuddi shu nuqtadan, `transform-origin:68% 4%`) — aks holda             │
+│      yigit kichkina va uzoqda ko'rinardi (fotoda atrofida bo'sh joy          │
+│      ko'p). `.hero-bottom` (swatch, «Assalomu alaykum — xush                 │
+│      kelibsiz» matni, pastga strelka) `z-index:20` oldi — avval              │
+│      `auto` (0) edi, `.hero-greeter` (11) ostida qolib, rasm                 │
+│      ustiga chiqqanda matn/strelka KO'RINMAS bo'lib qolardi.                 │
+│                                                                              │
+│    ── TEKSHIRILDI (375 / 768 / 900 / 1024 / 1280 / 1440 / 1920) ──           │
+│                                                                              │
+│      Hammasida brauzerda ko'z bilan: bosh HECH QACHON kesilmaydi,            │
+│      yelka ekrandan chiqmaydi, pufakcha yuzga yaqin turadi,                  │
+│      «Assalomu alaykum — xush kelibsiz» va pastga strelka rasm               │
+│      ustida (orqasida emas) ko'rinadi.                                       │
+│                                                                              │
+│    ── QOLGAN (bu yerda TUZATILMADI) ──                                       │
+│                                                                              │
+│      • 900px atrofida `.hero-drag` hamon torroq joyga tushadi —              │
+│        "yo'q joy" muammosi, S-008 ning ishi.                                 │
+│      • «OVOZ O'CHIQ» suzuvchi tugmasi ko'kragida — S-013.                    │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-008 · Oraliq kengliklar (768–1280px) — "yo'q joy" ────────────────────┐
+┌─ [x] S-008 · Oraliq kengliklar (768–1280px) — "yo'q joy" ────────────────────┐
 │                                                                              │
 │  TOPILDI: `index.css` da FAQAT `max-width: 767px` breakpointi bor.           │
 │  768px dan 1280px gacha bo'lgan oraliqda desktop kompozitsiyasi              │
@@ -688,9 +784,54 @@
 │                                                                              │
 │  Bog'liq: S-007                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── HAQIQIY MUAMMO O'LCHASHDA TOPILDI (taxmin bilan farq) ──               │
+│                                                                              │
+│      `.hero-object-label` ("Vodiy mehmondo'stligi / 001...") va              │
+│      `.hero-greeter` (rasm) qutilarini brauzerda o'lchab solishtirdim.       │
+│      Natija taskning "768-1280px" taxminidan KENGROQ edi: ustma-ust          │
+│      tushish 768px DAN 2560px GACHA — hammasida bor edi (labelning           │
+│      ikkinchi qatori har doim rasm ostida yashiringan, `z-index:11`          │
+│      rasm ustidan bosib turgani uchun). `right:7vw` faqat BITTA              │
+│      kenglikda (taxminan qayerdadir) tasodifan mos kelgan, qolgan            │
+│      hamma joyda mos KELMAGAN — mustaqil formula edi.                        │
+│                                                                              │
+│    ── TUZATISH: mos kelishga umid qilish o'rniga BOG'LASH ──                 │
+│                                                                              │
+│      `.hero-object-label`ning `right` qiymati endi `.hero-greeter`           │
+│      ning chap chetiga BEVOSITA bog'langan:                                  │
+│        right: calc(2.5vw + min(47vw, 610px) + 28px)                          │
+│      Bu ikkalasi ham AYNAN shu ikki songa (`2.5vw`, `min(47vw,610px)`)       │
+│      tayanadi — qaysi biri o'zgarsa, ikkalasi birga o'zgaradi,               │
+│      alohida breakpoint kerak emas. Natija: 375–2560px oralig'ida            │
+│      TEKSHIRILDI (768/900/1024/1280/1440/1920/2560) — hech qaysi             │
+│      kenglikda rasm bilan ustma-ust tushmaydi, ikkala qator ham              │
+│      to'liq o'qiladi.                                                        │
+│                                                                              │
+│    ── TASK TAKLIF QILGAN, LEKIN O'LCHASHDA TASDIQLANMAGAN ──                 │
+│                                                                              │
+│      • "768-1024 uchun alohida (ustma-ust) kompozitsiya" — sinab             │
+│        ko'rildi: 768/900/1024px da matn ustuni TABIIY holda                  │
+│        (o'zining kontenti bilan) 60% chegaraga yetmasdan torayadi            │
+│        (masalan 768px da ≈296px, ruxsat etilgan ≈414px), sarlavha            │
+│        2 qatorga chiroyli buklanadi — siqilish yo'q. Kompozitsiya            │
+│        o'zgartirilmadi, chunki buzilgan narsa yo'q edi.                      │
+│      • "hero-copy max-width:60% juda tor" — yuqoridagi sabab bilan           │
+│        bu oraliqda haqiqatda cheklovchi omil emas edi, o'zgartirilmadi.      │
+│      • Rasmiy breakpoint tizimi (480/768/1024/1280) — bu task uchun          │
+│        kerak bo'lmadi (formula yechimi barcha kengliklarda ishlaydi).        │
+│        Butun sayt bo'ylab umumiy tizim S-010 ning ishi.                      │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Mobil (375/564px) — `.hero-object-label`ning o'z mobil                │
+│        qoidasi (`right:6vw`) o'zgarmagan, ta'sirlanmadi                      │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-009 · 📱 Mobil hero — pufak va yigit bog'lanishi ─────────────────────┐
+┌─ [x] S-009 · 📱 Mobil hero — pufak va yigit bog'lanishi ─────────────────────┐
 │                                                                              │
 │  TOPILDI (375×812 da):                                                       │
 │    • "Assalomu alaykum!" pufagi y≈980px da, yigitning boshi y≈1230px da      │
@@ -712,6 +853,49 @@
 │                                                                              │
 │  Bog'liq: S-007, S-011                                                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── UCHTA BAND S-007 ORQALI ALLAQACHON YOPILGAN EDI ──                     │
+│                                                                              │
+│      375×812 da o'lchab tekshirdim — S-007 (bosh kesilishi/pufak             │
+│      joyi) tuzatilgach, quyidagilar avtomatik yo'qolgan edi:                 │
+│      pufak-bosh orasidagi ~250px bo'shliq (bosh endi kesilmagani             │
+│      uchun pufak to'g'ridan-to'g'ri yuzga yaqin), yigitning o'ngga           │
+│      surilishi, «2026 SELECTION» matnining unga tushib qolishi               │
+│      (`.hero-bottom`ning `z-index:20` si, S-007).                            │
+│                                                                              │
+│    ── QOLGAN IKKITASI: `min-height:1050px` OLIB TASHLANDI ──                 │
+│                                                                              │
+│      Shunchaki o'chirib ko'rdim — balandlik 995px ga tushdi-yu,              │
+│      lekin `.hero-bottom{bottom:72px}` GALEREYANING (endi qisqarib           │
+│      qolgan) pastki chetiga bog'liq bo'lgani uchun swatch qatori             │
+│      72px yuqoriga surilib, rasm bilan yana ustma-ust tushdi —               │
+│      xuddi shu «yigit bilan urishmasin» talabini yangidan buzardi.           │
+│      Ildiz sabab: `.hero-bottom` GALEREYA balandligiga (o'zgaruvchan)        │
+│      emas, GREETER ning O'Z (qat'iy: `top:430px`+`height:500px`,             │
+│      S-007) chegarasiga bog'lanishi kerak edi. Endi shunday:                 │
+│      `.hero-bottom{ top:950px }` (greeter tugashidan 20px pastda),           │
+│      `padding-bottom` 500→560px (shu qatorni sig'dirish uchun).              │
+│      Natija: balandlik endi 1055px — SONI deyarli bir xil, lekin             │
+│      MEXANIZM boshqa: kontentga bog'liq, qo'lda kelishilgan                  │
+│      ikkita raqamga (min-height va bottom%) emas.                            │
+│                                                                              │
+│    ── YO'L-YO'LAKAY TOPILGAN QOSHIMCHA XATO ──                               │
+│                                                                              │
+│      `.hero-object-label` («Vodiy mehmondo'stligi...») mobilda               │
+│      HAR DOIM greeter rasmining ICHIDA edi (`bottom:145px` —                 │
+│      to'liq X/Y ustma-ust), `z-index:auto` uni rasm orqasida                 │
+│      qoldirardi — RENDER bo'lardi, lekin HECH QACHON ko'rinmasdi.            │
+│      Mobilda torroq joy uchun allaqachon o'chirilgan `.hero-drag`            │
+│      bilan bir xil qarorga keldim: `display:none` (mobilda).                 │
+│                                                                              │
+│    Tekshirildi: 320 / 375 / 564 / 768px (mobil chegarasi)                    │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Brauzerda: bosh-pufak bog'liq, yigit kesilmagan, «2026                │
+│        SELECTION» rasm OSTIDA aniq bo'shliq bilan, ortiqcha                  │
+│        bo'sh joy yo'q, keyingi bo'lim («01 — KIRISH») darhol keladi          │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -722,7 +906,7 @@
 ║          Mobil — ikkinchi darajali emas, teng darajada chiroyli bo'ladi.     ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-010 · Breakpoint va tartib tizimi ────────────────────────────────────┐
+┌─ [x] S-010 · Breakpoint va tartib tizimi ────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Yagona breakpoint to'plami: 480 / 768 / 1024 / 1280 (S-008)             │
@@ -736,9 +920,66 @@
 │                                                                              │
 │  Bog'liq: S-008                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── GORIZONTAL SCROLL: SABAB QIDIRILDI, TOPILMADI ──                       │
+│                                                                              │
+│      `overflow-x:hidden`ni `body`dan VAQTINCHA olib tashlab,                 │
+│      `document.documentElement.scrollWidth` ni HAQIQIY brauzerda             │
+│      o'lchadim — 8 sahifa (Bosh, Katalog, Kategoriyalar, Kategoriya          │
+│      tafsiloti, Mahsulot, Biz haqimizda, Aloqa, 404) × 6 kenglik             │
+│      (320/375/768/1024/1440/1920), + kirish ekrani, + ochiq menyu.           │
+│      Hech qaysi birida `scrollWidth > innerWidth` chiqmadi —                 │
+│      hozirgi kodda takrorlanadigan gorizontal scroll xatosi YO'Q.            │
+│      (`.r-zoom` kabi 114%-kattalashtirilgan rasmlar `SmartImage`ning         │
+│      o'z `overflow-hidden` ramkasi bilan allaqachon o'ralgan.)               │
+│      Xulosa: `overflow-x:hidden` YASHIRAYOTGAN sabab hozir yo'q —            │
+│      qoidaning o'zi butunlay OLIB TASHLANDI (`index.css`), niqob             │
+│      qoldirilmadi. Kelajakda haqiqiy scroll paydo bo'lsa, endi               │
+│      YASHIRINMAY, ko'rinadi — bu ataylab shunday.                            │
+│                                                                              │
+│    ── svh/dvh: TEKSHIRILDI, TUZATISH KERAK EMAS ──                           │
+│                                                                              │
+│      Butun kodda bitta ham yalang'och `100vh` yo'q — hammasi allaqachon      │
+│      `svh` (`.hero-gallery`, `.hero-greeter`, NotFound, Categories,          │
+│      Showroom, route-skeleton) — bu AYNAN to'g'ri tanlov: `svh`              │
+│      brauzer paneli ochiq holatidagi ENG KICHIK balandlikni oladi,           │
+│      shuning uchun panel ochilib-yopilganda sakramaydi. `dvh`                │
+│      (jonli o'lchov, AYNAN sakrashni keltirib chiqaradi) hech qaerda         │
+│      ishlatilmagan.                                                          │
+│                                                                              │
+│    ── GUTTER/SPACING: 90% SAYT ALLAQACHON BITTA TOKENDA ──                   │
+│                                                                              │
+│      Barcha kontent sahifalari (Catalog, Categories, CategoryDetail,         │
+│      ProductDetail, About, Contact, NotFound) `edge` utility'sidan           │
+│      (`clamp(1.25rem,4vw,4.5rem)`, bitta joyda e'lon qilingan)               │
+│      foydalanadi. `5vw/6vw/7vw` xilma-xilligi FAQAT bosh sahifaning          │
+│      hero/kirish/material-study bo'limlarida — bular oddiy sahifa            │
+│      to'ldirmasi emas, o'zaro matematik bog'liq geometriya (masalan          │
+│      `.hero-greeter`ning `right:2.5vw` si `.hero-gallery`ning                │
+│      `5vw` to'ldirmasining ATAYLAB yarmi, S-007/S-008 da tekshirilgan)       │
+│      — bitta umumiy tokenga majburan ko'chirish shu geometriyani             │
+│      buzardi, shuning uchun TEGILMADI.                                       │
+│                                                                              │
+│    ── BREAKPOINT TO'PLAMI: RASMIYLASHTIRILDI ──                              │
+│                                                                              │
+│      Auditda: sayt DEYARLI FAQAT `md:` (768px) ishlatadi (134 marta),        │
+│      `lg:` (1024px) — 3 marta, `sm:`/`xl:` — 0 marta. 480px                  │
+│      umuman yo'q edi. `index.css`ning `@theme` blokiga to'rttasi ham         │
+│      ATAYLAB, KO'RINADIGAN joyda e'lon qilindi (`--breakpoint-xs:480px`      │
+│      yangi; md/lg/xl — Tailwind standartini qayta tasdiqlash).               │
+│      ⚠ `xs:` HECH QAYERGA QO'YILMADI — S-008 saboqi: taxmin bilan            │
+│      breakpoint qo'yish o'zi "yo'q joy" xatosi yaratadi. Qayerda             │
+│      kerakligi keyingi tasklarda (S-011..S-015) o'lchab aniqlanadi.          │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓ (CSS 42.87→42.98 KB)   • `pnpm lint` ✓                 │
+│      • `node --test tests/sound.test.js` ✓ (3/3)                             │
+│      • Barcha 8 sahifa qayta ko'rildi — vizual regressiya yo'q               │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-011 · 📱 Mobil hero qayta dizayni ────────────────────────────────────┐
+┌─ [x] S-011 · 📱 Mobil hero qayta dizayni ────────────────────────────────────┐
 │                                                                              │
 │  S-009 dagi muammolar asosida hero mobil uchun QAYTA chiziladi —             │
 │  desktop tartibini siqish emas, alohida kompozitsiya.                        │
@@ -751,9 +992,54 @@
 │                                                                              │
 │  Bog'liq: S-009, S-010                                                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── ARXITEKTURA: ABSOLYUT KOORDINATADAN — OQIMGA (FLOW) ──                 │
+│                                                                              │
+│      Birinchi urinish (fixed `top:726px` bilan) 812px balandlikda            │
+│      sig'di, lekin iPhone SE (667px) da tekshirilganda pastki                │
+│      qator ekrandan 124px pastda chiqib ketdi — raqam faqat BITTA            │
+│      balandlikka moslangan edi. Tuzatish: `.hero-gallery`                    │
+│      mobilda `flex-direction:column` bo'ldi — sarlavha, rasm+pufak,          │
+│      svatch qatori endi ODDIY OQIMDA, DOM tartibida ketma-ket                │
+│      turadi (avvalgi `position:absolute` + qo'lda hisoblangan                │
+│      `top`/`bottom` o'rniga). Natija: bo'lim balandligi HAR DOIM             │
+│      real kontentga teng — qaysi telefon balandligida ham                    │
+│      to'g'ri, chunki endi bironta ham qattiq raqamga tayanmaydi.             │
+│                                                                              │
+│    ── ZICHLASHTIRISH ──                                                      │
+│                                                                              │
+│      Sarlavha: `clamp(3rem,10vw,5rem)` → `clamp(2.25rem,9vw,3rem)`           │
+│      Yuqori bo'shliq: 130px → 80px; pastki: 560px → 24px                     │
+│      Band oralig'i (eyebrow/desc/CTA): 32/32/24px → 14/14/14px               │
+│      Yigit ramkasi: 500px → 235px (kesim nisbati saqlanib qoldi —            │
+│      xuddi shu `object-position`/`scale` S-007 dan)                          │
+│                                                                              │
+│    ── TEKSHIRILDI: BITTA EKRANGA SIG'ADIMI (raqam bilan) ──                  │
+│                                                                              │
+│      320×690, 375×667 (iPhone SE — ENG QISQA ommaviy nishon),                │
+│      375×812, 375×926 — har birida pastki qator (`.hero-bottom`)             │
+│      ning `getBoundingClientRect().bottom` ekran balandligidan               │
+│      OSHMASLIGI tasdiqlandi (667px da: 660.7 < 667 — 6px zaxira).            │
+│      812px va undan balandda hero hatto keyingi bo'limning                   │
+│      boshini ham ko'rsatadi — «bitta ekranga sig'adi» so'zma-so'z.           │
+│                                                                              │
+│    ── YO'L-YO'LAKAY KO'RILGAN, LEKIN TUZATILMAGAN ──                         │
+│                                                                              │
+│      667px balandlikda suzuvchi «OVOZ O'CHIQ» tugmasi endi                   │
+│      «2026 SELECTION» matnining bir qismini bosib turibdi —                  │
+│      bu ANIQ S-013 ning ishi (suzuvchi elementlar uchun                      │
+│      xavfsiz zona), shu yerda qo'l tegizilmadi.                              │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Desktop (1440px) — o'zgarishsiz, faqat `max-width:767px`              │
+│        qoidalari o'zgardi                                                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-012 · 📱 Mobil katalog va mahsulot sahifasi ──────────────────────────┐
+┌─ [x] S-012 · 📱 Mobil katalog va mahsulot sahifasi ──────────────────────────┐
 │                                                                              │
 │  TOPILDI (375px, `/catalog`):                                                │
 │    • Filtr tugmalari qatori gorizontal chiqib ketgan — "KERAMIKA" yarim      │
@@ -772,9 +1058,63 @@
 │                                                                              │
 │  Bog'liq: S-010                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── FILTR QATORI: FADE + FAOL FILTR HAR DOIM KO'RINADI ──                  │
+│                                                                              │
+│      `Catalog.jsx` — `overflow-x-auto` qatoriga ikkita gradient              │
+│      qoplama qo'shildi (chap/o'ng), holati scroll pozitsiyasiga              │
+│      qarab `opacity` bilan yoqiladi/o'chadi (o'lchandi: boshida              │
+│      chap=0/o'ng=1, oxiriga scroll qilinganda chap=1/o'ng=0).                │
+│      Filtr bosilganda esa `scrollIntoView({inline:'center'})` —              │
+│      "Outdoor" kabi oxirgi filtrlar endi ekrandan chiqib                     │
+│      qolmaydi, tasdiqlandi (brauzerda bosib ko'rildi).                       │
+│                                                                              │
+│    ── MOBILDA 2 USTUNLI GRID SINALDI — QABUL QILINDI ──                      │
+│                                                                              │
+│      `grid-cols-1` → `grid-cols-2` (mobil), `md:grid-cols-12`                │
+│      o'zgarmadi. Panoramik 16:9 karta (har 5-chi mahsulot)                   │
+│      mobilda ham to'liq kenglikda qoladi (`col-span-2`) —                    │
+│      aks holda yarim kenglikda juda tor tasma bo'lib qolardi.                │
+│      320/375px da tekshirildi: kesilish yo'q, ikkala ustun ham               │
+│      o'qiladi.                                                               │
+│                                                                              │
+│    ── KARTOCHKA META: TIQILISH TUZATILDI ──                                  │
+│                                                                              │
+│      Eski `flex flex-wrap justify-between` ikki blokni (indeks+              │
+│      nom / toifa+o'lcham) 2-ustunli tor kartada bir-biriga                   │
+│      bosib qo'yardi. Endi mobilda TIK STEK (`flex-col`), md dan              │
+│      boshlab eski yonma-yon (`md:flex-row md:justify-between`)               │
+│      qaytadi — bu ProductGrid.jsx dagi (CategoryDetail/                      │
+│      ProductDetail "o'xshash mahsulotlar") allaqachon ishlatgan              │
+│      naqshning o'zi, endi Catalog ham unga mos keladi.                       │
+│                                                                              │
+│    ── MAHSULOT SAHIFASI: TEKSHIRILDI, ALLAQACHON YAXSHI ──                   │
+│                                                                              │
+│      `ProductDetail.jsx` allaqachon `md:col-span-N` naqshi bilan             │
+│      qurilgan — mobilda galereya, xususiyatlar jadvali (`<dl>`),             │
+│      tavsif, material-study rasmlari va CTA hammasi TABIIY                   │
+│      ravishda bitta ustunga tushadi. 320/375px da to'liq                     │
+│      ko'rib chiqildi (skroll qilib) — kesilish, tiqilish yo'q.               │
+│      O'zgartirish talab qilinmadi.                                           │
+│                                                                              │
+│    ── YO'L-YO'LAKAY KO'RILGAN, LEKIN TUZATILMAGAN ──                         │
+│                                                                              │
+│      «OVOZ O'CHIQ» suzuvchi tugmasi hamon mahsulot                           │
+│      nomi/xususiyat matni ustiga tushadi (Catalog VA                         │
+│      ProductDetail da) — bu ANIQ S-013 ning ishi.                            │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Sahifa darajasida gorizontal scroll yo'q (375px, S-010                │
+│        usulida qayta tekshirildi) — filtr qatorining o'z ichki               │
+│        scroll'i ataylab, sahifaga chiqmaydi                                  │
+│      • Desktop (1440px) — o'zgarishsiz                                       │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-013 · Suzuvchi elementlar kontentni to'smasligi ──────────────────────┐
+┌─ [x] S-013 · Suzuvchi elementlar kontentni to'smasligi ──────────────────────┐
 │                                                                              │
 │  TOPILDI: "OVOZ O'CHIQ" tugmasi `position: fixed` va HAR SAHIFADA            │
 │  kontentni to'sadi — hero'da yigitning ko'kragida, katalogda mahsulot        │
@@ -788,9 +1128,57 @@
 │                                                                              │
 │  Bog'liq: S-012                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── ANIQLASH: `.floating-nav` FAQAT BITTA ELEMENT ──                       │
+│                                                                              │
+│      `Nav.jsx`dagi header (`position:fixed`) ichida to'rtta                  │
+│      burchak boshqaruvi bor: logotip (yuqori-chap), menyu                    │
+│      (yuqori-o'ng), telefon (pastki-chap — mobilda ALLAQACHON                │
+│      `hidden md:block`) va OVOZ tugmasi (pastki-o'ng). Faqat                 │
+│      OXIRGISI mobilda muammoli edi — hero, katalog, mahsulot                 │
+│      sahifasida (uchalasida ham) haqiqiy matn ustiga tushib                  │
+│      turgani S-011/S-012 davomida qayd etilgan edi.                          │
+│                                                                              │
+│    ── YECHIM: "xavfsiz zona" izlash o'rniga — KO'CHIRISH ──                  │
+│                                                                              │
+│      Mobil ekranda tugma uchun kontent bilan URISHMAYDIGAN                   │
+│      doimiy joy YO'Q edi (hero balandligi ham, katalog                       │
+│      kartochkalari ham, mahsulot xususiyatlari ham — barchasi                │
+│      pastki-o'ng burchakka vaqti-vaqti bilan yetib boradi).                  │
+│      Shuning uchun `padding-bottom` bilan "joy ochish" o'rniga               │
+│      tugmaning o'zi ko'chirildi:                                             │
+│        • `Nav.jsx` — suzuvchi OVOZ tugmasi `md:` dan pastda                  │
+│          `hidden` (o'chirilgan), `md:bottom-[calc(2rem+                      │
+│          env(safe-area-inset-bottom))]` — iPhone home-chizig'i               │
+│          hisobga olindi (desktop uchun ham, zarar yo'q)                      │
+│        • `Menu.jsx` — xuddi shu `SoundToggle` mobil uchun                    │
+│          (`md:hidden`) menyuning pastki qatoriga (Telegram/                  │
+│          Instagram yonida) qo'shildi — menyu HAR SAHIFADA                    │
+│          ochiladi, shuning uchun bu doimo yetib bo'ladigan,                  │
+│          hech qachon kontentga to'g'ri kelmaydigan joy                       │
+│                                                                              │
+│    ── NEGA "xavfsiz zona" EMAS ──                                            │
+│                                                                              │
+│      Sayt bo'ylab tekshirildi (`grep -rn fixed`) — boshqa                    │
+│      suzuvchi element yo'q (kursor nuqtalari `useIsTouch()`                  │
+│      bilan allaqachon touch qurilmalarida o'chirilgan). Demak                │
+│      mobilda to'sib turadigan YAGONA narsa shu tugma edi —                   │
+│      uni butunlay olib tashlash har bir sahifaga alohida                     │
+│      `padding-bottom` qo'shishdan ODDIYROQ va ISHONCHLIROQ.                  │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • 375×667 — Bosh, Katalog, Mahsulot sahifalarida suzuvchi               │
+│        tugma YO'Q, kontent to'liq erkin; Menyu ichida                        │
+│        "OVOZ YOQILGAN/O'CHIQ" ishlaydi (bosildi, holat o'zgardi)             │
+│      • 1440px — suzuvchi tugma joyida qoladi, Menyu ichidagi                 │
+│        nusxasi `display:none` (ikkalasi birga ko'rinmaydi)                   │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-014 · 📱 Mobil menyu va navigatsiya ──────────────────────────────────┐
+┌─ [x] S-014 · 📱 Mobil menyu va navigatsiya ──────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • To'liq ekranli menyu mobilda tekshiriladi: ochilish/yopilish,           │
@@ -802,9 +1190,63 @@
 │                                                                              │
 │  Bog'liq: S-013                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── TEKSHIRILDI, ALLAQACHON TO'G'RI ISHLAYDI ──                            │
+│                                                                              │
+│      • Ochilish/yopilish, `Esc` bilan yopish, sahifa                         │
+│        o'zgarganda avtomatik yopilish — bor edi                              │
+│      • Scroll qulfi — `lib/lenis.js`ning `stopScroll()`                      │
+│        ikki qatlamli: Lenis'ning o'zini to'xtatadi VA                        │
+│        `document.body.style.overflow='hidden'` qo'yadi —                     │
+│        Lenis hali yuklanmagan bo'lsa ham ishlaydi.                           │
+│        Brauzerda o'lchandi: menyu ochiq — `overflow:hidden`,                 │
+│        `lenis-stopped` klassi bor — tasdiqlandi                              │
+│                                                                              │
+│    ── TOPILDI VA TUZATILDI: FOKUS TUZOG'I YO'Q EDI ──                        │
+│                                                                              │
+│      O'lchov: menyu ichidagi OXIRGI havoladan `Tab` bosilganda               │
+│      fokus MENYU ORQASIDAGI "Kolleksiyalarni ko'rish" havolasiga             │
+│      (hero'da, ko'rinmas holda) o'tib ketardi. Klaviatura                    │
+│      foydalanuvchisi ochiq menyudan "chiqib", ko'rinmas sahifa               │
+│      ustida adashib qolardi.                                                 │
+│      Tuzatish — `Layout.jsx`: menyu ochiq bo'lganda `<main>` va              │
+│      `<Footer>` ga `inert` atributi qo'yiladi. Bu ularni HAM                 │
+│      Tab tartibidan, HAM screen reader daraxtidan olib                       │
+│      tashlaydi — qo'lda yozilgan `keydown` tuzog'idan ko'ra                  │
+│      ishonchliroq (brauzerning o'zi bajaradi). `Nav` ataylab                 │
+│      tashqarida qoldi — uning z-index'i (160) menyunikidan                   │
+│      (150) yuqori, ya'ni yopish tugmasi doim yetib bo'ladi.                  │
+│      Ikkala yo'nalishda ham (`Tab` va `Shift+Tab`) qayta                     │
+│      o'lchandi — endi faqat Nav+Menyu ichida aylanadi.                       │
+│                                                                              │
+│    ── TOPILDI VA TUZATILDI: ORQAGA TUGMASI SAHIFADAN CHIQARARDI ──           │
+│                                                                              │
+│      Menyu ochilganda `history.pushState` bilan bitta belgi                  │
+│      qo'shiladi; `popstate` (orqaga tugmasi) shu belgini                     │
+│      ko'rsa — menyu yopiladi, sahifadan chiqilmaydi. Yopilganda              │
+│      (Esc, havola, orqaga) fokus doimo ochgan tugmaga qaytadi —              │
+│      avval `<body>`ga tushib qolardi.                                        │
+│                                                                              │
+│    ── TOPILDI VA TUZATILDI: JORIY SAHIFA MOBILDA KO'RINMASDI ──              │
+│                                                                              │
+│      "— joriy" yorlig'i `hidden md:block` ichida edi — ya'ni                 │
+│      FAQAT desktopda ko'rinardi, aynan shu task mo'ljallagan                 │
+│      mobil o'lchamda esa yo'q edi. Endi joriy band uchun                     │
+│      alohida shart bilan barcha o'lchamda ko'rinadi; `Link`ga                │
+│      `aria-current="page"` ham qo'shildi.                                    │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • To'liq oqim: menyu och → havola bos → sahifa                          │
+│        o'zgaradi, menyu yopiladi → orqaga → boshiga qaytadi                  │
+│        (ortiqcha tarix bosqichi yo'q, ikki marta bosish shart                │
+│        emas)                                                                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-015 · Touch maqsadlari va mobil qulaylik ─────────────────────────────┐
+┌─ [x] S-015 · Touch maqsadlari va mobil qulaylik ─────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Barcha bosiladigan element ≥ 44×44px (hozir 12px matnli havolalar       │
@@ -815,6 +1257,72 @@
 │                                                                              │
 │  Bog'liq: S-014                                                              │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── TOUCH MAQSADI ≥44×44px: BRAUZERDA O'LCHANDI ──                         │
+│                                                                              │
+│      Taxmin bilan emas — `getBoundingClientRect()` orqali HAR                │
+│      BIR `a`/`button`/`input` sahifada (Bosh, Katalog,                       │
+│      Kategoriyalar, Kategoriya tafsiloti, Mahsulot, Biz                      │
+│      haqimizda, Aloqa, 404, Menyu) 375px da o'lchandi. Topilgan              │
+│      va tuzatilgan (barchasi qayta o'lchab tasdiqlangan):                    │
+│      • Nav logotip/menyu tugmasi — 41/40px → umumiy                          │
+│        `.floating-nav a,button` qoidasi 12px→14px padding                    │
+│      • Footer: telefon (28px), email (31px), Indeks                          │
+│        havolalari (26px), Telegram/Instagram (19px) — barcha                 │
+│        sahifada takrorlanardi                                                │
+│      • Filtr chiplari (Catalog, CategoryDetail) — 20px                       │
+│      • «← Katalog/Indeks», «Barchasi →», «Aloqa sahifasi»,                   │
+│        «Yana yozish» — 15px                                                  │
+│      • Contact: telefon (22px), email (20px), Telegram/                      │
+│        Instagram (15px), «YUBORISH» tugmasi — FORMA CTA'si,                  │
+│        atigi 15px edi                                                        │
+│      • NotFound'dagi tezkor havolalar — 15px                                 │
+│      • Menyu ichidagi asosiy bandlar — 36px (mobil `type-head`               │
+│        o'zi shu kenglikda kichikroq shriftga tushadi)                        │
+│                                                                              │
+│    ── IKKI USUL, KONTEKSTGA QARAB ──                                         │
+│                                                                              │
+│      1) Ko'rinmas `::before` (`-inset-Npx`) — vizual o'lcham                 │
+│         O'ZGARMAYDI, faqat bosish zonasi kengayadi. Izolyatsiya              │
+│         qilingan havolalar uchun (orqaga, CTA).                              │
+│      2) Haqiqiy padding + teng manfiy margin (`-my-N py-N`) —                │
+│         gorizontal scroll konteynerlar ICHIDA (filtr chiplari)               │
+│         1-usul ISHLAMADI: `overflow-x:auto` qo'yilgan                        │
+│         konteynerda `overflow-y` CSS spetsifikatsiyasi bo'yicha              │
+│         avtomatik `auto`ga aylanadi ("agar bitta o'q ko'rinmas               │
+│         bo'lmasa, ikkinchisi auto bo'ladi") — shuning uchun                  │
+│         pastga kengaygan qism KESILARDI (`elementFromPoint` bilan            │
+│         aniqlandi: yuqorida ishlaydi, pastda yo'q). Har bir                  │
+│         holat brauzerda `elementFromPoint` bilan ikki                        │
+│         yo'nalishda ham qayta tasdiqlandi.                                   │
+│                                                                              │
+│    ── QOLGAN UCHTA BAND ──                                                   │
+│                                                                              │
+│      • Hover'ga bog'liq ma'lumot — auditda topilmadi: barcha                 │
+│        `group-hover`/`opacity-0` holatlar dekorativ (satr osti               │
+│        chizig'i, rasm kattalashishi) yoki `hidden md:block` bilan            │
+│        touch qurilmada butunlay render bo'lmaydi — asosiy                    │
+│        matn/havola hech qachon hover'ga bog'lanmagan.                        │
+│      • `:active` holati — sayt bo'ylab BITTA ham yo'q edi (faqat             │
+│        500-700ms `:hover` o'tishlari, sichqoncha uchun mo'ljallangan).       │
+│        `index.css`ga `@media (hover:none) { a:active,                        │
+│        button:active { opacity:.55 } }` qo'shildi — FAQAT hover'i            │
+│        yo'q qurilmalarda, 100ms tez javob.                                   │
+│      • Forma `inputmode`/`autocomplete` — tekshirildi: saytda                │
+│        YAGONA forma (`Contact.jsx`), telefon maydoni allaqachon              │
+│        `type="tel" inputMode="tel" autoComplete="tel"`,                      │
+│        ism maydoni `autoComplete="name"` — hammasi to'g'ri edi.              │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • 375px: barcha 8 sahifa + Menyu — audit ro'yxati BO'SH                 │
+│        (faqat `::before`-tuzatilgan bandlar qoladi, ular                     │
+│        `elementFromPoint` bilan alohida tasdiqlangan)                        │
+│      • Gorizontal scroll yo'q (375/1440px, S-010 usulida)                    │
+│      • Desktop (1440px) — vizual regressiya yo'q                             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -825,7 +1333,7 @@
 ║          "GSAP imkoniyatlarini yanada rivojlantirish kerak".                 ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-016 · Kursor kechikishini yo'qotish ──────────────────────────────────┐
+┌─ [x] S-016 · Kursor kechikishini yo'qotish ──────────────────────────────────┐
 │                                                                              │
 │  SABAB TOPILDI — kompyuter sekin emas, kechikish ATAYLAB qo'yilgan:          │
 │    • `index.css`: `html[data-cursor='on'] *  { cursor: none !important }`    │
@@ -857,6 +1365,59 @@
 │     qiladi. Kursor qayta yozilganda — GSAP siz variant tanlansa (A yoki      │
 │     B da `quickTo` o'rniga oddiy `transform` yetadi) — GSAP qobiqdan         │
 │     chiqadi. Qaysi yo'l tanlansa ham, shu savol hisobga olinsin.             │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-19                                                    │
+│                                                                              │
+│    ── TANLANGAN YO'L: B (nuqta olib tashlandi, halqa qoldi) ──               │
+│                                                                              │
+│      Nuqta butunlay o'chirildi, native kursor QAYTARILDI                     │
+│      (`html[data-cursor='on'] * { cursor:none }` qoidasi va uni              │
+│      yoqadigan JS o'chirildi). Halqa endi FAQAT qo'shimcha                   │
+│      bezak — GSAP `quickTo` o'rniga CSS'ning mustaqil                        │
+│      `translate`/`scale` xususiyatlari (`transform` emas!) —                 │
+│      ikkalasi turli `transition` davomiyligiga ega bo'lishi                  │
+│      mumkin, bir-biriga xalaqit bermaydi. `Cursor.jsx` endi                  │
+│      GSAP'ni umuman import qilmaydi.                                         │
+│                                                                              │
+│    ── TASDIQLANDI: NATIV KURSOR HAQIQATDA QAYTGAN ──                         │
+│                                                                              │
+│      Brauzerda: `getComputedStyle(document.body).cursor` avval               │
+│      "none" edi (taxmin emas — CSS qoidasi shunday yozgan edi),              │
+│      endi "auto". Halqa harakati (`ring.style.translate`),                   │
+│      hover'da kattalashishi (`scale:1.5`) va ko'rinish/                      │
+│      yashirinishi (`mouseleave`) alohida-alohida sinovdan                    │
+│      o'tkazildi — barchasi ishlaydi.                                         │
+│                                                                              │
+│    ── QO'SHIMCHA: closest() KESHLANDI ──                                     │
+│                                                                              │
+│      `WeakMap` — har bir element uchun `closest('[data-cursor]')`            │
+│      natijasi BIR MARTA hisoblanadi; xuddi shu elementga qayta               │
+│      "pointerover" kelsa (katta kartochka ichida bir nechta                  │
+│      ichki elementlar orasida sichqoncha yurganda tez-tez                    │
+│      bo'ladi), DOM bo'ylab qayta yurilmaydi.                                 │
+│                                                                              │
+│    ── ⚠ GSAP "QOBIQDAN CHIQMADI" — O'LCHAB TEKSHIRILDI ──                    │
+│                                                                              │
+│      Taskdagi taxmin: `Cursor.jsx` GSAP'siz bo'lsa, GSAP boshlang'ich        │
+│      yuklamadan chiqadi. Build oldin/keyin solishtirildi:                    │
+│      `vendor-gsap-*.js` (112.83 KB) BAYT-BAYIGA BIR XIL qoldi va             │
+│      `dist/index.html`da hamon `modulepreload` sifatida turibdi.             │
+│      Sabab: `Layout.jsx` (har doim render bo'ladi, lazy emas) o'zi           │
+│      `ScrollTrigger.refresh()` uchun, `Menu.jsx` esa ochilish/               │
+│      yopilish animatsiyasi uchun GSAP'ni TO'G'RIDAN-TO'G'RI                  │
+│      import qiladi — ular hamon boshlang'ich yuklamani ushlab                │
+│      turibdi. Buni yechish ALOHIDA, ancha kattaroq ish (Layout/              │
+│      Menu/lenis.js GSAP'ni DINAMIK import qilishi kerak bo'ladi) —           │
+│      shu yerda qo'l tegizilmadi, chunki bu S-016 ning ("kursor               │
+│      kechikishi") doirasidan chiqadi.                                        │
+│                                                                              │
+│    Tekshirildi:                                                              │
+│      • `pnpm build` ✓   • `pnpm lint` ✓   • `node --test                     │
+│        tests/sound.test.js` ✓ (3/3)                                          │
+│      • Touch qurilma (`useIsTouch`) — o'zgarishsiz, hamon                    │
+│        butunlay o'chirilgan                                                  │
+│      • `prefers-reduced-motion` — halqa uchun transition                     │
+│        0.01ms ga tushiriladi                                                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [ ] S-017 · Scroll silliqligi (Lenis) sozlash ──────────────────────────────┐
@@ -1484,16 +2045,16 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 45
-  Tugadi       : 5
+  Tugadi       : 16
   Jarayonda    : 0
   Bloklangan   : 0
 
   Epic bo'yicha:
     EPIC 0  Tozalash va poydevor ......  4 / 4   [xxxx]
-    EPIC 1  Tipografika ..............  1 / 2    [x·]
-    EPIC 2  Hero va greeter ..........  0 / 3    [···]
-    EPIC 3  Responsive ...............  0 / 6    [······]
-    EPIC 4  Harakat va GSAP ..........  0 / 5    [·····]
+    EPIC 1  Tipografika ..............  2 / 2    [xx]
+    EPIC 2  Hero va greeter ..........  3 / 3   [xxx]
+    EPIC 3  Responsive ...............  6 / 6   [xxxxxx]
+    EPIC 4  Harakat va GSAP ..........  1 / 5    [x····]
     EPIC 5  Backendga ulash ..........  0 / 12   [············]
     EPIC 6  Huquqiy va kontent .......  0 / 3    [···]
     EPIC 7  SEO ......................  0 / 4    [····]
@@ -1501,7 +2062,7 @@
     (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  S-006 · Kontrast va o'qilish auditi
+  KEYINGI TASK:  S-017 · Scroll silliqligi (Lenis) sozlash
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,

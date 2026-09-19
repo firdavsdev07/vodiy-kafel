@@ -109,10 +109,7 @@ export default function Categories() {
                     playTone('hover')
                   }}
                   onClick={() => playTone('click')}
-                  className="group flex items-center gap-5 py-[clamp(1.25rem,3vw,2.4rem)] transition-opacity duration-500 md:gap-10"
-                  style={{
-                    opacity: hovered === null || hovered === i || isTouch ? 1 : 0.3,
-                  }}
+                  className="group flex items-center gap-5 py-[clamp(1.25rem,3vw,2.4rem)] md:gap-10"
                 >
                   <span className="type-label w-7 shrink-0 text-clay">{cat.index}</span>
 
@@ -128,7 +125,16 @@ export default function Categories() {
                   )}
 
                   <span className="min-w-0 flex-1">
-                    <span className="type-sub block transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] md:group-hover:translate-x-3">
+                    {/* Faqat sarlavha xiralashadi — kichik matnlar (index,
+                        tagline, nameEn) o'zgarmas: `clay` rangi o'zi ham
+                        AA chegarasiga yaqin (4.62:1), xiralashtirilsa
+                        pastga tushib ketardi (S-006). */}
+                    <span
+                      className="type-sub block transition-[opacity,transform] duration-500 ease-[cubic-bezier(.16,1,.3,1)] md:group-hover:translate-x-3"
+                      style={{
+                        opacity: hovered === null || hovered === i || isTouch ? 1 : 0.5,
+                      }}
+                    >
                       {cat.name}
                     </span>
                     <span className="mt-2 block max-w-[42ch] text-clay md:mt-3">

@@ -25,7 +25,9 @@ export default function CategoryDetail() {
         className="relative z-10 edge pb-[clamp(3rem,7vw,6rem)] pt-[clamp(7rem,16vw,13rem)]"
       >
         <div className="flex items-baseline justify-between">
-          <Link to="/categories" data-cursor="" className="type-label text-clay hover:text-charcoal">
+          {/* Touch target ≥44px (S-015): invisible `::before` extends the
+              hit area without changing the visible link's size/position. */}
+          <Link to="/categories" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
             ← Indeks
           </Link>
           <span className="type-label text-clay">{items.length} mahsulot</span>
@@ -42,7 +44,9 @@ export default function CategoryDetail() {
 
         <div className="mt-[clamp(2.5rem,6vw,5rem)] grid gap-8 md:grid-cols-12">
           <p className="r-fade type-editorial md:col-span-5">{category.tagline}</p>
-          <p className="r-fade text-clay md:col-span-5 md:col-start-8">
+          {/* Qator uzunligi 75 belgidan oshmasin (S-006) — cheklovsiz 5
+              ustunda 1920px da ≈90 belgi/qator chiqardi. */}
+          <p className="r-fade max-w-[48ch] text-clay md:col-span-5 md:col-start-8">
             {category.description}
           </p>
         </div>
@@ -63,13 +67,13 @@ export default function CategoryDetail() {
 
         {/* sibling navigation */}
         <nav className="edge mt-[clamp(3rem,7vw,5rem)]">
-          <div className="hairline flex gap-6 overflow-x-auto pt-4 text-charcoal [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="hairline flex gap-6 overflow-x-auto py-4 text-charcoal [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categories.map((c) => (
               <Link
                 key={c.slug}
                 to={`/categories/${c.slug}`}
                 data-cursor=""
-                className={`type-label shrink-0 whitespace-nowrap border-b pb-1 transition-colors duration-500 ${
+                className={`-my-4 type-label shrink-0 whitespace-nowrap border-b py-4 transition-colors duration-500 ${
                   c.slug === category.slug
                     ? 'border-charcoal text-charcoal'
                     : 'border-transparent text-clay hover:text-charcoal'

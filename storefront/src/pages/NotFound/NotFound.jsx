@@ -34,12 +34,16 @@ export default function NotFound() {
         </p>
       </div>
 
+      {/* Touch target ≥44px (S-015): padding grows each link's own box
+          (`-my-4`/`py-4` cancel out visually) — flex-wrap then spaces
+          wrapped rows apart automatically, unlike an expanded `::before`
+          which would need the row gap increased by hand to not overlap. */}
       <nav className="r-fade">
         <div className="hairline flex flex-wrap gap-x-8 gap-y-3 pt-6 text-charcoal">
-          <Link to="/" data-cursor="" className="type-label hover:text-clay">
+          <Link to="/" data-cursor="" className="-my-4 inline-block py-4 type-label hover:text-clay">
             Bosh sahifa
           </Link>
-          <Link to="/catalog" data-cursor="" className="type-label hover:text-clay">
+          <Link to="/catalog" data-cursor="" className="-my-4 inline-block py-4 type-label hover:text-clay">
             Katalog
           </Link>
           {categories.slice(0, 4).map((c) => (
@@ -47,7 +51,7 @@ export default function NotFound() {
               key={c.slug}
               to={`/categories/${c.slug}`}
               data-cursor=""
-              className="type-label text-clay hover:text-charcoal"
+              className="-my-4 inline-block py-4 type-label text-clay hover:text-charcoal"
             >
               {c.name}
             </Link>

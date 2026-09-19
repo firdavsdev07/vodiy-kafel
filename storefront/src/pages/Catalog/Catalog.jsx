@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import PageHeader from '@/components/ui/PageHeader'
@@ -17,13 +17,20 @@ const RHYTHM = [
   { span: 'md:col-span-5', ratio: '3 / 4', offset: 'md:mt-[6vw]' },
   { span: 'md:col-span-5', ratio: '3 / 4', offset: '' },
   { span: 'md:col-span-7', ratio: '4 / 3', offset: 'md:mt-[4vw]' },
-  { span: 'md:col-span-12', ratio: '16 / 9', offset: '' },
+  // Panoramic 16:9 — kept full-width on the mobile 2-col grid too (S-012),
+  // otherwise it renders as a narrow sliver at half a phone's width.
+  { span: 'col-span-2 md:col-span-12', ratio: '16 / 9', offset: '' },
 ]
 
 export default function Catalog() {
   const [params, setParams] = useSearchParams()
   const active = params.get('toifa') ?? 'all'
   const ref = useReveal({ start: 'top 88%', stagger: 0.05 })
+  const filterRef = useRef(null)
+  // Scroll-edge fade for the filter row (S-012): plain `overflow-x-auto`
+  // gave no hint it scrolls at all — "Keramogranit" just cut off mid-word
+  // with no arrow, no gradient, nothing.
+  const [edges, setEdges] = useState({ left: false, right: false })
 
   const visible = useMemo(
     () => (active === 'all' ? products : products.filter((p) => p.category === active)),
@@ -35,6 +42,29 @@ export default function Catalog() {
     if (slug === 'all') setParams({}, { replace: true })
     else setParams({ toifa: slug }, { replace: true })
   }
+
+  const updateEdges = () => {
+    const el = filterRef.current
+    if (!el) return
+    setEdges({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    })
+  }
+
+  useEffect(() => {
+    updateEdges()
+    window.addEventListener('resize', updateEdges)
+    return () => window.removeEventListener('resize', updateEdges)
+  }, [])
+
+  // Active filter always in view (S-012) — scrolling in from a related
+  // category page can land on a filter that's off to the right.
+  useEffect(() => {
+    filterRef.current
+      ?.querySelector('[aria-pressed="true"]')
+      ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [active])
 
   return (
     <>
@@ -48,24 +78,43 @@ export default function Catalog() {
 
       {/* filters */}
       <nav className="sticky top-[82px] z-30 bg-bone/95 backdrop-blur-md">
-        <div className="hairline edge flex gap-x-6 gap-y-3 overflow-x-auto py-4 text-charcoal [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[{ slug: 'all', name: 'Barchasi', index: '00' }, ...categories].map((cat) => {
-            const on = active === cat.slug
-            return (
-              <button
-                key={cat.slug}
-                type="button"
-                data-cursor=""
-                onClick={() => select(cat.slug)}
-                aria-pressed={on}
-                className={`type-label shrink-0 whitespace-nowrap border-b pb-1 transition-colors duration-500 ${
-                  on ? 'border-charcoal text-charcoal' : 'border-transparent text-clay hover:text-charcoal'
-                }`}
-              >
-                {cat.name}
-              </button>
-            )
-          })}
+        <div className="hairline relative">
+          <div
+            ref={filterRef}
+            onScroll={updateEdges}
+            className="edge flex gap-x-6 gap-y-3 overflow-x-auto py-4 text-charcoal [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {[{ slug: 'all', name: 'Barchasi', index: '00' }, ...categories].map((cat) => {
+              const on = active === cat.slug
+              return (
+                <button
+                  key={cat.slug}
+                  type="button"
+                  data-cursor=""
+                  onClick={() => select(cat.slug)}
+                  aria-pressed={on}
+                  className={`-my-4 type-label shrink-0 whitespace-nowrap border-b py-4 transition-colors duration-500 ${
+                    on ? 'border-charcoal text-charcoal' : 'border-transparent text-clay hover:text-charcoal'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              )
+            })}
+          </div>
+          {/* Fade hints, not arrows — matches the site's quiet editorial
+              chrome. Each side only shows while there's really more to
+              scroll that way (S-012). */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-bone to-transparent transition-opacity duration-300"
+            style={{ opacity: edges.left ? 1 : 0 }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-bone to-transparent transition-opacity duration-300"
+            style={{ opacity: edges.right ? 1 : 0 }}
+          />
         </div>
       </nav>
 
@@ -79,7 +128,7 @@ export default function Catalog() {
             Bu toifada hozircha mahsulot yo‘q.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-x-8 gap-y-[clamp(3rem,7vw,6rem)] md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-12 md:gap-x-8 md:gap-y-[clamp(3rem,7vw,6rem)]">
             {visible.map((product, i) => {
               const r = RHYTHM[i % RHYTHM.length]
               return (
@@ -99,18 +148,21 @@ export default function Catalog() {
                       imgClassName="transition-transform duration-[1500ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.055]"
                     />
 
-                    <div className="mt-5 flex flex-wrap items-start justify-between gap-6 border-t border-charcoal/12 pt-4">
+                    {/* Stacked on mobile, side-by-side from md — the old
+                        `flex-wrap justify-between` crowded index/name
+                        against category/size in a 2-col mobile card (S-012). */}
+                    <div className="mt-4 flex flex-col gap-4 border-t border-charcoal/12 pt-3 md:mt-5 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6 md:pt-4">
                       <div>
                         <div className="type-label text-clay">
                           {String(i + 1).padStart(2, '0')} / {product.collection}
                         </div>
-                        <h2 className="mt-3 text-[clamp(1.25rem,2.2vw,1.9rem)] font-semibold leading-none tracking-[-0.02em]">
+                        <h2 className="mt-2 text-[clamp(1.05rem,2.2vw,1.9rem)] font-semibold leading-none tracking-[-0.02em] md:mt-3">
                           {product.name}
                         </h2>
                       </div>
-                      <div className="shrink-0 text-right">
+                      <div className="md:shrink-0 md:text-right">
                         <div className="type-label text-clay">{categoryName(product.category)}</div>
-                        <div className="mt-3 type-meta">
+                        <div className="mt-2 type-meta md:mt-3">
                           {product.size} · {product.finish}
                         </div>
                       </div>

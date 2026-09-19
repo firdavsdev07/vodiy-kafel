@@ -13,11 +13,26 @@
   :root { --tracking-label: 0.1em; }
 }
 
-/* Contrast follows the section surface, including nested dark sections. */
+/* Contrast follows the section surface, including nested dark sections.
+   `stone` is darker than `bone`, so the same clay reads only 3.66:1 on it
+   (fails AA) — currently `.bg-stone` never carries text (SmartImage frame
+   only), but the token stays safe for whenever it does (S-006 audit). */
 :where(.text-bone, .bg-ink, .bg-charcoal) { --color-clay: #c2b9ac; }
-:where(.bg-bone, .bg-stone) { --color-clay: #71685e; }
+:where(.bg-bone) { --color-clay: #71685e; }
+:where(.bg-stone) { --color-clay: #5a534b; }
 :focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
-.floating-nav a, .floating-nav button { background: #eeece5f5; color: #232321; padding: 12px 16px; border: 1px solid #d1cabc; border-radius: 2px; }
+/* Noticeable `:active` feedback on touch (S-015) — every interaction cue
+   on this site is a slow (500-700ms) `:hover` transition designed for a
+   mouse that lingers; a phone has no hover, so a tap produced no visible
+   response at all before this. Scoped to `(hover: none)` so it only
+   applies where hover genuinely isn't available, and left off `input`/
+   `textarea` (an `:active` dim there would misread as "disabled"). */
+@media (hover: none) {
+  a:active, button:active, [role='button']:active { opacity: 0.55; transition: opacity 100ms ease-out; }
+}
+/* `padding` bumped 12px→14px (S-015): the logo/menu pill measured 41px
+   tall — just under the 44px touch-target floor. */
+.floating-nav a, .floating-nav button { background: #eeece5f5; color: #232321; padding: 14px 16px; border: 1px solid #d1cabc; border-radius: 2px; }
 .floating-nav a:first-child { font-weight: 700; letter-spacing: .1em; }
 /* Material study entrance: the same paper, stone and Manrope as the gallery. */
 .entry-screen { position: fixed; inset: 0; z-index: 200; overflow: hidden; color: #232321; background: #eeece5; isolation: isolate; }
@@ -80,7 +95,15 @@
 .hero-gallery a { pointer-events: auto; }
 .hero-greeter { position: absolute; z-index: 11; top: 112px; right: 2.5vw; width: min(47vw, 610px); height: calc(100svh - 112px); min-height: 560px; pointer-events: none; overflow: hidden; }
 .hero-greeter::after { content: ''; position: absolute; z-index: 2; left: 15%; right: 2%; bottom: 0; height: 18%; background: linear-gradient(to bottom, transparent, #eeece5 80%); }
-.hero-greeter img { position: absolute; right: 0; bottom: -12%; width: 82%; height: auto; filter: saturate(.15) contrast(.96); }
+/* `object-fit: cover` + a fixed `object-position` (S-007): the frame's own
+   aspect ratio varies a lot by breakpoint (near-square on mobile, tall on
+   desktop) but the crop always anchors from the TOP, so the head is never
+   lost — only how far down the torso is visible changes. The old
+   `width:82%; bottom:-N%` trick sized the image off the PHOTO's own aspect
+   ratio, not the frame's, so on a frame shorter than the scaled photo the
+   negative `bottom` pushed the image's top edge above the clipped frame
+   and cut the head off instead of the legs. */
+.hero-greeter img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 68% 4%; filter: saturate(.15) contrast(.96); }
 .hero-greeting { position: absolute; z-index: 3; top: 16%; left: 0; padding: 18px 24px; border: 1px solid #aaa294; border-radius: 22px 22px 4px 22px; background: #eeece5ef; color: #232321; font-size: clamp(16px, 1.6vw, 25px); letter-spacing: -.035em; box-shadow: 0 12px 35px #28251f12; backdrop-filter: blur(8px); animation: greeting-float 4.5s ease-in-out infinite; }
 .hero-greeting > span { position: absolute; right: 13px; bottom: -10px; width: 19px; height: 19px; border-right: 1px solid #aaa294; border-bottom: 1px solid #aaa294; background: #eeece5; transform: skewY(38deg); }
 @keyframes greeting-float { 50% { transform: translateY(-7px); } }
@@ -88,9 +111,23 @@
 .material-study-image { transform: rotate(-4deg); }
 .material-study .type-head { font-size: clamp(2.5rem, 4.5vw, 6rem); }
 @media (max-width: 767px) {
- .hero-greeter { top: 430px; right: 0; width: 88vw; height: 500px; min-height: 0; }
- .hero-greeter img { right: -2%; bottom: -15%; width: 82%; }
- .hero-greeting { top: 8%; left: 0; padding: 13px 17px; font-size: 16px; }
+ /* Compact, single-screen mobile hero (S-011). Earlier drafts pinned this
+    at a fixed pixel `top` measured against ONE phone height (812px) —
+    it fit there, but on a shorter phone (iPhone SE, 667px) the fixed
+    offset didn't shrink with it, so the swatch row below ended up
+    rendering 124px past the bottom of the screen (measured). Flow
+    layout instead (`.hero-gallery` below is `flex-direction:column`
+    on mobile): the frame just takes its place after the copy, so the
+    section is exactly as tall as its content on EVERY phone height,
+    never a fixed number that only happened to fit one of them. */
+ .hero-greeter { position: relative; top: auto; right: auto; width: 100%; height: 235px; min-height: 0; }
+ /* Mobile frame is near-square (~1:1); the photo is a tall 2:3 portrait
+    with room either side of the subject, so a plain `cover` fill leaves
+    him looking small and distant. Scale in from the same anchor point
+    the crop uses so the frame reads as a deliberate close crop, not an
+    accident (S-007). */
+ .hero-greeter img { transform: scale(1.45); transform-origin: 68% 4%; }
+ .hero-greeting { top: 6%; left: 0; padding: 11px 15px; font-size: 15px; }
  .material-study { grid-template-columns: 1fr; padding: 80px 6vw; gap: 60px; }
 }
 .hero-copy { max-width: 60%; padding-bottom: 40px; }
@@ -99,8 +136,15 @@
 .hero-copy h1 span { color: #777863; }
 .hero-description { margin-top: 32px; color: #625d54; line-height: 1.85; }
 .hero-link { display: inline-flex; align-items: center; gap: 32px; border-bottom: 1px solid #766e5e; padding: 15px 0; margin-top: 24px; font-size: var(--text-action); font-weight: 600; letter-spacing: .04em; }
-.hero-object-label { position: absolute; right: 7vw; top: 125px; display: flex; flex-direction: column; gap: 8px; text-align: right; color: #665e53; font-size: var(--text-meta); }
-.hero-bottom { position: absolute; left: 5vw; right: 5vw; bottom: 75px; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+/* `right` is pinned to the greeter photo's own left edge (S-008) — a
+   fixed `7vw` used to clear it only by coincidence at the one width it
+   was eyeballed on; measured, it overlapped the (opaque, S-007) photo at
+   every width from 768px to 2560px, silently swallowing the second line. */
+.hero-object-label { position: absolute; right: calc(2.5vw + min(47vw, 610px) + 28px); top: 125px; display: flex; flex-direction: column; gap: 8px; text-align: right; color: #665e53; font-size: var(--text-meta); }
+/* z-index above `.hero-greeter` (11, S-007) — the swatch, drag hint and
+   scroll arrow must never sit BEHIND the greeter photo, which overlaps
+   this row's right-hand side on several widths. */
+.hero-bottom { position: absolute; z-index: 20; left: 5vw; right: 5vw; bottom: 75px; display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .hero-swatch { display: flex; gap: 18px; align-items: center; }
 .hero-swatch img { width: 55px; height: 65px; object-fit: cover; }
 .hero-swatch p { font-size: var(--text-meta); margin-top: 6px; color: #71685e; }
@@ -110,11 +154,27 @@
 @keyframes gallery-enter { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .hero-greeting { animation: none; } }
 @media (max-width: 767px) {
-  .hero-gallery { min-height: 1050px; padding: 130px 6vw 500px; align-items: flex-start; }
-  .hero-copy { max-width: 100%; }
-  .hero-copy h1 { font-size: clamp(3rem, 10vw, 5rem); }
-  .hero-object-label { top: auto; bottom: 145px; right: 6vw; }
-  .hero-bottom { bottom: 72px; }
+  /* Compact single-screen composition (S-011) — the mobile hero is FLOW
+     layout, not the desktop version's absolute-positioned stack squeezed
+     into a narrow column. `.hero-copy`, `.hero-greeter` and `.hero-bottom`
+     are simply stacked in DOM order (heading → person+bubble → swatch),
+     so the section is always exactly as tall as its real content on
+     every phone height — no fixed offset to go stale on a shorter
+     screen (a fixed `top:726px` here once rendered 124px past the
+     bottom of an iPhone SE's 667px viewport, measured). */
+  .hero-gallery { display: flex; flex-direction: column; align-items: stretch; min-height: 0; padding: 80px 6vw 24px; gap: 14px; }
+  .hero-copy { max-width: 100%; padding-bottom: 0; }
+  .hero-eyebrow { margin-bottom: 14px; }
+  .hero-copy h1 { font-size: clamp(2.25rem, 9vw, 3rem); }
+  .hero-description { margin-top: 14px; }
+  .hero-link { margin-top: 14px; }
+  /* `bottom:145px` measured square inside the (opaque, S-007) greeter
+     photo's own box on every phone width tried — z-index:auto put it
+     behind the photo, so it was rendering, just never visible. Hidden
+     here rather than hunted for a free gap, same call already made for
+     `.hero-drag` below: a secondary caption, not core hero content. */
+  .hero-object-label { display: none; }
+  .hero-bottom { position: relative; top: auto; bottom: auto; left: auto; right: auto; }
   .hero-drag { display: none; }
 }
 
@@ -122,6 +182,18 @@
  * Theme tokens — see DESIGN.md §2, §3
  * ------------------------------------------------------------------ */
 @theme {
+  /* Yagona breakpoint to'plami (S-010) — `md`/`lg`/`xl` Tailwind'ning o'z
+     standart qiymatlari bilan bir xil (768/1024/1280), shu yerda ATAYLAB
+     qayta e'lon qilingan — bitta ko'rinadigan joyda, tasodifiy emas.
+     `xs` (480px) esa yangi: avval umuman yo'q edi. Auditda (2026-09-19)
+     saytning deyarli barcha joyi FAQAT `md` dan foydalanishi aniqlandi —
+     boshqalarni QAYERDA HAQIQATDA kerakligi tekshirilmasdan hamma joyga
+     qo'yish o'zi yangi "yo'q joy" xatosi yaratardi (S-008 saboqi). */
+  --breakpoint-xs: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
   --color-bone: #eeece5;
   --color-stone: #d8d3c8;
   --color-clay: #71685e;
@@ -185,7 +257,6 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
   }
 
   ::selection {
@@ -238,12 +309,23 @@
   canvas {
     display: block;
   }
+}
 
-  /* Hide the native cursor only where our custom one is active. */
-  html[data-cursor='on'],
-  html[data-cursor='on'] * {
-    cursor: none !important;
-  }
+/* Trailing cursor ring (S-016) — `translate`/`scale` are independent CSS
+   properties (not the shorthand `transform`), so position and hover/press
+   feedback each get their own transition duration without fighting over
+   one `transform` value. No GSAP in this component; the native cursor
+   was restored (it's the only pointer position with zero latency) and
+   this ring is purely a decorative trail on top of it. */
+.cursor-ring {
+  transition:
+    translate 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    scale 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.25s ease-out;
+  will-change: translate, scale;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cursor-ring { transition-duration: 0.01ms; }
 }
 
 /* ------------------------------------------------------------------ *

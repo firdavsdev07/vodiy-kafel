@@ -10,7 +10,7 @@ import { playTone } from '@/lib/sound'
  * Everything uses mix-blend-difference so a single set of controls stays
  * legible over both the bone and ink grounds, and over the WebGL canvas.
  */
-export default function Nav({ open, onToggle }) {
+export default function Nav({ open, onToggle, toggleRef }) {
   return (
     <header className="floating-nav pointer-events-none fixed inset-0 z-[160]">
       <div className="relative h-full edge py-6 text-bone md:py-8">
@@ -24,6 +24,7 @@ export default function Nav({ open, onToggle }) {
         </Link>
 
         <button
+          ref={toggleRef}
           type="button"
           data-cursor=""
           onClick={() => {
@@ -31,6 +32,7 @@ export default function Nav({ open, onToggle }) {
             onToggle()
           }}
           aria-expanded={open}
+          aria-label={open ? 'Menyuni yopish' : 'Menyuni ochish'}
           className="pointer-events-auto absolute right-[clamp(1.25rem,4vw,4.5rem)] top-6 type-label md:top-8"
         >
           <span className="relative block h-[1em] w-[5.6em] overflow-hidden text-right">
@@ -57,7 +59,13 @@ export default function Nav({ open, onToggle }) {
           {company.contact.phones[0]}
         </a>
 
-        <SoundToggle className="pointer-events-auto absolute bottom-6 right-[clamp(1.25rem,4vw,4.5rem)] text-bone md:bottom-8" />
+        {/* Hidden below `md` (S-013) — moved into the menu overlay
+            instead, see `Menu.jsx`: a fixed bottom-right control had
+            nowhere to sit on a phone screen without landing on top of
+            page content (hero photo, product name, spec values — all
+            measured). `env(safe-area-inset-bottom)` clears the iPhone
+            home-indicator strip on the desktop instance that remains. */}
+        <SoundToggle className="pointer-events-auto absolute right-[clamp(1.25rem,4vw,4.5rem)] hidden text-bone md:block md:bottom-[calc(2rem+env(safe-area-inset-bottom))]" />
       </div>
     </header>
   )
