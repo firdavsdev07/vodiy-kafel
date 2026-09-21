@@ -12,6 +12,21 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  /**
+   * Testlar (S-041). `node --test` o'rniga Vitest: sababi — komponent
+   * renderi. `node --test` da DOM yo'q, ya'ni sahifa render qilinmaydi.
+   *
+   * `environment: 'jsdom'` — brauzer emas, uning taqlidi. Chinakam
+   * brauzer xatti-harakati (layout, GSAP, scroll) BU YERDA
+   * SINALMAYDI; ular uchun haqiqiy brauzer kerak.
+   */
+  test: {
+    environment: 'jsdom',
+    globals: false,
+    setupFiles: ['./tests/setup.js'],
+    include: ['tests/**/*.test.{js,jsx}'],
+  },
+
   build: {
     rollupOptions: {
       output: {

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { EASE, gsapLoaded, loadGsapNear } from '@/animations/gsap'
 import { prefersReducedMotion } from '@/lib/motion'
@@ -16,10 +16,27 @@ import { prefersReducedMotion } from '@/lib/motion'
  *   .r-zoom — counter-scale, use on the <img> inside a .r-clip frame
  *
  * CSS holds the same initial state so nothing flashes before JS runs.
+ *
+ * ⚠ ELEMENT KECH KELISHI MUMKIN (S-026 da topildi). API'ga bog'liq
+ *   bo'lim avval `null` qaytaradi va DOM'ga faqat javob kelgach
+ *   chiqadi. Oddiy `useRef` bunda ishlamaydi: effekt mount paytida
+ *   BIR MARTA ishlaydi, o'shanda `ref.current` hali bo'sh — natijada
+ *   `data-reveal` "in" ga o'tmay qoladi va CSS butun bo'limni
+ *   ko'rinmas holda ushlab turadi. Ya'ni bo'lim BOR, lekin odam
+ *   bo'sh joyga qarab turadi.
+ *
+ *   Shuning uchun ref — CALLBACK: element o'rnatilgan payt aniq
+ *   ma'lum bo'ladi va effektlar o'shanda qayta ishlaydi.
  */
 export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}) {
   const ref = useRef(null)
   const ctxRef = useRef(null)
+  // Element DOM'ga ulanganda o'zgaradi — quyidagi effektlar shunga qaraydi.
+  const [node, setNode] = useState(null)
+  const setRef = useCallback((el) => {
+    ref.current = el
+    setNode((previous) => (previous === el ? previous : el))
+  }, [])
 
   /* FOUC QALQONI (S-018). GSAP endi asinxron keladi, ya'ni mount paytida
      u deyarli hech qachon tayyor emas. CSS esa `[data-reveal]` ostidagi
@@ -40,7 +57,7 @@ export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}
     if (prefersReducedMotion() || (!gsapLoaded() && visible)) {
       el.setAttribute('data-reveal', 'in')
     }
-  }, [])
+  }, [node])
 
   useEffect(() => {
     const el = ref.current
@@ -140,7 +157,7 @@ export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}
     })
 
     return cancel
-  }, [start, stagger, delay])
+  }, [node, start, stagger, delay])
 
   // Cleanup in useLayoutEffect so GSAP reverts BEFORE React removes DOM nodes
   useLayoutEffect(() => {
@@ -150,7 +167,7 @@ export function useReveal({ start = 'top 82%', stagger = 0.075, delay = 0 } = {}
     }
   }, [])
 
-  return ref
+  return setRef
 }
 
 export default useReveal

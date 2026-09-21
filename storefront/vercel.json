@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/((?!assets/|images/|models/|fonts/|audio\\.mp3|favicon\\.svg).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/index.html"
+    }
   ]
 }

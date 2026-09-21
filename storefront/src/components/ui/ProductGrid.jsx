@@ -4,7 +4,14 @@ import SmartImage from '@/components/ui/SmartImage'
 import { categoryName } from '@/data/categories'
 import { playTone } from '@/lib/sound'
 
-/** Shared product listing. Alternating ratios keep the rows from reading as cards. */
+/**
+ * Shared product listing. Alternating ratios keep the rows from reading as cards.
+ *
+ * Ikki manbani ko'radi (S-023): mahalliy namuna katalogi (`product.image`,
+ * `product.category`) va API (`product.src`, `product.categoryLabel` —
+ * `productCardModel` tayyorlaydi). Mock S-022 da o'chadi, o'shanda
+ * `image`/`category` shoxlari ham ketadi.
+ */
 export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
   const cols =
     columns === 2
@@ -25,6 +32,7 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
           >
             <SmartImage
               id={product.image}
+              src={product.src}
               alt={product.name}
               ratio={i % 4 === 0 ? '4 / 5' : '3 / 4'}
               sizes="(max-width: 767px) 92vw, (max-width: 1023px) 46vw, 30vw"
@@ -39,7 +47,9 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
                 {product.name}
               </h3>
               <div className="mt-3 flex items-baseline justify-between gap-4 type-meta">
-                <span className="opacity-60">{categoryName(product.category)}</span>
+                <span className="opacity-60">
+                  {product.categoryLabel ?? categoryName(product.category)}
+                </span>
                 <span>
                   {product.size} · {product.finish}
                 </span>

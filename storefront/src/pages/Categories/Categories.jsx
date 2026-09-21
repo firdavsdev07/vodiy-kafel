@@ -9,6 +9,7 @@ import { countByCategory } from '@/data/products'
 import { useIsTouch } from '@/hooks/useMediaQuery'
 import { useReveal } from '@/hooks/useReveal'
 import { playTone } from '@/lib/sound'
+import Seo from '@/components/ui/Seo'
 
 /** The index. A cursor-tracked still answers whichever row is being read. */
 export default function Categories() {
@@ -77,6 +78,11 @@ export default function Categories() {
 
   return (
     <>
+      <Seo
+        title="Kategoriyalar"
+        description="Yuza turlari bo‘yicha katalog: pol, devor, marmar effekt, tosh effekt va boshqalar."
+      />
+
       <PageHeader
         index="03"
         eyebrow="Indeks"

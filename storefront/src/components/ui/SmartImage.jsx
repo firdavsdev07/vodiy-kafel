@@ -8,9 +8,15 @@ import { img, imgSrcSet } from '@/data/images'
  *
  * Inside a `useReveal` section it participates in the clip-wipe reveal:
  * the frame opens (.r-clip) while the picture settles (.r-zoom).
+ *
+ * Ikki manba (S-023): `id` — mahalliy namuna rasmi (`src/data/images.js`),
+ * `src` — backend bergan tayyor manzil (`assetUrl`). `src` berilsa u
+ * ustun: `srcSet` yo'q, chunki backend hozircha bitta o'lchamni beradi
+ * (turli o'lchamlar — S-032).
  */
 export default function SmartImage({
   id,
+  src,
   alt = '',
   className = '',
   imgClassName = '',
@@ -21,7 +27,13 @@ export default function SmartImage({
   width = 1600,
 }) {
   const [loaded, setLoaded] = useState(null)
-  const status = loaded?.id === id ? loaded.status : 'loading'
+  // Manba almashganda holat nolga qaytsin — aks holda yangi rasm
+  // oldingisining "ready" bayrog'i bilan darhol ko'rinib qolardi.
+  const key = src || id
+  // Manba UMUMAN yo'q (backend `primaryImageUrl: null` berdi) — `img()`
+  // ning mahalliy zaxirasiga tushib ketmaslik kerak: u namuna
+  // katalogining rasmi, mahsulotning rasmi emas (ASSETS.md).
+  const status = !key ? 'error' : loaded?.key === key ? loaded.status : 'loading'
 
   const frame = [
     'relative overflow-hidden bg-stone',
@@ -51,15 +63,15 @@ export default function SmartImage({
         />
       ) : (
         <img
-          src={img(id, width)}
-          srcSet={imgSrcSet(id)}
+          src={src || img(id, width)}
+          srcSet={src ? undefined : imgSrcSet(id)}
           sizes={sizes}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           decoding="async"
           onLoad={() => {
-            setLoaded({ id, status: 'ready' })
+            setLoaded({ key, status: 'ready' })
             /* `ratio` berilgan bo'lsa quti balandligi oldindan band
                qilingan — rasm kelishi hech narsani surmaydi. Aks holda
                sahifa balandligi o'zgaradi va ScrollTrigger nuqtalari
@@ -67,7 +79,7 @@ export default function SmartImage({
                (S-018). Chaqiruvlar bitta kadrga yig'iladi. */
             if (!ratio) refreshScrollTriggers()
           }}
-          onError={() => setLoaded({ id, status: 'error' })}
+          onError={() => setLoaded({ key, status: 'error' })}
           className={[
             'absolute inset-0 h-full w-full object-cover',
             reveal ? 'r-zoom' : '',

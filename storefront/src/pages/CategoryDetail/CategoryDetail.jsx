@@ -6,6 +6,7 @@ import { categories, categoryBySlug } from '@/data/categories'
 import { productsByCategory } from '@/data/products'
 import { useReveal } from '@/hooks/useReveal'
 import NotFound from '@/pages/NotFound/NotFound'
+import Seo from '@/components/ui/Seo'
 
 export default function CategoryDetail() {
   const { slug } = useParams()
@@ -19,6 +20,11 @@ export default function CategoryDetail() {
 
   return (
     <>
+      <Seo
+        title={category.name}
+        description={category.description || `${category.name} — Vodiy Kafel katalogi.`}
+      />
+
       <header
         ref={headRef}
         data-reveal=""

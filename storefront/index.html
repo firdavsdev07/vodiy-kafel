@@ -9,17 +9,23 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B0B0A" />
-    <meta
-      name="description"
-      content="Vodiy Kafel — Farg'ona vodiysida premium keramika va keramogranit. 20 yildan ortiq tajriba, 50 000+ mijoz."
-    />
-
     <!-- Birinchi ekranda aynan shu ikkitasi ishlatiladi: 400 — matn, 500 — h1.
          600/700 pastroqda kerak bo'ladi, ularni oldindan tortish shart emas. -->
     <link rel="preload" href="/fonts/manrope-400.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin />
 
-    <title>Vodiy Kafel® — Premium keramik yuzalar</title>
+    <!-- ⚠ BU YERDA `<title>` VA `<meta name="description">` YO'Q (S-036).
+         Ularni har sahifa o'zi beradi (`src/components/ui/Seo.jsx`) —
+         React 19 bu teglarni komponentdan `<head>` ga o'zi ko'chiradi.
+
+         Statik nusxa qoldirilmadi: React o'zinikini QO'SHADI, eskisini
+         o'chirmaydi — natijada ikkita `<title>` va ikkita `description`
+         paydo bo'lardi, va robotlar ko'pincha BIRINCHISINI oladi, ya'ni
+         mahsulot havolasi "Premium keramik yuzalar" bo'lib ko'rinardi.
+
+         ⚠ Buning narxi: JS ishlatmaydigan robot xom HTML'da sarlavha
+           ko'rmaydi. Lekin u KONTENTNI ham ko'rmaydi — sayt toza SPA.
+           Ikkalasining ham yechimi bitta: S-038 (prerender). -->
   </head>
   <body>
     <div id="root"></div>

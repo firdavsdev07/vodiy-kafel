@@ -10,9 +10,18 @@ import { BATH, INTERIOR, MARBLE, TILE, TRAVERTINE } from '@/data/images'
 import { useIsTouch } from '@/hooks/useMediaQuery'
 import { startScroll, stopScroll } from '@/lib/lenis'
 import { playTone } from '@/lib/sound'
+import { useMainBranch } from '@/shared/api'
 
-/** One still per destination — the background answers the hovered link. */
-const STILLS = [INTERIOR[4], MARBLE[0], TILE[5], TRAVERTINE[0], BATH[1]]
+/**
+ * One still per destination — the background answers the hovered link.
+ *
+ * ⚠ TARTIB `company.nav` BILAN BIR XIL bo'lishi SHART: `hovered` —
+ *   havolaning indeksi, shu indeks bilan surat tanlanadi. Menyuga
+ *   yangi havola qo'shilsa, bu yerga ham surat qo'shiladi, aks holda
+ *   oxirgi havola foni ko'rinmay qoladi (S-027 da aynan shunday
+ *   bo'lgandi: galereya qo'shildi, surat qo'shilmadi).
+ */
+const STILLS = [INTERIOR[4], MARBLE[0], TILE[5], INTERIOR[8], TRAVERTINE[0], BATH[1]]
 
 export default function Menu({ open, onClose }) {
   const rootRef = useRef(null)
@@ -22,6 +31,7 @@ export default function Menu({ open, onClose }) {
   const isTouch = useIsTouch()
   const location = useLocation()
   const [hovered, setHovered] = useState(0)
+  const { data: branch } = useMainBranch()
 
   /* Close on route change and on Escape. */
   useEffect(() => {
@@ -203,11 +213,16 @@ export default function Menu({ open, onClose }) {
                 </a>
               ))}
             </div>
-            <div className="type-label text-clay">
-              {company.showroom.street}
-              <br />
-              <span className="text-bone">{company.showroom.hours}</span>
-            </div>
+            {/* Manzil API'dan (S-025). Backend javob bermasa blok
+                chiqmaydi — telefon va ijtimoiy tarmoqlar yuqorida
+                qolgani uchun aloqa imkoni yo'qolmaydi. */}
+            {branch && (
+              <div className="type-label text-clay">
+                {branch.address}
+                <br />
+                <span className="text-bone">{branch.workingHours}</span>
+              </div>
+            )}
             <div className="flex gap-6">
               <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="type-label text-clay transition-colors hover:text-bone">
                 Telegram

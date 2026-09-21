@@ -7,10 +7,16 @@ import Cursor from '@/components/Cursor/Cursor'
 import Footer from '@/components/Footer/Footer'
 import Menu from '@/components/Menu/Menu'
 import Nav from '@/components/Nav/Nav'
+import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import JsonLd from '@/components/ui/JsonLd'
+import OfflineBanner from '@/components/ui/OfflineBanner'
 import RouteSkeleton from '@/components/ui/RouteSkeleton'
 import { destroyLenis, initLenis, scrollToTop, startScroll, stopScroll } from '@/lib/lenis'
 import { EntryContext } from '@/lib/entryContext'
 import { hasEnteredThisSession } from '@/lib/session'
+import { company } from '@/data/company'
+import { organizationSchema } from '@/lib/schema'
+import { branchModel, useBranches } from '@/shared/api'
 
 /**
  * Kirish darvozasi — `lazy` (S-002). U faqat BIRINCHI tashrifda ochiladi;
@@ -29,6 +35,10 @@ export default function Layout() {
   const wasMenuOpen = useRef(false)
   const veilRef = useRef(null)
   const firstRoute = useRef(true)
+  /* Kompaniya sxemasi sayt bo'ylab BITTA joyda (S-039) — har sahifada
+     takrorlansa Google uni ikki xil tashkilot deb o'qishi mumkin.
+     Manzil `GET /branches` dan (S-025). */
+  const { data: branchData } = useBranches()
 
   useEffect(() => {
     initLenis()
@@ -112,6 +122,24 @@ export default function Layout() {
 
   return (
     <EntryContext.Provider value={entered}>
+      <JsonLd
+        data={organizationSchema({
+          company,
+          branches: (branchData ?? []).map(branchModel),
+        })}
+      />
+
+      {/* Klaviatura bilan yuruvchi odam uchun birinchi element (S-040):
+          Nav va menyudan sakrab, to'g'ridan-to'g'ri kontentga o'tadi.
+          `<a href>` — router havolasi EMAS: sahifa almashmaydi, faqat
+          fokus `<main id="main">` ga ko'chadi. */}
+      <a href="#main" className="skip-link">
+        Kontentga o‘tish
+      </a>
+
+      {/* Aloqa yo'qligi — butun sayt uchun BITTA xabar (S-031), har bir
+          bo'lim alohida qichqirmasin. */}
+      <OfflineBanner />
       <Cursor />
       {/* z-140: menyu (150) va Nav (160) dan past — o'tish paytida ham
           menyu tugmasi bosiladigan holda qoladi */}
@@ -123,16 +151,32 @@ export default function Layout() {
       <Nav open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} toggleRef={menuToggleRef} />
       <Menu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <main ref={mainRef} id="main">
+      {/* `tabIndex={-1}` — skip-link bosilganda `<main>` ga fokus
+          tushsin: aks holda brauzer faqat skroll qiladi va keyingi Tab
+          yana sahifa boshidan boshlanardi. */}
+      <main ref={mainRef} id="main" tabIndex={-1}>
         {/* Suspense chegarasi shu yerda — Nav, Footer va kursor sahifa
-            almashganda mount holicha qoladi, ekran oqarmaydi. */}
+            almashganda mount holicha qoladi, ekran oqarmaydi.
+
+            `ErrorBoundary` ichkarida va `key` — marshrut (S-043):
+            bir sahifa yiqilsa Nav/Footer joyida qoladi, va boshqa
+            sahifaga o'tilganda chegara O'ZI tiklanadi (yangi `key` →
+            yangi nusxa), ya'ni odam "qayta urinish" ni bosishi shart
+            emas. */}
         <Suspense fallback={<RouteSkeleton />}>
-          <Outlet />
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </Suspense>
       </main>
 
+      {/* Footer alohida chegara ichida va yiqilsa JIM o'chadi: u
+          yordamchi bo'lim, uning xatosi uchun sahifaning o'rtasiga
+          katta xato ekrani chiqarish o'rinsiz bo'lardi. */}
       <div ref={footerRef}>
-        <Footer />
+        <ErrorBoundary fallback={() => null}>
+          <Footer />
+        </ErrorBoundary>
       </div>
 
       {gateOpen && (

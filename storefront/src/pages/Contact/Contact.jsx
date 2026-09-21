@@ -1,68 +1,28 @@
-import { useState } from 'react'
-
 import SmartImage from '@/components/ui/SmartImage'
 import { company } from '@/data/company'
 import { INTERIOR } from '@/data/images'
 import { useReveal } from '@/hooks/useReveal'
-import { submitEnquiry } from '@/lib/enquiry'
-import { playTone } from '@/lib/sound'
-
-const EMPTY = { name: '', phone: '', message: '' }
+import { branchModel, useBranches, usePaymentRequisites } from '@/shared/api'
+import Seo from '@/components/ui/Seo'
 
 export default function Contact() {
   const headRef = useReveal({ start: 'top 92%', stagger: 0.08 })
   const bodyRef = useReveal({ start: 'top 85%' })
 
-  const [values, setValues] = useState(EMPTY)
-  const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState('idle')
-  const [reference, setReference] = useState(null)
-
-  const update = (field) => (e) => {
-    setValues((v) => ({ ...v, [field]: e.target.value }))
-    setErrors((v) => ({ ...v, [field]: undefined }))
-  }
-
-  const validate = () => {
-    const next = {}
-    if (values.name.trim().length < 2) next.name = 'Ismingizni kiriting'
-    if (values.phone.replace(/\D/g, '').length < 9) next.phone = 'Telefon raqamini kiriting'
-    if (values.message.trim().length < 4) next.message = 'Qisqacha yozing'
-    setErrors(next)
-    return Object.keys(next).length === 0
-  }
-
-  /* No API call — see src/lib/enquiry.js */
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    if (status === 'sending') return
-    if (!validate()) return
-
-    setStatus('sending')
-    playTone('click')
-    const result = await submitEnquiry(values)
-    if (result.ok) {
-      setReference(result.reference)
-      setStatus('sent')
-      setValues(EMPTY)
-      playTone('open')
-    } else {
-      setStatus('idle')
-    }
-  }
-
-  const field =
-    'w-full border-b border-charcoal/25 bg-transparent py-4 text-[clamp(1.05rem,1.6vw,1.3rem)] outline-none transition-colors placeholder:text-clay focus:border-charcoal'
-
   return (
     <>
+      <Seo
+        title="Aloqa"
+        description="Vodiy Kafel do‘konlari: manzil, ish vaqti va telefon raqamlari. Farg‘ona, Andijon, Namangan, Qo‘qon."
+      />
+
       <header
         ref={headRef}
         data-reveal=""
         className="relative z-10 edge pb-[clamp(3rem,7vw,6rem)] pt-[clamp(7rem,16vw,13rem)]"
       >
         <div className="flex items-baseline justify-between">
-          <span className="type-label text-clay">05 — Aloqa</span>
+          <span className="type-label text-clay">06 — Aloqa</span>
           <span className="type-label text-clay">{company.location}</span>
         </div>
 
@@ -103,30 +63,6 @@ export default function Contact() {
               </div>
             </div>
 
-            <div className="r-fade mt-12">
-              <div className="type-label text-clay">Manzil</div>
-              <address className="mt-4 not-italic leading-relaxed">
-                {company.showroom.region}
-                <br />
-                {company.showroom.city} shahri
-                <br />
-                {company.showroom.street}
-                <br />
-                <span className="text-clay">{company.showroom.landmark}</span>
-              </address>
-            </div>
-
-            <div className="r-fade mt-12">
-              <div className="type-label text-clay">Ish vaqti</div>
-              <p className="mt-4 leading-relaxed">
-                {company.showroom.hours}
-                <br />
-                {company.showroom.days}
-                <br />
-                <span className="text-clay">{company.showroom.closed}</span>
-              </p>
-            </div>
-
             {/* Touch target ≥44px (S-015): real padding, not an expanded
                 `::before` — this row wraps on narrow screens, and an
                 inset large enough to reach 44px would overlap the row
@@ -144,126 +80,258 @@ export default function Contact() {
               </a>
             </div>
 
-            <a
-              href={company.showroom.mapUrl}
-              target="_blank"
-              rel="noreferrer"
-              data-cursor="Ochish"
-              className="r-fade mt-12 block"
-            >
+            <div className="r-fade mt-12">
               <SmartImage
                 id={INTERIOR[9]}
-                alt="Showroom joylashuvi"
+                alt=""
                 ratio="16 / 9"
                 sizes="(max-width: 767px) 92vw, 40vw"
                 className="w-full"
-                imgClassName="transition-transform duration-[1400ms] ease-[cubic-bezier(.16,1,.3,1)] hover:scale-[1.04]"
               />
-              <span className="mt-3 block type-action text-clay">Xaritada ko‘rish →</span>
-            </a>
+            </div>
           </div>
 
-          {/* form */}
+          {/* Aloqa yo'llari (S-030).
+
+              ⚠ FORMA OLIB TASHLANDI. U ochiq-oydin "demo rejimida —
+                ma'lumot hech qayerga yuborilmaydi" deb yozib turardi.
+                Backendda ochiq "murojaat/lead" endpointi YO'Q:
+                `POST /orders` faqat optom mijoz tokeni bilan ishlaydi,
+                chakana mijozda esa hisob yo'q (G1). Ishlamaydigan
+                forma ishonchni yo'qotadi — odam yozadi, javob kelmaydi.
+
+              🆕 Keyingi qadam — api'da `POST /leads` (task.txt, S-030
+                 dagi "A yo'li"). U tayyor bo'lgach forma shu yerga
+                 qaytadi. */}
           <div className="md:col-span-6 md:col-start-7">
-            <div className="r-fade type-label text-clay">Xabar qoldiring</div>
+            <div className="r-fade type-label text-clay">Qanday bog‘lanish mumkin</div>
 
-            {status === 'sent' ? (
-              <div className="mt-8 border-t border-charcoal/25 pt-8">
-                <p className="type-sub">Qabul qilindi.</p>
-                <p className="mt-5 max-w-[38ch] text-clay">
-                  Menejerimiz ish vaqti davomida siz bilan bog‘lanadi. Shoshilinch
-                  bo‘lsa, to‘g‘ridan-to‘g‘ri qo‘ng‘iroq qiling.
-                </p>
-                <p className="mt-6 type-label text-clay">Ma’lumotnoma: {reference}</p>
-                <button
-                  type="button"
+            <div className="r-fade mt-8 flex flex-col">
+              {company.contact.phones.map((phone, i) => (
+                <a
+                  key={phone}
+                  href={`tel:${company.contact.phoneHref[i]}`}
                   data-cursor=""
-                  onClick={() => setStatus('idle')}
-                  className="group relative mt-10 inline-flex items-center gap-3 type-label before:absolute before:-inset-4 before:content-['']"
+                  className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
                 >
-                  Yana yozish
-                  <span className="block h-px w-10 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={onSubmit} noValidate className="mt-8 flex flex-col gap-8">
-                <div>
-                  <label htmlFor="name" className="type-label text-clay">
-                    Ism
-                  </label>
-                  <input
-                    id="name"
-                    name="name"
-                    value={values.name}
-                    onChange={update('name')}
-                    placeholder="Ismingiz"
-                    autoComplete="name"
-                    aria-invalid={Boolean(errors.name)}
-                    className={field}
-                  />
-                  {errors.name && <p className="mt-2 type-label text-clay">{errors.name}</p>}
-                </div>
+                  <span className="type-label text-clay">
+                    {i === 0 ? 'Qo‘ng‘iroq' : 'Qo‘shimcha'}
+                  </span>
+                  <span className="text-[clamp(1.1rem,2vw,1.6rem)] font-semibold tracking-[-0.02em]">
+                    {phone}
+                  </span>
+                </a>
+              ))}
 
-                <div>
-                  <label htmlFor="phone" className="type-label text-clay">
-                    Telefon
-                  </label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    inputMode="tel"
-                    value={values.phone}
-                    onChange={update('phone')}
-                    placeholder="+998 __ ___ __ __"
-                    autoComplete="tel"
-                    aria-invalid={Boolean(errors.phone)}
-                    className={field}
-                  />
-                  {errors.phone && <p className="mt-2 type-label text-clay">{errors.phone}</p>}
-                </div>
+              <a
+                href={company.contact.telegram}
+                target="_blank"
+                rel="noreferrer"
+                data-cursor="Ochish"
+                className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
+              >
+                <span className="type-label text-clay">Telegram</span>
+                <span className="text-[clamp(1.1rem,2vw,1.6rem)] font-semibold tracking-[-0.02em]">
+                  {company.contact.handle} ↗
+                </span>
+              </a>
 
-                <div>
-                  <label htmlFor="message" className="type-label text-clay">
-                    Xabar
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={4}
-                    value={values.message}
-                    onChange={update('message')}
-                    placeholder="Qaysi yuza qiziqtiradi, qancha m² kerak?"
-                    aria-invalid={Boolean(errors.message)}
-                    className={`${field} resize-none`}
-                  />
-                  {errors.message && (
-                    <p className="mt-2 type-label text-clay">{errors.message}</p>
-                  )}
-                </div>
+              <a
+                href={`mailto:${company.contact.email}`}
+                data-cursor=""
+                className="group flex items-baseline justify-between gap-4 border-y border-charcoal/25 py-5 transition-colors hover:text-clay"
+              >
+                <span className="type-label text-clay">Pochta</span>
+                <span className="break-all text-[clamp(0.95rem,1.5vw,1.2rem)]">
+                  {company.contact.email}
+                </span>
+              </a>
+            </div>
 
-                {/* Touch target ≥44px (S-015) — the primary form CTA was
-                    only 15px tall. `gap-8` on the form's flex column gives
-                    16px of clearance on each side to expand into safely. */}
-                <button
-                  type="submit"
-                  data-cursor=""
-                  disabled={status === 'sending'}
-                  className="group relative mt-2 flex w-fit items-center gap-4 type-label before:absolute before:-inset-4 before:content-[''] disabled:opacity-40"
-                >
-                  {status === 'sending' ? 'Yuborilmoqda' : 'Yuborish'}
-                  <span className="block h-px w-14 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[1.714]" />
-                </button>
-
-                <p className="type-label max-w-[40ch] leading-relaxed text-clay">
-                  Bu forma hozircha demo rejimida — ma’lumot hech qayerga
-                  yuborilmaydi.
-                </p>
-              </form>
-            )}
+            <p className="r-fade mt-8 max-w-[42ch] leading-relaxed text-clay">
+              Qo‘ng‘iroq qiling yoki Telegramga yozing — ish vaqtida darhol
+              javob beramiz. Qaysi yuza kerakligini bilmasangiz ham bo‘ladi:
+              xonani aytsangiz, o‘zimiz tanlab beramiz.
+            </p>
           </div>
         </div>
       </section>
+
+      <BranchList />
+      <Requisites />
     </>
+  )
+}
+
+/**
+ * Do'konlar ro'yxati (S-025) — `GET /branches`.
+ *
+ * ⚠ Bu yerda kelgan hammasi — odam borib ko'ra oladigan do'kon.
+ *   Markaziy ombor ochiq endpointda UMUMAN yo'q, ya'ni saytda
+ *   "filial turi" degan tushuncha ham yo'q (api/CLAUDE.md §5).
+ */
+function BranchList() {
+  const ref = useReveal({ start: 'top 85%' })
+  const { data, error, refetch } = useBranches()
+  const branches = (data ?? []).map(branchModel)
+
+  // Hech narsa yo'q va xato ham yo'q — hali yuklanmoqda.
+  if (!branches.length && !error) return <BranchListSkeleton />
+
+  return (
+    <section
+      ref={ref}
+      data-reveal=""
+      className="relative z-10 edge pb-[clamp(5rem,12vw,10rem)]"
+    >
+      <div className="hairline flex items-baseline justify-between pt-4">
+        <span className="type-label text-clay">Do‘konlar</span>
+        {branches.length > 0 && (
+          <span className="type-label text-clay">
+            {String(branches.length).padStart(2, '0')} ta manzil
+          </span>
+        )}
+      </div>
+
+      {error ? (
+        <div className="mt-[clamp(2.5rem,6vw,4rem)]">
+          <p className="max-w-[44ch] text-clay">{error.message}</p>
+          {error.isRetryable && (
+            <button
+              type="button"
+              onClick={refetch}
+              data-cursor=""
+              className="group mt-8 flex items-center gap-3 type-action"
+            >
+              Qayta urinish
+              <span className="block h-px w-10 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="mt-[clamp(2.5rem,6vw,4rem)] grid gap-x-8 gap-y-[clamp(2.5rem,5vw,4rem)] md:grid-cols-2 lg:grid-cols-4">
+          {branches.map((branch) => (
+            <article key={branch.id} className="r-fade border-t border-charcoal/12 pt-5">
+              <h2 className="text-[clamp(1.1rem,1.8vw,1.55rem)] font-semibold leading-none tracking-[-0.02em]">
+                {branch.city}
+              </h2>
+
+              <address className="mt-4 not-italic leading-relaxed text-clay">
+                {branch.address}
+              </address>
+
+              <p className="mt-4 type-meta">{branch.workingHours}</p>
+
+              {/* Touch target ≥44px (S-015): `-my-2.5`/`py-2.5` — qator
+                  kattalashadi, lekin qo'shni elementlar joyidan siljimaydi. */}
+              <div className="mt-4 flex flex-col">
+                {branch.phones.map((phone) => (
+                  <a
+                    key={phone.href}
+                    href={`tel:${phone.href}`}
+                    data-cursor=""
+                    className="-my-2.5 block py-2.5 transition-colors hover:text-clay"
+                  >
+                    {phone.display}
+                  </a>
+                ))}
+              </div>
+
+              {branch.mapUrl && (
+                <a
+                  href={branch.mapUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-cursor="Ochish"
+                  className="group mt-6 flex items-center gap-3 type-action"
+                >
+                  Xaritada ochish
+                  <span className="block h-px w-8 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
+                </a>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** Ro'yxat kelguncha — o'sha tartib, saytning o'z ohangida (S-031). */
+function BranchListSkeleton() {
+  return (
+    <section
+      role="status"
+      aria-live="polite"
+      className="relative z-10 edge pb-[clamp(5rem,12vw,10rem)]"
+    >
+      <span className="sr-only">Do‘konlar ro‘yxati yuklanmoqda</span>
+      <div className="hairline pt-4">
+        <span className="type-label text-clay" aria-hidden>Do‘konlar</span>
+      </div>
+      <div className="mt-[clamp(2.5rem,6vw,4rem)] grid gap-x-8 gap-y-[clamp(2.5rem,5vw,4rem)] md:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="flex flex-col gap-3 border-t border-charcoal/12 pt-5" aria-hidden>
+            <span className="route-skeleton-bar" style={{ width: '45%', height: '1.3rem' }} />
+            <span className="route-skeleton-bar" style={{ width: '80%', height: '1rem' }} />
+            <span className="route-skeleton-bar" style={{ width: '70%', height: '1rem' }} />
+            <span className="route-skeleton-bar" style={{ width: '60%', height: '1rem' }} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Bank rekvizitlari (S-028) — `GET /settings/public`.
+ *
+ * ❓ Taskdagi savol: "saytda kerakmi?". Javob — HA, chunki qaror
+ *    saytniki emas: backend bu kalitni faqat admin `isPublic` deb
+ *    belgilagandagina chiqaradi. Ya'ni "ko'rsatilsinmi" degan savolga
+ *    admin panelining o'zi javob beradi, sayt esa bor narsani
+ *    ko'rsatadi va yo'q bo'lsa jim turadi.
+ *
+ * 🔒 Bu to'lov QABUL QILISH emas: ochiq saytda savat ham, to'lov ham
+ *    yo'q (G1). Bu shunchaki pul ko'chirish uchun kerakli ma'lumot —
+ *    ko'pincha shartnoma bo'yicha ishlaydigan mijozga.
+ */
+function Requisites() {
+  const ref = useReveal({ start: 'top 88%' })
+  const { data } = usePaymentRequisites()
+
+  // Kalit ochilmagan yoki hali to'ldirilmagan — blok umuman chiqmaydi.
+  if (!data) return null
+
+  const rows = [
+    ['Nomi', data.name],
+    ['Bank', data.bank],
+    ['Hisob raqami', data.account],
+    ['MFO', data.mfo],
+    ['INN', data.inn],
+  ].filter(([, value]) => value)
+
+  return (
+    <section
+      ref={ref}
+      data-reveal=""
+      className="relative z-10 edge pb-[clamp(5rem,12vw,10rem)]"
+    >
+      <div className="hairline flex items-baseline justify-between pt-4">
+        <span className="type-label text-clay">Rekvizitlar</span>
+        <span className="type-label text-clay">Pul ko‘chirish uchun</span>
+      </div>
+
+      <dl className="r-fade mt-[clamp(2rem,5vw,3rem)] grid gap-x-8 gap-y-6 md:grid-cols-3 lg:grid-cols-5">
+        {rows.map(([label, value]) => (
+          <div key={label} className="border-t border-charcoal/12 pt-3">
+            <dt className="type-label text-clay">{label}</dt>
+            {/* Hisob raqami uzun va ko'chiriladi — `break-all` bo'lmasa
+                tor ekranda qutidan chiqib ketadi. */}
+            <dd className="mt-2 type-meta break-all">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }

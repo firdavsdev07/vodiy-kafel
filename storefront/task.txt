@@ -2142,7 +2142,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-023 · Mahsulot sahifasi → `GET /products/{slug}` ─────────────────────┐
+┌─ [x] S-023 · Mahsulot sahifasi → `GET /products/{slug}` ─────────────────────┐
 │                                                                              │
 │  Endpointlar:                                                                │
 │    `GET /products/{slug}`          — `ProductDetailResponseDto`              │
@@ -2158,6 +2158,119 @@
 │    • `POST .../view` — sahifa ochilganda BIR MARTA (har renderda emas)       │
 │    • Mahsulot topilmasa → 404 sahifasi                                       │
 │    • Texnik xususiyatlar: o'lcham, sirt, zavod, m²/paddon, kg/paddon         │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    ── NIMA QILINDI ──                                                        │
+│                                                                              │
+│      Yangi fayl: `src/shared/api/catalog.js` — ochiq katalogning             │
+│      DOMEN qatlami. `client.js` transport bo'lib qoladi (fetch, xato,        │
+│      kesh), DTO → sahifa o'girishi esa shu yerda: enum'lar o'zbekcha         │
+│      matnga, `/uploads/...` to'liq manzilga, `media[]` turlariga.            │
+│                                                                              │
+│      `ProductDetail.jsx` to'liq qayta yozildi — mock YO'Q:                   │
+│        `GET  /products/{slug}`          → mahsulot va `media[]`              │
+│        `GET  /products/{slug}/similar`  → "shunga o'xshash" bloki            │
+│        `POST /products/{slug}/view`     → ko'rishlar hisoblagichi            │
+│                                                                              │
+│      Xususiyatlar ro'yxati API maydonlaridan: zavod, o'lcham, yuza,          │
+│      rang, m²/paddon, kg/paddon, holati. `sqmPerPallet` va                   │
+│      `weightPerPallet` SATR holicha ko'rsatiladi — songa aylantirilsa        │
+│      aniqlik yo'qoladi (api CLAUDE.md, 7-qoida). Bo'sh maydon                │
+│      ro'yxatdan tushib qoladi, bo'sh qator qolmaydi.                         │
+│                                                                              │
+│      🔒 Narx ham, ombordagi aniq son ham YO'Q (G1) — faqat                   │
+│         `availability`: "Omborda bor" / "Hozircha yo'q".                     │
+│                                                                              │
+│    ── 360° MEDIA ──                                                          │
+│                                                                              │
+│      `IMAGE_360` bitta surat EMAS: admin har bir kadrni alohida fayl         │
+│      qilib yuklaydi (`product-media.admin.controller.ts`), ya'ni bir         │
+│      mahsulotda shu turdagi bir necha yozuv bo'ladi. `groupMedia`            │
+│      ularni yig'adi, `Product360.jsx` bitta aylantirgichga aylantiradi       │
+│      — sudrash, `←`/`→` tugmalari, `role="slider"`.                          │
+│                                                                              │
+│      ⚠ O'ZI AYLANMAYDI. Avtomatik aylanish — to'xtovsiz harakat, ya'ni       │
+│        S-020 ni buzardi. Harakatni odam boshqaradi.                          │
+│                                                                              │
+│      Kadrlar HAMMASI DOM'da turadi, faqat ko'rinishi almashadi.              │
+│      `SmartImage` bu yerda ishlamadi: u har bir yangi manbani noldan         │
+│      "yuklanmoqda" deb boshlaydi, ya'ni sudrash paytida kadrlar              │
+│      o'chib-yonardi.                                                         │
+│                                                                              │
+│      `VIDEO_360` → `<video controls loop muted playsInline>`.                │
+│      `autoPlay` YO'Q — shu sabab.                                            │
+│                                                                              │
+│    ── KO'RISHNI HISOBLASH ──                                                 │
+│                                                                              │
+│      `POST .../view` BIR MARTA va faqat mahsulot HAQIQATAN topilgandan       │
+│      keyin (mavjud bo'lmagan slug uchun so'rov — serverga bekorga 404        │
+│      yasash). Takrorlanishdan modul darajasidagi `Set` saqlaydi:             │
+│      StrictMode (dev) effektni ikki marta ishga tushirsa ham, SPA            │
+│      ichida orqaga-oldinga yurilsa ham — bitta so'rov. Sahifa                │
+│      YANGILANSA qaytadan sanaladi: bu haqiqatan yangi tashrif.               │
+│                                                                              │
+│      Xatosi JIM yutiladi — hisoblagich mahsulot sahifasini buza olmaydi.     │
+│                                                                              │
+│    ── HOLATLAR (S-031 shu yerdan boshlandi) ──                               │
+│                                                                              │
+│      Tartib ataylab shunday:                                                 │
+│        1. ma'lumot bor → ko'rsatiladi. Fonda qayta so'rov yiqilsa ham        │
+│           ekrandagi mahsulot xato sahifasiga ALMASHMAYDI                     │
+│        2. 404 → `NotFound`. Yo'q, o'chirilgan va "zavodi o'chirilgan"        │
+│           ataylab farqlanmaydi (api CLAUDE.md, IDOR qoidasi)                 │
+│        3. boshqa xato → tushunarli matn + "Qayta urinish"                    │
+│        4. qolgan hammasi (`idle` ham, `loading` ham) → skelet                │
+│                                                                              │
+│      Skelet `RouteSkeleton` emas: tartibi aynan mahsulot sahifasiniki        │
+│      (yorliq, sarlavha, 16/10 surat, yonida xususiyatlar), shuning           │
+│      uchun kontent kelganda sahifa sakramaydi.                               │
+│                                                                              │
+│      `useReveal` `ProductView` ichida — u faqat ma'lumot kelgandan           │
+│      keyin mount bo'ladi, ya'ni reveal'lar bo'sh DOM ustida ishlamaydi.      │
+│                                                                              │
+│    ── TEGIB O'TILGAN FAYLLAR ──                                              │
+│                                                                              │
+│      `SmartImage`  — endi `src` (backend manzili) ham qabul qiladi,          │
+│                      `id` (mahalliy namuna) yonida.                          │
+│                      ⚠ Manba UMUMAN yo'q bo'lsa `img()` ning mahalliy        │
+│                        zaxirasiga TUSHMAYDI — u Marazzi namunasining         │
+│                        rasmi, mahsulotniki emas (ASSETS.md, S-033).          │
+│                        O'rniga o'z o'rin egallovchisi chiqadi.               │
+│      `ProductGrid` — `product.src` va `product.categoryLabel` ni ham         │
+│                      ko'radi (`productCardModel` tayyorlaydi). Mock          │
+│                      shoxlari S-022 da o'chadi.                              │
+│      `package.json`, `README.md`, ildizdagi `CLAUDE.md` — `pnpm test`        │
+│                      qo'shildi: test fayli endi bitta emas.                  │
+│                                                                              │
+│    ── TEKSHIRILDI ──                                                         │
+│                                                                              │
+│      `pnpm lint` · `pnpm build` · `pnpm test` (8 ta test, 0 xato).           │
+│                                                                              │
+│      Yangi `tests/catalog.test.js` — 5 ta test: media turlarga ajralishi     │
+│      va tartibi, nisbiy manzilning to'lishi (tashqi manzil TEGILMAYDI),      │
+│      `media` yo'q yoki `url` siz yozuv, karta modeli, rang/rasm yo'q holat.  │
+│                                                                              │
+│      Jonli backend (`api` seed ma'lumoti) bilan:                             │
+│        `GET  /products/metro-vintage`         → 200, `media` 2 ta            │
+│                                                 (IMAGE + IMAGE_360)          │
+│        `GET  /products/metro-vintage/similar` → 200, 1 ta mahsulot           │
+│        `POST /products/metro-vintage/view`    → 204                          │
+│        `GET  /products/yoq-mahsulot`          → 404 "Mahsulot topilmadi"     │
+│                                                                              │
+│      `groupMedia` va `productCardModel` aynan shu javoblar ustida            │
+│      ishlatib ko'rildi: seed'dagi `https://cdn.vodiykafel.uz/...`            │
+│      manzillari o'zgarishsiz o'tdi, `DEVOR` → "Devor uchun".                 │
+│                                                                              │
+│      ⚠ Brauzerda ko'rib tekshirilmadi — Chrome kengaytmasi ulanmagan         │
+│        edi. Qolgan tekshiruvlar (build, test, jonli curl) o'tdi.             │
+│                                                                              │
+│    ⚠ KATALOG HALI MOCK — S-022 bloklangan (api B-067 ni kutadi).             │
+│      Ya'ni `/catalog` dagi kartalar namuna slug'lariga ishora qiladi         │
+│      va ular endi 404 beradi. Bu KUTILGAN oraliq holat: mahsulot             │
+│      sahifasi haqiqiy slug bilan ochiladi (`/catalog/metro-vintage`),        │
+│      S-022 tugagach havolalar o'zi to'g'rilanadi.                            │
 │                                                                              │
 │  Bog'liq: S-022                                                              │
 │                                                                              │
@@ -2177,7 +2290,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-025 · Filiallar → `GET /branches` ────────────────────────────────────┐
+┌─ [x] S-025 · Filiallar → `GET /branches` ────────────────────────────────────┐
 │                                                                              │
 │  Endpointlar: `GET /branches`, `GET /branches/{id}`                          │
 │                                                                              │
@@ -2189,29 +2302,272 @@
 │      "filial turi" degan tushuncha UMUMAN bo'lmaydi                          │
 │    • ❓ Xarita provayderi hali tanlanmagan (api 10-savol: Yandex/2GIS)       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    ── IKKI QAROR (yahyo bilan kelishildi) ──                                 │
+│                                                                              │
+│      1. XARITA: hozircha O'RNATILMAYDI. Provayder tanlanmagani               │
+│         (api 10-savol) butun taskni bloklab turishiga hojat yo'q —           │
+│         har do'konda koordinatadan yasalgan oddiy `https` havola             │
+│         bor, bosilsa telefon o'z xarita ilovasida ochadi. Tashqi             │
+│         skript ham, iframe ham, cookie ham qo'shilmadi.                      │
+│         ❓ Qaror qabul qilinganda O'ZGARADIGAN YAGONA JOY —                  │
+│            `branches.js` dagi `mapLink()` funksiyasi.                        │
+│                                                                              │
+│      2. QAMROV: Contact sahifasi — to'liq ro'yxat; qolgan hamma joy          │
+│         (Footer, Menyu, "Biz haqimizda", bosh sahifa showroom bloki,         │
+│         mahsulot CTA'si) — ro'yxatdagi BIRINCHI do'kon. Ya'ni manzil         │
+│         butun saytda BITTA manbadan keladi.                                  │
+│                                                                              │
+│    ── NIMA QILINDI ──                                                        │
+│                                                                              │
+│      Yangi fayl: `src/shared/api/branches.js`.                               │
+│        `useBranches()`   — hamma do'kon (Contact sahifasi)                   │
+│        `useMainBranch()` — bitta manzil kerak bo'lgan joylar uchun           │
+│        `branchModel()`   — DTO → sahifa shakli                               │
+│        `formatPhone()`   — `+998730000010` → `+998 73 000 00 10`             │
+│        `mapLink()`       — koordinatadan xarita havolasi                     │
+│                                                                              │
+│      ⚠ "Asosiy do'kon" = ro'yxatdagi birinchisi. Tartibni server             │
+│        `sortOrder` bo'yicha beradi, ya'ni qaysi manzil footerda              │
+│        turishini ADMIN hal qiladi, sayt emas.                                │
+│                                                                              │
+│      Telefon ikki ko'rinishda saqlanadi: ekranda ajratilgan,                 │
+│      `tel:` da esa faqat raqam — brauzer bo'shliqli raqamni                  │
+│      ba'zan terolmaydi.                                                      │
+│                                                                              │
+│    ── MOCK `showroom` O'CHIRILDI ──                                          │
+│                                                                              │
+│      `src/data/company.js` dagi `showroom` bloki butunlay olib               │
+│      tashlandi (u BITTA Farg'ona manzilini qotirib yozgan edi,               │
+│      API esa 4 ta do'kon qaytaradi).                                         │
+│                                                                              │
+│      `company.js` da QOLGANI — API'da muqobili YO'Q narsalar:                │
+│      nom, tarix, statistika, bozorlar, kafolat, navigatsiya va               │
+│      umumiy telefon/pochta/ijtimoiy tarmoqlar.                               │
+│                                                                              │
+│      ⚠ Aloqa ma'lumoti ATAYLAB `company.js` da qoldirildi: backend           │
+│        o'chib qolsa ham odam qo'ng'iroq qila olishi kerak. Manzil            │
+│        bloki esa bunday holatda CHIQMAYDI — eski/noto'g'ri manzil            │
+│        ko'rsatgandan ko'ra ko'rsatmagan afzal.                               │
+│                                                                              │
+│    ── YO'QOLGAN KONTENT (e'tibor bering) ──                                  │
+│                                                                              │
+│      `BranchPublicDto` da muqobili yo'q ikki maydon mock'da bor edi:         │
+│                                                                              │
+│        `landmark` — "Urjuza klinikasi va Farg'ona bolalar shifoxonasi        │
+│                     yaqinida". O'zbekistonda ko'cha manzilidan               │
+│                     ko'ra ORIYENTIR ko'proq ish beradi, ya'ni bu             │
+│                     foydali matn edi.                                        │
+│        `region`   — "Farg'ona viloyati" (endi faqat `city`).                 │
+│                                                                              │
+│      🆕 TAVSIYA: `api/task.txt` ga kichik task — `Branch` ga                 │
+│         `landmark` (oriyentir) maydoni. Hozircha sayt usiz ishlaydi.         │
+│                                                                              │
+│      `closed` ("Yakshanba — dam olish kuni") YO'QOLMADI: u API'ning          │
+│      `workingHours` satri ichida keladi ("Du–Sh 09:00–18:00,                 │
+│      Yakshanba dam"), shunchaki uch qator o'rniga bitta qator.               │
+│                                                                              │
+│    ── HOLATLAR ──                                                            │
+│                                                                              │
+│      Contact sahifasi — ro'yxat o'sha tartibda skelet bilan ochiladi,        │
+│      xatoda esa matn va "Qayta urinish" (S-031 ohangida).                    │
+│                                                                              │
+│      Footer / Menyu / About / bosh sahifa — ma'lumot kelmasa blok            │
+│      CHIQMAYDI, skelet ham yo'q. Sabab: ularning hammasi ekranning           │
+│      pastida yoki overlay ichida, ya'ni sakrash ko'rinmaydi; skelet          │
+│      esa footer'ning qora fonida yorqin dog' bo'lib turardi.                 │
+│                                                                              │
+│    ── TEKSHIRILDI ──                                                         │
+│                                                                              │
+│      `pnpm lint` · `pnpm build` · `pnpm test` (14 ta test, 0 xato).          │
+│      Yangi `tests/branches.test.js` — 6 ta test: raqam formati,              │
+│      notanish formatga TEGMASLIK, xarita havolasi, koordinatasiz             │
+│      va telefonsiz do'kon, model maydonlari.                                 │
+│                                                                              │
+│      Jonli backend (`api` seed) bilan: `GET /branches` → 4 ta do'kon         │
+│      (Farg'ona, Andijon, Namangan, Qo'qon), markaziy ombor YO'Q ✓            │
+│                                                                              │
+│      BRAUZERDA (Chrome, localhost:5173 + localhost:3000):                    │
+│        /contact  → "DO'KONLAR · 04 TA MANZIL", to'rtala shahar,              │
+│                    manzil, ish vaqti, formatlangan raqam va                  │
+│                    "Xaritada ochish" havolasi bilan                          │
+│        /         → showroom bloki: Mustaqillik 12, ish vaqti,                │
+│                    "40.3864 / 71.7864" koordinatasi — hammasi API'dan        │
+│        /about    → "FARG'ONA SHOWROOM" yorlig'i `city` dan yasaldi           │
+│        Footer    → Farg'ona shahri / Mustaqillik 12 / ish vaqti              │
+│        Menyu     → overlay DOM'ida manzil va ish vaqti API'dan               │
+│        Mahsulot  → "namunasi Farg'ona showroomida mavjud"                    │
+│        Eski mock matni ("Vatan ravnaqi 47", "Urjuza") hech qayerda           │
+│        QOLMAGAN ✓ · konsolda xato YO'Q ✓                                     │
+│                                                                              │
+│      Yo'l-yo'lakay S-023 ham brauzerda ko'rildi (o'tgan safar                │
+│      kengaytma ulanmagan edi): `/catalog/metro-vintage` — yettala            │
+│      xususiyat qatori, tavsif, "Omborda bor"; mavjud bo'lmagan               │
+│      slug → 404 sahifasi. Seed'dagi rasm manzillari (`cdn.vodiykafel.uz`)    │
+│      haqiqiy emas, shuning uchun `SmartImage` o'rin egallovchisi             │
+│      ko'rinadi — bu kutilgan xatti-harakat.                                  │
+│                                                                              │
 │  Bog'liq: S-004                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-026 · Hamkorlar → `GET /partners` ────────────────────────────────────┐
+┌─ [x] S-026 · Hamkorlar → `GET /partners` ────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /partners`                                                   │
 │  Nima qilinadi: hamkor logotiplari API'dan, `src/data/company.js` dan emas   │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    ── ⚠ TASK SHARTI NOTO'G'RI EDI ──                                         │
+│                                                                              │
+│      Task "hamkor logotiplari `company.js` dan emas, API'dan" deydi.         │
+│      Lekin `company.js` da hamkor logotiplari HECH QACHON bo'lmagan —        │
+│      butun saytda hamkorlar bo'limi UMUMAN yo'q edi. Yagona iz —             │
+│      statistikadagi "120+ Hamkorlar" raqami.                                 │
+│                                                                              │
+│      Ya'ni bu ma'lumot manbaini almashtirish emas, YANGI BO'LIM              │
+│      yasash bo'ldi.                                                          │
+│                                                                              │
+│    ── NIMA QILINDI ──                                                        │
+│                                                                              │
+│      `src/shared/api/partners.js` — `usePartners()`, `partnerModel()`.       │
+│      `src/components/ui/PartnerLogo.jsx` — bitta hamkor belgisi.             │
+│      "Biz haqimizda" sahifasiga yangi bo'lim: geografiya (qora) va           │
+│      showroom bloklari orasida, ochiq qog'oz fonda.                          │
+│                                                                              │
+│      Joylashuv: faqat About. Bosh sahifaga ham qo'yish — DIZAYN              │
+│      qarori, DESIGN.md da bu haqda hech narsa yo'q, shuning uchun            │
+│      task doirasidan tashqarida qoldirildi.                                  │
+│                                                                              │
+│      Ro'yxat bo'sh bo'lsa bo'lim CHIQMAYDI: bo'sh "Hamkorlar"                │
+│      sarlavhasi 120+ raqamiga zid bo'lib turardi.                            │
+│                                                                              │
+│    ── LOGOTIP: NOM — ZAXIRA EMAS, ASOS ──                                    │
+│                                                                              │
+│      `SmartImage` bu yerda ATAYLAB ishlatilmadi: u `object-cover`            │
+│      bilan ramkani to'ldiradi va yuklanmasa tosh rangli to'rtburchak         │
+│      qoldiradi. Logotipda nisbat har xil (keng, kvadrat, tik),               │
+│      kesilsa buziladi, bo'sh kulrang quti esa saytni singan ko'rsatadi.      │
+│                                                                              │
+│      Shuning uchun `PartnerLogo`:                                            │
+│        • `object-contain` — logotip kesilmaydi                               │
+│        • boshlang'ich holat — hamkor NOMI; logotip faqat HAQIQATAN           │
+│          yuklangandan keyin uning ustiga chiqadi                             │
+│        • sokin holatda kulrang, sichqoncha tekkanda o'z rangida              │
+│                                                                              │
+│      ⚠ "Avval surat, xato bo'lsa nom" YO'LI TANLANMADI. Seed'dagi            │
+│        logotip manzillari (`cdn.vodiykafel.uz`) javob bermay OSILIB          │
+│        qoladi — `complete: false`, ya'ni `onError` hech qachon               │
+│        ishlamaydi va odam bo'sh joyga qarab turaveradi. Yuklanish            │
+│        MUVAFFAQIYATI esa aniq hodisa: kelsa ko'rinadi, kelmasa nom           │
+│        joyida qoladi. Taymer ham, xato ushlash ham kerak emas.               │
+│                                                                              │
+│      ⚠ Faqat `onLoad` ga ishonish ham yetarli emas: surat keshdan            │
+│        darhol kelsa, React tinglovchini ulgurmasidan `load` o'tib            │
+│        ketadi. Shuning uchun mount paytida `complete && naturalWidth`        │
+│        qo'lda ham tekshiriladi (`naturalWidth > 0` muhim — yiqilgan          │
+│        surat ham `complete: true` bo'ladi, lekin kengligi nol).              │
+│                                                                              │
+│      Kirish imkoni: surat BEZAK (`alt=""`, `aria-hidden`), nom esa           │
+│      har doim DOM'da — ekran o'quvchi hamkor nomini bir marta aytadi.        │
+│      Sayti bor hamkor havola bo'ladi (`aria-label` da "yangi oynada").       │
+│                                                                              │
+│    ── 🔴 YO'L-YO'LAKAY TOPILGAN BUZILISH: `useReveal` ──                     │
+│                                                                              │
+│      Hamkorlar bo'limi brauzerda UMUMAN ko'rinmadi: `data-reveal`            │
+│      "in" ga o'tmay qolgan, CSS esa butun bo'limni yashirib turgan.          │
+│                                                                              │
+│      SABABI — `useReveal` dagi eski tuzoq: u `useRef` ishlatardi va          │
+│      effekti FAQAT mount paytida bir marta ishlardi. API'ga bog'liq          │
+│      bo'lim esa avval `null` qaytaradi va DOM'ga faqat javob kelgach         │
+│      chiqadi — o'sha payt effekt allaqachon o'tib ketgan, ya'ni              │
+│      ScrollTrigger umuman yaratilmagan.                                      │
+│                                                                              │
+│      Tuzatildi: ref endi CALLBACK, element o'rnatilgan payt aniq             │
+│      ma'lum va effektlar o'shanda qayta ishlaydi.                            │
+│                                                                              │
+│      ⚠ Bu S-025 ni ham JIM buzayotgan edi: Contact'dagi do'konlar            │
+│        ro'yxati faqat kesh ISSIQ bo'lganda (footer avval so'rab              │
+│        qo'yganda) ko'rinardi, sovuq keshda esa yo'q. O'tgan safar            │
+│        tekshirganda kesh issiq bo'lgani uchun sezilmagan.                    │
+│                                                                              │
+│      ⚠ Qolgan 22 ta `useReveal` chaqiruvi tekshirildi: hech biri             │
+│        qaytgan qiymatni `.current` sifatida o'qimaydi, ya'ni                 │
+│        callback ref'ga o'tish xavfsiz. Bosh sahifa, katalog,                 │
+│        "biz haqimizda" va aloqa sahifalarida reveal'lar avvalgidek           │
+│        ishlayapti.                                                           │
+│                                                                              │
+│    ── TEKSHIRILDI ──                                                         │
+│                                                                              │
+│      `pnpm lint` · `pnpm build` · `pnpm test` (18 ta test, 0 xato).          │
+│      Yangi `tests/partners.test.js` — 4 ta test: nisbiy manzil,              │
+│      tashqi manzilga TEGMASLIK, saytsiz hamkor (`null`, bo'sh satr           │
+│      emas — aks holda `href=""` sahifaning o'ziga havola yasardi),           │
+│      logotipsiz hamkor.                                                      │
+│                                                                              │
+│      Jonli backend: `GET /partners` → 3 ta hamkor (Yuksalish Group,          │
+│      Belissimo, Ansor; oxirgisining sayti bor).                              │
+│                                                                              │
+│      BRAUZERDA ikkala holat ham ko'rildi:                                    │
+│        • seed manzillari javob bermaydi → uchala NOM matn bo'lib             │
+│          chiqdi, bo'sh quti yo'q                                             │
+│        • logotip mavjud holat (vaqtincha mahalliy rasm bilan                 │
+│          tekshirildi, keyin qaytarildi) → logotiplar kulrang holda           │
+│          ko'rindi, nomlar yashirindi                                         │
+│        Konsolda xato YO'Q.                                                   │
+│                                                                              │
 │  Bog'liq: S-025                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-027 · Galereya → `GET /gallery` ──────────────────────────────────────┐
+┌─ [x] S-027 · Galereya → `GET /gallery` ──────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /gallery`                                                    │
 │  Nima qilinadi:                                                              │
 │    • Loyiha galereyasi API'dan (sarlavha, rasm, bog'langan mahsulotlar)      │
 │    • Galereyadan mahsulot sahifasiga o'tish                                  │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    Saytda galereya bo'limi YO'Q edi — yangi sahifa yasaldi:                  │
+│    `/gallery`, `src/pages/Gallery/Gallery.jsx`.                              │
+│                                                                              │
+│    Katalog "bizda nima bor" degan savolga javob beradi, galereya esa         │
+│    "u haqiqatda qanday ko'rinadi" degan savolga. Shuning uchun bu            │
+│    yerda xususiyat ham, filtr ham yo'q: surat, joy nomi va — agar            │
+│    bog'langan bo'lsa — mahsulotga o'tish havolasi.                           │
+│                                                                              │
+│    ⚠ `product` `null` BO'LISHI MUMKIN (bog'lanmagan yoki mahsulot            │
+│      vitrinadan olingan). O'shanda surat havola QILINMAYDI va                │
+│      "Mahsulot ko'rsatilmagan" deb yoziladi — bo'sh havola yasalmaydi.       │
+│                                                                              │
+│    ⚠ Mahsulot manzili — `/catalog/:slug`. Backend izohida                    │
+│      `/products/:slug` deyilgan, lekin u BACKEND yo'li; saytdagi             │
+│      marshrut boshqacha (`src/App.jsx`). Testda shu qotirib qo'yildi.        │
+│                                                                              │
+│    Sahifalash `data` ichida (`items`/`total`) — `meta` da emas.              │
+│    Hozircha bitta sahifa (`limit: 24`); ro'yxat o'sganda "ko'proq            │
+│    yuklash" qo'shiladi.                                                      │
+│                                                                              │
+│    Menyuga qo'shildi (`company.nav`), indekslar qayta raqamlandi:            │
+│    galereya 04, "biz haqimizda" 05, aloqa 06.                                │
+│                                                                              │
+│    🔴 YO'L-YO'LAKAY: `Menu.jsx` dagi `STILLS` massivi `company.nav`          │
+│       bilan bir xil uzunlikda bo'lishi SHART (fon surati havola              │
+│       indeksi bilan tanlanadi). Galereya qo'shilgach oxirgi havola           │
+│       foni yo'qolgan edi — surat qo'shildi va izoh yozildi.                  │
+│                                                                              │
+│    Tekshirildi: brauzerda 3 ta surat, 2 tasi mahsulotga bog'langan           │
+│    (`/catalog/lyuks-granit-bej`, `/catalog/marmar-oq`), uchinchisi           │
+│    bog'lanmagan va havolasiz.                                                │
+│                                                                              │
 │  Bog'liq: S-026                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-028 · Sayt sozlamalari → `GET /settings/public` ──────────────────────┐
+┌─ [x] S-028 · Sayt sozlamalari → `GET /settings/public` ──────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /settings/public`                                            │
 │  Nima qilinadi:                                                              │
@@ -2222,11 +2578,39 @@
 │    • Telefon, manzil, ijtimoiy tarmoqlar sozlamada YO'Q — ular hozircha      │
 │      `src/data/company.js` da. 🆕 Kerak bo'lsa `api/task.txt` ga task        │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    ❓ SAVOLGA JAVOB: "rekvizitlar saytda kerakmi?" — HA.                     │
+│                                                                              │
+│      Sabab: qaror saytniki EMAS. Backend bu kalitni faqat admin              │
+│      `isPublic` deb belgilagandagina chiqaradi, ya'ni "ko'rsatilsinmi"       │
+│      degan savolga admin panelining O'ZI javob beradi. Sayt bor              │
+│      narsani ko'rsatadi, yo'q bo'lsa jim turadi — kalitni kod ichida         │
+│      qattiq yoqib/o'chirib o'tirmaydi.                                       │
+│                                                                              │
+│    🔒 Bu to'lov QABUL QILISH emas: ochiq saytda savat ham, to'lov ham        │
+│       yo'q (G1). Bu shunchaki pul ko'chirish uchun kerakli ma'lumot.         │
+│                                                                              │
+│    `src/shared/api/settings.js` — `usePublicSettings()`, `findSetting()`,    │
+│    `usePaymentRequisites()`. Aloqa sahifasining oxirida kichik blok:         │
+│    nomi, bank, hisob raqami, MFO, INN.                                       │
+│                                                                              │
+│    ⚠ Qiymat `null` bo'lishi mumkin (admin kalitni ochgan, lekin hali         │
+│      to'ldirmagan) — o'shanda ham blok chiqmaydi.                            │
+│                                                                              │
+│    ⚠ Hisob raqami 20 xonali — `break-all` bo'lmasa tor ekranda               │
+│      qutidan chiqib ketadi.                                                  │
+│                                                                              │
+│    Telefon/manzil/ijtimoiy tarmoqlar sozlamalarda YO'Q: manzil va            │
+│    ish vaqti `GET /branches` dan keladi (S-025), qolgani                     │
+│    `company.js` da.                                                          │
+│                                                                              │
 │  Bog'liq: S-025                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-029 · Buyurtmani kuzatish → `GET /orders/{orderNumber}/track` ────────┐
+┌─ [x] S-029 · Buyurtmani kuzatish → `GET /orders/{orderNumber}/track` ────────┐
 │                                                                              │
 │  Endpoint: `GET /orders/{orderNumber}/track` — OCHIQ, token talab qilmaydi   │
 │                                                                              │
@@ -2239,11 +2623,45 @@
 │  ⚠ Bu — saytda HOZIR UMUMAN YO'Q sahifa, lekin backendda tayyor turibdi      │
 │    va chakana mijoz uchun foydali (hisobsiz ishlaydi).                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    Yangi sahifa: `/track`, `src/pages/Track/Track.jsx`.                      │
+│                                                                              │
+│    🔴 TASK SHARTI TO'LIQ EMAS EDI. Taskda "buyurtma raqami kiritiladi"       │
+│       deyilgan, lekin endpoint RAQAM + TELEFON so'raydi                      │
+│       (`?phone=...`, majburiy). Faqat raqam bilan 400 qaytadi.               │
+│                                                                              │
+│       Bu ataylab: raqam ketma-ket (`VK-2026-000001`, `...002`), ya'ni        │
+│       telefonsiz har kim begona buyurtmani ko'ra olardi. Telefon mos         │
+│       kelmasa server 404 beradi — "yo'q" va "sizniki emas" javobi            │
+│       BIR XIL. Sayt shu qoidani buzmaydi: xato xabari ham bitta              │
+│       ("Bunday buyurtma topilmadi"), aks holda raqam bor-yo'qligini          │
+│       xabar matnidan bilib olsa bo'lardi.                                    │
+│                                                                              │
+│    🔒 Ekranda faqat holat va vaqtlar — summa, mahsulot, mijoz yo'q.          │
+│                                                                              │
+│    Holat nomlari `api/docs/enums.md` dagi o'zbekcha matnlar.                 │
+│    Tarix eng yangisidan boshlanadi (server tartibiga ishonilmaydi).          │
+│    `regionName: null` — yetkazib berish emas, "Olib ketish — filialdan".     │
+│                                                                              │
+│    `useApiQuery` ATAYLAB ishlatilmadi: bu sahifa ochilganda emas,            │
+│    forma yuborilganda bajariladigan amal, va kesh kaliti URL bo'lgani        │
+│    uchun telefon raqami keshda qolib ketardi.                                │
+│                                                                              │
+│    Bosh menyuda YO'Q — kundalik yo'l emas; havola footerda.                  │
+│                                                                              │
+│    Tekshirildi (jonli backend, seed buyurtmasi):                             │
+│      to'g'ri raqam+telefon → "Mashina qidirilmoqda", "Yetkazib berish:       │
+│      Farg'ona", ikki qatorli tarix vaqtlari bilan                            │
+│      noto'g'ri telefon   → "Bunday buyurtma topilmadi", oldingi natija       │
+│      ekrandan TOZALANADI (yangi so'rovdan oldin `setResult(null)`)           │
+│                                                                              │
 │  Bog'liq: S-028                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-030 · ❓ Kontakt formasi — demo'dan haqiqiyga ────────────────────────┐
+┌─ [x] S-030 · ❓ Kontakt formasi — demo'dan haqiqiyga ────────────────────────┐
 │                                                                              │
 │  TOPILDI: `Contact.jsx` da forma bor, lekin ochiq yozilgan:                  │
 │    "Bu forma hozircha demo rejimida — ma'lumot hech qayerga [bormaydi]"      │
@@ -2261,11 +2679,32 @@
 │    → Tavsiya: hozircha C, keyin A. Chunki ishlamaydigan forma —              │
 │      ishonchni yo'qotadi: odam yozadi, javob kelmaydi.                       │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21 · C YO'LI TANLANDI                                │
+│                                                                              │
+│    Forma OLIB TASHLANDI. U o'zi ochiq-oydin "demo rejimida —                 │
+│    ma'lumot hech qayerga yuborilmaydi" deb yozib turardi.                    │
+│                                                                              │
+│    Sabab (taskning o'z tahlili): backendda ochiq "murojaat/lead"             │
+│    endpointi YO'Q. `POST /orders` faqat optom mijoz tokeni bilan             │
+│    ishlaydi, chakana mijozda esa hisob yo'q (G1). Ishlamaydigan              │
+│    forma ishonchni yo'qotadi — odam yozadi, javob kelmaydi.                  │
+│                                                                              │
+│    O'rniga aniq aloqa yo'llari: ikkita telefon (bosilsa teradi),             │
+│    Telegram va pochta — har biri alohida qator, ≥44px tegish maydoni.        │
+│                                                                              │
+│    `src/lib/enquiry.js` O'CHIRILDI (boshqa hech kim ishlatmasdi).            │
+│                                                                              │
+│    🆕 KEYINGI QADAM — "A yo'li": `api/task.txt` ga yangi task                │
+│       `POST /leads` (ism, telefon, xabar) → admin panelda ko'rinadi.         │
+│       U tayyor bo'lgach forma shu yerga qaytadi; hozircha kod ham,           │
+│       izoh ham shuni ko'zda tutib yozilgan.                                  │
+│                                                                              │
 │  Bog'liq: S-028                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-031 · Yuklanish, xato va bo'sh holatlar ──────────────────────────────┐
+┌─ [x] S-031 · Yuklanish, xato va bo'sh holatlar ──────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Har bir API chaqiruvi uchun: skelet (yuklanmoqda), xato ("qayta         │
@@ -2275,11 +2714,52 @@
 │    • 404: mahsulot/kategoriya topilmasa                                      │
 │    • Tarmoq yo'qolganda banner                                               │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    Holatlar S-023…S-029 bilan BIRGA yozilgan (har bir bo'lim o'z             │
+│    skeleti, xatosi va bo'sh holati bilan keldi). Bu taskda qolgani           │
+│    yig'ib tekshirildi va yetishmagani qo'shildi.                             │
+│                                                                              │
+│    ── TARMOQ YO'QOLGANDA BANNER (yetishmayotgan qism) ──                     │
+│                                                                              │
+│      `src/components/ui/OfflineBanner.jsx`, `Layout` da.                     │
+│                                                                              │
+│      Sayt butunlay API'ga tayanadi, ya'ni internet uzilsa har bir            │
+│      bo'lim alohida "serverga ulanib bo'lmadi" deb qichqirardi.              │
+│      Sabab bitta — xabar ham bitta: yuqorida bitta qator, qolgan             │
+│      sahifa o'z holicha (keshdagi ma'lumot ko'rinib turaveradi).             │
+│                                                                              │
+│      ⚠ `navigator.onLine` FAQAT `false` bo'lganda ishlatiladi. U             │
+│        "tarmoq interfeysi bormi" degan savolga javob beradi,                 │
+│        "internet ishlayaptimi" degan savolga emas — shuning uchun            │
+│        "offline" deyilsa ishonamiz, "online" deyilsa hech narsa              │
+│        da'vo qilmaymiz. Server o'chiq holatini har bir bo'limning            │
+│        o'z xato holati ko'rsatadi.                                           │
+│                                                                              │
+│      `z-[170]` — menyu (150) va Nav (160) dan tepada: aloqa yo'qligi         │
+│      hech narsa ostida qolmasin.                                             │
+│                                                                              │
+│    ── QOLGANI (allaqachon bor) ──                                            │
+│                                                                              │
+│      skelet     — mahsulot sahifasi, do'konlar ro'yxati, galereya            │
+│      xato+qayta — mahsulot, do'konlar, galereya                              │
+│      bo'sh      — galereya ("hozircha bo'sh"), o'xshash mahsulotlar          │
+│                   (blok chiqmaydi), hamkorlar (blok chiqmaydi)               │
+│      404        — mahsulot topilmasa `NotFound`                              │
+│      oq ekran   — YO'Q: backend o'chiq bo'lsa ham sarlavha, menyu,           │
+│                   footer, telefon va manzil joyida qoladi                    │
+│                                                                              │
+│    ⚠ Skelet FAQAT sahifaning o'z kontenti uchun. Footer/menyu/bosh           │
+│      sahifadagi manzil bloklari skelet ko'rsatmaydi — ular ekran             │
+│      pastida yoki overlay ichida (sakrash ko'rinmaydi), va och               │
+│      skelet chizig'i footerning qora fonida yorqin dog' bo'lardi.            │
+│                                                                              │
 │  Bog'liq: S-023                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-032 · Rasmlar API'dan (`/uploads/...`) va optimallashtirish ──────────┐
+┌─ [!] S-032 · Rasmlar API'dan (`/uploads/...`) va optimallashtirish ──────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Mahsulot rasmlari backend `/uploads/...` manzilidan olinadi             │
@@ -2290,6 +2770,42 @@
 │    • ⚠ Backend hozir rasm o'lchamlarini o'zgartirmaydi (resize yo'q) —       │
 │      katta rasm yuklansa, o'sha katta holda keladi. 🆕 Kerak bo'lsa          │
 │      `api/task.txt` ga task (thumbnail generatsiyasi)                        │
+│                                                                              │
+│                                                                              │
+│  ⚠ QISMAN — 2026-09-21 · QOLGANI BACKENDNI KUTADI                            │
+│                                                                              │
+│    ── BAJARILDI ──                                                           │
+│                                                                              │
+│      Mahsulot rasmlari backenddan (`S-023`), galereya rasmlari ham           │
+│      (`S-027`). `assetUrl()` nisbiy `/uploads/...` ni to'liq manzilga        │
+│      aylantiradi, tashqi (`https://`) manzilga tegmaydi.                     │
+│                                                                              │
+│      `SmartImage`: `loading="lazy"`, `decoding="async"`,                     │
+│      `fetchPriority`, ramkada `aspect-ratio` (joy oldindan band              │
+│      qilinadi — layout sakramaydi), yuklanmasa o'rin egallovchi.             │
+│                                                                              │
+│      ⚠ Manba UMUMAN yo'q bo'lsa mahalliy zaxiraga TUSHMAYDI: u               │
+│        Marazzi namunasining rasmi, mahsulotniki emas (S-033).                │
+│                                                                              │
+│    ── 🔴 BLOKLANGAN: `srcset` YASAB BO'LMAYDI ──                             │
+│                                                                              │
+│      Taskning o'zi yozib qo'ygan: backend rasm o'lchamini                    │
+│      o'zgartirmaydi (resize yo'q). Bitta manzil, bitta o'lcham.              │
+│                                                                              │
+│      `srcset` — bu "shu rasmning 400px, 800px, 1600px nusxalari"             │
+│      degani. Nusxalar YO'Q ekan, frontend ularni o'zidan yasay               │
+│      olmaydi: brauzerga bir xil faylni uch marta ko'rsatish hech             │
+│      narsani tejamaydi.                                                      │
+│                                                                              │
+│      Ya'ni "telefon 3.5 MB rasm yuklab olmasligi kerak" bandi                │
+│      HOZIRCHA BAJARILMAYDI va uni frontendda hal qilib bo'lmaydi.            │
+│                                                                              │
+│      🆕 KERAK: `api/task.txt` ga task — yuklangan rasm uchun                 │
+│         thumbnail/variant generatsiyasi (masalan 400/800/1600 px             │
+│         webp). Shu tayyor bo'lgach `SmartImage` ga `srcSet`                  │
+│         qo'shiladi — u allaqachon `sizes` ni qabul qiladi.                   │
+│                                                                              │
+│      Shu sababli task [x] emas, [!] qilib qoldirildi.                        │
 │                                                                              │
 │  Bog'liq: S-031                                                              │
 │                                                                              │
@@ -2371,7 +2887,7 @@
 ║          borligining sababi shu.                                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-036 · Sahifaga xos meta va Open Graph ────────────────────────────────┐
+┌─ [x] S-036 · Sahifaga xos meta va Open Graph ────────────────────────────────┐
 │                                                                              │
 │  TOPILDI: `index.html` da BITTA statik `<title>` va `<description>`.         │
 │  Har bir sahifa (katalog, mahsulot, kategoriya) AYNAN SHU sarlavha           │
@@ -2389,11 +2905,51 @@
 │      chiqishi uchun `og:image`                                               │
 │    • `Meta.jsx` boshqa nomga o'tkaziladi (masalan `SpecRow.jsx`)             │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    `src/components/ui/Seo.jsx` — kutubxonasiz: React 19 `<title>`,           │
+│    `<meta>` va `<link>` ni komponentdan `<head>` ga o'zi ko'chiradi.         │
+│                                                                              │
+│    Har sahifada: `<title>`, `description`, `canonical`, `og:type`,           │
+│    `og:site_name`, `og:locale`, `og:title`, `og:description`,                │
+│    `og:url`, `og:image` va `twitter:*`.                                      │
+│                                                                              │
+│    Mahsulot sahifasi sarlavhasi — nom · zavod · o'lcham                      │
+│    ("Metro Vintage · Metro Ceramics · 30x60 — Vodiy Kafel").                 │
+│                                                                              │
+│    `/track` — `noindex, follow`: natija faqat raqam + telefon bilan          │
+│    chiqadi, indekslashdan foyda yo'q.                                        │
+│                                                                              │
+│    ── 🔴 `index.html` DAN STATIK `<title>` OLIB TASHLANDI ──                 │
+│                                                                              │
+│      React o'zinikini QO'SHADI, eskisini o'chirmaydi. Natijada               │
+│      brauzerda IKKITA `<title>` va IKKITA `description` turgan edi           │
+│      (o'lchab ko'rildi: `titleCount: 2`). Robotlar ko'pincha                 │
+│      BIRINCHISINI oladi — ya'ni mahsulot havolasi hamma joyda                │
+│      "Premium keramik yuzalar" bo'lib ko'rinardi.                            │
+│                                                                              │
+│      ⚠ Narxi: JS ishlatmaydigan robot xom HTML'da sarlavha ko'rmaydi.        │
+│        Lekin u KONTENTNI ham ko'rmaydi — sayt toza SPA. Ikkalasining         │
+│        yechimi bitta: S-038 (prerender).                                     │
+│                                                                              │
+│    ⚠ `og:image` — LOGOTIP, mahsulot surati EMAS. Katalogdagi hamma           │
+│      surat Marazzi'niki (ASSETS.md); ularni ijtimoiy tarmoq                  │
+│      kartochkasida tarqatish huquqi yo'q. S-033 hal bo'lgach bu              │
+│      yerga haqiqiy 1200×630 kartochka surati qo'yiladi.                      │
+│                                                                              │
+│    `Meta.jsx` boshqa nomga o'tkazilmadi — U O'CHIRILDI: hech kim             │
+│    import qilmasdi, ya'ni o'lik kod edi (taskda "nomi chalg'itadi"           │
+│    deyilgan, lekin aslida umuman ishlatilmagan).                             │
+│                                                                              │
+│    Tekshirildi: mahsulot va galereya sahifalarida bittadan `<title>`,        │
+│    `description` va `canonical`; hammasi sahifaga xos.                       │
+│                                                                              │
 │  Bog'liq: S-023                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-037 · `robots.txt` va `sitemap.xml` ──────────────────────────────────┐
+┌─ [x] S-037 · `robots.txt` va `sitemap.xml` ──────────────────────────────────┐
 │                                                                              │
 │  TOPILDI: `public/` da ikkalasi ham YO'Q.                                    │
 │                                                                              │
@@ -2402,6 +2958,34 @@
 │    • `sitemap.xml` — build paytida mahsulot va kategoriya ro'yxatidan        │
 │      avtomatik generatsiya qilinadi (API'dan olib)                           │
 │    • Google Search Console'ga qo'shish yo'riqnomasi README'ga                │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    `public/robots.txt` — hammasi ochiq (`Allow: /`), faqat `/track`          │
+│    taqiqlangan (sahifaning o'zida ham `noindex`). `Sitemap:` qatori bor.     │
+│                                                                              │
+│    `scripts/generate-sitemap.mjs` — `pnpm build` uni o'zi chaqiradi          │
+│    (`pnpm sitemap` alohida ham ishlaydi).                                    │
+│                                                                              │
+│      • statik sahifalar har doim yoziladi                                    │
+│      • mahsulot manzillari API'dan, sahifama-sahifa (`limit=100`)            │
+│      • manzil `VITE_SITE_URL` dan, API `VITE_API_URL` dan                    │
+│                                                                              │
+│    ⚠ API YETIB BO'LMASA SKRIPT YIQILMAYDI — faqat statik qismni              │
+│      yozadi va ogohlantiradi. Sabab: build (masalan Vercel'da)               │
+│      backend o'chiq bo'lsa ham o'tishi kerak. Ikkala yo'l ham                │
+│      sinab ko'rildi: API bilan 16 ta manzil, APIsiz 6 ta.                    │
+│                                                                              │
+│    🔴 YO'L-YO'LAKAY TUZATILDI: dastlab `xmlns` da                            │
+│       `sitemap.org` deb yozilgan edi — to'g'risi `sitemaps.org`              │
+│       (ko'plikda). Noto'g'ri namespace bilan fayl yaroqsiz bo'lardi.         │
+│                                                                              │
+│    Google Search Console yo'riqnomasi `README.md` ga yozildi.                │
+│                                                                              │
+│    ⚠ `public/sitemap.xml` — YASALADIGAN fayl, lekin repoda turadi:           │
+│      build paytida API yo'q bo'lsa ham deploy'da yaroqli sitemap             │
+│      bo'lsin.                                                                │
 │                                                                              │
 │  Bog'liq: S-036                                                              │
 │                                                                              │
@@ -2429,7 +3013,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-039 · Structured data (Schema.org) ───────────────────────────────────┐
+┌─ [x] S-039 · Structured data (Schema.org) ───────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `LocalBusiness` — kompaniya, manzil, ish vaqti, telefon                 │
@@ -2439,6 +3023,41 @@
 │                                                                              │
 │  ⚠ Narx bo'lmagani uchun `Offer` to'liq bo'lmaydi — bu normal,               │
 │    `availability` ko'rsatiladi.                                              │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    JSON-LD tanlandi (microdata emas): JSX'ga aralashmaydi, dizaynga          │
+│    tegmaydi. `src/components/ui/JsonLd.jsx` — komponent,                     │
+│    `src/lib/schema.js` — obyekt yasovchi toza funksiyalar                    │
+│    (ajratilgan: lint fast-refresh qoidasi, hamda testdan shu yerda           │
+│    o'tkaziladi).                                                             │
+│                                                                              │
+│      `LocalBusiness`  — `Layout` da, SAYT BO'YLAB BITTA. Har sahifada        │
+│                         takrorlansa Google ikki xil tashkilot deb            │
+│                         o'qishi mumkin. Manzil `GET /branches` dan:          │
+│                         birinchi do'kon asosiy, qolgani `department`.        │
+│      `Product`        — mahsulot sahifasi                                    │
+│      `BreadcrumbList` — katalog, mahsulot, galereya                          │
+│      `ImageGallery`   — galereya (`ImageObject` ro'yxati)                    │
+│                                                                              │
+│    🔒 `Offer` DA NARX YO'Q (G1). `availability` beriladi                     │
+│       (`InStock`/`OutOfStock`), `price` va valyuta esa UMUMAN                │
+│       berilmaydi. Google buni "to'liq bo'lmagan Offer" deb                   │
+│       ogohlantiradi — bu xato emas, ataylab shunday: yolg'on narx            │
+│       yozishdan ko'ra maydonni bermagan to'g'ri.                             │
+│       Testda shu qotirib qo'yilgan (`hasPrice` tekshiruvi).                  │
+│                                                                              │
+│    ⚠ `openingHours` — bizda erkin matn ("Du–Sh 09:00–18:00, Yakshanba        │
+│      dam"), Schema.org esa `Mo-Sa 09:00-18:00` kutadi. Noto'g'ri             │
+│      formatdagi qiymat berishdan ko'ra odam o'qiydigan matn berildi.         │
+│                                                                              │
+│    ⚠ Bo'sh maydon (`color: null`) UMUMAN chiqmaydi — `undefined`             │
+│      `JSON.stringify` da tushib qoladi.                                      │
+│                                                                              │
+│    Brauzerda tekshirildi: mahsulot sahifasida 3 ta blok                      │
+│    (LocalBusiness + Product + BreadcrumbList), galereyada 3 ta               │
+│    (LocalBusiness + ImageGallery + BreadcrumbList), narx yo'q ✓              │
 │                                                                              │
 │  Bog'liq: S-038                                                              │
 │                                                                              │
@@ -2450,7 +3069,7 @@
 ║  EPIC 8 — SIFAT VA YAKUNIY TAYYORGARLIK                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-040 · Qulaylik (a11y) auditi ─────────────────────────────────────────┐
+┌─ [x] S-040 · Qulaylik (a11y) auditi ─────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Klaviatura bilan butun saytni aylanib chiqish (menyu, katalog,          │
@@ -2462,11 +3081,63 @@
 │    • Ekran o'quvchisi bilan sinov                                            │
 │    • `aria-live` — filtr natijasi o'zgarganda e'lon qilinishi                │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21 (bitta bandi bajarilmadi — pastda)                │
+│                                                                              │
+│    ── SKIP-LINK (yo'q edi) ──                                                │
+│                                                                              │
+│      `Layout` ning ENG BIRINCHI elementi: "Kontentga o'tish" →               │
+│      `#main`. Brauzerda tekshirildi — Tab bosilganda birinchi                │
+│      bo'lib aynan shu chiqadi va ko'rinadi.                                  │
+│                                                                              │
+│      ⚠ `display:none` yoki `visibility:hidden` QILINMADI — o'shanda          │
+│        klaviatura uni umuman topa olmasdi. Ekrandan tashqariga               │
+│        chiqarilgan (`translateY(-120%)`) va fokus tushganda joyiga           │
+│        qaytadi.                                                              │
+│                                                                              │
+│      `<main>` ga `tabIndex={-1}` qo'shildi: aks holda brauzer faqat          │
+│      skroll qilardi va keyingi Tab yana sahifa boshidan boshlanardi.         │
+│                                                                              │
+│    ── HAR SAHIFADA BITTA `h1` (buzilgan edi) ──                              │
+│                                                                              │
+│      🔴 Kirish darvozasi (`Preloader`) `<h1>Vodiy Kafel</h1>` chizardi,      │
+│         bosh sahifada esa `HeroSection` ning o'z `<h1>` i bor edi —          │
+│         birinchi tashrifda sahifada IKKITA `h1` turardi.                     │
+│         Darvozadagisi `<p>` ga o'tkazildi (`aria-label` joyida               │
+│         qoldi); CSS selektori ham yangilandi.                                │
+│                                                                              │
+│      Qolgan sahifalar: `PageHeader` bitta `<h1>` beradi, bo'limlar           │
+│      `<h2>`, kartalar `<h3>` — ierarxiya buzilmagan.                         │
+│      `ProductDetail` da ikkita `<h1>` ko'rinadi, lekin ular BIR              │
+│      VAQTDA chiqmaydi (biri xato holati) — bu xato emas.                     │
+│                                                                              │
+│    ── `aria-live` (yo'q edi) ──                                              │
+│                                                                              │
+│      Katalogda filtr bosilganda ro'yxat JIM almashardi. Endi                 │
+│      `sr-only` qator e'lon qiladi: "N ta mahsulot ko'rsatilmoqda"            │
+│      yoki "Bu toifada mahsulot yo'q". `polite` — odam gapini                 │
+│      bo'lmaydi. Tekshirildi: 16 → 2 ga o'zgardi.                             │
+│                                                                              │
+│    ── ALLAQACHON JOYIDA EDI (tekshirildi) ──                                 │
+│                                                                              │
+│      `alt` matnlari — bezak rasmlarda bo'sh, mazmunlisida ma'noli.           │
+│      Fokus ko'rinishi — S-006 da qilingan.                                   │
+│      Menyuda fokus tuzog'i — S-014 da (`inert`).                             │
+│      Tegish maydoni ≥44px — S-015 da.                                        │
+│                                                                              │
+│    ── ⚠ BAJARILMADI: EKRAN O'QUVCHISI BILAN SINOV ──                         │
+│                                                                              │
+│      Bu qo'lda, haqiqiy dastur bilan (NVDA/VoiceOver) qilinadigan            │
+│      ish — avtomatlashtirib bo'lmaydi va men uni qila olmadim.               │
+│      Yuqoridagilar DOM va brauzer orqali tekshirildi, lekin                  │
+│      "eshitilishi" sinalmadi. Efirga chiqishdan oldin bir marta              │
+│      qo'lda o'tish kerak.                                                    │
+│                                                                              │
 │  Bog'liq: S-015                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-041 · Testlar ────────────────────────────────────────────────────────┐
+┌─ [x] S-041 · Testlar ────────────────────────────────────────────────────────┐
 │                                                                              │
 │  TOPILDI: butun paketda BITTA test fayli — `tests/sound.test.js`             │
 │  (`node --test` bilan ishlaydi).                                             │
@@ -2479,11 +3150,56 @@
 │    • Reduced motion holatida animatsiya o'chishi                             │
 │    • Asosiy sahifalar renderi (smoke test)                                   │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    Vitest o'rnatildi (+ jsdom, @testing-library/react). Mavjud 34 ta         │
+│    `node --test` testi ham unga ko'chirildi — endi YAGONA yurgizgich:        │
+│    `pnpm test`. Jami 67 ta test, 10 ta fayl.                                 │
+│                                                                              │
+│    ⚠ NEGA Vitest: `node --test` da DOM YO'Q, ya'ni komponentni render        │
+│      qilib bo'lmaydi. Taskdagi "asosiy sahifalar renderi" bandi aynan        │
+│      shuni talab qiladi.                                                     │
+│                                                                              │
+│    ── QO'SHILGAN TESTLAR ──                                                  │
+│                                                                              │
+│      `api-client`  16 ta — `{ data }` o'rami ochilishi, sahifalash           │
+│                    `data` ichida ekani, xato → `ApiError`, validatsiya       │
+│                    massivi, tarmoq uzilishi, BEKOR QILISH xato emasligi,     │
+│                    `X-Request-Id`, 204, filtr → query (bo'sh qiymat          │
+│                    tashlanishi, kalit saralanishi, massiv)                   │
+│      `enums`        6 ta — lug'atlar TO'LIQ va ORTIQCHASIZ ekani             │
+│      `motion`       5 ta — reduced motion, zaif qurilma, 4 yadro             │
+│                    chegarasi, trafik tejash                                  │
+│      `smoke`        7 ta — galereya (ma'lumot/bo'sh/xato), kuzatish          │
+│                    formasi, mahsulot sahifasi, 404                           │
+│                                                                              │
+│    ── 🔒 ENG MUHIM TEST ──                                                   │
+│                                                                              │
+│      `smoke` dagi "NARX ham, ZAXIRA SONI ham ekranda YO'Q (G1)" —            │
+│      mahsulot sahifasining butun matnini tekshiradi.                         │
+│                                                                              │
+│      Test HAQIQATAN ushlashiga ishonch hosil qilindi: sahifaga               │
+│      ataylab `['Narx', '85 000 so'm']` qatori qo'shildi → test               │
+│      yiqildi ("narx bo'lmasligi kerak"), keyin qaytarildi.                   │
+│                                                                              │
+│    ── ⚠ NIMA SINALMAYDI ──                                                   │
+│                                                                              │
+│      jsdom — brauzer EMAS. Joylashuv, rang, GSAP animatsiyasi, scroll        │
+│      va haqiqiy fokus BU YERDA sinalmaydi. `tests/setup.js` faqat            │
+│      `matchMedia`, `IntersectionObserver`, `ResizeObserver` va               │
+│      `scrollTo` ni taqlid qiladi.                                            │
+│                                                                              │
+│      🔴 YO'L-YO'LAKAY: soxta `fetch` dastlab `includes` bilan yo'l           │
+│         solishtirardi — `/products/x` naqshi `/products/x/similar`           │
+│         ga ham mos kelib, sahifa `.map is not a function` bilan              │
+│         yiqilardi. Endi yo'l ANIQ solishtiriladi.                            │
+│                                                                              │
 │  Bog'liq: S-031                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-042 · Tezlik byudjeti va Lighthouse ──────────────────────────────────┐
+┌─ [x] S-042 · Tezlik byudjeti va Lighthouse ──────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • Lighthouse o'lchovi (mobil, sekin 4G) — boshlang'ich holat yozib        │
@@ -2493,11 +3209,78 @@
 │    • Rasm hajmi (hozir 3.6 MB) nazorat ostiga olinadi                        │
 │    • Build'da byudjetdan oshsa ogohlantirish                                 │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21 (o'lchov olindi, byudjet o'rnatildi)              │
+│                                                                              │
+│    ── BOSHLANG'ICH HOLAT (Lighthouse 13.5, mobil, sekin 4G) ──               │
+│                                                                              │
+│      3 marta yurgizilib MEDIANA olindi — bitta yurish ishonchsiz             │
+│      (ball 80 dan 86 gacha sakraydi, LCP 3.8–4.8 s).                         │
+│                                                                              │
+│        Performance ball .........  84   (80–86)                              │
+│        First Contentful Paint ... 2.09 s                                     │
+│        Largest Contentful Paint . 4.28 s  ❌ byudjet 2.5 s                   │
+│        Speed Index .............. 2.09 s                                     │
+│        Total Blocking Time ......   71 ms  ✅ (INP o'rnini bosadi)           │
+│        Cumulative Layout Shift ..    0    ✅ byudjet 0.1                     │
+│                                                                              │
+│      Tarmoq: jami 681 KB, shundan JS 160 KB.                                 │
+│                                                                              │
+│    ── BYUDJET NAZORATI (`scripts/check-budget.mjs`) ──                       │
+│                                                                              │
+│      `pnpm build` dan keyin o'zi ishlaydi (`pnpm budget` alohida ham).       │
+│                                                                              │
+│        birinchi ekran JS ≤ 150 KB (gzip)  → hozir 155 KB  ❌ 5 KB oshgan     │
+│        bitta rasm ≤ 200 KB                → hozir hammasi joyida ✅          │
+│                                                                              │
+│      ⚠ Skript build'ni YIQITMAYDI — ogohlantiradi. Sabab: byudjet            │
+│        nazorat vositasi, darvoza emas. 3 KB uchun deploy to'xtasa,           │
+│        odamlar byudjetni o'chirib qo'yadi. CI uchun `--strict` bor.          │
+│                                                                              │
+│      ⚠ GSAP va Lenis QO'LDA qo'shilgan: ular dinamik `import()` bilan        │
+│        keladi, ya'ni HTML'da ko'rinmaydi, LEKIN birinchi ekranda             │
+│        baribir so'raladi (`Layout` doim mount bo'ladi — buni                 │
+│        `vite.config.js` izohi ham yozib qo'ygan). Ularsiz hisob              │
+│        104 KB chiqib, o'zini aldardi.                                        │
+│                                                                              │
+│    ── 🔴 TOPILDI VA TUZATILDI: 1.45 MB LIK `og:image` ──                     │
+│                                                                              │
+│      `public/images/logo.png` — 1211×1211, 1.45 MB. Men uni S-036 da         │
+│      `og:image` qilib qo'ygan edim, ya'ni Telegram/WhatsApp HAR BIR          │
+│      havola uchun 1.45 MB tortardi (ko'p robot bunchasini kutmaydi           │
+│      va kartochka umuman chiqmasdi).                                         │
+│                                                                              │
+│      `scripts/generate-og.mjs` yasaydi:                                      │
+│        `og-card.png`  1200×630, 64 KB  → `og:image`                          │
+│        `logo-512.png`            80 KB  → Schema.org `image`                 │
+│                                                                              │
+│      Asl fayl `public/` dan OLIB CHIQILDI (`scripts/assets/`):               │
+│      `public/` dagi hamma narsa `dist/` ga ko'chiriladi, ya'ni               │
+│      1.45 MB har deployda serverga chiqardi — hech kim so'ramasa ham.        │
+│                                                                              │
+│    ── ⚠ QOLGAN MUAMMO: LCP 4.28 s ──                                         │
+│                                                                              │
+│      Sabab — rasmlar. Eng kattasi 152 KB webp va birinchi ekranda            │
+│      yuklanadi. Frontendda qilinadigan ish deyarli tugagan                   │
+│      (`lazy`, `decoding=async`, `aspect-ratio` bilan CLS = 0).               │
+│                                                                              │
+│      Haqiqiy yechim IKKITA boshqa taskda:                                    │
+│        S-032  `srcset` — telefon kichik nusxani olsin. BLOKLANGAN:           │
+│               backend rasm variantlarini yasamaydi.                          │
+│        S-033  Marazzi rasmlari almashtirilganda yangi suratlar               │
+│               boshidanoq to'g'ri o'lchamda tayyorlansin.                     │
+│                                                                              │
+│      Ya'ni LCP ni hozir "tuzatib" bo'lmaydi — u shu ikki taskka              │
+│      bog'langan. Byudjet esa endi buzilishni JIM o'tkazib                    │
+│      yubormaydi.                                                             │
+│                                                                              │
+│    `pnpm lighthouse` — o'lchovni qaytarish uchun (avval `pnpm preview`).     │
+│                                                                              │
 │  Bog'liq: S-041                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-043 · Xato chegarasi va barqarorlik ──────────────────────────────────┐
+┌─ [x] S-043 · Xato chegarasi va barqarorlik ──────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `ErrorBoundary` — bitta komponent yiqilsa butun sayt oq ekran           │
@@ -2505,11 +3288,45 @@
 │    • Animatsiya yoki audio xatosi sahifani buzmasligi                        │
 │    • Konsolda xato qolmasligi (tekshiriladi)                                 │
 │                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    `src/components/ui/ErrorBoundary.jsx` — uchta joyda:                      │
+│                                                                              │
+│      `main.jsx`   — eng tashqi: router yoki `Layout` yiqilsa ham             │
+│                     oq ekran emas, tushunarli xabar                          │
+│      `<Outlet />` — har marshrut uchun, `key={pathname}`: bir sahifa         │
+│                     yiqilsa Nav va Footer joyida qoladi, va boshqa           │
+│                     sahifaga o'tilganda chegara O'ZI tiklanadi               │
+│                     (yangi `key` → yangi nusxa), odam "qayta urinish"        │
+│                     ni bosishi shart emas                                    │
+│      `Footer`     — yiqilsa JIM o'chadi (`fallback: null`): u                │
+│                     yordamchi bo'lim, uning xatosi uchun sahifa              │
+│                     o'rtasiga katta xato ekrani chiqarish o'rinsiz           │
+│                                                                              │
+│    ⚠ Sinf komponenti ATAYLAB: `componentDidCatch` ning hook                  │
+│      ko'rinishi React'da hali YO'Q. Kutubxona qo'shmaslik uchun              │
+│      shu yagona yo'l.                                                        │
+│                                                                              │
+│    ⚠ NIMANI USHLAMAYDI: hodisa ishlovchilari (`onClick`),                    │
+│      `setTimeout` va asinxron kod xatolari — ular render paytida             │
+│      emas, keyinroq otiladi. Shuning uchun API xatolari ALOHIDA              │
+│      ushlanadi (`ApiError` + har bo'limning o'z xato holati, S-031),         │
+│      va audio/animatsiya xatolari o'z joyida yutiladi.                       │
+│                                                                              │
+│    Xato ekranidagi "Bosh sahifa" havolasi — `<Link>` emas, oddiy             │
+│    `<a href>`: router ham yiqilgan bo'lishi mumkin, to'liq qayta             │
+│    yuklash ishonchliroq.                                                     │
+│                                                                              │
+│    Konsol: bu sessiyada tekshirilgan hamma sahifada (bosh, katalog,          │
+│    kategoriyalar, galereya, biz haqimizda, aloqa, kuzatish,                  │
+│    mahsulot, 404) xato YO'Q.                                                 │
+│                                                                              │
 │  Bog'liq: S-042                                                              │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-044 · Deploy va muhit ────────────────────────────────────────────────┐
+┌─ [x] S-044 · Deploy va muhit ────────────────────────────────────────────────┐
 │                                                                              │
 │  Nima qilinadi:                                                              │
 │    • `.env.example` va muhit o'zgaruvchilari hujjatlashtiriladi              │
@@ -2519,6 +3336,55 @@
 │      hozir `*` turibdi (bu `api/` tomondagi ish, eslatib qo'yiladi)          │
 │    • `README.md` yangilanadi: API bilan birga ishga tushirish tartibi        │
 │    • Rasm va API manzillari production'da to'g'riligi tekshiriladi           │
+│                                                                              │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-21                                                   │
+│                                                                              │
+│    ── 🔴 `vercel.json` DA BUZILISH TOPILDI VA TUZATILDI ──                   │
+│                                                                              │
+│      Eski qoida SPA rewrite'dan faqat sanab o'tilgan yo'llarni               │
+│      istisno qilardi:                                                        │
+│        `assets/`, `images/`, `models/`, `fonts/`, `audio.mp3`,               │
+│        `favicon.svg`                                                         │
+│                                                                              │
+│      Uchta muammo:                                                           │
+│        • `robots.txt` va `sitemap.xml` RO'YXATDA YO'Q — ular S-037 da        │
+│          qo'shilgan. Ya'ni Google sitemap so'raganda HTML olardi.            │
+│        • `models/` — S-001 da o'chirilgan 3D quyi tizimidan qolgan.          │
+│        • `favicon.svg` YO'Q; haqiqiy fayllar (`favicon.ico`,                 │
+│          `favicon-32.png`, `favicon-192.png`, `apple-touch-icon.png`)        │
+│          esa ro'yxatga kirmagan.                                             │
+│                                                                              │
+│      Yangi qoida ro'yxat bilan emas, KENGAYTMA bo'yicha ishlaydi:            │
+│      oxiri `.xxx` bo'lgan yo'l tegilmaydi, qolgani `index.html` ga           │
+│      ketadi. Ya'ni keyin qo'shiladigan statik fayl ham o'zi to'g'ri          │
+│      ishlaydi.                                                               │
+│                                                                              │
+│      17 ta yo'lda sinab ko'rildi (marshrutlar, robots, sitemap,              │
+│      favicon'lar, shrift, rasm, assets) — hammasi kutilganidek.              │
+│                                                                              │
+│    ── HUJJAT ──                                                              │
+│                                                                              │
+│      `README.md` ga qo'shildi: muhit o'zgaruvchilari jadvali,                │
+│      API bilan birga ishga tushirish tartibi, deploy izohi.                  │
+│      `.env.example` da uchala o'zgaruvchi ham izohi bilan turibdi.           │
+│                                                                              │
+│      ⚠ Hech bir o'zgaruvchi MAJBURIY emas — berilmasa zaxira qiymat          │
+│        ishlatiladi (dev'da localhost, prod'da joriy domen). Shuning          │
+│        uchun noto'g'ri sozlash jimgina `localhost` ga ketib qolmaydi.        │
+│                                                                              │
+│    ── ⚠ ESLATMA (api/ tomondagi ish) ──                                      │
+│                                                                              │
+│      `api/.env` da `CORS_ORIGINS=*` turibdi. Production'da u sayt            │
+│      domeniga almashtirilishi kerak. Bu storefront'dan hal                   │
+│      qilinmaydi — `api/` paketining ishi.                                    │
+│                                                                              │
+│    ── ⚠ TEKSHIRILMAGANI ──                                                   │
+│                                                                              │
+│      Haqiqiy Vercel deploy'ida SINALMADI — bu yerda deploy qilinmadi.        │
+│      `vercel.json` qoidasi mantiqan va 17 ta yo'lda sinab ko'rildi,          │
+│      lekin birinchi deploy'dan keyin `robots.txt`, `sitemap.xml` va          │
+│      favicon'lar brauzerda bir marta ochib ko'rilishi kerak.                 │
 │                                                                              │
 │  Bog'liq: S-043                                                              │
 │                                                                              │
@@ -2606,25 +3472,39 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 45
-  Tugadi       : 21
+  Tugadi       : 37
   Jarayonda    : 0
-  Bloklangan   : 2  (S-022, S-024 — api B-067 ni kutadi)
+  Bloklangan   : 3  (S-022, S-024 — api B-067 ni kutadi;
+                     S-032 — rasm variantlari uchun yangi api task kerak)
 
   Epic bo'yicha:
-    EPIC 0  Tozalash va poydevor ......  4 / 4   [xxxx]
-    EPIC 1  Tipografika ..............  2 / 2    [xx]
+    EPIC 0  Tozalash va poydevor .....  4 / 4   [xxxx]
+    EPIC 1  Tipografika ..............  2 / 2   [xx]
     EPIC 2  Hero va greeter ..........  3 / 3   [xxx]
     EPIC 3  Responsive ...............  6 / 6   [xxxxxx]
     EPIC 4  Harakat va GSAP ..........  5 / 5   [xxxxx]
-    EPIC 5  Backendga ulash ..........  1 / 12   [x!·!········]
-    EPIC 6  Huquqiy va kontent .......  0 / 3    [···]
-    EPIC 7  SEO ......................  0 / 4    [····]
-    EPIC 8  Sifat ....................  0 / 5    [·····]
+    EPIC 5  Backendga ulash ..........  9 / 12  [x!x!xxxxxxx!]
+    EPIC 6  Huquqiy va kontent .......  0 / 3   [···]
+    EPIC 7  SEO ......................  3 / 4   [xx·x]
+    EPIC 8  Sifat ....................  5 / 5   [xxxxx]
     (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
-  KEYINGI TASK:  S-023 · Mahsulot sahifasi → `GET /products/{slug}`
-                 (S-022 va S-024 bloklangan — api B-067 ni kutadi)
+  KEYINGI TASK:  ❓ QAROR KUTILMOQDA — o'zim hal qila olmaydiganlari:
+
+    S-038  SPA'ni qidiruv tizimlari ko'radimi (prerender / SSR / hech
+           narsa). S-036 buni o'tkirlashtirdi: xom HTML'da endi
+           sarlavha ham yo'q. Task tavsiyasi — A (prerender).
+    S-033  Marazzi rasmlari — EFIRGA CHIQISHNI BLOKLAYDI. Haqiqiy
+           surat kerak, kod bilan hal bo'lmaydi.
+    S-034  `audio.mp3` litsenziyasi — huquqiy tekshiruv.
+    S-035  O'ylab topilgan matnlar — mijozdan haqiqiy kontent kerak.
+
+    Kod bilan hal bo'ladigan hamma task TUGADI. Qolgan 7 tasi:
+    4 tasi yuqoridagi qarorlarni kutadi, 3 tasi bloklangan
+    (S-022/S-024 → api B-067, S-032 → rasm variantlari task'i).
+                 EPIC 5 dan qolgani BLOKLANGAN: S-022/S-024 → api B-067,
+                 S-032 → rasm variantlari uchun yangi api task
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,
@@ -2633,4 +3513,29 @@
   ⚠ S-021 qarori QABUL QILINDI (2026-09-19, B yo'li): backendga
     `Category` qo'shiladi → `api/task.txt` B-067. EPIC 5 ning faqat
     S-022 va S-024 bloklandi, qolgan to'qqiztasi ketaveradi.
+
+  🆕 S-030 va S-032 dan chiqqan TAVSIYALAR (2026-09-21) — `api/task.txt`:
+    • `POST /leads` (ism, telefon, xabar) → aloqa formasi qaytadi.
+      Hozircha forma olib tashlandi: ishlamaydigan forma ishonchni
+      yo'qotadi (S-030, C yo'li).
+    • Yuklangan rasm uchun thumbnail/variant generatsiyasi (400/800/
+      1600 px). Ularsiz `srcset` yasab bo'lmaydi va telefon to'liq
+      o'lchamdagi rasmni yuklab oladi (S-032 shu sababli bloklangan).
+
+  🔴 S-026 da `useReveal` dagi buzilish tuzatildi (2026-09-21):
+    API'ga bog'liq bo'lim (avval `null`, keyin DOM'ga chiqadi) hech
+    qachon ko'rinmas edi — effekt faqat mount paytida ishlardi. Ref
+    endi callback. Bu S-025 ni ham jim buzayotgan edi (Contact'dagi
+    do'konlar ro'yxati faqat issiq keshda ko'rinardi). Bundan keyingi
+    API bo'limlari (S-027, S-029) shu tuzatishga tayanadi.
+
+  🆕 S-025 dan chiqqan TAVSIYA (2026-09-21): `api/task.txt` ga kichik
+    task — `Branch` ga `landmark` (oriyentir) maydoni. Mock'da bor edi
+    ("Urjuza klinikasi yaqinida"), `BranchPublicDto` da yo'q. O'zbekistonda
+    oriyentir ko'cha manzilidan ko'ra ko'proq ish beradi.
+
+  ⚠ S-023 (2026-09-21) mahsulot sahifasini API'ga o'tkazdi, KATALOG esa
+    hali mock — S-022 bloklangani uchun. Ya'ni `/catalog` dagi kartalar
+    namuna slug'lariga ishora qiladi va 404 beradi. Kutilgan oraliq
+    holat: S-022 tugagach o'zi to'g'rilanadi.
   ──────────────────────────────────────────────────────────────────────────

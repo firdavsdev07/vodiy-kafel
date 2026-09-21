@@ -1,0 +1,14 @@
+# Vodiy Kafel — ochiq katalog sayti (S-037).
+#
+# Sayt butunlay ochiq: narx ham, shaxsiy ma'lumot ham yo'q (G1),
+# shuning uchun taqiqlanadigan bo'lim deyarli yo'q.
+
+User-agent: *
+Allow: /
+
+# Buyurtma kuzatish — natija faqat raqam + telefon bilan chiqadi va
+# indekslashdan hech qanday foyda yo'q (sahifaning o'zida ham
+# `noindex` bor).
+Disallow: /track
+
+Sitemap: https://vodiykafel.uz/sitemap.xml

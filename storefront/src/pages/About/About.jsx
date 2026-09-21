@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom'
 
 import PageHeader from '@/components/ui/PageHeader'
+import PartnerLogo from '@/components/ui/PartnerLogo'
 import SmartImage from '@/components/ui/SmartImage'
 import { company } from '@/data/company'
 import { INTERIOR, MARBLE, TRAVERTINE } from '@/data/images'
 import { useParallax } from '@/hooks/useParallax'
 import { useReveal } from '@/hooks/useReveal'
+import { partnerModel, useMainBranch, usePartners } from '@/shared/api'
+import Seo from '@/components/ui/Seo'
 
 export default function About() {
   const oneRef = useReveal({ start: 'top 82%' })
@@ -13,11 +16,17 @@ export default function About() {
   const threeRef = useReveal({ start: 'top 82%' })
   const fourRef = useReveal({ start: 'top 82%' })
   const plateRef = useParallax(140)
+  const { data: branch } = useMainBranch()
 
   return (
     <>
+      <Seo
+        title="Biz haqimizda"
+        description="20 yildan ortiq vaqtdan beri Farg‘ona vodiysiga keramika olib kelamiz — zavod bilan to‘g‘ridan-to‘g‘ri, vositachisiz."
+      />
+
       <PageHeader
-        index="04"
+        index="05"
         eyebrow="Biz haqimizda"
         title={['Biz', 'haqimizda']}
         meta={`${company.markets.import.join(' / ')} → O‘zbekiston`}
@@ -140,6 +149,8 @@ export default function About() {
         </div>
       </section>
 
+      <Partners />
+
       {/* showroom + CTA */}
       <section
         ref={fourRef}
@@ -149,8 +160,8 @@ export default function About() {
         <div className="grid gap-10 md:grid-cols-12">
           <div className="md:col-span-6">
             <SmartImage
-              id={company.showroom.texture}
-              alt={company.showroom.label}
+              id={TRAVERTINE[5]}
+              alt=""
               ratio="4 / 3"
               sizes="(max-width: 767px) 92vw, 48vw"
               className="w-full"
@@ -158,19 +169,26 @@ export default function About() {
           </div>
 
           <div className="md:col-span-5 md:col-start-8 md:self-end">
-            <span className="r-fade type-label text-clay">{company.showroom.label}</span>
+            <span className="r-fade type-label text-clay">
+              {branch ? `${branch.city.toUpperCase()} SHOWROOM` : 'SHOWROOM'}
+            </span>
             <h2 className="mt-6 type-sub">
               <span className="line-mask">
                 <span className="r-line">Kelib ko‘ring.</span>
               </span>
             </h2>
-            <address className="r-fade mt-6 not-italic leading-relaxed text-clay">
-              {company.showroom.region}, {company.showroom.city} shahri
-              <br />
-              {company.showroom.street}
-              <br />
-              {company.showroom.hours} · {company.showroom.days}
-            </address>
+            {/* Manzil API'dan (S-025) — ro'yxatdagi birinchi do'kon.
+                Kelmasa blok chiqmaydi, "Aloqa sahifasi" havolasi esa
+                joyida qoladi: u yerda hamma do'kon ro'yxati bor. */}
+            {branch && (
+              <address className="r-fade mt-6 not-italic leading-relaxed text-clay">
+                {branch.city} shahri
+                <br />
+                {branch.address}
+                <br />
+                {branch.workingHours}
+              </address>
+            )}
             <Link
               to="/contact"
               data-cursor="Ochish"
@@ -183,5 +201,45 @@ export default function About() {
         </div>
       </section>
     </>
+  )
+}
+
+/**
+ * Hamkorlar (S-026) — `GET /partners`.
+ *
+ * Yuqoridagi statistikada "120+ Hamkorlar" deb yozilgan; bu blok
+ * o'shaning yuzi. Ro'yxat bo'sh bo'lsa (yoki backend javob bermasa)
+ * bo'lim UMUMAN chiqmaydi: bo'sh "Hamkorlar" sarlavhasi 120+ raqamiga
+ * zid bo'lib turardi.
+ */
+function Partners() {
+  const ref = useReveal({ start: 'top 85%' })
+  const { data } = usePartners()
+  const partners = (data ?? []).map(partnerModel)
+
+  if (!partners.length) return null
+
+  return (
+    <section
+      ref={ref}
+      data-reveal=""
+      className="relative z-10 edge py-[clamp(5rem,12vw,9rem)]"
+    >
+      <div className="hairline flex items-baseline justify-between pt-4">
+        <span className="type-label text-clay">Hamkorlar</span>
+        <span className="type-label text-clay">Biz bilan ishlaydiganlar</span>
+      </div>
+
+      {/* Logotiplar o'lchami har xil — `items-center` ularni bitta
+          ko'rinmas chiziqqa tizadi, ya'ni keng va tik belgilar yonma-yon
+          turganda qator qiyshaymaydi. */}
+      <div className="mt-[clamp(2.5rem,6vw,4rem)] grid grid-cols-2 items-center gap-x-8 gap-y-[clamp(2rem,4vw,3rem)] md:grid-cols-3 lg:grid-cols-4">
+        {partners.map((partner) => (
+          <div key={partner.id} className="r-fade">
+            <PartnerLogo partner={partner} />
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }

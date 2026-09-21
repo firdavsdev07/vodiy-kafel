@@ -65,7 +65,7 @@
 .entry-caption > span:last-child { font-size: var(--text-meta); line-height: 1.7; }
 .entry-heading { position: absolute; z-index: 1; top: 59%; left: 0; width: 100%; text-align: center; }
 .entry-eyebrow { font-size: var(--text-label); letter-spacing: .16em; color: #71685e; margin-bottom: 10px; }
-.entry-heading h1 { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
+.entry-heading p { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
 .entry-word-mask { overflow: hidden; display: block; }
 .entry-word { display: block; }
 .entry-period { color: #777863; }
@@ -84,7 +84,7 @@
  .entry-caption { top: 15%; left: 7vw; }
  .entry-caption > span:last-child { display: none; }
  .entry-heading { top: 65%; }
- .entry-heading h1 { font-size: 13vw; }
+ .entry-heading p { font-size: 13vw; }
  .entry-eyebrow { margin-bottom: 12px; }
  .entry-bottom { bottom: max(4%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; padding-top: 15px; flex-direction: column; align-items: flex-start; gap: 16px; }
  .entry-enter { gap: 12px; }
@@ -546,6 +546,16 @@
     background: #d8d3c8 !important;
   }
 }
+
+/* "Kontentga o'tish" havolasi (S-040).
+
+   Ko'rinmaydi, lekin YASHIRILMAGAN: `display:none` yoki
+   `visibility:hidden` bo'lsa klaviatura uni umuman topa olmasdi.
+   Shuning uchun ekrandan tashqariga chiqarib qo'yiladi va fokus
+   tushganda joyiga qaytadi. Tab bosgan odam uchun bu — saytning
+   BIRINCHI elementi, ya'ni uzun menyudan sakrab o'tish imkoni. */
+.skip-link { position: fixed; top: 0; left: 0; z-index: 300; transform: translateY(-120%); background: #232321; color: #eeece5; padding: 14px 20px; font-size: var(--text-label); letter-spacing: .08em; text-transform: uppercase; transition: transform .2s ease; }
+.skip-link:focus { transform: translateY(0); outline: 2px solid #eeece5; outline-offset: -6px; }
 
 /* Lazy sahifa yuklanayotgandagi skelet (S-002) — saytning o'z qog'oz ohangida. */
 .route-skeleton { display: flex; flex-direction: column; gap: 18px; min-height: 70svh; padding: clamp(120px, 16vh, 200px) 5vw 120px; }

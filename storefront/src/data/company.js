@@ -1,8 +1,16 @@
-import { INTERIOR, TRAVERTINE } from './images'
-
 /**
  * Factual company information. Content reference only — no UI, layout or
  * imagery was taken from the client's previous site. See ASSETS.md §8.
+ *
+ * ⚠ MANZIL, ISH VAQTI VA KOORDINATA BU YERDA YO'Q (S-025). Ular
+ *   `GET /branches` dan keladi — admin panelidan boshqariladi va
+ *   bittadan ko'p do'kon bor. `@/shared/api` dagi `useMainBranch()`
+ *   (bitta manzil kerak bo'lsa) yoki `useBranches()` (to'liq ro'yxat).
+ *
+ * Bu yerda qolgani — API'da MUQOBILI YO'Q narsalar: kompaniya nomi,
+ * tarix, statistika, bozorlar, kafolat, umumiy telefon/pochta/ijtimoiy
+ * tarmoqlar va navigatsiya. Backend o'chiq bo'lsa ham odam qo'ng'iroq
+ * qila olishi uchun aloqa ma'lumoti ataylab shu yerda qoldirildi.
  */
 export const company = {
   name: 'Vodiy Kafel',
@@ -44,20 +52,6 @@ export const company = {
       "Yetkazib berish jarayonida yoki savdo nuqtasida shikastlangan plita bepul almashtiriladi.",
   },
 
-  showroom: {
-    city: "Farg'ona",
-    label: "FARG'ONA SHOWROOM",
-    region: "Farg'ona viloyati",
-    street: "Vatan ravnaqi ko'chasi 47",
-    landmark: "Urjuza klinikasi va Farg'ona bolalar shifoxonasi yaqinida",
-    hours: '08:00 — 17:00',
-    days: 'Dushanba — Shanba',
-    closed: 'Yakshanba — dam olish kuni',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=40.3864,71.7864',
-    image: INTERIOR[4],
-    texture: TRAVERTINE[5],
-  },
-
   contact: {
     phones: ['+998 91 129 66 66', '+998 77 777 52 51'],
     phoneHref: ['+998911296666', '+998777775251'],
@@ -67,12 +61,17 @@ export const company = {
     handle: '@vodiykafelsavdo',
   },
 
+  /* Bosh menyu. `index` — ko'rinadigan tartib raqami, marshrut emas.
+     Galereya S-027 da qo'shildi, shuning uchun undan keyingilar
+     qayta raqamlandi. Buyurtma kuzatish menyuda EMAS: u kundalik
+     yo'l emas, kerak bo'lganda footerdan topiladi. */
   nav: [
     { index: '01', label: 'Bosh sahifa', en: 'Home', to: '/' },
     { index: '02', label: 'Katalog', en: 'Catalog', to: '/catalog' },
     { index: '03', label: 'Kategoriyalar', en: 'Categories', to: '/categories' },
-    { index: '04', label: 'Biz haqimizda', en: 'About', to: '/about' },
-    { index: '05', label: 'Aloqa', en: 'Contact', to: '/contact' },
+    { index: '04', label: 'Galereya', en: 'Gallery', to: '/gallery' },
+    { index: '05', label: 'Biz haqimizda', en: 'About', to: '/about' },
+    { index: '06', label: 'Aloqa', en: 'Contact', to: '/contact' },
   ],
 }
 

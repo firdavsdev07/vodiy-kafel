@@ -7,6 +7,9 @@ import { categories, categoryName } from '@/data/categories'
 import { products } from '@/data/products'
 import { useReveal } from '@/hooks/useReveal'
 import { playTone } from '@/lib/sound'
+import JsonLd from '@/components/ui/JsonLd'
+import Seo from '@/components/ui/Seo'
+import { breadcrumbSchema } from '@/lib/schema'
 
 /**
  * Editorial grid, not a marketplace. The column rhythm repeats every five
@@ -68,6 +71,18 @@ export default function Catalog() {
 
   return (
     <>
+      <Seo
+        title="Katalog"
+        description="Keramika va keramogranit katalogi — marmar, tosh va beton effektlari. O‘lcham, sirt va zavod bo‘yicha tanlang."
+      />
+
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Bosh sahifa', path: '/' },
+          { name: 'Katalog', path: '/catalog' },
+        ])}
+      />
+
       <PageHeader
         index="02"
         eyebrow="Katalog"
@@ -123,6 +138,16 @@ export default function Catalog() {
         data-reveal=""
         className="relative z-10 edge pb-[clamp(6rem,14vw,12rem)] pt-[clamp(2.5rem,6vw,5rem)]"
       >
+        {/* Filtr bosilganda ro'yxat JIM almashadi — ko'rib turgan odam
+            buni sezadi, ekran o'quvchi esa yo'q. Shu qator o'zgarishni
+            e'lon qiladi (S-040). `aria-live="polite"` — odam gapini
+            bo'lmaydi, joriy o'qish tugagach aytiladi. */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {visible.length === 0
+            ? 'Bu toifada mahsulot yo‘q'
+            : `${visible.length} ta mahsulot ko‘rsatilmoqda`}
+        </p>
+
         {visible.length === 0 ? (
           <p className="type-editorial py-24 text-clay">
             Bu toifada hozircha mahsulot yo‘q.

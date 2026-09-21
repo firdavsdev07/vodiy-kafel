@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { company } from '@/data/company'
 import { useReveal } from '@/hooks/useReveal'
+import { useMainBranch } from '@/shared/api'
 
 /**
  * The contact section is a designed page in its own right, not a footer
@@ -10,6 +11,7 @@ import { useReveal } from '@/hooks/useReveal'
 export default function Footer() {
   const ref = useReveal({ start: 'top 78%' })
   const year = new Date().getFullYear()
+  const { data: branch } = useMainBranch()
 
   return (
     <footer
@@ -69,24 +71,26 @@ export default function Footer() {
             </a>
           </div>
 
-          <div className="r-fade md:col-span-3">
-            <div className="type-label text-clay">Showroom</div>
-            <address className="mt-5 not-italic leading-relaxed">
-              {company.showroom.region}
-              <br />
-              {company.showroom.city} shahri
-              <br />
-              {company.showroom.street}
-            </address>
-            <div className="mt-6 type-label text-clay">Ish vaqti</div>
-            <p className="mt-3 leading-relaxed">
-              {company.showroom.hours}
-              <br />
-              <span className="text-clay">{company.showroom.days}</span>
-              <br />
-              <span className="text-clay">{company.showroom.closed}</span>
-            </p>
-          </div>
+          {/* Manzil API'dan (S-025) — ro'yxatdagi birinchi do'kon.
+              Qaysi biri birinchi ekanini admin `sortOrder` bilan hal
+              qiladi, sayt emas.
+
+              Backend javob bermasa blok CHIQMAYDI — noto'g'ri manzil
+              ko'rsatgandan ko'ra ko'rsatmagan afzal. Qo'ng'iroq qilish
+              va yozish imkoni yo'qolmaydi: telefon, pochta va ijtimoiy
+              tarmoqlar kompaniya darajasida, chap ustunda turadi. */}
+          {branch && (
+            <div className="r-fade md:col-span-3">
+              <div className="type-label text-clay">Showroom</div>
+              <address className="mt-5 not-italic leading-relaxed">
+                {branch.city} shahri
+                <br />
+                {branch.address}
+              </address>
+              <div className="mt-6 type-label text-clay">Ish vaqti</div>
+              <p className="mt-3 leading-relaxed">{branch.workingHours}</p>
+            </div>
+          )}
 
           <nav className="r-fade md:col-span-2">
             <div className="type-label text-clay">Indeks</div>
@@ -104,7 +108,13 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            {/* Buyurtma kuzatish bosh menyuda EMAS (S-029): u kundalik
+                yo'l emas, kerak bo'lgandagina qidiriladi — shuning
+                uchun o'rni footer. */}
             <div className="mt-8 flex flex-col gap-3">
+              <Link to="/track" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
+                Buyurtmani kuzatish →
+              </Link>
               <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Telegram ↗
               </a>

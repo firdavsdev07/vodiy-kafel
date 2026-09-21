@@ -40,7 +40,7 @@ pnpm install
 pnpm dev                          # vite dev server (port 5173 via .claude/launch.json)
 pnpm build
 pnpm lint                         # oxlint
-node --test tests/sound.test.js   # only test file in the package
+pnpm test                         # node --test over tests/*.test.js
 ```
 
 ### dashboard/
