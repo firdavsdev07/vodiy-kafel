@@ -12,6 +12,13 @@ author James Ray Cock), so nothing is owed for having used it. If 3D is
 ever wanted again, the files are recoverable from git history (commit
 before S-001) — but the npm packages must be reinstalled deliberately.
 
+## Entry-screen backdrop
+
+- Source file: `entry-backdrop.webp`, supplied by the project owner on **2026-09-23** (1798×875 WebP, RGBA — transparent centre, corner stacks of tile/marble samples with a blurred plant and directional light, meant to frame text placed over the empty middle).
+- Committed as `storefront/public/images/entry-backdrop.webp`, used full-bleed behind the "Vodiy Kafel." wordmark on the entry/loading screen (`Preloader.jsx`).
+
+⚠️ **Rights status: NOT ESTABLISHED** — same situation as `logo.png` below: handed over as a file with no stated author, licence or generation method. Record here before commercial launch whether it's owned/commissioned, AI-generated, or sourced from a manufacturer/stock library (the last case blocks launch under **G7**, same as the Marazzi photography).
+
 ## Logo / favicon
 
 - Source file: `logo.png`, supplied by the project owner on **2026-09-17** (1254×1254 PNG, transparent background). A render of six ceramic tiles — Calacatta, travertine, olive, blue, grey stone and black marble — arranged as a diamond.

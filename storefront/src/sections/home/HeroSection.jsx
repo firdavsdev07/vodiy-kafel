@@ -22,7 +22,6 @@ export default function HeroSection() {
       <div className="hero-object-label"><span className="type-label">Assalomu alaykum</span><span>Xush kelibsiz</span></div>
       <div className="hero-bottom">
         <div className="hero-swatch"><img src={img(MARBLE[0], 300)} alt="Marmar tekstura namunasi" /><div><span className="type-label">2026 Selection</span><p>Tabiiy ohang. Yangi talqin.</p></div></div>
-        <span className="hero-drag">Vodiy mehmondo‘stligi / 001 — Sizni ko‘rganimizdan xursandmiz</span>
         <a href="#intro" aria-label="Keyingi bo‘limga o‘tish" className="hero-scroll"><ArrowDown size={20} /></a>
       </div>
     </section>

@@ -1,25 +1,22 @@
 import { useLayoutEffect, useRef } from 'react'
 import { gsapLoaded, loadGsap } from '@/animations/gsap'
 import { prefersReducedMotion } from '@/lib/motion'
-import { MARBLE, TRAVERTINE, img } from '@/data/images'
 import { startScroll, stopScroll } from '@/lib/lenis'
 import { markEntered } from '@/lib/session'
 import { playTone, setSoundEnabled } from '@/lib/sound'
 
-const samples = [
-  { source: MARBLE[8], angle: -28, x: -105, y: 35 },
-  { source: TRAVERTINE[2], angle: -14, x: -54, y: 9 },
-  { source: MARBLE[0], angle: 0, x: 0, y: 0 },
-  { source: MARBLE[4], angle: 14, x: 54, y: 9 },
-  { source: TRAVERTINE[0], angle: 28, x: 105, y: 35 },
-]
+const BADGE_TEXT = 'YAXSHIROQ KELAJAK YARATING • YAXSHIROQ KELAJAK YARATING • '
 
-/** A finite material study, with no simulated network progress or WebGL. */
+/** Fixed backdrop photo (`entry-backdrop.webp`, ASSETS.md), wordmark, a
+ * decorative — but timeline-driven, not fake-network — loading readout. */
 export default function Preloader({ onDone }) {
   const root = useRef(null)
   const leaving = useRef(false)
   const intro = useRef(null)
   const exit = useRef(null)
+  const fillRef = useRef(null)
+  const valueRef = useRef(null)
+  const progress = useRef({ value: 0 })
 
   useLayoutEffect(() => {
     stopScroll()
@@ -33,6 +30,8 @@ export default function Preloader({ onDone }) {
        ko'rinib ketmaydi. */
     if (prefersReducedMotion()) {
       el.setAttribute('data-entry', 'in')
+      if (fillRef.current) fillRef.current.style.width = '100%'
+      if (valueRef.current) valueRef.current.textContent = '100%'
       return () => {
         startScroll()
         previous?.focus?.({ preventScroll: true })
@@ -46,11 +45,19 @@ export default function Preloader({ onDone }) {
       if (cancelled || !root.current) return
       context = gsap.context(() => {
         intro.current = gsap.timeline({ defaults: { ease: 'power3.out' } })
-          .fromTo('.entry-sample', { x: 0, y: 0, xPercent: 0, yPercent: 45, rotation: 0, opacity: 0 },
-            { xPercent: i => samples[i].x, yPercent: i => samples[i].y, rotation: i => samples[i].angle, opacity: 1, duration: 1.65, stagger: { each: .06, from: 'center' } }, .1)
-          .fromTo('.entry-word', { yPercent: 110 }, { yPercent: 0, duration: 1.2, stagger: .12 }, .35)
-          .fromTo('.entry-detail', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7, stagger: .05 }, .55)
-          .fromTo('.entry-rule', { scaleX: 0 }, { scaleX: 1, duration: 1.3 }, .3)
+          .fromTo('.entry-backdrop', { opacity: 0, scale: 1.05 },
+            { opacity: 1, scale: 1, duration: 1.3 }, 0)
+          .fromTo('.entry-fade', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7, stagger: .06 }, .3)
+          .fromTo('.entry-word', { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: .9, stagger: .12 }, .5)
+          .to(progress.current, {
+            value: 100, duration: 1.4, ease: 'power1.inOut',
+            onUpdate: () => {
+              const value = Math.round(progress.current.value)
+              if (fillRef.current) fillRef.current.style.width = value + '%'
+              if (valueRef.current) valueRef.current.textContent = value + '%'
+            },
+          }, .5)
+          .fromTo('.entry-enter', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .7 }, 1.3)
       }, root)
       root.current.setAttribute('data-entry', 'in')
     }).catch(() => root.current?.setAttribute('data-entry', 'in'))
@@ -78,10 +85,9 @@ export default function Preloader({ onDone }) {
     intro.current?.kill()
     const el = root.current
     exit.current = gsap.timeline({ onComplete: finish })
-      .to(el.querySelectorAll('.entry-detail, .entry-enter'), { opacity: 0, duration: .2 }, 0)
-      .to(el.querySelectorAll('.entry-sample'), { xPercent: 0, yPercent: 8, rotation: 0, duration: .5, ease: 'power3.inOut' }, 0)
-      .to(el.querySelector('.entry-study'), { yPercent: -35, opacity: 0, duration: .45, ease: 'power2.in' }, .3)
-      .to(el.querySelectorAll('.entry-word'), { yPercent: -110, duration: .6, stagger: .05, ease: 'power3.in' }, .15)
+      .to(el.querySelectorAll('.entry-enter, .entry-fade'), { opacity: 0, duration: .2 }, 0)
+      .to(el.querySelector('.entry-backdrop'), { opacity: 0, scale: 1.04, duration: .5, ease: 'power2.in' }, 0)
+      .to(el.querySelectorAll('.entry-word'), { opacity: 0, y: -20, duration: .5, stagger: .05, ease: 'power3.in' }, .15)
       .to(el, { yPercent: -100, duration: .85, ease: 'power3.inOut' }, .45)
   }
 
@@ -92,33 +98,40 @@ export default function Preloader({ onDone }) {
         if (event.key === 'Escape' || (event.key === 'Enter' && event.target === root.current)) { event.preventDefault(); enter() }
         if (event.key === 'Tab') { event.preventDefault(); root.current.querySelector('button').focus() }
       }}>
-      <header className="entry-top entry-detail">
-        <span className="entry-monogram">V/K<sup>®</sup></span>
-        <span>FARG‘ONA, UZBEKISTAN<br /><span className="entry-muted">EST. 2006</span></span>
+      <div className="entry-backdrop" aria-hidden="true">
+        <img src="/images/entry-backdrop.webp" alt="" decoding="async" fetchPriority="high" />
+      </div>
+
+      <header className="entry-top">
+        <span className="entry-fade entry-est">EST. 2006</span>
+        <span className="entry-fade entry-crumbs">Kafel / Interyer / Ilhom</span>
       </header>
-      <div className="entry-study" aria-hidden="true">
-        <div className="entry-study-axis" />
-        {samples.map((sample, i) => (
-          <div key={i} className="entry-sample" style={{
-            '--sample-x': sample.x + '%', '--sample-y': sample.y + '%',
-            '--sample-angle': sample.angle + 'deg', zIndex: 5 - Math.abs(i - 2),
-          }}>
-            <img src={img(sample.source)} alt="" decoding="async" fetchPriority={i === 2 ? 'high' : 'auto'} />
-            <span className="entry-sample-edge" />
-          </div>
-        ))}
-      </div>
-      <div className="entry-caption entry-detail"><span>01 — MATERIAL STUDY</span><span>Tabiatdan ilhomlangan.<br />Makon uchun yaratilgan.</span></div>
+
       <div className="entry-heading">
-        <p className="entry-eyebrow entry-detail">SHAKL. YUZA. XARAKTER.</p>
-        <p className="entry-title" aria-label="Vodiy Kafel"><span className="entry-word-mask"><span className="entry-word">Vodiy</span></span><span className="entry-word-mask"><span className="entry-word">Kafel<span className="entry-period">.</span></span></span></p>
+        <p className="entry-fade entry-tagline">Kafeldan ko‘proq<br />Eng yaxshi makon</p>
+        <p className="entry-title" aria-label="Vodiy Kafel">
+          <span className="entry-word entry-word-strong">Vodiy</span>
+          <span className="entry-word entry-word-accent">Kafel<span className="entry-period">.</span></span>
+        </p>
+        <div className="entry-fade entry-progress">
+          <span className="entry-progress-track"><span ref={fillRef} className="entry-progress-fill" /></span>
+          <span ref={valueRef} className="entry-progress-value">0%</span>
+        </div>
+        <p className="entry-fade entry-progress-caption">Ilhom yuklanmoqda…</p>
       </div>
+
       <footer className="entry-bottom">
-        <div className="entry-rule" />
-        <p className="entry-detail">PREMIUM KERAMIK YUZALAR<br /><span className="entry-muted">Kolleksiya — 2026</span></p>
+        <span className="entry-fade entry-corner-label">Sifat<br />Dizayn<br />Makoningiz</span>
         <button type="button" className="entry-enter" onClick={enter} data-cursor="">
-          <span><span>Kashf eting</span><small>Ovoz bilan saytga kirish</small></span><span className="entry-arrow" aria-hidden="true">↗</span>
+          <span>Kashf eting</span><span className="entry-arrow" aria-hidden="true">↗</span>
         </button>
+        <div className="entry-fade entry-badge" aria-hidden="true">
+          <svg viewBox="0 0 120 120" className="entry-badge-ring">
+            <path id="entry-badge-circle" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0" fill="none" />
+            <text className="entry-badge-text"><textPath href="#entry-badge-circle">{BADGE_TEXT}</textPath></text>
+          </svg>
+          <span className="entry-badge-icon">✓</span>
+        </div>
       </footer>
     </div>
   )

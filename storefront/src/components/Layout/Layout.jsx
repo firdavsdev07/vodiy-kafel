@@ -180,7 +180,13 @@ export default function Layout() {
       </div>
 
       {gateOpen && (
-        <Suspense fallback={null}>
+        // `fallback={null}` avval "hero'ning bir lahza ko'rinib qolishi"ga
+        // sabab bo'lardi (2026-09-23): `Preloader` chunk'i yuklanib
+        // bo'lguncha uning o'rnida HECH NARSA chizilmaydi, shu payt ostidagi
+        // Hero ochiq qoladi. Xuddi shu qog'oz fonli qatlam endi fallback
+        // sifatida turadi — chunk kelgach, ustidan aynan shu rangli haqiqiy
+        // ekran almashadi, chaqnash bo'lmaydi.
+        <Suspense fallback={<div className="fixed inset-0 z-[200] bg-bone" aria-hidden="true" />}>
           <Preloader
             onDone={() => {
               setEntered(true)

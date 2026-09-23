@@ -52,64 +52,91 @@
    bo'lguncha (yoki yuklash bo'lmay qolguncha — `data-entry='in'`)
    yashirin turadi. Busiz yakuniy kompozitsiya bir zum ko'rinib, keyin
    qaytadan yig'ilardi. */
-.entry-screen:not([data-entry='in']) .entry-study,
-.entry-screen:not([data-entry='in']) .entry-detail,
-.entry-screen:not([data-entry='in']) .entry-heading,
-.entry-screen:not([data-entry='in']) .entry-rule { opacity: 0; }
-.entry-top { position: absolute; top: 5%; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; font-size: var(--text-label); line-height: 1.7; letter-spacing: .08em; }
-.entry-top > span:last-child { text-align: right; }
-.entry-monogram { font-size: 28px; letter-spacing: -.08em; font-weight: 600; }
-.entry-monogram sup { margin-left: 6px; font-size: 12px; vertical-align: top; line-height: 2.3; }
-.entry-muted { color: #71685e; }
-.entry-study { --sample-width: min(13vw, 180px, 23svh); position: absolute; z-index: 0; left: 50%; top: 13%; width: var(--sample-width); height: 30%; margin-left: calc(var(--sample-width) / -2); }
-.entry-study-axis { position: absolute; top: -10%; bottom: -11%; left: 50%; width: 1px; background: #d8d3c8; }
-.entry-study-axis::before, .entry-study-axis::after { content: '+'; position: absolute; left: -4px; color: #928777; font-size: 12px; line-height: 1; }
-.entry-study-axis::before { top: -9px; }
-.entry-study-axis::after { bottom: -9px; }
-.entry-sample { position: absolute; inset: 0; border-radius: 100px 100px 3px 3px; overflow: hidden; background: #d8d3c8; transform: translate(var(--sample-x), var(--sample-y)) rotate(var(--sample-angle)); transform-origin: center 100%; box-shadow: 5px 10px 18px #43392724, 1px 2px 2px #302a252e; }
-.entry-sample img { width: 100%; height: 100%; object-fit: cover; }
-.entry-sample-edge { position: absolute; inset: 0; border-radius: inherit; border: 1px solid #ffffff65; background: linear-gradient(100deg, #fff3, transparent 20% 87%, #33271c30); box-shadow: inset -3px 0 1px #58473726; }
-.entry-caption { position: absolute; left: 7vw; top: 37%; display: flex; flex-direction: column; gap: 13px; }
-.entry-caption > span:first-child { font-size: var(--text-label); letter-spacing: .12em; color: #71685e; }
-.entry-caption > span:last-child { font-size: var(--text-meta); line-height: 1.7; }
-.entry-heading { position: absolute; z-index: 1; top: 59%; left: 0; width: 100%; text-align: center; }
-.entry-eyebrow { font-size: var(--text-label); letter-spacing: .16em; color: #71685e; margin-bottom: 10px; }
-/* `.entry-heading p` EMAS — u eyebrow `<p>` ni ham ushlab, uni ulkan
-   sarlavhaga aylantirar va blok "Kashf eting" tugmasini yopib qo'yardi. */
-.entry-title { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
-.entry-word-mask { overflow: hidden; display: block; }
+.entry-screen:not([data-entry='in']) .entry-backdrop,
+.entry-screen:not([data-entry='in']) .entry-word,
+.entry-screen:not([data-entry='in']) .entry-fade,
+.entry-screen:not([data-entry='in']) .entry-enter { opacity: 0; }
+/* 2026-09-23: reference-driven relayout — a labelled corner frame (EST.
+   date, breadcrumb, quality tagline, spinning badge) around a fixed
+   backdrop photo (`entry-backdrop.webp`, ASSETS.md — corner tile stacks
+   with a transparent centre) + the wordmark, plus a GSAP-timeline-driven
+   (not fake-network) progress readout. All copy in Uzbek.
+   `.entry-word` used to be masked (`overflow: hidden`) and slid in with a
+   `yPercent` reveal — that clipped the descender on "Vodiy" ('y') in a way
+   never fully pinned down (reproduced even with the mask's `overflow` set
+   to `visible` live, so it wasn't simply the padding being too small).
+   Replaced with a plain opacity+y fade: no clipping ancestor in the chain
+   at all now, so the glyph can't be cut regardless of the cause. */
+/* `contain`, not `cover` (2026-09-23): the backdrop's real content —
+   the tile stacks — sits hard against its left/right edges with a wide
+   empty middle. At the site's actual viewport ratios `cover` scaled the
+   image up to fill height and cropped ~200px off each side to fit the
+   width, which ate almost the ENTIRE right-hand stack (it starts past
+   x≈1620 of 1798). `contain` always shows the whole composition. */
+.entry-backdrop { position: absolute; inset: 0; z-index: 0; }
+/* The marble/travertine tones in the photo sit very close to the site's
+   own bone paper background — at native contrast the corner stacks nearly
+   vanished into the page. The boost makes the veining and wood-slat
+   accents read clearly again without touching the paper color itself. */
+.entry-backdrop img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; filter: contrast(1.18) saturate(1.35); }
+.entry-top { position: absolute; z-index: 2; top: 5%; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; font-size: var(--text-label); letter-spacing: .14em; text-transform: uppercase; }
+.entry-est { font-weight: 600; }
+.entry-crumbs { color: #71685e; }
+.entry-heading { position: absolute; z-index: 1; top: 50%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; transform: translateY(-50%); }
+.entry-tagline { font-size: var(--text-label); letter-spacing: .16em; text-transform: uppercase; color: #71685e; line-height: 1.7; }
+/* Ikki registrli tamg'a: "Vodiy" qalin/to'q, "Kafel." esa yupqaroq +
+   zaytun rang (bosh sahifadagi H1'dagi xuddi shu ikki tonlilik bilan bir
+   xil — DESIGN.md'dagi brend rangi) — tekis, bir xil og'irlikdagi yozuvga
+   tirik ohang qo'shadi. (2026-09-23: qiyalik — `rotate(-2deg)` — olib
+   tashlandi, "qiyshiq" ko'rinar edi.) */
+.entry-title { display: flex; justify-content: center; gap: .23em; font-size: clamp(56px, 10vw, 15svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; mix-blend-mode: multiply; }
 .entry-word { display: block; }
+.entry-word-strong { font-weight: 700; }
+.entry-word-accent { font-weight: 400; color: #777863; }
 .entry-period { color: #777863; }
-.entry-bottom { position: absolute; z-index: 2; bottom: 4%; left: 5vw; right: 5vw; display: flex; align-items: center; justify-content: space-between; padding-top: 20px; gap: 20px; }
-.entry-rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: #c9c2b5; transform-origin: left; }
-.entry-bottom p { font-size: var(--text-label); line-height: 1.75; letter-spacing: .08em; }
-.entry-enter { display: flex; align-items: center; gap: 25px; text-align: left; min-height: 58px; }
-.entry-enter > span:first-child { display: flex; flex-direction: column; gap: 4px; }
-.entry-enter > span:first-child > span { font-size: 21px; letter-spacing: -.045em; }
-.entry-enter small { font-size: var(--text-label); color: #71685e; }
+.entry-progress { display: flex; align-items: center; gap: 16px; }
+.entry-progress-track { width: 220px; height: 2px; border-radius: 2px; background: #00000018; overflow: hidden; }
+.entry-progress-fill { display: block; height: 100%; width: 0%; background: #777863; border-radius: inherit; }
+.entry-progress-value { min-width: 2.6em; text-align: left; font-size: var(--text-label); letter-spacing: .06em; color: #71685e; font-variant-numeric: tabular-nums; }
+.entry-progress-caption { font-size: var(--text-label); letter-spacing: .16em; text-transform: uppercase; color: #928777; }
+.entry-bottom { position: absolute; z-index: 2; bottom: 6%; left: 5vw; right: 5vw; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.entry-corner-label { font-size: var(--text-label); letter-spacing: .1em; line-height: 1.8; text-transform: uppercase; color: #71685e; }
+.entry-enter { display: flex; align-items: center; gap: 25px; text-align: left; min-height: 58px; background: #eeece5f2; padding: 12px 24px 12px 28px; border-radius: 999px; box-shadow: 0 10px 30px #2b241a30; }
+.entry-enter > span:first-child { font-size: 21px; letter-spacing: -.045em; }
 .entry-arrow { width: 54px; height: 54px; border: 1px solid #a69e90; border-radius: 50%; display: grid; place-items: center; font-size: 26px; transition: transform .35s, background .35s; }
 .entry-enter:hover .entry-arrow { transform: rotate(45deg); background: #d8d3c8; }
+.entry-badge { position: relative; width: 84px; height: 84px; display: grid; place-items: center; }
+.entry-badge-ring { width: 100%; height: 100%; animation: entry-badge-spin 13s linear infinite; }
+.entry-badge-text { font-size: 8.6px; letter-spacing: .04em; text-transform: uppercase; fill: #71685e; }
+.entry-badge-icon { position: absolute; font-size: 20px; }
+@keyframes entry-badge-spin { to { transform: rotate(360deg); } }
 @media (max-width: 767px) {
+ /* `contain` on a tall phone screen shrinks the whole ~2:1 banner down to
+    a thin, barely-legible letterboxed strip. `cover` anchored left crops
+    in on just the left-hand stack + plant instead, at a size that still
+    reads. */
+ .entry-backdrop img { object-fit: cover; object-position: left center; }
+ .entry-crumbs { display: none; }
  .entry-top { left: 7vw; right: 7vw; }
- .entry-study { --sample-width: min(24vw, 140px); top: 23%; height: 27%; }
- .entry-caption { top: 15%; left: 7vw; }
- .entry-caption > span:last-child { display: none; }
- .entry-heading { top: 65%; }
- .entry-title { font-size: 13vw; }
- .entry-eyebrow { margin-bottom: 12px; }
- .entry-bottom { bottom: max(4%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; padding-top: 15px; flex-direction: column; align-items: flex-start; gap: 16px; }
- .entry-enter { gap: 12px; }
- .entry-enter > span:first-child > span { font-size: 17px; }
+ .entry-heading { gap: 16px; }
+ .entry-title { font-size: 14vw; }
+ .entry-progress-track { width: 160px; }
+ .entry-bottom { bottom: max(6%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; }
+ .entry-corner-label, .entry-badge { display: none; }
+ .entry-enter { gap: 12px; padding: 10px 18px 10px 22px; }
+ .entry-enter > span:first-child { font-size: 17px; }
  .entry-arrow { width: 44px; height: 44px; font-size: 24px; }
 }
+@media (max-height: 620px) {
+ .entry-tagline, .entry-progress-caption { display: none; }
+ .entry-heading { gap: 14px; }
+}
 @media (max-height: 520px) and (min-width: 768px) {
- .entry-study { top: 12%; height: 25%; }
- .entry-heading { top: 55%; }
- .entry-bottom { bottom: 3%; padding-top: 8px; }
+ .entry-bottom { bottom: 5%; }
  .entry-arrow { width: 40px; height: 40px; }
  .entry-enter { min-height: 42px; }
 }
-@media (prefers-reduced-motion: reduce) { .entry-arrow { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .entry-arrow, .entry-badge-ring { transition: none; animation: none; } }
 
 
 .hero-gallery { position: relative; z-index: 10; min-height: 100svh; padding: 160px 5vw 110px; display: flex; align-items: center; pointer-events: none; }
