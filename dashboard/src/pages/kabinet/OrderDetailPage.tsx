@@ -102,7 +102,11 @@ export default function CabinetOrderDetailPage() {
               <dl className="grid gap-2 text-sm sm:grid-cols-2">
                 <Field label="Viloyat" value={data.delivery.regionName} />
                 <Field label="Transport" value={data.delivery.transportTypeName} />
-                <Field label="Mashina soni" value={String(data.delivery.vehicleCount)} />
+                {/* "Mashina soni" emas — vagon mashina emas; birlik turning o'z nomi. */}
+                <Field
+                  label="Soni"
+                  value={`${data.delivery.vehicleCount} ta ${data.delivery.transportTypeName}`}
+                />
                 {data.delivery.exactLat != null && data.delivery.exactLng != null && (
                   <Field
                     label="Xaritadagi nuqta"

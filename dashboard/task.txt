@@ -3134,3 +3134,41 @@
       B-064  Optom mijoz katalogi (`GET /me/catalog`) — D-052 ni ochdi
       B-066  Xodim paroli: yaratishda kiritish + reset-password — D-061
   ──────────────────────────────────────────────────────────────────────────
+
+  🔴 TO'G'RILANDI (2026-09-24) — "mashina" so'zi transport turiga
+    bog'lanmagan edi:
+
+      • D-063 kalkulyator sahifasi har bir tur uchun "1 mashinaga N
+        paddon" / "K mashina" deb yozardi. `TransportType` — CRUD
+        jadval (api/CLAUDE.md §5), enum emas: seedda "Fura" ham,
+        "Vagon" ham bor. Vagon mashina emas, ya'ni 60 paddonlik vagon
+        uchun "2 mashina" matni XATO edi. Endi birlik sifatida turning
+        O'Z nomi ishlatiladi: "Sig'imi: 60 paddon" → "2 ta Vagon".
+      • Xuddi shu xato kabinet buyurtma sahifasida ham bor edi
+        ("Mashina soni" maydoni) — u ham tur nomiga o'tkazildi.
+        Savat va xodim buyurtma sahifasi allaqachon to'g'ri edi
+        (`{transportTypeName} × {vehicleCount}`).
+      • Ikonka `Truck` → `Container` (neytral): kalkulyator sahifasi
+        ham, kabinet menyusidagi band ham.
+      • Kalkulyator kasr paddon qabul qilardi ("2.5" → javob ko'rsatardi),
+        backend esa butun musbat son talab qiladi
+        (`CalculatorService.assertPallets`) — endi `Number.isSafeInteger`.
+      • Swagger va admin paneldagi "mashina soni" matnlari ham
+        "transport soni" ga o'tkazildi.
+
+    Hisob mantig'ida XATO YO'Q — brauzerda tekshirildi (70 paddon):
+      Fura 20 → 4 ta, Vagon 60 → 2 ta; 75.6 m²; 1680 kg;
+      mahsulot 4 562 460, yo'l kira Fura 16 000 000 / Vagon 18 000 000.
+
+  🔴 TO'G'RILANDI (2026-09-24) — muhit va generatsiya drifti:
+
+      • `leaflet` / `react-leaflet` / `@types/leaflet` package.json da
+        bor edi, lekin o'rnatilmagan — `pnpm typecheck` 3 ta TS2307
+        bilan yiqilardi (`LocationPicker.tsx`). `pnpm install` qilindi.
+      • `src/shared/api/schema.d.ts` eskirgan edi: api B-067
+        (kategoriyalar) endpointlari umuman yo'q edi (585 qator).
+        `pnpm api:types` bilan qayta generatsiya qilindi.
+      • api: `Category` modeli uchun Prisma klienti generatsiya
+        qilinmagan va `20260923111910_add_category` migratsiyasi
+        qo'llanmagan edi — `pnpm start:dev` 12 ta TS2339 bilan
+        ishga tushmasdi.

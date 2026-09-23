@@ -86,7 +86,7 @@ export class CalculatorController {
     summary: 'Faqat yo‘l kira',
     description:
       '"Yo‘l kira hisoblash" tugmasi uchun (TZ 3.3): jami paddon, viloyat ' +
-      'va transport turi bo‘yicha nechta mashina va qancha turadi.',
+      'va transport turi bo‘yicha nechta transport va qancha turadi.',
   })
   @ApiDataResponse(DeliveryResponseDto, { description: 'Yo‘l kira' })
   @ApiNotFoundResponse({

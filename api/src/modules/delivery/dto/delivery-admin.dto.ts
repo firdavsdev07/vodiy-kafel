@@ -37,7 +37,7 @@ export class CreateTransportTypeDto {
     maximum: 1000,
     description:
       'Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI ' +
-      'hisoblarga ta’sir qiladi (buyurtmada mashina soni surat).',
+      'hisoblarga ta’sir qiladi (buyurtmada transport soni surat).',
   })
   @IsInt()
   @Min(1)

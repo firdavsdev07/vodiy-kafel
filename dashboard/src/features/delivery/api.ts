@@ -47,7 +47,7 @@ export function useDeactivateRegion() {
 }
 
 // ── Transport turlari (D-038). HARDCODE EMAS (api/CLAUDE.md §5) ──
-// Sig'im o'zgarsa — faqat YANGI hisoblarga ta'sir qiladi (buyurtmada mashina soni surat).
+// Sig'im o'zgarsa — faqat YANGI hisoblarga ta'sir qiladi (buyurtmada transport soni surat).
 
 export function useTransportTypeList(isActive?: string) {
   const query = activeQuery(isActive);

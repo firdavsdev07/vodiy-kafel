@@ -2,7 +2,7 @@ import {
   FileText,
   LayoutGrid,
   ShoppingCart,
-  Truck,
+  Container,
   Wallet,
   Package,
   type LucideIcon,
@@ -74,7 +74,7 @@ export const CABINET_SECTIONS: readonly CabinetSection[] = [
     id: 'calculator',
     path: '/kabinet/kalkulyator',
     title: 'Sig‘im kalkulyatori',
-    icon: Truck,
+    icon: Container,
     onPhone: false,
   },
   {

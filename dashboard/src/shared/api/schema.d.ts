@@ -488,7 +488,7 @@ export interface paths {
         put?: never;
         /**
          * Faqat yo‘l kira
-         * @description "Yo‘l kira hisoblash" tugmasi uchun (TZ 3.3): jami paddon, viloyat va transport turi bo‘yicha nechta mashina va qancha turadi.
+         * @description "Yo‘l kira hisoblash" tugmasi uchun (TZ 3.3): jami paddon, viloyat va transport turi bo‘yicha nechta transport va qancha turadi.
          */
         post: operations["CalculatorController_delivery"];
         delete?: never;
@@ -865,6 +865,128 @@ export interface paths {
          *     Faqat bir tomoni yuborilsa, ikkinchisi eskisicha qoladi.
          */
         patch: operations["SizesAdminController_update"];
+        trace?: never;
+    };
+    "/api/v1/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Kategoriyalar vitrinasi
+         * @description Katalog navigatsiyasi va bosh sahifadagi lenta uchun faol kategoriyalar ro‘yxati.
+         *
+         *     Tartib: avval admin qo‘ygan tartib raqami, teng bo‘lsa alifbo bo‘yicha. O‘chirilgan kategoriyalar ro‘yxatga tushmaydi.
+         *
+         *     Sahifalash yo‘q — kategoriyalar soni chegaralangan.
+         */
+        get: operations["CategoriesController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bitta kategoriya — slug bo‘yicha
+         * @description `/categories/:slug` sahifasi uchun.
+         */
+        get: operations["CategoriesController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Barcha kategoriyalar (o‘chirilganlari bilan)
+         * @description Ochiq vitrinadan farqi: `isActive: false` bo‘lganlar ham ko‘rinadi, va har bir kategoriyada unga bog‘langan mahsulotlar soni bor.
+         */
+        get: operations["CategoriesAdminController_findAll"];
+        put?: never;
+        /**
+         * Yangi kategoriya qo‘shish
+         * @description URL uchun `slug` nomdan AVTOMATIK yasaladi va keyin o‘zgarmaydi.
+         *
+         *     Bir xil slug beradigan nom allaqachon bo‘lsa — 409.
+         */
+        post: operations["CategoriesAdminController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Kategoriyani o‘chirish (soft delete)
+         * @description ⚠ Yozuv BAZADAN O‘CHIRILMAYDI — faqat `isActive: false` bo‘ladi va ochiq vitrinadan yo‘qoladi. Bog‘langan mahsulotlar kategoriyasiz (`categoryId: null`) qolmaydi — ular o‘zgarishsiz qoladi, faqat kategoriyaning o‘zi vitrinadan yashiriladi.
+         *
+         *     Javobda `productCount` — o‘chirish nechta mahsulotga ta’sir qilgani.
+         *
+         *     Qaytarish: `PATCH { "isActive": true }`.
+         */
+        delete: operations["CategoriesAdminController_remove"];
+        options?: never;
+        head?: never;
+        /**
+         * Kategoriyani tahrirlash
+         * @description Faqat yuborilgan maydonlar o‘zgaradi.
+         *
+         *     ⚠ `name` o‘zgarsa ham `slug` ESKICHA qoladi — katalog filtri havolalari buzilmasligi uchun.
+         *
+         *     O‘chirilgan kategoriyani qaytarish: `{ "isActive": true }`.
+         */
+        patch: operations["CategoriesAdminController_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/categories/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Muqova suratini yuklash
+         * @description `multipart/form-data`: `file` (JPG/PNG/WEBP, 10 MB gacha). Eski surat almashtiriladi. Tur fayl MAZMUNIDAN aniqlanadi.
+         */
+        post: operations["CategoriesAdminController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/products": {
@@ -3051,7 +3173,7 @@ export interface components {
              */
             name: string;
             /**
-             * @description Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada mashina soni surat).
+             * @description Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada transport soni surat).
              * @example 20
              */
             capacityPallets: number;
@@ -3065,7 +3187,7 @@ export interface components {
              */
             name?: string;
             /**
-             * @description Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada mashina soni surat).
+             * @description Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada transport soni surat).
              * @example 20
              */
             capacityPallets?: number;
@@ -3357,6 +3479,118 @@ export interface components {
              */
             sortOrder?: number;
         };
+        CategoryPublicResponseDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Keramogranit */
+            name: string;
+            /** @example Porcelain stoneware */
+            nameEn?: string | null;
+            /**
+             * @description URL uchun nom — katalog filtrida ishlatiladi
+             * @example keramogranit
+             */
+            slug: string;
+            /** @example Eng zich, eng chidamli yuza */
+            tagline?: string | null;
+            /** @example Yuqori bosim ostida presslanadi va 1250°C da pishiriladi. */
+            description?: string | null;
+            /** @example /uploads/categories/keramogranit.webp */
+            coverImageUrl?: string | null;
+        };
+        CategoryAdminResponseDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Keramogranit */
+            name: string;
+            /** @example Porcelain stoneware */
+            nameEn?: string | null;
+            /**
+             * @description URL uchun nom — katalog filtrida ishlatiladi
+             * @example keramogranit
+             */
+            slug: string;
+            /** @example Eng zich, eng chidamli yuza */
+            tagline?: string | null;
+            /** @example Yuqori bosim ostida presslanadi va 1250°C da pishiriladi. */
+            description?: string | null;
+            /** @example /uploads/categories/keramogranit.webp */
+            coverImageUrl?: string | null;
+            /**
+             * @description Vitrinada chiqish tartibi (kichik son — oldinroq)
+             * @example 10
+             */
+            sortOrder: number;
+            /**
+             * @description `false` — kategoriya o‘chirilgan (soft delete), ochiq API’da ko‘rinmaydi
+             * @example true
+             */
+            isActive: boolean;
+            /**
+             * @description Shu kategoriyaga bog‘langan mahsulotlar soni — o‘chirishdan oldin ta’sir doirasini ko‘rish uchun.
+             * @example 24
+             */
+            productCount: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-23T10:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-23T10:00:00.000Z
+             */
+            updatedAt: string;
+        };
+        CreateCategoryDto: {
+            /** @example Keramogranit */
+            name: string;
+            /**
+             * @description Ingliz tilidagi nom (kelajakdagi ko‘p tillilik uchun)
+             * @example Porcelain stoneware
+             */
+            nameEn?: string;
+            /**
+             * @description Qisqa shior — kartochkada nom ostida
+             * @example Eng zich, eng chidamli yuza
+             */
+            tagline?: string;
+            description?: string;
+            /**
+             * @description Vitrinada chiqish tartibi. Kichik son — oldinroq.
+             * @default 0
+             */
+            sortOrder?: number;
+        };
+        UpdateCategoryDto: {
+            /** @example Keramogranit */
+            name?: string;
+            /**
+             * @description Ingliz tilidagi nom (kelajakdagi ko‘p tillilik uchun)
+             * @example Porcelain stoneware
+             */
+            nameEn?: string;
+            /**
+             * @description Qisqa shior — kartochkada nom ostida
+             * @example Eng zich, eng chidamli yuza
+             */
+            tagline?: string;
+            description?: string;
+            /**
+             * @description Vitrinada chiqish tartibi. Kichik son — oldinroq.
+             * @default 0
+             */
+            sortOrder?: number;
+            /** @description Kategoriyani qayta faollashtirish yoki o‘chirish. `DELETE` endpointi ham shu maydonni `false` qiladi — qaytarish uchun shu yerdan `true`. */
+            isActive?: boolean;
+        };
+        UploadCategoryImageBodyDto: {
+            /**
+             * Format: binary
+             * @description Muqova surati: JPG/PNG/WEBP, 10 MB gacha
+             */
+            file: string;
+        };
         ProductFactoryRefDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
             id: string;
@@ -3375,6 +3609,14 @@ export interface components {
             /** @example 60 */
             heightCm: number;
         };
+        ProductCategoryRefDto: {
+            /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
+            id: string;
+            /** @example Keramogranit */
+            name: string;
+            /** @example keramogranit */
+            slug: string;
+        };
         ProductListItemResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
             id: string;
@@ -3387,6 +3629,8 @@ export interface components {
             slug: string;
             factory: components["schemas"]["ProductFactoryRefDto"];
             size: components["schemas"]["ProductSizeRefDto"];
+            /** @description Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan. */
+            category?: components["schemas"]["ProductCategoryRefDto"] | null;
             /**
              * @example POL
              * @enum {string}
@@ -3457,6 +3701,8 @@ export interface components {
             slug: string;
             factory: components["schemas"]["ProductFactoryRefDto"];
             size: components["schemas"]["ProductSizeRefDto"];
+            /** @description Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan. */
+            category?: components["schemas"]["ProductCategoryRefDto"] | null;
             /**
              * @example POL
              * @enum {string}
@@ -3502,6 +3748,8 @@ export interface components {
             slug: string;
             factory: components["schemas"]["ProductFactoryRefDto"];
             size: components["schemas"]["ProductSizeRefDto"];
+            /** @description Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan. */
+            category?: components["schemas"]["ProductCategoryRefDto"] | null;
             /**
              * @example POL
              * @enum {string}
@@ -3571,6 +3819,8 @@ export interface components {
             slug: string;
             factory: components["schemas"]["ProductFactoryRefDto"];
             size: components["schemas"]["ProductSizeRefDto"];
+            /** @description Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan. */
+            category?: components["schemas"]["ProductCategoryRefDto"] | null;
             /**
              * @example POL
              * @enum {string}
@@ -3640,6 +3890,8 @@ export interface components {
             slug: string;
             factory: components["schemas"]["ProductFactoryRefDto"];
             size: components["schemas"]["ProductSizeRefDto"];
+            /** @description Marketing kategoriyasi (B-067). `null` — hali tanlanmagan. */
+            category?: components["schemas"]["ProductCategoryRefDto"] | null;
             /**
              * @example POL
              * @enum {string}
@@ -3700,6 +3952,8 @@ export interface components {
             factoryId: string;
             /** @description O‘lcham ID */
             sizeId: string;
+            /** @description Kategoriya ID (B-067) — ixtiyoriy, keyinroq ham to‘ldirilishi mumkin. */
+            categoryId?: string;
             /**
              * @example POL
              * @enum {string}
@@ -3726,6 +3980,8 @@ export interface components {
             factoryId?: string;
             /** @description O‘lcham ID */
             sizeId?: string;
+            /** @description Kategoriya ID (B-067) — ixtiyoriy, keyinroq ham to‘ldirilishi mumkin. */
+            categoryId?: string;
             /**
              * @example POL
              * @enum {string}
@@ -7520,6 +7776,329 @@ export interface operations {
             };
         };
     };
+    CategoriesController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Faol kategoriyalar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryPublicResponseDto"][];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    CategoriesController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Kategoriya URL nomi */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kategoriya */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryPublicResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Topilmadi yoki o‘chirilgan */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    CategoriesAdminController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kategoriyalar ro‘yxati */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryAdminResponseDto"][];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    CategoriesAdminController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryDto"];
+            };
+        };
+        responses: {
+            /** @description Kategoriya yaratildi */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryAdminResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Maydonlar noto‘g‘ri */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Bunday nomli kategoriya bor yoki nomdan URL yasab bo‘lmadi */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    CategoriesAdminController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Kategoriya ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O‘chirilgan kategoriya (isActive: false) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryAdminResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Kategoriya topilmadi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    CategoriesAdminController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Kategoriya ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryDto"];
+            };
+        };
+        responses: {
+            /** @description Yangilangan kategoriya */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryAdminResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Kategoriya topilmadi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    CategoriesAdminController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Kategoriya ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadCategoryImageBodyDto"];
+            };
+        };
+        responses: {
+            /** @description Yuklandi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CategoryAdminResponseDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Fayl yo‘q yoki turi mos emas */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Bu amal uchun rol yetarli emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Kategoriya topilmadi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Fayl 10 MB dan katta */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
     ProductsController_findAll: {
         parameters: {
             query?: {
@@ -7536,6 +8115,8 @@ export interface operations {
                 factoryId?: string;
                 /** @description O‘lcham bo‘yicha filtr */
                 sizeId?: string;
+                /** @description Kategoriya bo‘yicha filtr (B-067) */
+                categoryId?: string;
                 /** @description Sirt turi: pol yoki devor */
                 surface?: "POL" | "DEVOR";
                 /** @description Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi) */
@@ -7687,6 +8268,8 @@ export interface operations {
                 factoryId?: string;
                 /** @description O‘lcham bo‘yicha filtr */
                 sizeId?: string;
+                /** @description Kategoriya bo‘yicha filtr (B-067) */
+                categoryId?: string;
                 /** @description Sirt turi: pol yoki devor */
                 surface?: "POL" | "DEVOR";
                 /** @description Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi) */
@@ -7804,6 +8387,8 @@ export interface operations {
                 factoryId?: string;
                 /** @description O‘lcham bo‘yicha filtr */
                 sizeId?: string;
+                /** @description Kategoriya bo‘yicha filtr (B-067) */
+                categoryId?: string;
                 /** @description Sirt turi: pol yoki devor */
                 surface?: "POL" | "DEVOR";
                 /** @description Qidiruv — mahsulot nomi yoki zavod nomi bo‘yicha (katta-kichik harf farqlanmaydi) */

@@ -214,7 +214,7 @@ function DictionaryFormModal({
       dismissible={!pending}
       size="sm"
       title={item ? `${item.name} — tahrirlash` : texts.addLabel}
-      description={withCapacity && item ? 'Sig‘im o‘zgarsa — faqat yangi hisoblarga ta’sir qiladi; eski buyurtmalardagi mashina soni o‘zgarmaydi.' : undefined}
+      description={withCapacity && item ? 'Sig‘im o‘zgarsa — faqat yangi hisoblarga ta’sir qiladi; eski buyurtmalardagi transport soni o‘zgarmaydi.' : undefined}
       footer={
         <>
           <Button onClick={close} disabled={pending}>

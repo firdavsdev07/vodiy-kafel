@@ -1762,7 +1762,7 @@
     },
     "/api/v1/calculator/delivery": {
       "post": {
-        "description": "\"Yo‘l kira hisoblash\" tugmasi uchun (TZ 3.3): jami paddon, viloyat va transport turi bo‘yicha nechta mashina va qancha turadi.",
+        "description": "\"Yo‘l kira hisoblash\" tugmasi uchun (TZ 3.3): jami paddon, viloyat va transport turi bo‘yicha nechta transport va qancha turadi.",
         "operationId": "CalculatorController_delivery",
         "parameters": [],
         "requestBody": {
@@ -13090,7 +13090,7 @@
             "example": 20,
             "minimum": 1,
             "maximum": 1000,
-            "description": "Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada mashina soni surat)."
+            "description": "Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada transport soni surat)."
           },
           "sortOrder": {
             "type": "number",
@@ -13117,7 +13117,7 @@
             "example": 20,
             "minimum": 1,
             "maximum": 1000,
-            "description": "Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada mashina soni surat)."
+            "description": "Bitta transportga sig‘adigan paddon. O‘zgarsa — faqat YANGI hisoblarga ta’sir qiladi (buyurtmada transport soni surat)."
           },
           "sortOrder": {
             "type": "number",
