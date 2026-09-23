@@ -22,6 +22,11 @@ export class ProductQueryDto extends PaginationQueryDto {
   @IsString()
   sizeId?: string;
 
+  @ApiPropertyOptional({ description: 'Kategoriya bo‘yicha filtr (B-067)' })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
   @ApiPropertyOptional({
     enum: ProductSurface,
     description: 'Sirt turi: pol yoki devor',

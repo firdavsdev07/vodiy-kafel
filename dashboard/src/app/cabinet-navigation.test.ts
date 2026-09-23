@@ -6,12 +6,13 @@ import {
 } from './cabinet-navigation';
 
 describe('kabinet navigatsiyasi (D-051)', () => {
-  it('task.txt dagi bo‘limlar: Katalog · Savat · Buyurtmalarim · Hisobim · Shartnomalar', () => {
+  it('task.txt dagi bo‘limlar: Katalog · Savat · Buyurtmalarim · Hisobim · Sig‘im kalkulyatori · Shartnomalar', () => {
     expect(CABINET_SECTIONS.map((section) => section.title)).toEqual([
       'Katalog',
       'Savat',
       'Buyurtmalarim',
       'Hisobim',
+      'Sig‘im kalkulyatori',
       'Shartnomalar',
     ]);
   });

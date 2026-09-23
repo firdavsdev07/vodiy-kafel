@@ -10,8 +10,12 @@ export {
   groupMedia,
   productCardModel,
   recordProductView,
+  useCategories,
+  useFactories,
   useProduct,
+  useProducts,
   useSimilarProducts,
+  useSizes,
 } from './catalog.js'
 export {
   branchModel,
@@ -23,10 +27,3 @@ export {
 export { partnerModel, usePartners } from './partners.js'
 export { galleryItemModel, useGallery } from './gallery.js'
 export { findSetting, usePaymentRequisites, usePublicSettings } from './settings.js'
-export {
-  FINAL_STATUSES,
-  ORDER_STATUS_LABEL,
-  formatDateTime,
-  trackModel,
-  trackOrder,
-} from './orders.js'

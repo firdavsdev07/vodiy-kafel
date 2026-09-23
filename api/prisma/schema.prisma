@@ -231,6 +231,35 @@ enum MediaType {
   @@map("media_type")
 }
 
+/// Marketing kategoriyasi (B-067, TZ 3.8) — mahsulot NIMA ekanini aytadi
+/// ("marmar effekt", "keramogranit"). `surface` (POL/DEVOR) buni ALMASHTIRA
+/// OLMAYDI: u mahsulot QAYERGA yopishtirilishini aytadi, `factory` ham
+/// almashtira olmaydi: bitta zavod o'nlab turli kategoriyada mahsulot chiqaradi.
+model Category {
+  id     String @id @default(cuid())
+  name   String
+  /// Ingliz tilidagi nom — kelajakdagi ko'p tillilik uchun (TZ 8.2).
+  nameEn String? @map("name_en")
+  slug   String @unique
+
+  tagline     String?
+  description String?
+
+  /// Muqova surati — `POST /admin/categories/{id}/image` orqali yuklanadi,
+  /// shu sababli yaratishda YO'Q (Branch.buildingImageUrl bilan bir xil naqsh).
+  coverImageUrl String? @map("cover_image_url")
+
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([isActive, sortOrder])
+  @@map("categories")
+}
+
 model Factory {
   id          String  @id @default(cuid())
   name        String
@@ -283,6 +312,13 @@ model Product {
   sizeId String      @map("size_id")
   size   ProductSize @relation(fields: [sizeId], references: [id], onDelete: Restrict)
 
+  /// Ixtiyoriy (B-067): mavjud mahsulotlar migratsiyada `null` bilan qoladi,
+  /// admin keyinroq to'ldiradi. `SetNull` — kategoriya o'chirilsa (hozircha
+  /// faqat soft delete bor, lekin tuzilma darajasida himoya) mahsulot
+  /// o'zi o'chib qolmaydi, faqat kategoriyasiz qoladi.
+  categoryId String?   @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
   surface     ProductSurface
   color       String?
   description String?
@@ -319,6 +355,7 @@ model Product {
   @@index([factoryId, isActive])
   @@index([sizeId, isActive])
   @@index([surface, isActive])
+  @@index([categoryId, isActive])
   @@map("products")
 }
 

@@ -2,6 +2,7 @@ import {
   FileText,
   LayoutGrid,
   ShoppingCart,
+  Truck,
   Wallet,
   Package,
   type LucideIcon,
@@ -24,6 +25,7 @@ export type CabinetSectionId =
   | 'cart'
   | 'orders'
   | 'account'
+  | 'calculator'
   | 'contracts';
 
 export interface CabinetSection {
@@ -64,6 +66,16 @@ export const CABINET_SECTIONS: readonly CabinetSection[] = [
     title: 'Hisobim',
     icon: Wallet,
     onPhone: true,
+  },
+  {
+    // Telefon panelida YO'Q — u 5 ta bandga sig'ib turibdi, bu olti
+    // bo'ladi. Desktop menyuda ko'rinadi; telefonda savat sahifasidagi
+    // havoladan ochiladi.
+    id: 'calculator',
+    path: '/kabinet/kalkulyator',
+    title: 'Sig‘im kalkulyatori',
+    icon: Truck,
+    onPhone: false,
   },
   {
     id: 'contracts',

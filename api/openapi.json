@@ -3742,6 +3742,485 @@
         ]
       }
     },
+    "/api/v1/categories": {
+      "get": {
+        "description": "Katalog navigatsiyasi va bosh sahifadagi lenta uchun faol kategoriyalar ro‘yxati.\n\nTartib: avval admin qo‘ygan tartib raqami, teng bo‘lsa alifbo bo‘yicha. O‘chirilgan kategoriyalar ro‘yxatga tushmaydi.\n\nSahifalash yo‘q — kategoriyalar soni chegaralangan.",
+        "operationId": "CategoriesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Faol kategoriyalar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CategoryPublicResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kategoriyalar vitrinasi",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/categories/{slug}": {
+      "get": {
+        "description": "`/categories/:slug` sahifasi uchun.",
+        "operationId": "CategoriesController_findOne",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Kategoriya URL nomi",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kategoriya",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryPublicResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi yoki o‘chirilgan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Bitta kategoriya — slug bo‘yicha",
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/categories": {
+      "get": {
+        "description": "Ochiq vitrinadan farqi: `isActive: false` bo‘lganlar ham ko‘rinadi, va har bir kategoriyada unga bog‘langan mahsulotlar soni bor.",
+        "operationId": "CategoriesAdminController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Kategoriyalar ro‘yxati",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CategoryAdminResponseDto"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Barcha kategoriyalar (o‘chirilganlari bilan)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "post": {
+        "description": "URL uchun `slug` nomdan AVTOMATIK yasaladi va keyin o‘zgarmaydi.\n\nBir xil slug beradigan nom allaqachon bo‘lsa — 409.",
+        "operationId": "CategoriesAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kategoriya yaratildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydonlar noto‘g‘ri",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Bunday nomli kategoriya bor yoki nomdan URL yasab bo‘lmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yangi kategoriya qo‘shish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/categories/{id}": {
+      "patch": {
+        "description": "Faqat yuborilgan maydonlar o‘zgaradi.\n\n⚠ `name` o‘zgarsa ham `slug` ESKICHA qoladi — katalog filtri havolalari buzilmasligi uchun.\n\nO‘chirilgan kategoriyani qaytarish: `{ \"isActive\": true }`.",
+        "operationId": "CategoriesAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategoriya ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan kategoriya",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Kategoriya topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kategoriyani tahrirlash",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "description": "⚠ Yozuv BAZADAN O‘CHIRILMAYDI — faqat `isActive: false` bo‘ladi va ochiq vitrinadan yo‘qoladi. Bog‘langan mahsulotlar kategoriyasiz (`categoryId: null`) qolmaydi — ular o‘zgarishsiz qoladi, faqat kategoriyaning o‘zi vitrinadan yashiriladi.\n\nJavobda `productCount` — o‘chirish nechta mahsulotga ta’sir qilgani.\n\nQaytarish: `PATCH { \"isActive\": true }`.",
+        "operationId": "CategoriesAdminController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategoriya ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "O‘chirilgan kategoriya (isActive: false)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Kategoriya topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kategoriyani o‘chirish (soft delete)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/categories/{id}/image": {
+      "post": {
+        "description": "`multipart/form-data`: `file` (JPG/PNG/WEBP, 10 MB gacha). Eski surat almashtiriladi. Tur fayl MAZMUNIDAN aniqlanadi.",
+        "operationId": "CategoriesAdminController_uploadImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Kategoriya ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadCategoryImageBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yuklandi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CategoryAdminResponseDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fayl yo‘q yoki turi mos emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Kategoriya topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Fayl 10 MB dan katta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Muqova suratini yuklash",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/products": {
       "get": {
         "description": "Zavod, o‘lcham, sirt turi bo‘yicha filtr va nom/zavod bo‘yicha qidiruv. Sahifalangan.\n\n🔒 Javobda narx YO‘Q va zaxiraning aniq soni YO‘Q — faqat `availability`: `AVAILABLE` yoki `UNAVAILABLE`.\n\nO‘chirilgan mahsulotlar va o‘chirilgan ZAVODNING mahsulotlari ro‘yxatga tushmaydi.",
@@ -3810,6 +4289,15 @@
             "required": false,
             "in": "query",
             "description": "O‘lcham bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Kategoriya bo‘yicha filtr (B-067)",
             "schema": {
               "type": "string"
             }
@@ -4106,6 +4594,15 @@
             }
           },
           {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Kategoriya bo‘yicha filtr (B-067)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "surface",
             "required": false,
             "in": "query",
@@ -4335,6 +4832,15 @@
             "required": false,
             "in": "query",
             "description": "O‘lcham bo‘yicha filtr",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Kategoriya bo‘yicha filtr (B-067)",
             "schema": {
               "type": "string"
             }
@@ -10904,7 +11410,7 @@
     },
     {
       "name": "Catalog",
-      "description": "Mahsulotlar, zavodlar, o‘lchamlar, galereya (ochiq)"
+      "description": "Mahsulotlar, zavodlar, kategoriyalar, o‘lchamlar, galereya (ochiq)"
     },
     {
       "name": "Calculator",
@@ -13167,6 +13673,206 @@
           }
         }
       },
+      "CategoryPublicResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Keramogranit"
+          },
+          "nameEn": {
+            "type": "string",
+            "nullable": true,
+            "example": "Porcelain stoneware"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL uchun nom — katalog filtrida ishlatiladi",
+            "example": "keramogranit"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Eng zich, eng chidamli yuza"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Yuqori bosim ostida presslanadi va 1250°C da pishiriladi."
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/uploads/categories/keramogranit.webp"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "CategoryAdminResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Keramogranit"
+          },
+          "nameEn": {
+            "type": "string",
+            "nullable": true,
+            "example": "Porcelain stoneware"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL uchun nom — katalog filtrida ishlatiladi",
+            "example": "keramogranit"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Eng zich, eng chidamli yuza"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Yuqori bosim ostida presslanadi va 1250°C da pishiriladi."
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/uploads/categories/keramogranit.webp"
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi (kichik son — oldinroq)",
+            "example": 10
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "`false` — kategoriya o‘chirilgan (soft delete), ochiq API’da ko‘rinmaydi",
+            "example": true
+          },
+          "productCount": {
+            "type": "number",
+            "description": "Shu kategoriyaga bog‘langan mahsulotlar soni — o‘chirishdan oldin ta’sir doirasini ko‘rish uchun.",
+            "example": 24
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-23T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-09-23T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "sortOrder",
+          "isActive",
+          "productCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Keramogranit",
+            "maxLength": 120
+          },
+          "nameEn": {
+            "type": "string",
+            "description": "Ingliz tilidagi nom (kelajakdagi ko‘p tillilik uchun)",
+            "example": "Porcelain stoneware",
+            "maxLength": 120
+          },
+          "tagline": {
+            "type": "string",
+            "description": "Qisqa shior — kartochkada nom ostida",
+            "example": "Eng zich, eng chidamli yuza",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi. Kichik son — oldinroq.",
+            "default": 0,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Keramogranit",
+            "maxLength": 120
+          },
+          "nameEn": {
+            "type": "string",
+            "description": "Ingliz tilidagi nom (kelajakdagi ko‘p tillilik uchun)",
+            "example": "Porcelain stoneware",
+            "maxLength": 120
+          },
+          "tagline": {
+            "type": "string",
+            "description": "Qisqa shior — kartochkada nom ostida",
+            "example": "Eng zich, eng chidamli yuza",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sortOrder": {
+            "type": "number",
+            "description": "Vitrinada chiqish tartibi. Kichik son — oldinroq.",
+            "default": 0,
+            "minimum": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Kategoriyani qayta faollashtirish yoki o‘chirish. `DELETE` endpointi ham shu maydonni `false` qiladi — qaytarish uchun shu yerdan `true`."
+          }
+        }
+      },
+      "UploadCategoryImageBodyDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Muqova surati: JPG/PNG/WEBP, 10 MB gacha"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
       "ProductFactoryRefDto": {
         "type": "object",
         "properties": {
@@ -13216,6 +13922,28 @@
           "heightCm"
         ]
       },
+      "ProductCategoryRefDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cmtz0a1b2c3d4e5f6g7h8i9j"
+          },
+          "name": {
+            "type": "string",
+            "example": "Keramogranit"
+          },
+          "slug": {
+            "type": "string",
+            "example": "keramogranit"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
       "ProductListItemResponseDto": {
         "type": "object",
         "properties": {
@@ -13237,6 +13965,16 @@
           },
           "size": {
             "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategoryRefDto"
+              }
+            ]
           },
           "surface": {
             "type": "string",
@@ -13375,6 +14113,16 @@
           "size": {
             "$ref": "#/components/schemas/ProductSizeRefDto"
           },
+          "category": {
+            "nullable": true,
+            "description": "Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategoryRefDto"
+              }
+            ]
+          },
           "surface": {
             "type": "string",
             "enum": [
@@ -13460,6 +14208,16 @@
           },
           "size": {
             "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategoryRefDto"
+              }
+            ]
           },
           "surface": {
             "type": "string",
@@ -13576,6 +14334,16 @@
           },
           "size": {
             "$ref": "#/components/schemas/ProductSizeRefDto"
+          },
+          "category": {
+            "nullable": true,
+            "description": "Marketing kategoriyasi (B-067). `null` — mahsulot hali kategoriyaga biriktirilmagan.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategoryRefDto"
+              }
+            ]
           },
           "surface": {
             "type": "string",
@@ -13704,6 +14472,16 @@
           "size": {
             "$ref": "#/components/schemas/ProductSizeRefDto"
           },
+          "category": {
+            "nullable": true,
+            "description": "Marketing kategoriyasi (B-067). `null` — hali tanlanmagan.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductCategoryRefDto"
+              }
+            ]
+          },
           "surface": {
             "type": "string",
             "enum": [
@@ -13826,6 +14604,10 @@
             "type": "string",
             "description": "O‘lcham ID"
           },
+          "categoryId": {
+            "type": "string",
+            "description": "Kategoriya ID (B-067) — ixtiyoriy, keyinroq ham to‘ldirilishi mumkin."
+          },
           "surface": {
             "type": "string",
             "enum": [
@@ -13878,6 +14660,10 @@
           "sizeId": {
             "type": "string",
             "description": "O‘lcham ID"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Kategoriya ID (B-067) — ixtiyoriy, keyinroq ham to‘ldirilishi mumkin."
           },
           "surface": {
             "type": "string",

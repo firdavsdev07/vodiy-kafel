@@ -26,7 +26,7 @@ export type SwaggerTag = (typeof SwaggerTag)[keyof typeof SwaggerTag];
 /** Tag → qisqa tavsif (Swagger sahifasida bo'lim ostida chiqadi). */
 export const SWAGGER_TAG_DESCRIPTIONS: Record<SwaggerTag, string> = {
   Auth: 'Kirish va ro‘yxatdan o‘tish — admin, mijoz va optom mijoz',
-  Catalog: 'Mahsulotlar, zavodlar, o‘lchamlar, galereya (ochiq)',
+  Catalog: 'Mahsulotlar, zavodlar, kategoriyalar, o‘lchamlar, galereya (ochiq)',
   Calculator: 'Paddon → kv², og‘irlik, summa va yo‘l kira hisobi',
   Delivery:
     'Transport turlari, viloyatlar, filial × viloyat × transport tarif matritsasi',

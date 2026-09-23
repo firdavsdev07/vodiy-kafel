@@ -41,6 +41,7 @@ const catalogSelect = (branchId: string) =>
     weightPerPallet: true,
     factory: { select: { id: true, name: true, slug: true } },
     size: { select: { id: true, label: true, widthCm: true, heightCm: true } },
+    category: { select: { id: true, name: true, slug: true } },
     stock: { select: { stockPallets: true, lowStockThreshold: true } },
     branchProducts: {
       where: { branchId, isActive: true },
@@ -194,12 +195,13 @@ export class CustomerCatalogService {
     branchId: string,
     query: ProductQueryDto,
   ): Prisma.ProductWhereInput {
-    const { factoryId, sizeId, surface, search } = query;
+    const { factoryId, sizeId, categoryId, surface, search } = query;
 
     return {
       ...this.visibilityWhere(branchId),
       ...(factoryId && { factoryId }),
       ...(sizeId && { sizeId }),
+      ...(categoryId && { categoryId }),
       ...(surface && { surface }),
       ...(search && {
         OR: [
@@ -260,6 +262,7 @@ export class CustomerCatalogService {
       slug: row.slug,
       factory: row.factory,
       size: row.size,
+      category: row.category,
       surface: row.surface,
       color: row.color,
       sqmPerPallet: row.sqmPerPallet.toString(),

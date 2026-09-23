@@ -33,6 +33,33 @@ export function useProduct(slug) {
 }
 
 /**
+ * Katalog ro'yxati va filtri (S-022, S-024) — `GET /products`.
+ *
+ * Sahifalangan (`{ items, total, page, totalPages }`, `data` ICHIDA —
+ * `client.js` izohiga qara). Bo'sh/`undefined` filtrlar `buildQuery`
+ * tomonidan o'zi tashlanadi (`config.js`), shuning uchun bu yerda
+ * qo'lda tekshirish shart emas.
+ */
+export function useProducts(params, options) {
+  return useApiQuery('/products', { ...options, params })
+}
+
+/** Kategoriya filtri qatori (B-067) — sahifalanmagan, soni chegaralangan. */
+export function useCategories() {
+  return useApiQuery('/categories')
+}
+
+/** Zavod filtri (S-024) — sahifalanmagan. */
+export function useFactories() {
+  return useApiQuery('/factories')
+}
+
+/** O'lcham filtri (S-024) — sahifalanmagan. */
+export function useSizes() {
+  return useApiQuery('/sizes')
+}
+
+/**
  * Sahifa ostidagi "shunga o'xshash" bloki.
  * Bo'sh kelishi MUMKIN — server o'zi qaror qiladi (admin bog'lagani +
  * avtomatik to'ldirish), bu xato emas.
@@ -92,8 +119,8 @@ export function groupMedia(media) {
 /**
  * `ProductListItemResponseDto` → `ProductGrid` kutadigan shakl.
  *
- * Grid hozir ikki manbani ko'radi: mock (`src/data/products.js`) va API.
- * Mock S-022 da o'chadi — o'shanda bu funksiya yagona yo'l bo'lib qoladi.
+ * `productCardModel` — API javobining YAGONA iste'molchisi (S-022):
+ * `src/data/products.js` katalog sahifasida endi ishlatilmaydi.
  */
 export function productCardModel(dto) {
   return {
@@ -103,7 +130,9 @@ export function productCardModel(dto) {
     // Kartadagi yuqori qator: mock'da kolleksiya turardi, API'da zavod —
     // katalogda mahsulotni ajratadigan eng ma'noli belgi shu.
     collection: dto.factory?.name ?? '',
-    categoryLabel: SURFACE_LABEL[dto.surface] ?? '',
+    // Kategoriya (B-067) — hali biriktirilmagan mahsulotlar uchun
+    // (`category: null`) yuza nomiga qaytiladi, bo'sh qator ko'rinmasin.
+    categoryLabel: dto.category?.name ?? SURFACE_LABEL[dto.surface] ?? '',
     size: dto.size?.label ?? '',
     finish: dto.color ?? SURFACE_LABEL[dto.surface] ?? '',
     src: assetUrl(dto.primaryImageUrl),

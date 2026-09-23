@@ -2630,7 +2630,7 @@
 │  Bog'liq: B-043 (menejerlar), B-057 (moderatorlar)                           │
 │  Ochdi: dashboard D-061                                                      │
 └──────────────────────────────────────────────────────────────────────────────┘
-┌─ [ ] B-067 · Ochiq katalogda kategoriya yo‘q                     🆕 ──────────┐
+┌─ [x] B-067 · Ochiq katalogda kategoriya yo‘q                     🆕 ──────────┐
 │                                                                              │
 │  KIM TOPDI: storefront S-021 (2026-09-19). Storefront'ning EPIC 5 dagi       │
 │             tasklari shu qarorni kutayotgan edi; mijoz 2026-09-19 da B       │
@@ -2684,6 +2684,55 @@
 │                                                                              │
 │  Bog'liq: B-017 (katalog), B-060 (mahsulot muqovasi)                         │
 │  So'radi: storefront S-021 (mijoz qarori, 2026-09-19)                        │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-23                                                    │
+│                                                                              │
+│    Yangi modul `src/modules/categories/` — Factories bilan bir xil naqsh     │
+│    (ochiq vitrina + admin CRUD, YOZISH faqat SUPER_ADMIN, chunki bu ham      │
+│    GLOBAL katalog yozuvi). Farqlari:                                        │
+│      • `GET /categories/{slug}` qo'shildi (Factories'da yo'q edi)           │
+│      • Muqova surati `coverMediaId` EMAS, `coverImageUrl` (satr) — bazada    │
+│        alohida Media modeli yo'q, Branch.buildingImageUrl bilan bir xil      │
+│        naqsh. `POST /admin/categories/{id}/image` — Branches.uploadImage    │
+│        naqshi (yangisi saqlangandan KEYIN eskisi o'chiriladi, xatoda         │
+│        yangi fayl tozalanadi)                                               │
+│      • `categorySlug` filtri YO'Q — faqat `categoryId` (Factories/Size      │
+│        bilan bir xil, frontend allaqachon ID biladi)                        │
+│                                                                              │
+│    `Product.categoryId` — IXTIYORIY (`String?`, `onDelete: SetNull`).        │
+│    Mavjud mahsulotlar seed'dan keyin ham `null` — TASK O'ZI SHUNI            │
+│    TAVSIYA QILGAN edi ("keyin to'ldirish xavfsizroq"). Admin keyinroq        │
+│    `PATCH /admin/products/{id}` bilan to'ldiradi.                           │
+│                                                                              │
+│    `ProductListItemResponseDto`/`ProductDetailResponseDto`/                 │
+│    `ProductAdminResponseDto` ga `category: ProductCategoryRefDto | null`     │
+│    qo'shildi. `CustomerCatalogItemDto` (B-064, optom kabinet) buni           │
+│    AVTOMATIK meros oladi (`ProductListItemResponseDto`dan `OmitType`) —      │
+│    shu joy build sinovida topildi, alohida task emas.                       │
+│                                                                              │
+│    Seed: 8 kategoriya (nomi/tavsifi `storefront/src/data/categories.js`     │
+│    dan), muqova surati YO'Q — Marazzi rasmlari mualliflik huquqi bilan       │
+│    himoyalangan (storefront S-033), backend seed'iga ko'chirilmadi.         │
+│    Mavjud 10 ta seed mahsulot ATAYLAB kategoriyasiz qoldirildi (yuqoridagi   │
+│    qoidaga mos).                                                            │
+│                                                                              │
+│    Tekshirildi (jonli backend, `curl`):                                     │
+│      • `GET /categories` — 8 ta, `GET /categories/{slug}` — topadi,          │
+│        noto'g'ri slug — 404                                                 │
+│      • Mahsulotga kategoriya biriktirildi (`PATCH /admin/products/{id}`) →   │
+│        `GET /products?categoryId=...` aynan o'sha mahsulotni qaytardi        │
+│      • Noto'g'ri `categoryId` bilan mahsulot yaratish/tahrirlash — 400       │
+│      • Muqova surati yuklandi (`POST .../image`) — `coverImageUrl` yozildi   │
+│      • Soft delete — `isActive: false`, ochiq ro'yxatdan yo'qoldi,           │
+│        `productCount` to'g'ri (1) ko'rsatildi                               │
+│                                                                              │
+│    `pnpm build` ✓ `pnpm lint` ✓ `pnpm test` 679/679 ✓ (32 yangi test —       │
+│    `categories.service.spec.ts`) `openapi:export` ✓ (105 yo'l, 5 tasi        │
+│    yangi: `/categories`, `/categories/{slug}`, `/admin/categories`,          │
+│    `/admin/categories/{id}`, `/admin/categories/{id}/image`)                 │
+│                                                                              │
+│    Ochilgan: storefront S-022, S-024, `/categories` sahifalari endi          │
+│    bloklanmagan.                                                            │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 
@@ -2692,12 +2741,13 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 67  (B-016 bekor; B-051...B-066 qo‘shildi — filial
+  Jami tasklar : 68  (B-016 bekor; B-051...B-066 qo‘shildi — filial
                  izolyatsiya + narx zanjiri + transport tarif + moderator +
                  dashboard ishida topilganlar: B-059 … B-063, optom mijoz
-                 kabineti rejasidan chiqqan B-064/B-065, hamda mijoz
-                 2026-09-18 da so‘ragan B-066)
-  Tugadi       : 61
+                 kabineti rejasidan chiqqan B-064/B-065, mijoz 2026-09-18 da
+                 so‘ragan B-066, hamda storefront S-021 qarori bilan
+                 2026-09-19 da qo‘shilib 2026-09-23 da bajarilgan B-067)
+  Tugadi       : 62
   Jarayonda    : 0
   Bloklangan   : 1  (B-050 — mijoz Payme'ni hozircha ulashni xohlamayapti)
                  (B-044 — Didox.uz spike hamon ochiq, lekin ENDI hech nimani
@@ -2707,7 +2757,7 @@
     EPIC 0  Poydevor .................  5 / 5    [█████]
     EPIC 1  DB sxemasi ............... 10 / 10   [██████████]
     EPIC 2  Auth + filial izolyatsiyasi  4 / 4    [████]  (B-016 bekor)
-    EPIC 3  Katalog ..................  8 / 8    [████████]
+    EPIC 3  Katalog ..................  9 / 9    [█████████]  (B-067 ✓)
     EPIC 4  Kalkulyator ..............  4 / 4    [████]
     EPIC 5  Buyurtma .................  4 / 4    [████]
     EPIC 6  To'lov (mock) ............  3 / 3    [███]
@@ -2742,10 +2792,16 @@
         yangi kartochka qo'shgan: 'today', 'stock-low'/'stock-out'),
         test ESKIRGAN edi. Test tuzatildi (bug emas, kutilgan o'zgarish).
 
-  KEYINGI TASK:  B-067 · Ochiq katalogda kategoriya yo'q
-                 (storefront S-021 qarori, 2026-09-19 — mijoz "kategoriya
-                 saqlansin" dedi; storefront EPIC 5 ning bir qismi shunga
-                 bog'liq)
+  2026-09-23 DA BAJARILDI:
+
+    [x] B-067  Ochiq katalogda kategoriya — `Category` modeli, ochiq
+               `GET /categories(/{slug})`, admin CRUD + muqova yuklash,
+               `GET /products` ga `categoryId` filtri, 8 kategoriya seed
+               → storefront S-022/S-024 blokini yechdi
+
+  KEYINGI TASK:  Backend'da ochiq task YO'Q — faqat B-050 (Payme) va
+                 B-044 (Didox.uz spike) qoldi, ikkalasi ham mijoz
+                 javobini kutadi va hech narsani bloklamaydi.
 
   Bloklanganlar:
                  B-050 (mijoz hozircha real Payme'ni ulashni xohlamayapti)

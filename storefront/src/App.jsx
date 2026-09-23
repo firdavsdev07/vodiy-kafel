@@ -18,7 +18,6 @@ const ProductDetail = lazy(() => import('@/pages/ProductDetail/ProductDetail'))
 const Categories = lazy(() => import('@/pages/Categories/Categories'))
 const CategoryDetail = lazy(() => import('@/pages/CategoryDetail/CategoryDetail'))
 const Gallery = lazy(() => import('@/pages/Gallery/Gallery'))
-const Track = lazy(() => import('@/pages/Track/Track'))
 const About = lazy(() => import('@/pages/About/About'))
 const Contact = lazy(() => import('@/pages/Contact/Contact'))
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'))
@@ -33,7 +32,6 @@ export default function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="categories/:slug" element={<CategoryDetail />} />
         <Route path="gallery" element={<Gallery />} />
-        <Route path="track" element={<Track />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />

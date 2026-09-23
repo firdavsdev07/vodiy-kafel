@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StockStatus } from '../../../common/enums';
 import { ProductSurface } from '../../../prisma';
 import {
+  ProductCategoryRefDto,
   ProductFactoryRefDto,
   ProductSizeRefDto,
 } from './product-public.response.dto';
@@ -62,6 +63,13 @@ export class ProductAdminResponseDto {
 
   @ApiProperty({ type: ProductSizeRefDto })
   size!: ProductSizeRefDto;
+
+  @ApiPropertyOptional({
+    type: ProductCategoryRefDto,
+    nullable: true,
+    description: 'Marketing kategoriyasi (B-067). `null` — hali tanlanmagan.',
+  })
+  category!: ProductCategoryRefDto | null;
 
   @ApiProperty({ enum: ProductSurface, example: ProductSurface.POL })
   surface!: ProductSurface;

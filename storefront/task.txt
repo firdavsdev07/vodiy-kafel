@@ -2112,10 +2112,14 @@
 │        S-027 galereya · S-028 sozlamalar · S-029 buyurtma kuzatish           │
 │        S-030 kontakt · S-031 holatlar · S-032 rasmlar                        │
 │                                                                              │
-│  ⚠ S-022 va S-024 endi [!] — B-067 tugagach ochiladi.                        │
+│  ⚠ S-022 va S-024 endi [!] — B-067 tugagach ochiladi.
+│
+│  ✅ B-067 BAJARILDI (2026-09-23, api/task.txt) — Category modeli, ochiq
+│    endpointlar, admin CRUD, 8 kategoriya seed. S-022/S-024 endi
+│    BLOKLANMAGAN — pastda [ ] ga qaytarildi, frontend ishi hali qoladi.                        │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [!] S-022 · Katalog → `GET /products` ──────────────────────────────────────┐
+┌─ [x] S-022 · Katalog → `GET /products` ──────────────────────────────────────┐
 │                                                                              │
 │  Endpoint: `GET /products`                                                   │
 │    Query: `page`, `limit`, `sortBy`, `sortOrder`, `factoryId`, `sizeId`,     │
@@ -2140,6 +2144,33 @@
 │                                                                              │
 │  Bog'liq: S-021                                                              │
 │                                                                              │
+│  ✅ BAJARILDI — 2026-09-23 (B-067 tugagach, S-024 bilan BIRGA — bitta         │
+│    sahifa, bitta o'zgarish)                                                  │
+│                                                                              │
+│    `src/data/products.js` Catalog sahifasida ENDI ishlatilmaydi              │
+│    (`productCardModel` — API javobining yagona iste'molchisi). Mock          │
+│    fayl o'zi hali O'CHIRILMADI — bosh sahifadagi                             │
+│    `CollectionsSection.jsx` unga hamon bog'liq, bu S-022 matnida             │
+│    hisobga olinmagan holat edi (alohida taskka nomzod, pastga qarang).       │
+│                                                                              │
+│    Kategoriya lentasi (mock `categories.js` edi) endi `GET /categories`      │
+│    dan (B-067) — B-067 ning aynan o'zi shu qatorni ochish uchun              │
+│    qo'shilgan edi. Sahifalash — "Yana ko'rsatish" tugmasi bilan,             │
+│    bosilganda natija ESKISI USTIGA QO'SHILADI (sahifa raqamlari EMAS,        │
+│    tanlov B: task matnida ikkalasi ham ruxsat etilgan edi).                  │
+│                                                                              │
+│    Holatlar (S-031 ohangida): birinchi yuklash — skelet, xato — matn +       │
+│    "Qayta urinish", bo'sh natija — "Bu tanlovda hozircha mahsulot            │
+│    yo'q". Filtr o'zgarganda ro'yxat noldan boshlanadi (`page` 1 ga           │
+│    qaytadi, eski natijalar tozalanadi) — `appendedRef` StrictMode'ning       │
+│    ikki martalik effekt chaqiruvida va eski filtrning kech kelgan            │
+│    javobida ikki marta qo'shib yubormasligini ta'minlaydi.                   │
+│                                                                              │
+│    Tekshirildi: `pnpm lint` ✓ `pnpm test` 58/58 ✓ `pnpm build` ✓ (byudjet     │
+│    ogohlantirishi Catalog'ga aloqasi yo'q — oldin ham bor edi).              │
+│                                                                              │
+│    Jonli backend bilan brauzerda (S-024 bilan birga tekshirildi, pastga      │
+│    qarang).                                                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [x] S-023 · Mahsulot sahifasi → `GET /products/{slug}` ─────────────────────┐
@@ -2276,7 +2307,7 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [!] S-024 · Filtrlar → haqiqiy `factory` / `size` / `surface` ──────────────┐
+┌─ [x] S-024 · Filtrlar → haqiqiy `factory` / `size` / `surface` ──────────────┐
 │                                                                              │
 │  Endpointlar: `GET /factories`, `GET /sizes`                                 │
 │                                                                              │
@@ -2288,6 +2319,50 @@
 │                                                                              │
 │  Bog'liq: S-022, S-021                                                       │
 │                                                                              │
+│  ✅ BAJARILDI — 2026-09-23 (S-022 bilan BIRGA, `Catalog.jsx`)                 │
+│                                                                              │
+│    `catalog.js` ga uchta yangi hook: `useFactories`, `useSizes`              │
+│    (`GET /factories`, `GET /sizes` — sahifalanmagan) va `useProducts`        │
+│    (`GET /products`, filtrlar bilan). Zavod/o'lcham/sirt — native            │
+│    `<select>`, saytning minimal chiziqli uslubida (input/select bu          │
+│    saytda BIRINCHI MARTA ishlatildi — mavjud namuna yo'q edi, `type-label`/  │
+│    `type-meta` va hairline chegaralar bilan qurildi).                       │
+│                                                                              │
+│    URL parametrlari: `toifa` (kategoriya slug'i — eski nom saqlandi),        │
+│    `zavod`/`olcham`/`sirt` (ID/qiymat), `q` (qidiruv). Havola ulashilsa —     │
+│    hammasi saqlanadi. Qidiruv `useDebouncedValue` (yangi kichik hook,        │
+│    `src/hooks/`) orqali 400ms kechiktiriladi — URL'ga ham FAQAT debounce     │
+│    tugagach yoziladi, ekrandagi inputning o'zi esa darhol yangilanadi.      │
+│                                                                              │
+│    ⚠ Poyga holati: URL'da kategoriya SLUG'I bor-u, `GET /categories`        │
+│    ro'yxati hali kelmagan bo'lsa, `categoryId` bir lahzaga bo'sh             │
+│    qolib, filtrsiz so'rov ketib qolishi mumkin edi. `useProducts`ga          │
+│    `enabled` qo'shildi (`useApiQuery` allaqachon qo'llab-quvvatlaydi) —      │
+│    kategoriyalar kelmaguncha so'rov TUTIB TURILADI.                          │
+│                                                                              │
+│    Tekshirildi jonli backend bilan (brauzerda, real `curl` orqali            │
+│    mahsulotga kategoriya biriktirib):                                        │
+│      • `?zavod=<YONGXIN id>` → 2/2 mahsulot, faqat YONGXIN'niki              │
+│      • `?q=granit` → 2/2, nom bo'yicha to'g'ri qidirdi                       │
+│      • `?toifa=keramogranit` (hech bir mahsulot biriktirilmagan) → "Bu       │
+│        tanlovda hozircha mahsulot yo'q"                                      │
+│      • Mahsulotga `keramogranit` kategoriyasi biriktirilgach —               │
+│        `?toifa=keramogranit` → 1/1, kartochkada "KERAMOGRANIT" (haqiqiy      │
+│        kategoriya nomi, `POL UCHUN` surface-zaxira EMAS) ✓                  │
+│                                                                              │
+│    🐞 BRAUZERDA TOPILGAN, TASKKA ALOQASI YO'Q: saytning "Kashf eting /       │
+│       Ovoz bilan saytga kirish" kirish darvozasi (EPIC 2) shu muhitda        │
+│       o'zi yopilmadi — `.entry-screen` (`z-index:200`, `pointer-events:      │
+│       auto`) butun ekranni to'sib turaverdi. Tugmani DOM orqali topib        │
+│       bosilgach ham holat o'zgarmadi. Bu Catalog o'zgarishidan OLDIN         │
+│       ham shunday edi (Home sahifasida ham xuddi shu holat), tuzatilmadi     │
+│       — alohida masala, kod TO'G'RILIGI `get_page_text`/`curl` orqali        │
+│       (vizual emas, DOM/tarmoq darajasida) tasdiqlandi.                      │
+│                                                                              │
+│    🆕 TAVSIYA (yangi task nomzodi): bosh sahifadagi                          │
+│       `CollectionsSection.jsx` hamon `src/data/products.js` mock'iga         │
+│       bog'liq — S-022/S-024 matnida bu hisobga olinmagan edi. Mock           │
+│       fayl shu sababli hali o'chirilmadi.                                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ [x] S-025 · Filiallar → `GET /branches` ────────────────────────────────────┐
@@ -2658,6 +2733,15 @@
 │      ekrandan TOZALANADI (yangi so'rovdan oldin `setResult(null)`)           │
 │                                                                              │
 │  Bog'liq: S-028                                                              │
+│                                                                              │
+│  ♻️ BEKOR QILINDI — 2026-09-23                                              │
+│                                                                              │
+│    Mijoz qarori: storefront hech qanday backend'ga bog'liq logikaga ega     │
+│    bo'lmasligi kerak — bu faqat statik vitrina, hisob-kitob va yetkazib     │
+│    berish esa BUTUNLAY dashboard'da (optom mijoz kabineti, D-062).          │
+│    `/track` sahifasi va uning API klienti (`shared/api/orders.js`)          │
+│    olib tashlandi. Backend endpoint (`GET /orders/{orderNumber}/track`)     │
+│    o'zgarishsiz qoldi — frontend uni chaqirmay qo'ydi, xolos.               │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -3472,10 +3556,9 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
   Jami tasklar : 45
-  Tugadi       : 37
+  Tugadi       : 39
   Jarayonda    : 0
-  Bloklangan   : 3  (S-022, S-024 — api B-067 ni kutadi;
-                     S-032 — rasm variantlari uchun yangi api task kerak)
+  Bloklangan   : 1  (S-032 — rasm variantlari uchun yangi api task kerak)
 
   Epic bo'yicha:
     EPIC 0  Tozalash va poydevor .....  4 / 4   [xxxx]
@@ -3483,7 +3566,7 @@
     EPIC 2  Hero va greeter ..........  3 / 3   [xxx]
     EPIC 3  Responsive ...............  6 / 6   [xxxxxx]
     EPIC 4  Harakat va GSAP ..........  5 / 5   [xxxxx]
-    EPIC 5  Backendga ulash ..........  9 / 12  [x!x!xxxxxxx!]
+    EPIC 5  Backendga ulash ......... 11 / 12  [xxxxxxxxxxx!]
     EPIC 6  Huquqiy va kontent .......  0 / 3   [···]
     EPIC 7  SEO ......................  3 / 4   [xx·x]
     EPIC 8  Sifat ....................  5 / 5   [xxxxx]
@@ -3500,19 +3583,24 @@
     S-034  `audio.mp3` litsenziyasi — huquqiy tekshiruv.
     S-035  O'ylab topilgan matnlar — mijozdan haqiqiy kontent kerak.
 
-    Kod bilan hal bo'ladigan hamma task TUGADI. Qolgan 7 tasi:
-    4 tasi yuqoridagi qarorlarni kutadi, 3 tasi bloklangan
-    (S-022/S-024 → api B-067, S-032 → rasm variantlari task'i).
-                 EPIC 5 dan qolgani BLOKLANGAN: S-022/S-024 → api B-067,
-                 S-032 → rasm variantlari uchun yangi api task
+    Kod bilan hal bo'ladigan hamma task TUGADI — S-022/S-024 ham
+    2026-09-23 da bajarildi. Qolgan 6 tasi: 4 tasi yuqoridagi qarorlarni
+    kutadi, 1 tasi hali bloklangan (S-032 → rasm variantlari uchun yangi
+    api task kerak).
+
+    🆕 Hali TICKET OLINMAGAN: bosh sahifadagi `CollectionsSection.jsx`
+    hamon `src/data/products.js` mock'iga bog'liq (S-022 matnida bu
+    hisobga olinmagan edi). Mock fayl shu sababli hali o'chirilmadi —
+    kerak bo'lsa alohida task sifatida rasmiylashtiriladi.
 
   ⚠ EFIRGA CHIQISHNI TO'XTATIB TURGAN YAGONA NARSA — S-033 (Marazzi
     rasmlari). U hal bo'lmaguncha sayt tijoriy ishga tushirilmaydi,
     qolgan hamma ish esa bemalol davom etaveradi.
 
   ⚠ S-021 qarori QABUL QILINDI (2026-09-19, B yo'li): backendga
-    `Category` qo'shiladi → `api/task.txt` B-067. EPIC 5 ning faqat
-    S-022 va S-024 bloklandi, qolgan to'qqiztasi ketaveradi.
+    `Category` qo'shiladi → `api/task.txt` B-067. EPIC 5 dagi faqat
+    S-022 va S-024 bloklangan edi, qolgan to'qqiztasi parallel ketdi.
+    ✅ B-067 2026-09-23 da tugadi — S-022/S-024 endi bloklanmagan.
 
   🆕 S-030 va S-032 dan chiqqan TAVSIYALAR (2026-09-21) — `api/task.txt`:
     • `POST /leads` (ism, telefon, xabar) → aloqa formasi qaytadi.
@@ -3538,4 +3626,7 @@
     hali mock — S-022 bloklangani uchun. Ya'ni `/catalog` dagi kartalar
     namuna slug'lariga ishora qiladi va 404 beradi. Kutilgan oraliq
     holat: S-022 tugagach o'zi to'g'rilanadi.
+
+  ✅ TO'G'RILANDI — S-022 2026-09-23 da tugadi, `/catalog` endi haqiqiy
+    slug'larga ishora qiladi, 404 muammosi yo'q.
   ──────────────────────────────────────────────────────────────────────────

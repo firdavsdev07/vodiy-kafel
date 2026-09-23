@@ -14,6 +14,18 @@ export class ProductFactoryRefDto {
   slug!: string;
 }
 
+/** Mahsulot kartasidagi kategoriya (B-067) — faqat havola uchun zarur maydonlar. */
+export class ProductCategoryRefDto {
+  @ApiProperty({ example: 'cmtz0a1b2c3d4e5f6g7h8i9j' })
+  id!: string;
+
+  @ApiProperty({ example: 'Keramogranit' })
+  name!: string;
+
+  @ApiProperty({ example: 'keramogranit' })
+  slug!: string;
+}
+
 /** Mahsulot kartasidagi o'lcham. */
 export class ProductSizeRefDto {
   @ApiProperty({ example: 'cmtz0a1b2c3d4e5f6g7h8i9j' })
@@ -57,6 +69,15 @@ export class ProductListItemResponseDto {
 
   @ApiProperty({ type: ProductSizeRefDto })
   size!: ProductSizeRefDto;
+
+  @ApiPropertyOptional({
+    type: ProductCategoryRefDto,
+    nullable: true,
+    description:
+      'Marketing kategoriyasi (B-067). `null` — mahsulot hali ' +
+      'kategoriyaga biriktirilmagan.',
+  })
+  category!: ProductCategoryRefDto | null;
 
   @ApiProperty({ enum: ProductSurface, example: ProductSurface.POL })
   surface!: ProductSurface;

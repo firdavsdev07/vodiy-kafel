@@ -208,6 +208,78 @@ async function main() {
     ),
   );
 
+  // Kategoriyalar (B-067) — storefront/src/data/categories.js dagi 8 tasi,
+  // faqat nom/tavsif (muqova surati admin panelidan keyinroq yuklanadi).
+  const kategoriyalar = await Promise.all(
+    [
+      {
+        name: 'Keramogranit',
+        nameEn: 'Porcelain stoneware',
+        tagline: 'Eng zich, eng chidamli yuza',
+        description:
+          "Yuqori bosim ostida presslanadi va 1250°C da pishiriladi. Suv shimishi 0,05% dan past — shuning uchun u sovuqqa ham, og'ir yukka ham bardosh beradi.",
+      },
+      {
+        name: 'Keramika',
+        nameEn: 'Glazed ceramic',
+        tagline: 'Devor uchun yengil va aniq',
+        description:
+          "Sirlangan keramika — rang va naqsh eng aniq chiqadigan yuza. Yengil bo'lgani uchun devorga oson o'rnatiladi.",
+      },
+      {
+        name: 'Marmar effekt',
+        nameEn: 'Marble effect',
+        tagline: 'Marmarning tasviri, keramikaning xulqi',
+        description:
+          'Calacatta, Statuario, Onix — tabiiy marmar tomirlari raqamli bosma orqali qayta tiklanadi.',
+      },
+      {
+        name: 'Tosh effekt',
+        nameEn: 'Stone effect',
+        tagline: 'Travertin, bazalt, ohaktosh',
+        description:
+          'Tabiiy toshning donadorligi va issiq ohangi. Ichki va tashqi makonlarda birdek ishlaydi.',
+      },
+      {
+        name: 'Devor uchun',
+        nameEn: 'Wall surfaces',
+        tagline: '30 × 60 va katta formatlar',
+        description:
+          'Devor uchun ishlab chiqarilgan yupqa va yengil plitalar. Oshxona fartugi, hammom devorlari uchun.',
+      },
+      {
+        name: 'Pol uchun',
+        nameEn: 'Floor surfaces',
+        tagline: 'Yuqori yuklamaga hisoblangan',
+        description:
+          'PEI IV va V sinfidagi pol qoplamalari. Sirpanishga qarshilik R9 dan R11 gacha.',
+      },
+      {
+        name: 'Premium',
+        nameEn: 'Premium selection',
+        tagline: 'Cheklangan partiyalar',
+        description:
+          'Katta format, qalinlashtirilgan qirra va sayqallangan yuza. Har bir partiya cheklangan.',
+      },
+      {
+        name: 'Outdoor',
+        nameEn: 'Exterior',
+        tagline: '20 mm — terrassa va yo‘lak',
+        description:
+          "20 mm qalinlikdagi keramogranit. Sovuqqa chidamli, sirpanmaydigan, quyoshda rangini yo'qotmaydigan.",
+      },
+    ].map((c, i) =>
+      prisma.category.create({
+        data: {
+          ...c,
+          slug: c.name.toLowerCase().replace(/\s+/g, '-'),
+          sortOrder: i + 1,
+        },
+      }),
+    ),
+  );
+  console.log(`🗂️  ${kategoriyalar.length} kategoriya (B-067)`);
+
   const [k60, k30] = await Promise.all([
     prisma.productSize.create({
       data: { label: '60x60', widthCm: 60, heightCm: 60, sortOrder: 1 },

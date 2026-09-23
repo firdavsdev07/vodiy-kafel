@@ -6,9 +6,4 @@
 User-agent: *
 Allow: /
 
-# Buyurtma kuzatish — natija faqat raqam + telefon bilan chiqadi va
-# indekslashdan hech qanday foyda yo'q (sahifaning o'zida ham
-# `noindex` bor).
-Disallow: /track
-
 Sitemap: https://vodiykafel.uz/sitemap.xml

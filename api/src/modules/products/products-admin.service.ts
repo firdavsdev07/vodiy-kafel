@@ -41,6 +41,7 @@ const ADMIN_SELECT = {
   updatedAt: true,
   factory: { select: { id: true, name: true, slug: true } },
   size: { select: { id: true, label: true, widthCm: true, heightCm: true } },
+  category: { select: { id: true, name: true, slug: true } },
   stock: { select: { stockPallets: true, lowStockThreshold: true } },
   // Jadvaldagi muqova (B-060). `take: 1` — ro'yxat uchun N+1 so'rov
   // bo'lmasin; 360° materiallar muqova bo'lolmaydi, shuning uchun
@@ -128,6 +129,7 @@ export class ProductsAdminService {
     const [size] = await Promise.all([
       this.requireSize(dto.sizeId),
       this.requireFactory(dto.factoryId),
+      dto.categoryId && this.requireCategory(dto.categoryId),
     ]);
     const slug = buildProductSlug(dto.name, size.label);
 
@@ -161,6 +163,7 @@ export class ProductsAdminService {
     await Promise.all([
       dto.sizeId && this.requireSize(dto.sizeId),
       dto.factoryId && this.requireFactory(dto.factoryId),
+      dto.categoryId && this.requireCategory(dto.categoryId),
     ]);
 
     const row = await this.prisma.product.update({
@@ -195,11 +198,12 @@ export class ProductsAdminService {
   }
 
   private buildWhere(query: ProductAdminQueryDto): Prisma.ProductWhereInput {
-    const { factoryId, sizeId, surface, search, isActive } = query;
+    const { factoryId, sizeId, categoryId, surface, search, isActive } = query;
 
     return {
       ...(factoryId && { factoryId }),
       ...(sizeId && { sizeId }),
+      ...(categoryId && { categoryId }),
       ...(surface && { surface }),
       ...(isActive !== undefined && { isActive }),
       ...(search && {
@@ -244,6 +248,15 @@ export class ProductsAdminService {
       select: { id: true },
     });
     if (!factory) throw new BadRequestException('Zavod topilmadi');
+  }
+
+  /** Body'dagi havola noto'g'ri — 400 (404 emas, [[requireSize]] izohiga qara). */
+  private async requireCategory(categoryId: string): Promise<void> {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { id: true },
+    });
+    if (!category) throw new BadRequestException('Kategoriya topilmadi');
   }
 
   private async assertExists(id: string): Promise<void> {

@@ -4,7 +4,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import assert from 'node:assert/strict'
 
 import Gallery from '../src/pages/Gallery/Gallery.jsx'
-import Track from '../src/pages/Track/Track.jsx'
 import NotFound from '../src/pages/NotFound/NotFound.jsx'
 import ProductDetail from '../src/pages/ProductDetail/ProductDetail.jsx'
 import { resetQueries } from '../src/shared/api/query-store.js'
@@ -124,14 +123,6 @@ test('Galereya — xato holatida "qayta urinish" bor', async () => {
   }))
   draw(<Gallery />)
   await waitFor(() => screen.getByRole('button', { name: /Qayta urinish/ }))
-})
-
-test('Kuzatish — forma chiziladi, natija hali yo‘q', () => {
-  draw(<Track />)
-  assert.ok(screen.getByLabelText('Buyurtma raqami'))
-  assert.ok(screen.getByLabelText('Telefon'))
-  // Natija kelguncha bosqichlar ro'yxati turadi
-  assert.ok(screen.getByText('Bosqichlar'))
 })
 
 test('Mahsulot — 🔒 NARX ham, ZAXIRA SONI ham ekranda YO‘Q (G1)', async () => {

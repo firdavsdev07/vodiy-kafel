@@ -36,6 +36,14 @@ export class CreateProductDto {
   @IsNotEmpty()
   sizeId!: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Kategoriya ID (B-067) — ixtiyoriy, keyinroq ham to‘ldirilishi mumkin.',
+  })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
   @ApiProperty({ enum: ProductSurface, example: ProductSurface.POL })
   @IsEnum(ProductSurface)
   surface!: ProductSurface;

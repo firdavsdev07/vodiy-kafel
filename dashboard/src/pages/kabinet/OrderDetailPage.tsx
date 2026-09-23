@@ -7,6 +7,7 @@ import {
   type CustomerOrder,
   type PaymentMethod,
 } from '@/features/cabinet/orders-api';
+import { StatusHistoryCard } from '@/features/orders/OrderDetailParts';
 import {
   isFinalPaymentStatus,
   paymentSimulationAvailable,
@@ -114,18 +115,7 @@ export default function CabinetOrderDetailPage() {
             )}
           </section>
 
-          <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
-            <h3 className="text-sm font-medium">Holat tarixi</h3>
-            <ol className="flex flex-col gap-2">
-              {data.statusHistory.map((entry, index) => (
-                <li key={`${entry.status}-${index}`} className="flex flex-wrap items-center gap-2 text-sm">
-                  <StatusBadge kind="order" value={entry.status} />
-                  <DateText value={entry.createdAt} className="text-xs text-muted" />
-                  {entry.note && <span className="text-xs text-muted">· {entry.note}</span>}
-                </li>
-              ))}
-            </ol>
-          </section>
+          <StatusHistoryCard entries={data.statusHistory} showActor={false} />
 
           {data.note && (
             <section className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">

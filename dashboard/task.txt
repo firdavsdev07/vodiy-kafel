@@ -2927,6 +2927,85 @@
 │         ochilmagan" deb 400 berardi. Endi tugma faqat `CARD` da.             │
 └──────────────────────────────────────────────────────────────────────────────┘
 
+┌─ [x] D-062 · Kabinetda buyurtma holati — vizual zanjir 🆕 ────────────────────┐
+│                                                                              │
+│  KIM TOPDI: mijoz, 2026-09-23. Storefront'dagi eski buyurtma-kuzatuv         │
+│  sahifasida (S-029, endi olib tashlandi) nuqta+chiziqli vizual holat         │
+│  zanjiri bor edi, optom kabinetida esa "Holat tarixi" faqat tekis            │
+│  (`StatusBadge` + sana) ro'yxat edi.                                        │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-23                                                    │
+│                                                                              │
+│    Yangi komponent yozilmadi — admin buyurtma sahifalarida allaqachon        │
+│    xuddi shunday vizual zanjir bor edi: `features/orders/                   │
+│    OrderDetailParts.tsx` dagi `StatusHistoryCard` (nuqta+chiziqli            │
+│    vertikal timeline). `pages/kabinet/OrderDetailPage.tsx` dagi tekis        │
+│    "Holat tarixi" bloki shu komponent bilan almashtirildi                   │
+│    (`showActor={false}` — mijoz DTO'sida `changedBy` yo'q).                 │
+│                                                                              │
+│    Tekshirildi: brauzerda (Farg'ona optom mijoz, real backend) mavjud        │
+│    buyurtma ochilib, "Qabul qilindi → Mashina qidirilmoqda" zanjiri          │
+│    to'g'ri chizilgani ko'rildi.                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] D-063 · Mustaqil sig'im kalkulyatori sahifasi 🆕 ────────────────────────┐
+│                                                                              │
+│  KIM TOPDI: mijoz, 2026-09-23. Sig'im kalkulyatori faqat savatga             │
+│  bog'liq edi (D-053) — paddon soni kiritish uchun avval mahsulot             │
+│  tanlab savatga solish kerak edi. Mijoz buyurtmadan MUSTAQIL, faqat          │
+│  "nechta poddon KamAZga/Zilga sig'adi" hisoblaydigan alohida sahifa          │
+│  so'radi.                                                                    │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-23                                                    │
+│                                                                              │
+│    Yangi backend endpoint kerak bo'lmadi: `GET /transport-types`             │
+│    (ochiq, `useDeliveryOptions()` orqali savat sahifasida ham                │
+│    ishlatiladi) har bir transport turi uchun `capacityPallets`ni             │
+│    qaytaradi. Sig'im = `Math.ceil(paddon / capacityPallets)` — butunlay      │
+│    frontendda.                                                              │
+│                                                                              │
+│    Yangi sahifa: `pages/kabinet/CalculatorPage.tsx`, marshrut                │
+│    `/kabinet/kalkulyator`. Menyuda ko'rinadi (`cabinet-navigation.ts`),      │
+│    telefon panelida YO'Q (5 bandlik chegaraga rioya qilish uchun) —          │
+│    savat sahifasidagi "Sig'imni oldindan hisoblash →" havolasi orqali        │
+│    telefonda ham topiladi.                                                  │
+│                                                                              │
+│    Tekshirildi: brauzerda 45 paddon kiritilganda Fura (20/mashina) →         │
+│    3 mashina, Vagon (60/mashina) → 1 mashina — to'g'ri.                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ [x] D-064 · Lokatsiya — Leaflet interaktiv xarita 🆕 ────────────────────────┐
+│                                                                              │
+│  KIM TOPDI: mijoz, 2026-09-23. Savat sahifasidagi "Xaritadagi aniq            │
+│  nuqta" bloki faqat ikkita quruq lat/lng raqam-input edi — xarita yo'q       │
+│  edi (TZ 3.13: "Yandex kartaga o'xshab... o'zi turgan nuqtani belgilab       │
+│  yubora oladigan"). Provayder tanlovi: Leaflet + OpenStreetMap               │
+│  (bepul, API kalit shart emas — mijoz tasdiqladi).                          │
+│                                                                              │
+│  ✅ BAJARILDI — 2026-09-23                                                    │
+│                                                                              │
+│    Yangi bog'liqlik: `leaflet` + `react-leaflet` + `@types/leaflet`.         │
+│    Yangi komponent: `features/cabinet/LocationPicker.tsx` — markazi          │
+│    Farg'ona, xaritani bosib nuqta belgilash, manzil qidiruv                  │
+│    (OpenStreetMap Nominatim, ⚠ bepul lekin trafik cheklovi bor — B2B         │
+│    checkout uchun yetarli), mavjud "Joylashuvim" (brauzer geolokatsiya)      │
+│    tugmasi shu komponent ichiga ko'chdi. `CartPage.tsx`dagi eski             │
+│    raqam-inputlar shu komponent bilan almashtirildi, validatsiya             │
+│    mantig'i (hasLat/hasLng, pickup cheklovi) o'zgarishsiz qoldi.             │
+│                                                                              │
+│    🐞 BRAUZERDA TOPILGAN VA TUZATILGAN: `L.Icon.Default.mergeOptions`        │
+│       Vite ostida marker rasmi URL'ini ikki karra birlashtirib,              │
+│       siniq rasm chiqarardi (Leaflet'ning ichki `imagePath` avtomatik        │
+│       aniqlash xatosi). Tuzatish: `Icon.Default`ga tegilmadi, o'rniga        │
+│       alohida `L.icon(...)` nusxasi yasalib, `<Marker icon={...}>`ga         │
+│       to'g'ridan-to'g'ri berildi.                                           │
+│                                                                              │
+│    Tekshirildi: brauzerda (real backend) — viloyat+transport tanlab,         │
+│    xaritani bosib nuqta belgilandi, buyurtma yaratildi (VK-2026-000003),     │
+│    buyurtma tafsilotida "Xaritadagi nuqta: 40.384997, 71.789818" to'g'ri     │
+│    saqlangani ko'rildi.                                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -2982,9 +3061,11 @@
 ║  UMUMIY HOLAT                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami tasklar : 61   (D-061 qo‘shildi — mijoz 2026-09-18 da aytgan
-                 xodim paroli muammosi)
-  Tugadi       : 61
+  Jami tasklar : 64   (D-062, D-063, D-064 qo‘shildi — mijoz 2026-09-23 da
+                 storefront'ni "faqat vitrina"ga qaytarishni so'rab, uning
+                 o'rniga kabinetga uchta funksiya (holat zanjiri, mustaqil
+                 kalkulyator, interaktiv xarita) so'radi)
+  Tugadi       : 64
   Jarayonda    : 0
   Bloklangan   : 0
 
@@ -2999,10 +3080,10 @@
     EPIC 7  Yetkazib berish ..........  3 / 3    [███]       ✓ D-037 … D-039
     EPIC 8  Sozlamalar ...............  1 / 1    [█]         ✓ D-040
     EPIC 9  Bosh sahifa va sifat .....  8 / 8    [████████]  ✓ D-041 … D-048
-    EPIC 10 Optom mijoz kabineti ..... 12 / 12   [████████████]  ✓ D-049 … D-060
+    EPIC 10 Optom mijoz kabineti ..... 15 / 15   [███████████████]  ✓ D-049 … D-060, D-062 … D-064
 
   ──────────────────────────────────────────────────────────────────────────
-  ✅ OPTOM MIJOZ KABINETI (EPIC 10) — 12 TASKDAN 12 TASI TUGADI
+  ✅ OPTOM MIJOZ KABINETI (EPIC 10) — 15 TASKDAN 15 TASI TUGADI
 
     [x] D-049  Mijoz seansi va aktor ajratish            (2026-09-17)
     [x] D-050  Majburiy parol almashtirish               (2026-09-17)
@@ -3016,6 +3097,9 @@
     [x] D-058  Bildirishnomalar va yangilanishlar        (2026-09-18)
     [x] D-059  Shartnomalar (INN, PDF)                   (2026-09-18)
     [x] D-060  Kabinet xavfsizligi va ajratish tekshiruvi (2026-09-18)
+    [x] D-062  Buyurtma holati — vizual zanjir            (2026-09-23)
+    [x] D-063  Mustaqil sig'im kalkulyatori sahifasi      (2026-09-23)
+    [x] D-064  Lokatsiya — Leaflet interaktiv xarita      (2026-09-23)
 
     Oxirigacha brauzerda, haqiqiy backend bilan tekshirildi: mijoz
     kirdi → katalogdan savatga qo'shdi → viloyat+transport tanladi →
@@ -3023,7 +3107,12 @@
     to'lov boshlandi → holat kuzatildi. Sinov ma'lumotlari `db:seed`
     bilan tozalandi.
 
-  KEYINGI TASK:  Dashboard'da ochiq task YO'Q — 61/61 tugadi.
+    (2026-09-23): xuddi shu oqim D-062/D-063/D-064 bilan birga QAYTA
+    tekshirildi — mijoz kirdi (VK-2026-000003), holat zanjiri to'g'ri
+    chizildi, kalkulyator savatdan mustaqil ishladi, xaritada nuqta
+    belgilanib buyurtmaga to'g'ri yozildi.
+
+  KEYINGI TASK:  Dashboard'da ochiq task YO'Q — 64/64 tugadi.
 
     Nima qolgani (dashboard emas, boshqa paketlar):
       • api/task.txt: B-044 (Didox.uz spike) va B-050 (haqiqiy Payme) —

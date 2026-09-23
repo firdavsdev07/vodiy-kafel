@@ -59,6 +59,7 @@ const CabinetProductPage = lazy(() => import('@/pages/kabinet/ProductPage'));
 const CabinetCartPage = lazy(() => import('@/pages/kabinet/CartPage'));
 const CabinetOrdersPage = lazy(() => import('@/pages/kabinet/OrdersPage'));
 const CabinetOrderDetailPage = lazy(() => import('@/pages/kabinet/OrderDetailPage'));
+const CabinetCalculatorPage = lazy(() => import('@/pages/kabinet/CalculatorPage'));
 const CabinetAccountPage = lazy(() => import('@/pages/kabinet/AccountPage'));
 const CabinetNotificationsPage = lazy(() => import('@/pages/kabinet/NotificationsPage'));
 const CabinetContractsPage = lazy(() => import('@/pages/kabinet/ContractsPage'));
@@ -130,6 +131,11 @@ export const routes: RouteObject[] = [
             handle: { title: 'Buyurtma' },
           },
           { path: 'hisob', element: <CabinetAccountPage />, handle: { title: 'Hisobim' } },
+          {
+            path: 'kalkulyator',
+            element: <CabinetCalculatorPage />,
+            handle: { title: 'Sig‘im kalkulyatori' },
+          },
           {
             path: 'bildirishnomalar',
             element: <CabinetNotificationsPage />,

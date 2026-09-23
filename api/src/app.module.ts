@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { CalculatorModule } from './modules/calculator/calculator.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
@@ -39,6 +40,7 @@ import { AppService } from './app.service';
     CustomersModule,
     FactoriesModule,
     SizesModule,
+    CategoriesModule,
     ProductsModule,
     GalleryModule,
     PricingModule,

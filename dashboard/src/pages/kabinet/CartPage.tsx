@@ -1,8 +1,9 @@
-import { LocateFixed, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { MAX_PALLETS, MIN_PALLETS, totalPallets, type CartLine } from '@/features/cabinet/cart';
 import { cartStore, useCart } from '@/features/cabinet/cart-store';
+import { LocationPicker } from '@/features/cabinet/LocationPicker';
 import {
   EMPTY_ROUTE,
   isPickup,
@@ -109,7 +110,12 @@ export default function CabinetCartPage() {
         </ul>
 
         <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
-          <h2 className="text-sm font-medium">Yetkazib berish</h2>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-sm font-medium">Yetkazib berish</h2>
+            <Link to="/kabinet/kalkulyator" className="text-xs text-accent hover:underline">
+              Sig‘imni oldindan hisoblash →
+            </Link>
+          </div>
           <p className="text-xs text-muted">
             Viloyat va transport turini <strong>birga</strong> tanlang. Ikkalasi ham bo‘sh bo‘lsa —
             o‘zingiz olib ketasiz, yo‘l kira 0.
@@ -163,48 +169,7 @@ export default function CabinetCartPage() {
               <p className="text-xs text-muted">
                 Narxga ta’sir qilmaydi — haydovchi manzilni aniq topishi uchun.
               </p>
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="flex flex-col gap-1 text-xs text-muted">
-                  Kenglik (lat)
-                  <input
-                    inputMode="decimal"
-                    value={point.lat}
-                    onChange={(event) => setPoint((p) => ({ ...p, lat: event.target.value }))}
-                    placeholder="41.311081"
-                    className="h-9 w-32 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg tabular-nums"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-xs text-muted">
-                  Uzunlik (lng)
-                  <input
-                    inputMode="decimal"
-                    value={point.lng}
-                    onChange={(event) => setPoint((p) => ({ ...p, lng: event.target.value }))}
-                    placeholder="69.240562"
-                    className="h-9 w-32 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg tabular-nums"
-                  />
-                </label>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    if (!navigator.geolocation) {
-                      toast.info('Brauzer joylashuvni bermaydi — koordinatani qo‘lda kiriting');
-                      return;
-                    }
-                    navigator.geolocation.getCurrentPosition(
-                      (position) =>
-                        setPoint({
-                          lat: position.coords.latitude.toFixed(6),
-                          lng: position.coords.longitude.toFixed(6),
-                        }),
-                      () => toast.info('Joylashuv olinmadi — koordinatani qo‘lda kiriting'),
-                    );
-                  }}
-                >
-                  <LocateFixed size={15} aria-hidden />
-                  Joylashuvim
-                </Button>
-              </div>
+              <LocationPicker value={point} onChange={setPoint} />
             </div>
           )}
         </section>

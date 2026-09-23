@@ -108,13 +108,7 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-            {/* Buyurtma kuzatish bosh menyuda EMAS (S-029): u kundalik
-                yo'l emas, kerak bo'lgandagina qidiriladi — shuning
-                uchun o'rni footer. */}
             <div className="mt-8 flex flex-col gap-3">
-              <Link to="/track" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
-                Buyurtmani kuzatish →
-              </Link>
               <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Telegram ↗
               </a>
