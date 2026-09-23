@@ -111,7 +111,7 @@ export default function Preloader({ onDone }) {
       <div className="entry-caption entry-detail"><span>01 — MATERIAL STUDY</span><span>Tabiatdan ilhomlangan.<br />Makon uchun yaratilgan.</span></div>
       <div className="entry-heading">
         <p className="entry-eyebrow entry-detail">SHAKL. YUZA. XARAKTER.</p>
-        <p aria-label="Vodiy Kafel"><span className="entry-word-mask"><span className="entry-word">Vodiy</span></span><span className="entry-word-mask"><span className="entry-word">Kafel<span className="entry-period">.</span></span></span></p>
+        <p className="entry-title" aria-label="Vodiy Kafel"><span className="entry-word-mask"><span className="entry-word">Vodiy</span></span><span className="entry-word-mask"><span className="entry-word">Kafel<span className="entry-period">.</span></span></span></p>
       </div>
       <footer className="entry-bottom">
         <div className="entry-rule" />

@@ -31,9 +31,18 @@
   a:active, button:active, [role='button']:active { opacity: 0.55; transition: opacity 100ms ease-out; }
 }
 /* `padding` bumped 12px→14px (S-015): the logo/menu pill measured 41px
-   tall — just under the 44px touch-target floor. */
-.floating-nav a, .floating-nav button { background: #eeece5f5; color: #232321; padding: 14px 16px; border: 1px solid #d1cabc; border-radius: 2px; }
-.floating-nav a:first-child { font-weight: 700; letter-spacing: .1em; }
+   tall — just under the 44px touch-target floor.
+   2026-09-23: the hard border/box look was dropped from the logo, phone
+   number and sound toggle (on mobile the pill's bounding box also
+   overlapped `.hero-eyebrow`, "01 / MATERIALLAR GALEREYASI"). The header
+   sets `text-bone` for legibility over dark sections/photos, which is
+   invisible against a `bg-bone` section — so ink color is still forced on
+   every control; the logo and phone number then had their background veil
+   dropped too (bare mark/text, no fill), while `.nav-veil` (sound toggle)
+   and the bordered `.nav-chip` (Menyu/Yopish) keep theirs. */
+.floating-nav a, .floating-nav button { color: #232321; border-radius: 2px; }
+.floating-nav .nav-veil, .floating-nav .nav-chip { background: #eeece5f5; }
+.floating-nav .nav-chip { padding: 14px 16px; border: 1px solid #d1cabc; }
 /* Material study entrance: the same paper, stone and Manrope as the gallery. */
 .entry-screen { position: fixed; inset: 0; z-index: 200; overflow: hidden; color: #232321; background: #eeece5; isolation: isolate; }
 .entry-screen:focus { outline: none; }
@@ -65,11 +74,13 @@
 .entry-caption > span:last-child { font-size: var(--text-meta); line-height: 1.7; }
 .entry-heading { position: absolute; z-index: 1; top: 59%; left: 0; width: 100%; text-align: center; }
 .entry-eyebrow { font-size: var(--text-label); letter-spacing: .16em; color: #71685e; margin-bottom: 10px; }
-.entry-heading p { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
+/* `.entry-heading p` EMAS — u eyebrow `<p>` ni ham ushlab, uni ulkan
+   sarlavhaga aylantirar va blok "Kashf eting" tugmasini yopib qo'yardi. */
+.entry-title { display: flex; justify-content: center; gap: .23em; font-size: clamp(60px, 10.8vw, 17svh); font-weight: 500; line-height: 1.18; letter-spacing: -.075em; }
 .entry-word-mask { overflow: hidden; display: block; }
 .entry-word { display: block; }
 .entry-period { color: #777863; }
-.entry-bottom { position: absolute; bottom: 4%; left: 5vw; right: 5vw; display: flex; align-items: center; justify-content: space-between; padding-top: 20px; gap: 20px; }
+.entry-bottom { position: absolute; z-index: 2; bottom: 4%; left: 5vw; right: 5vw; display: flex; align-items: center; justify-content: space-between; padding-top: 20px; gap: 20px; }
 .entry-rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: #c9c2b5; transform-origin: left; }
 .entry-bottom p { font-size: var(--text-label); line-height: 1.75; letter-spacing: .08em; }
 .entry-enter { display: flex; align-items: center; gap: 25px; text-align: left; min-height: 58px; }
@@ -84,7 +95,7 @@
  .entry-caption { top: 15%; left: 7vw; }
  .entry-caption > span:last-child { display: none; }
  .entry-heading { top: 65%; }
- .entry-heading p { font-size: 13vw; }
+ .entry-title { font-size: 13vw; }
  .entry-eyebrow { margin-bottom: 12px; }
  .entry-bottom { bottom: max(4%, env(safe-area-inset-bottom)); left: 7vw; right: 7vw; padding-top: 15px; flex-direction: column; align-items: flex-start; gap: 16px; }
  .entry-enter { gap: 12px; }
@@ -114,9 +125,6 @@
    negative `bottom` pushed the image's top edge above the clipped frame
    and cut the head off instead of the legs. */
 .hero-greeter img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 68% 4%; filter: saturate(.15) contrast(.96); }
-.hero-greeting { position: absolute; z-index: 3; top: 16%; left: 0; padding: 18px 24px; border: 1px solid #aaa294; border-radius: 22px 22px 4px 22px; background: #eeece5ef; color: #232321; font-size: clamp(16px, 1.6vw, 25px); letter-spacing: -.035em; box-shadow: 0 12px 35px #28251f12; backdrop-filter: blur(8px); animation: greeting-float 4.5s ease-in-out infinite; }
-.hero-greeting > span { position: absolute; right: 13px; bottom: -10px; width: 19px; height: 19px; border-right: 1px solid #aaa294; border-bottom: 1px solid #aaa294; background: #eeece5; transform: skewY(38deg); }
-@keyframes greeting-float { 50% { transform: translateY(-7px); } }
 .material-study { position: relative; z-index: 12; display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; align-items: center; padding: 120px 5vw; }
 .material-study-image { transform: rotate(-4deg); }
 .material-study .type-head { font-size: clamp(2.5rem, 4.5vw, 6rem); }
@@ -137,7 +145,6 @@
     the crop uses so the frame reads as a deliberate close crop, not an
     accident (S-007). */
  .hero-greeter img { transform: scale(1.45); transform-origin: 68% 4%; }
- .hero-greeting { top: 6%; left: 0; padding: 11px 15px; font-size: 15px; }
  .material-study { grid-template-columns: 1fr; padding: 80px 6vw; gap: 60px; }
 }
 .hero-copy { max-width: 60%; padding-bottom: 40px; }
@@ -158,11 +165,15 @@
 .hero-swatch { display: flex; gap: 18px; align-items: center; }
 .hero-swatch img { width: 55px; height: 65px; object-fit: cover; }
 .hero-swatch p { font-size: var(--text-meta); margin-top: 6px; color: #71685e; }
-.hero-drag { max-width: 180px; font-size: var(--text-meta); line-height: 1.6; color: #71685e; }
+/* `margin-right: auto` — swatch yonida turadi. `space-between` uni qator
+   o'rtasiga qo'yardi, ya'ni 1000–1440px da to'g'ridan-to'g'ri greeter
+   rasmining ustiga (o'lchandi). */
+.hero-drag { max-width: 180px; margin-right: auto; font-size: var(--text-meta); line-height: 1.6; color: #71685e; }
+/* ~1000px dan torroqda swatch + yozuv rasmning chap chetigacha sig'maydi. */
+@media (max-width: 1000px) { .hero-drag { display: none; } }
 .hero-scroll { border: 1px solid #b9b0a2; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; }
 .has-entered .hero-copy { animation: gallery-enter 1s both; }
 @keyframes gallery-enter { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .hero-greeting { animation: none; } }
 @media (max-width: 767px) {
   /* Compact single-screen composition (S-011) — the mobile hero is FLOW
      layout, not the desktop version's absolute-positioned stack squeezed
