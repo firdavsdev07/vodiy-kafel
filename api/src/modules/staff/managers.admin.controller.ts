@@ -56,9 +56,15 @@ export class ManagersAdminController {
   constructor(private readonly staff: StaffAdminService) {}
 
   @Get()
+  // T-001: MODERATOR faqat O'QIYDI — optom mijozni menejerga biriktirish
+  // uchun ro'yxat kerak. Yaratish/tahrirlash unga ochilmaydi.
+  @Roles(UserRole.SUPER_ADMIN, UserRole.BRANCH_ADMIN, UserRole.MODERATOR)
   @ApiOperation({
     summary: 'Menejerlar',
-    description: 'Filtr: filial, holat, qidiruv (ism / telefon / Telegram).',
+    description:
+      'Filtr: filial, holat, qidiruv (ism / telefon / Telegram).\n\n' +
+      'MODERATOR — faqat o‘qish (mijozni menejerga biriktirish uchun), ' +
+      'barcha filiallar bo‘yicha.',
   })
   @ApiDataResponse(StaffDto, { isArray: true, description: 'Menejerlar' })
   @ApiNotFoundResponse({

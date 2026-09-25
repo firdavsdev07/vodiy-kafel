@@ -33,6 +33,22 @@ export type BranchScope =
 const NOT_FOUND = 'Topilmadi';
 
 /**
+ * Qaysi domen uchun doira so'ralyapti (T-001, 2026-09-25).
+ *
+ * - `DEFAULT`   — narx, xodim, filial, sozlama … : faqat SUPER_ADMIN
+ *                 cheklovsiz, qolganlar o'z filialida.
+ * - `CUSTOMERS` — optom mijoz va unga tegishli hamma narsa (mijoz kartasi,
+ *                 balans, mijoz buyurtmalari, to'lovni tasdiqlash, mijoz
+ *                 narx qoidalari): MODERATOR ham cheklovsiz. Mijoz talabi —
+ *                 moderator optom mijozlarni yaratib, boshqaradi, mijozlar
+ *                 esa RETAIL filiallarda turadi (moderator — CENTRAL).
+ *
+ * ⚠ Domen faqat MODERATOR uchun farq qiladi. BRANCH_ADMIN / MANAGER har
+ *   ikkala domenda ham faqat o'z filialida.
+ */
+export type ScopeDomain = 'DEFAULT' | 'CUSTOMERS';
+
+/**
  * Filial izolyatsiyasining YAGONA joyi (B-051).
  *
  * Muammo: "bu foydalanuvchi qaysi filialni ko'radi?" tekshiruvini har bir
@@ -52,10 +68,14 @@ export class BranchScopeService {
    *   SUPER_ADMIN uchun `?branchId=...` filtri). Cheklangan rol o'zinikidan
    *   boshqasini so'rasa — 404.
    */
-  resolve(actor: Actor | undefined, requestedBranchId?: string): BranchScope {
+  resolve(
+    actor: Actor | undefined,
+    requestedBranchId?: string,
+    domain: ScopeDomain = 'DEFAULT',
+  ): BranchScope {
     if (!actor) return { kind: 'NONE' };
 
-    if (this.isUnscoped(actor)) {
+    if (this.isUnscoped(actor, domain)) {
       return requestedBranchId
         ? { kind: 'SINGLE', branchId: requestedBranchId }
         : { kind: 'ALL' };
@@ -85,8 +105,9 @@ export class BranchScopeService {
     actor: Actor | undefined,
     resourceBranchId: string,
     notFoundMessage: string = NOT_FOUND,
+    domain: ScopeDomain = 'DEFAULT',
   ): void {
-    const scope = this.resolve(actor);
+    const scope = this.resolve(actor, undefined, domain);
 
     if (scope.kind === 'ALL') return;
     if (scope.kind === 'SINGLE' && scope.branchId === resourceBranchId) return;
@@ -129,8 +150,9 @@ export class BranchScopeService {
   requireBranchId(
     actor: Actor | undefined,
     requestedBranchId?: string,
+    domain: ScopeDomain = 'DEFAULT',
   ): string {
-    const scope = this.resolve(actor, requestedBranchId);
+    const scope = this.resolve(actor, requestedBranchId, domain);
 
     if (scope.kind === 'SINGLE') return scope.branchId;
     if (scope.kind === 'ALL') {
@@ -140,13 +162,15 @@ export class BranchScopeService {
   }
 
   /**
-   * Cheklovsiz subyekt — faqat SUPER_ADMIN.
+   * Cheklovsiz subyekt — SUPER_ADMIN; `CUSTOMERS` domenida MODERATOR ham.
    *
    * 🔒 `type === 'USER'` sharti ham MAJBURIY: mijoz tokenida rol umuman
    *    yo'q, lekin tekshiruv faqat rolga qarab qolsa, kelajakda mijozga
    *    biror rol qo'shilishi bilan bu joy jimgina ochilib ketardi.
    */
-  private isUnscoped(actor: Actor): boolean {
-    return actor.type === 'USER' && actor.role === UserRole.SUPER_ADMIN;
+  private isUnscoped(actor: Actor, domain: ScopeDomain): boolean {
+    if (actor.type !== 'USER') return false;
+    if (actor.role === UserRole.SUPER_ADMIN) return true;
+    return domain === 'CUSTOMERS' && actor.role === UserRole.MODERATOR;
   }
 }

@@ -90,3 +90,37 @@ export class ByBranchAssignmentStrategy implements ManagerAssignmentStrategy {
     )[0].id;
   }
 }
+
+/**
+ * CUSTOMER_MANAGER_ONLY — T-007 (2026-09-25) dan boshlab ishlatiladi.
+ *
+ * Mijoz talabi: "Mijozlarni avtomatik/default tarzda biriktirish
+ * bo'lmasligi kerak — qo'lda biriktiramiz". `BY_BRANCH` esa menejeri yo'q
+ * mijoz buyurtmasini filialning eng bo'sh menejeriga O'ZI berardi — ya'ni
+ * aynan avtomatik biriktirish. Endi:
+ *   1. Afzal xodim (mijozning menejeri yoki buyurtmani qo'lda kiritayotgan
+ *      menejer) faol va shu filialniki bo'lsa — u.
+ *   2. Aks holda — `null`: buyurtma biriktirilmagan, admin qo'lda beradi
+ *      (`PATCH /admin/orders/{id}/assign`).
+ */
+@Injectable()
+export class CustomerManagerOnlyStrategy implements ManagerAssignmentStrategy {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async pick({
+    branchId,
+    preferredManagerId,
+  }: ManagerAssignmentInput): Promise<string | null> {
+    if (!preferredManagerId) return null;
+    const preferred = await this.prisma.user.findFirst({
+      where: {
+        id: preferredManagerId,
+        branchId,
+        isActive: true,
+        role: { in: ASSIGNABLE_ROLES },
+      },
+      select: { id: true },
+    });
+    return preferred?.id ?? null;
+  }
+}

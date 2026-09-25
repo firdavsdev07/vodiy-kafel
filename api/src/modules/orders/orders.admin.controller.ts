@@ -38,6 +38,7 @@ import {
   ChangeOrderStatusDto,
   CreateManualOrderDto,
   OrderStatusChangeResponseDto,
+  SetOrderDeliveryDto,
   SetOrderUrgentDto,
 } from './dto';
 import { OrderStatusService } from './order-status.service';
@@ -168,6 +169,47 @@ export class OrdersAdminController {
     @Body() dto: SetOrderUrgentDto,
   ): Promise<AdminOrderDetailDto> {
     return this.ordersAdmin.setUrgent(actor, id, dto.isUrgent);
+  }
+
+  @Patch(':id/delivery')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.MODERATOR)
+  @ApiOperation({
+    summary:
+      'Yetkazib berishni belgilash (jo‘natish ombori, yo‘nalish, yo‘l kira)',
+    description:
+      'T-004: mijoz yetkazib berishni faqat SO‘RAYDI (`deliveryRequested`); ' +
+      'jo‘natiladigan CENTRAL ombor, viloyat va transportni moderator yoki ' +
+      'bosh admin shu yerda belgilaydi.\n\n' +
+      '• `regionId` + `transportTypeId` BIRGA — yo‘l kira buyurtma filiali ' +
+      'tarifi va mijozning transport qoidalari bo‘yicha qayta hisoblanadi; ' +
+      'ikkalasi `null` — olib ketish (yo‘l kira 0).\n' +
+      '• Summa o‘zgarsa: buyurtma summasi, kutilayotgan to‘lov va mijoz ' +
+      'balansi (farq) bitta tranzaksiyada yangilanadi. Mahsulot narxlari ' +
+      'o‘zgarmaydi.\n\n' +
+      '🔒 Faqat NEW / SEARCHING_TRANSPORT holatida va to‘lov qabul ' +
+      'qilinmagan bo‘lsa — aks holda 409.',
+  })
+  @ApiParam({ name: 'id', description: 'Buyurtma ID' })
+  @ApiDataResponse(AdminOrderDetailDto, { description: 'Yangilangan buyurtma' })
+  @ApiBadRequestResponse({
+    description:
+      'Viloyat va transport birga emas, jo‘natish joyi markaziy ombor emas',
+    type: ApiErrorDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Buyurtma yoki bu yo‘nalish uchun faol tarif topilmadi',
+    type: ApiErrorDto,
+  })
+  @ApiConflictResponse({
+    description: 'Yuklash boshlangan yoki to‘lov qabul qilingan',
+    type: ApiErrorDto,
+  })
+  setDelivery(
+    @CurrentActor() actor: Actor,
+    @Param('id') id: string,
+    @Body() dto: SetOrderDeliveryDto,
+  ): Promise<AdminOrderDetailDto> {
+    return this.ordersAdmin.setDelivery(actor, id, dto);
   }
 
   @Get(':id/assignable-staff')

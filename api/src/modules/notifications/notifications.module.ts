@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../../auth/auth.module';
+import { AnnouncementsAdminController } from './announcements.admin.controller';
+import { AnnouncementsService } from './announcements.service';
 import { InAppChannel } from './channels/in-app.channel';
 import { MockSmsChannel } from './channels/mock-sms.channel';
 import { MockTelegramChannel } from './channels/mock-telegram.channel';
@@ -18,7 +20,11 @@ import { UpdatesService } from './updates.service';
  */
 @Module({
   imports: [AuthModule],
-  controllers: [MeNotificationsController, MeUpdatesController],
+  controllers: [
+    MeNotificationsController,
+    MeUpdatesController,
+    AnnouncementsAdminController,
+  ],
   providers: [
     NotificationsInboxService,
     UpdatesService,
@@ -31,6 +37,7 @@ import { UpdatesService } from './updates.service';
       useFactory: (...channels: unknown[]) => channels,
     },
     NotificationService,
+    AnnouncementsService,
   ],
   exports: [NotificationService],
 })

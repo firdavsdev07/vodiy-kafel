@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '@/shared/api';
+import { ApiError, type Schema } from '@/shared/api';
 import { api } from '@/shared/api';
 import type { ListParams } from '@/shared/lib/list-params';
 import { queryKeys } from '@/shared/query';
@@ -67,6 +67,20 @@ export function useSetOrderUrgent(id: string) {
 }
 
 /**
+ * Yetkazib berishni belgilash (T-004) — jo'natish ombori, viloyat +
+ * transport. 🔒 MODERATOR, SUPER_ADMIN. Yo'l kira, buyurtma summasi, to'lov
+ * va mijoz balansi BACKENDDA qayta hisoblanadi — shuning uchun hisob
+ * harakatlari ham yangilanadi.
+ */
+export function useSetOrderDelivery(id: string) {
+  return useMutation({
+    mutationFn: (body: Schema<'SetOrderDeliveryDto'>) =>
+      api.patch('/admin/orders/{id}/delivery', { params: { id }, body }),
+    meta: { invalidates: [queryKeys.orders.all, queryKeys.customers.all] },
+  });
+}
+
+/**
  * Xodim biriktirish (D-027). `null` — olib tashlash. 🔒 SUPER_ADMIN,
  * BRANCH_ADMIN, MODERATOR; xodim buyurtma FILIALINING faol xodimi bo'lishi
  * shart — tekshiruv backendda (400).
@@ -118,7 +132,7 @@ export function useCustomerSearch(search: string) {
 
 /**
  * Menejer filtri uchun. `GET /admin/managers` — faqat SUPER_ADMIN va
- * BRANCH_ADMIN (`managers.manage`); boshqa rolda so'ralmaydi.
+ * BRANCH_ADMIN, MODERATOR (`managers.view`); boshqa rolda so'ralmaydi.
  * SUPER_ADMIN filial tanlagan bo'lsa — faqat o'sha filial menejerlari.
  */
 /**
@@ -127,7 +141,7 @@ export function useCustomerSearch(search: string) {
  * ⚠ `useAssignableStaff` bilan ARALASHTIRILMAYDI: bu yerda "kim bo'yicha
  *   filtrlash mumkin" degan savol va u buyurtmaga bog'liq emas, shuning
  *   uchun manba ham boshqa (`/admin/managers`). Ro'yxat MANAGER rolini
- *   qaytaradi va faqat `managers.manage` ruxsati borga ochiq.
+ *   qaytaradi va faqat `managers.view` ruxsati borga ochiq.
  */
 export function useManagerFilterOptions(enabled: boolean, branchId: string | undefined) {
   const query = { isActive: true, ...(branchId ? { branchId } : {}) };

@@ -44,6 +44,12 @@ export const PERMISSIONS = {
   // ── Mijoz va moliya ──
   /** GET/POST/PATCH /admin/customers, reset-password */
   'customers.manage': ALL_STAFF,
+  /**
+   * Barcha filial mijozlari — filial filtri/ustuni, yaratishda filial
+   * tanlash, boshqa filialga ko'chirish. T-001 (2026-09-25): MODERATOR ham
+   * (backend: BranchScopeService `CUSTOMERS` domeni).
+   */
+  'customers.allBranches': ['SUPER_ADMIN', 'MODERATOR'],
   /** PATCH /admin/customers/{id}/active */
   'customers.toggleActive': ['SUPER_ADMIN', 'BRANCH_ADMIN', 'MODERATOR'],
   /** POST /admin/customers/{id}/transactions */
@@ -51,9 +57,20 @@ export const PERMISSIONS = {
   /** PATCH /admin/payments/{id}/confirm */
   'payments.confirm': ['SUPER_ADMIN', 'BRANCH_ADMIN', 'MODERATOR'],
 
+  /**
+   * POST/GET /admin/announcements — mijozlarga xabar (T-009). Barcha xodim;
+   * DOIRA backendda (menejer — faqat o'z mijozlari).
+   */
+  'announcements.send': ALL_STAFF,
+
   // ── Buyurtmalar ──
   /** GET/POST /admin/orders, PATCH …/urgent, …/status */
   'orders.manage': ALL_STAFF,
+  /**
+   * PATCH /admin/orders/{id}/delivery — jo'natish ombori, yo'nalish, yo'l
+   * kira (T-004). Mijoz va filial xodimi yetkazib berishni faqat so'raydi.
+   */
+  'orders.setDelivery': ['SUPER_ADMIN', 'MODERATOR'],
   /** PATCH /admin/orders/{id}/assign */
   'orders.assign': ['SUPER_ADMIN', 'BRANCH_ADMIN', 'MODERATOR'],
   /** /admin/branch-orders — markaz qabul qiladi (D-030, D-031) */
@@ -72,6 +89,11 @@ export const PERMISSIONS = {
   'partners.write': ['SUPER_ADMIN'],
   /** /admin/managers */
   'managers.manage': ['SUPER_ADMIN', 'BRANCH_ADMIN'],
+  /**
+   * GET /admin/managers — faqat o'qish: mijozni menejerga biriktirish,
+   * buyurtmalarni menejer bo'yicha filtrlash. T-001: MODERATOR ham.
+   */
+  'managers.view': ['SUPER_ADMIN', 'BRANCH_ADMIN', 'MODERATOR'],
   /** /admin/moderators */
   'moderators.manage': ['SUPER_ADMIN'],
 

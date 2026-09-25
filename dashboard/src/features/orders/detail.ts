@@ -43,3 +43,17 @@ export function isZeroAmount(value: string): boolean {
 export function isManuallyConfirmable(payment: Pick<OrderPayment, 'status' | 'method'>): boolean {
   return payment.status === 'PENDING' && payment.method !== 'CARD';
 }
+
+/** Yo'l kirani o'zgartirish mumkin bo'lgan holatlar — backend bilan bir xil (T-004). */
+const DELIVERY_EDITABLE_STATUSES: readonly OrderDetail['status'][] = ['NEW', 'SEARCHING_TRANSPORT'];
+
+/**
+ * Yetkazib berishni belgilash formasi ko'rsatiladimi: yuk yuklanmagan va
+ * to'lov qabul qilinmagan (aks holda backend 409 beradi).
+ */
+export function canEditDelivery(order: Pick<OrderDetail, 'status' | 'payments'>): boolean {
+  return (
+    DELIVERY_EDITABLE_STATUSES.includes(order.status) &&
+    !order.payments.some((p) => p.status === 'PAID')
+  );
+}

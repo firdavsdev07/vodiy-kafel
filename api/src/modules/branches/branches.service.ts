@@ -107,7 +107,10 @@ export class BranchesService {
     query: BranchAdminQueryDto,
   ): Promise<BranchAdminDto[]> {
     // Filial "resursining" o'zi — filtr `id` bo'yicha (branchId emas).
-    const scope = this.branchScope.resolve(actor);
+    // Ro'yxat mijozlar domenida (T-001): MODERATOR optom mijozni RETAIL
+    // filialga yaratadi, shuning uchun hamma filialni ko'rishi kerak.
+    // Tahrirlash (`update`) esa oddiy doirada — faqat o'z filiali.
+    const scope = this.branchScope.resolve(actor, undefined, 'CUSTOMERS');
     return this.prisma.branch.findMany({
       where: {
         ...(scope.kind === 'SINGLE' && { id: scope.branchId }),

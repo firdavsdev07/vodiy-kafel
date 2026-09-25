@@ -15,6 +15,10 @@ describe('permissions (D-007)', () => {
       ['settings.view', ['BRANCH_ADMIN', 'SUPER_ADMIN']],
       ['settings.write', ['SUPER_ADMIN']],
       ['orders.assign', ['BRANCH_ADMIN', 'MODERATOR', 'SUPER_ADMIN']],
+      // T-001: moderator optom mijozlarni barcha filial bo'yicha boshqaradi
+      ['customers.manage', ['BRANCH_ADMIN', 'MANAGER', 'MODERATOR', 'SUPER_ADMIN']],
+      ['customers.allBranches', ['MODERATOR', 'SUPER_ADMIN']],
+      ['managers.view', ['BRANCH_ADMIN', 'MODERATOR', 'SUPER_ADMIN']],
     ];
     for (const [permission, roles] of matrix) {
       expect([...PERMISSIONS[permission]].sort(), permission).toEqual(roles);

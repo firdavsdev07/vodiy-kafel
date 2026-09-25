@@ -70,6 +70,8 @@ export const queryKeys = {
     payment: (id: string) => ['me', 'payment', id] as const,
     /** Buyurtma menejeri bilan bog'lanish (D-056). */
     managerContact: (orderId: string) => ['me', 'manager-contact', orderId] as const,
+    /** Mijozning o'z menejeri va filiali — buyurtmaga bog'liq emas (T-006). */
+    myManagerContact: () => ['me', 'manager-contact'] as const,
   },
 
   products: {
@@ -81,6 +83,8 @@ export const queryKeys = {
   sizes: domainKeys('sizes'),
   media: domainKeys('media'),
   gallery: domainKeys('gallery'),
+  /** Mijozlarga yuborilgan xabarlar (T-009). */
+  announcements: domainKeys('announcements'),
   /** Filial narxlari — GET /admin/branch-products */
   branchProducts: domainKeys('branch-products'),
   productStocks: domainKeys('product-stocks'),

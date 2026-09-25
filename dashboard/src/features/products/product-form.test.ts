@@ -56,6 +56,24 @@ describe('mahsulot formasi (D-012)', () => {
     });
   });
 
+  it('T-008: ombordagi miqdor — butun son ≥ 0, faqat YARATISHDA yuboriladi', () => {
+    const ok = (stockPallets: string) => productSchema.safeParse({ ...valid, stockPallets }).success;
+    expect(ok('')).toBe(true);
+    expect(ok('0')).toBe(true);
+    expect(ok('120')).toBe(true);
+    expect(ok('-1')).toBe(false);
+    expect(ok('2.5')).toBe(false);
+    expect(ok('abc')).toBe(false);
+    expect(ok('2147483648')).toBe(false);
+
+    const create = (stockPallets: string) => toCreateBody(productSchema.parse({ ...valid, stockPallets }));
+    expect(create('120').stockPallets).toBe(120);
+    expect(create('0').stockPallets).toBe(0);
+    expect(create('')).not.toHaveProperty('stockPallets');
+    // Tahrirda zaxira maydoni HECH QACHON ketmaydi — u «Zaxira» bo'limida
+    expect(toUpdateBody(productSchema.parse({ ...valid, stockPallets: '50' }), product)).toEqual({});
+  });
+
   it('tahrir: API "43.2000" formada "43.2" — o‘zgarmagan deb hisoblanadi', () => {
     expect(productDefaults(product).sqmPerPallet).toBe('43.2');
     expect(toUpdateBody(productSchema.parse(valid), product)).toEqual({});

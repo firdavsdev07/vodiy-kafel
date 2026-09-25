@@ -50,11 +50,13 @@ export const ORDER_SELECT = {
   transportCount: true,
   exactLat: true,
   exactLng: true,
+  deliveryRequested: true,
   note: true,
   createdAt: true,
   branch: { select: { name: true } },
   region: { select: { name: true } },
   transportType: { select: { name: true } },
+  requestedTransportType: { select: { name: true } },
   items: {
     orderBy: { createdAt: 'asc' },
     select: {
@@ -88,17 +90,66 @@ export type OrderCustomerRow = Prisma.OrderGetPayload<{
   select: typeof ORDER_SELECT;
 }>;
 
-/** Buyurtma tarkibi — mijoz ham, menejer ham shu shaklda yuboradi. */
+const CONTACT_PERSON_SELECT = {
+  fullName: true,
+  phone: true,
+  telegramUsername: true,
+  isActive: true,
+} as const satisfies Prisma.UserSelect;
+
+const BRANCH_CONTACT_SELECT = {
+  name: true,
+  phones: true,
+  address: true,
+  workingHours: true,
+  telegramUrl: true,
+} as const satisfies Prisma.BranchSelect;
+
+/** Telegram username → havola. Noto'g'ri username (masalan apostrofli) — `null`. */
+function telegramLink(username: string | null): string | null {
+  const clean = username?.trim().replace(/^@/, '');
+  return clean && /^[A-Za-z0-9_]{5,32}$/.test(clean)
+    ? `https://t.me/${clean}`
+    : null;
+}
+
+function toContactPerson(
+  person:
+    | Prisma.UserGetPayload<{ select: typeof CONTACT_PERSON_SELECT }>
+    | null
+    | undefined,
+): ManagerContactDto['manager'] {
+  if (!person) return null;
+  return {
+    fullName: person.fullName,
+    phone: person.phone,
+    telegramUrl: telegramLink(person.telegramUsername),
+  };
+}
+
+function toBranchContact(
+  branch: Prisma.BranchGetPayload<{ select: typeof BRANCH_CONTACT_SELECT }>,
+): ManagerContactDto['branch'] {
+  return { ...branch, telegramUrl: branch.telegramUrl ?? null };
+}
+
+/**
+ * Buyurtma tarkibi — mijoz ham, menejer ham shu shaklda yuboradi.
+ *
+ * `regionId` — FAQAT MODERATOR / SUPER_ADMIN qo'lda kiritganda (T-004):
+ * mijoz va filial xodimi yetkazib berishni faqat SO'RAYDI
+ * (`deliveryRequested`), yo'nalishni keyin moderator belgilaydi.
+ */
 export type OrderDraft = Pick<
   CreateOrderDto,
   | 'items'
-  | 'regionId'
+  | 'deliveryRequested'
   | 'transportTypeId'
   | 'exactLat'
   | 'exactLng'
   | 'paymentMethod'
   | 'note'
->;
+> & { regionId?: string };
 
 export interface PlaceOrderInput {
   /** Buyurtmani bajaradigan filial — narx va tarif shu filialdan. */
@@ -172,15 +223,33 @@ export class OrdersService {
    */
   async place(input: PlaceOrderInput): Promise<string> {
     const { draft } = input;
-    const hasDelivery = Boolean(draft.regionId && draft.transportTypeId);
-    this.assertLocation(draft, hasDelivery);
+    // Yo'nalish (viloyat + transport) — yo'l kira DARHOL hisoblanadi.
+    // Faqat moderator/super admin qo'lda kiritganda keladi (T-004).
+    const routed = Boolean(draft.regionId);
+    if (routed && !draft.transportTypeId) {
+      throw new BadRequestException(
+        'regionId va transportTypeId birga yuborilishi kerak',
+      );
+    }
+    const deliveryRequested = routed || draft.deliveryRequested === true;
+    if (draft.transportTypeId && !deliveryRequested) {
+      throw new BadRequestException(
+        'Transport turi faqat yetkazib berishda tanlanadi (olib ketishda emas)',
+      );
+    }
+    this.assertLocation(draft, deliveryRequested);
+    if (deliveryRequested && !routed && draft.transportTypeId) {
+      await this.assertTransportType(draft.transportTypeId);
+    }
 
     const customerId =
       'customerId' in input.buyer ? input.buyer.customerId : null;
     const { result, productNames } = await this.quotes.build(
       { branchId: input.branchId, customerId },
       draft.items,
-      { regionId: draft.regionId, transportTypeId: draft.transportTypeId },
+      routed
+        ? { regionId: draft.regionId, transportTypeId: draft.transportTypeId }
+        : {},
     );
 
     // Menejer (B-043): afzal xodim yaroqli bo'lsa — u, aks holda strategiya.
@@ -189,23 +258,34 @@ export class OrdersService {
       preferredManagerId: input.managerId,
     });
 
-    const stocks = await this.prisma.productStock.findMany({
-      where: { productId: { in: result.items.map((item) => item.productId) } },
-      select: { productId: true, stockPallets: true },
-    });
-
-    // 🔒 Qancha yetmasligi AYTILMAYDI — aniq zaxira soni sir (G3).
-    const available = new Map(stocks.map((s) => [s.productId, s.stockPallets]));
-    const short = result.items.filter(
-      (item) => (available.get(item.productId) ?? 0) < item.pallets,
-    );
-    if (short.length > 0) {
-      throw new ConflictException(
-        `Omborda yetarli emas: ${short
-          .map((item) => productNames.get(item.productId))
-          .join(', ')}`,
+    // Bir mahsulot ikki qatorda kelsa ham zaxira JAMI bo'yicha tekshiriladi
+    const wanted = new Map<string, number>();
+    for (const item of result.items) {
+      wanted.set(
+        item.productId,
+        (wanted.get(item.productId) ?? 0) + item.pallets,
       );
     }
+    const shortError = (productIds: string[]) =>
+      // 🔒 Qancha yetmasligi AYTILMAYDI — aniq zaxira soni sir (G3).
+      new ConflictException(
+        `Omborda yetarli emas: ${productIds
+          .map((id) => productNames.get(id))
+          .join(', ')}`,
+      );
+
+    // Oldindan tekshiruv — barcha yetmaydigan mahsulotni BITTA xabarda
+    // aytish uchun. Haqiqiy kafolat esa pastda, tranzaksiya ichidagi
+    // shartli kamaytirishda (parallel buyurtmalar poygasi).
+    const stocks = await this.prisma.productStock.findMany({
+      where: { productId: { in: [...wanted.keys()] } },
+      select: { productId: true, stockPallets: true },
+    });
+    const available = new Map(stocks.map((s) => [s.productId, s.stockPallets]));
+    const short = [...wanted].filter(
+      ([productId, pallets]) => (available.get(productId) ?? 0) < pallets,
+    );
+    if (short.length > 0) throw shortError(short.map(([id]) => id));
 
     const buyerData =
       'customerId' in input.buyer
@@ -239,9 +319,24 @@ export class OrdersService {
         select: { lastValue: true },
       });
 
+      // T-005: zaxirani BAND qilish. `stockPallets >= kerak` sharti bilan
+      // kamaytiriladi — ikki mijoz bir vaqtda oxirgi paddonlarni olmoqchi
+      // bo'lsa, ikkinchisining `count` i 0 bo'ladi va butun buyurtma
+      // (raqam hisoblagichi bilan birga) orqaga qaytadi.
+      const lost: string[] = [];
+      for (const [productId, pallets] of wanted) {
+        const { count } = await tx.productStock.updateMany({
+          where: { productId, stockPallets: { gte: pallets } },
+          data: { stockPallets: { decrement: pallets } },
+        });
+        if (count === 0) lost.push(productId);
+      }
+      if (lost.length > 0) throw shortError(lost);
+
       const created = await tx.order.create({
         data: {
           orderNumber: formatOrderNumber(year, counter.lastValue),
+          stockReserved: true,
           ...buyerData,
           branchId: input.branchId,
           managerId,
@@ -251,8 +346,14 @@ export class OrdersService {
           itemsTotal: result.itemsTotal,
           deliveryTotal: result.deliveryTotal,
           grandTotal: result.grandTotal,
-          regionId: hasDelivery ? draft.regionId : null,
-          transportTypeId: hasDelivery ? draft.transportTypeId : null,
+          deliveryRequested,
+          regionId: routed ? draft.regionId : null,
+          transportTypeId: routed ? draft.transportTypeId : null,
+          // Yo'nalish belgilanmagan — mijozning afzal ko'rgan transporti (T-004)
+          requestedTransportTypeId:
+            deliveryRequested && !routed
+              ? (draft.transportTypeId ?? null)
+              : null,
           transportCount: result.transport?.vehicleCount ?? null,
           exactLat: draft.exactLat ?? null,
           exactLng: draft.exactLng ?? null,
@@ -312,9 +413,12 @@ export class OrdersService {
   }
 
   /**
-   * Buyurtma menejeri bilan bog'lanish (B-043, TZ 3.12) — mijoz Telegram
-   * orqali yozadi. 🔒 Faqat o'z buyurtmasi (qoida 6); telefon (xodimning
-   * login identifikatori) berilmaydi.
+   * Buyurtma bo'yicha «Menejer bilan aloqa» (B-043, TZ 3.12, T-006).
+   * 🔒 Faqat o'z buyurtmasi (qoida 6) — begonasi 404.
+   *
+   * Menejer: buyurtmaniki, u bo'lmasa (yoki faol emas) — mijozniki. Hech
+   * kim bo'lmasa `manager: null`, lekin filial aloqasi baribir qaytadi
+   * (avval bu holatda 404 berilardi va mijoz hech narsa ko'rmasdi).
    */
   async managerContact(
     actor: Actor | undefined,
@@ -324,22 +428,46 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, customerId },
       select: {
-        manager: {
-          select: { fullName: true, telegramUsername: true, isActive: true },
+        manager: { select: CONTACT_PERSON_SELECT },
+        branch: { select: BRANCH_CONTACT_SELECT },
+        customer: {
+          select: {
+            manager: { select: CONTACT_PERSON_SELECT },
+            branch: { select: BRANCH_CONTACT_SELECT },
+          },
         },
       },
     });
     if (!order) throw new NotFoundException('Buyurtma topilmadi');
-    if (!order.manager?.isActive) {
-      throw new NotFoundException('Buyurtmaga hali menejer biriktirilmagan');
-    }
-    const username = order.manager.telegramUsername?.replace(/^@/, '');
+    const person = [order.manager, order.customer?.manager].find(
+      (m) => m?.isActive,
+    );
+    const branch = order.branch ?? order.customer!.branch;
     return {
-      fullName: order.manager.fullName,
-      telegramUrl:
-        username && /^[A-Za-z0-9_]{5,32}$/.test(username)
-          ? `https://t.me/${username}`
-          : null,
+      manager: toContactPerson(person),
+      branch: toBranchContact(branch),
+    };
+  }
+
+  /**
+   * Kabinet — mijozning O'Z menejeri va filiali (T-006). Buyurtmaga
+   * bog'liq emas: mijoz buyurtma bermasdan ham kimga murojaat qilishini
+   * bilsin.
+   */
+  async myManagerContact(actor: Actor | undefined): Promise<ManagerContactDto> {
+    const { customerId } = await this.quotes.requireCustomer(actor);
+    const customer = await this.prisma.customer.findUniqueOrThrow({
+      where: { id: customerId },
+      select: {
+        manager: { select: CONTACT_PERSON_SELECT },
+        branch: { select: BRANCH_CONTACT_SELECT },
+      },
+    });
+    return {
+      manager: toContactPerson(
+        customer.manager?.isActive ? customer.manager : undefined,
+      ),
+      branch: toBranchContact(customer.branch),
     };
   }
 
@@ -449,6 +577,11 @@ export class OrdersService {
               exactLng: order.exactLng,
             }
           : null,
+      deliveryRequested: order.deliveryRequested,
+      deliveryPending: order.deliveryRequested && !order.region,
+      requestedTransportTypeName: order.requestedTransportType?.name ?? null,
+      exactLat: order.exactLat,
+      exactLng: order.exactLng,
       payments: order.payments.map((payment) => ({
         ...payment,
         amount: payment.amount.toString(),
@@ -457,6 +590,17 @@ export class OrdersService {
       note: order.note,
       createdAt: order.createdAt,
     };
+  }
+
+  /** Afzal ko'rilgan transport — mavjud va faol bo'lishi shart. */
+  private async assertTransportType(transportTypeId: string): Promise<void> {
+    const type = await this.prisma.transportType.findUnique({
+      where: { id: transportTypeId },
+      select: { isActive: true },
+    });
+    if (!type?.isActive) {
+      throw new BadRequestException('Transport turi topilmadi yoki faol emas');
+    }
   }
 
   /** Aniq nuqta: ikkala koordinata birga va faqat yetkazib berishda. */

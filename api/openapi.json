@@ -646,7 +646,7 @@
     },
     "/api/v1/admin/customers": {
       "get": {
-        "description": "Qidiruv (login / kompaniya / kontakt / telefon / INN), qarzdorlik, filial, menejer, faollik bo‘yicha filtr. Har qatorda joriy balans.\n\n🔒 Filial xodimi faqat o‘z filialini ko‘radi; SUPER_ADMIN `branchId` bilan filtrlaydi.",
+        "description": "Qidiruv (login / kompaniya / kontakt / telefon / INN), qarzdorlik, filial, menejer, faollik bo‘yicha filtr. Har qatorda joriy balans.\n\n🔒 Filial xodimi faqat o‘z filialini ko‘radi; SUPER_ADMIN va MODERATOR hamma filialni ko‘radi va `branchId` bilan filtrlaydi.",
         "operationId": "CustomersAdminController_findAll",
         "parameters": [
           {
@@ -782,7 +782,7 @@
         ]
       },
       "post": {
-        "description": "Hisob yaratiladi va VAQTINCHALIK PAROL qaytadi.\n\n⚠ Parol FAQAT shu javobda ko‘rinadi — mijozga telefon/Telegram orqali yetkazing. Birinchi kirishda almashtiriladi.\n\n🔒 Filial xodimi faqat O‘Z filialiga yaratadi; SUPER_ADMIN `branchId` ni aniq beradi. Menejer yaratsa — mijoz unga biriktiriladi.",
+        "description": "Hisob yaratiladi va VAQTINCHALIK PAROL qaytadi.\n\n⚠ Parol FAQAT shu javobda ko‘rinadi — mijozga telefon/Telegram orqali yetkazing. Birinchi kirishda almashtiriladi.\n\n🔒 Filial xodimi faqat O‘Z filialiga yaratadi; SUPER_ADMIN va MODERATOR `branchId` ni aniq beradi.\n\nT-007: menejer AVTOMATIK biriktirilmaydi (yaratgan menejerga ham) — faqat aniq `managerId` yoki keyin kartada.",
         "operationId": "CustomersAdminController_create",
         "parameters": [],
         "requestBody": {
@@ -922,7 +922,7 @@
         ]
       },
       "patch": {
-        "description": "Login o‘zgarmaydi. `inn: null` / `managerId: null` — tozalash.\n\n🔒 Boshqa filialga ko‘chirish — faqat SUPER_ADMIN (mijoz narxi o‘zgaradi!). Ko‘chirilganda eski filial menejeri uziladi.",
+        "description": "Login o‘zgarmaydi. `inn: null` / `managerId: null` — tozalash.\n\n🔒 Boshqa filialga ko‘chirish — SUPER_ADMIN va MODERATOR (mijoz narxi o‘zgaradi!). Ko‘chirilganda eski filial menejeri uziladi.",
         "operationId": "CustomersAdminController_update",
         "parameters": [
           {
@@ -7094,7 +7094,7 @@
     },
     "/api/v1/orders/{id}/manager-contact": {
       "get": {
-        "description": "Menejer ismi va Telegram havolasi (TZ 3.12). Faqat o‘z buyurtmasi.",
+        "description": "Menejer (buyurtmaniki, bo‘lmasa mijozniki): ism, telefon, Telegram (TZ 3.12, T-006). Menejer yo‘q bo‘lsa `manager: null` — filial aloqasi baribir qaytadi. Faqat o‘z buyurtmasi.",
         "operationId": "OrdersController_managerContact",
         "parameters": [
           {
@@ -7109,7 +7109,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Menejer",
+            "description": "Aloqa ma’lumoti",
             "content": {
               "application/json": {
                 "schema": {
@@ -7152,7 +7152,7 @@
             }
           },
           "404": {
-            "description": "Buyurtma topilmadi yoki menejer hali biriktirilmagan",
+            "description": "Buyurtma topilmadi (yoki begona)",
             "content": {
               "application/json": {
                 "schema": {
@@ -7695,6 +7695,107 @@
         ]
       }
     },
+    "/api/v1/admin/orders/{id}/delivery": {
+      "patch": {
+        "description": "T-004: mijoz yetkazib berishni faqat SO‘RAYDI (`deliveryRequested`); jo‘natiladigan CENTRAL ombor, viloyat va transportni moderator yoki bosh admin shu yerda belgilaydi.\n\n• `regionId` + `transportTypeId` BIRGA — yo‘l kira buyurtma filiali tarifi va mijozning transport qoidalari bo‘yicha qayta hisoblanadi; ikkalasi `null` — olib ketish (yo‘l kira 0).\n• Summa o‘zgarsa: buyurtma summasi, kutilayotgan to‘lov va mijoz balansi (farq) bitta tranzaksiyada yangilanadi. Mahsulot narxlari o‘zgarmaydi.\n\n🔒 Faqat NEW / SEARCHING_TRANSPORT holatida va to‘lov qabul qilinmagan bo‘lsa — aks holda 409.",
+        "operationId": "OrdersAdminController_setDelivery",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Buyurtma ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOrderDeliveryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilangan buyurtma",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminOrderDetailDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Viloyat va transport birga emas, jo‘natish joyi markaziy ombor emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bu amal uchun rol yetarli emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Buyurtma yoki bu yo‘nalish uchun faol tarif topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Yuklash boshlangan yoki to‘lov qabul qilingan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yetkazib berishni belgilash (jo‘natish ombori, yo‘nalish, yo‘l kira)",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/admin/orders/{id}/assignable-staff": {
       "get": {
         "description": "Buyurtma FILIALINING faol xodimlari — aynan biriktirish qabul qiladigan rollar (MANAGER, BRANCH_ADMIN, MODERATOR).\n\n⚠ Rollar ro‘yxati `PATCH /admin/orders/{id}/assign` bilan BITTA manbadan (`ASSIGNABLE_ROLES`): ro‘yxatda ko‘rinadigan har bir xodimga biriktirish ishlaydi.\n\n🔒 Filial buyurtmadan olinadi, so‘rovdan EMAS — begona filial buyurtmasi so‘ralsa 404. Filialsiz buyurtma uchun bo‘sh ro‘yxat.\n\n⚠ `@Roles` aynan `assign` bilan bir xil: ro‘yxatni faqat biriktira oladigan xodim ko‘radi.",
@@ -8158,6 +8259,67 @@
           }
         ],
         "summary": "Buyurtma tafsiloti",
+        "tags": [
+          "Customers"
+        ]
+      }
+    },
+    "/api/v1/me/manager-contact": {
+      "get": {
+        "description": "Biriktirilgan menejer (ism, telefon, Telegram) — yo‘q bo‘lsa `manager: null`; filial aloqasi (telefonlar, manzil, ish vaqti) DOIM.",
+        "operationId": "MeManagerContactController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Aloqa ma’lumoti",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ManagerContactDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Optom mijoz tokeni emas yoki vaqtinchalik parol almashtirilmagan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mening menejerim va filialim",
         "tags": [
           "Customers"
         ]
@@ -9449,6 +9611,190 @@
         ]
       }
     },
+    "/api/v1/admin/announcements": {
+      "post": {
+        "description": "`multipart/form-data`: `title` (ixtiyoriy), `body`, `audience` (`ALL` | `SELECTED`), `customerIds` (SELECTED da), `image` (ixtiyoriy, bitta: JPG/PNG/WEBP, 10 MB gacha).\n\nHar qabul qiluvchi kabinetida `ANNOUNCEMENT` bildirishnomasi: rasm va uning OSTIDA matn.\n\n🔒 `ALL` — sizning DOIRANGIZDAGI barcha faol mijozlar: SUPER_ADMIN va MODERATOR — hammasi, BRANCH_ADMIN — o‘z filiali, MANAGER — faqat o‘ziga biriktirilganlar. `SELECTED` da doiradan tashqari bitta mijoz bo‘lsa ham — 404 va hech kimga yuborilmaydi.",
+        "operationId": "AnnouncementsAdminController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Yuborildi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AnnouncementDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydon noto‘g‘ri, rasm turi mos emas yoki qabul qiluvchi yo‘q",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tanlangan mijoz topilmadi yoki sizning doirangizda emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Rasm 10 MB dan katta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mijozlarga xabar yuborish (rasm + matn)",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "get": {
+        "description": "SUPER_ADMIN va MODERATOR — barcha xabarlar; boshqa xodim — faqat o‘zi yuborganlari. Yangilari birinchi.",
+        "operationId": "AnnouncementsAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedAnnouncementDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yuborilgan xabarlar",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/branches": {
       "get": {
         "description": "Faqat faol do‘konlar (markaziy ombor ko‘rsatilmaydi). Tartib — admin belgilagan `sortOrder`.",
@@ -9545,7 +9891,7 @@
     },
     "/api/v1/admin/branches": {
       "get": {
-        "description": "🔒 Filial xodimi faqat o‘z filialini ko‘radi.",
+        "description": "🔒 Filial xodimi faqat o‘z filialini ko‘radi. MODERATOR — hamma filialni (optom mijozni RETAIL filialga ochish uchun).",
         "operationId": "BranchesAdminController_findAll",
         "parameters": [
           {
@@ -10458,7 +10804,7 @@
     },
     "/api/v1/admin/managers": {
       "get": {
-        "description": "Filtr: filial, holat, qidiruv (ism / telefon / Telegram).",
+        "description": "Filtr: filial, holat, qidiruv (ism / telefon / Telegram).\n\nMODERATOR — faqat o‘qish (mijozni menejerga biriktirish uchun), barcha filiallar bo‘yicha.",
         "operationId": "ManagersAdminController_findAll",
         "parameters": [
           {
@@ -11315,6 +11661,107 @@
           }
         ],
         "summary": "Bosh sahifa ko‘rsatkichlari",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/dashboard/daily": {
+      "get": {
+        "description": "T-010: davr — sana VA soat bilan (`from` kiradi, `to` kirmaydi), eng ko‘pi 12 oy. Kunlar Toshkent vaqti bo‘yicha; bo‘sh kunlar ham nol bilan. Har kun: buyurtmalar soni va summasi (bekor qilinmaganlari), bekor qilingan, yetkazilgan, tushgan to‘lovlar, yangi mijozlar; `totals` — butun davr.\n\n🔒 Doira buyurtmalar ro‘yxati bilan bir xil: SUPER_ADMIN va MODERATOR — barcha filial (`branchId` bilan toraytiriladi), filial xodimi — o‘z filiali.",
+        "operationId": "StatsAdminController_daily",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "Davr boshi (shu daqiqa KIRADI), ISO 8601",
+            "schema": {
+              "example": "2026-09-18T00:00:00+05:00",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "Davr oxiri (shu daqiqa KIRMAYDI), ISO 8601",
+            "schema": {
+              "example": "2026-09-25T23:59:59+05:00",
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filial bo‘yicha — SUPER_ADMIN va MODERATOR uchun; filial xodimi har doim o‘z filialini ko‘radi",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kunlar va jami",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DailyStatsDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Sana noto‘g‘ri, boshi oxiridan keyin yoki davr 12 oydan uzun",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token yo‘q, muddati o‘tgan yoki hisob faol emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Xodim tokeni emas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Kunlik statistika (chart)",
         "tags": [
           "Admin"
         ]
@@ -12709,6 +13156,11 @@
           "lineTotal": {
             "type": "string",
             "example": "1101600"
+          },
+          "enoughStock": {
+            "type": "boolean",
+            "example": true,
+            "description": "T-005: markaziy omborda so‘ralgan paddon BORMI. `false` bo‘lsa buyurtma 409 bilan rad etiladi — kamroq kiriting.\n\n🔒 Aniq zaxira soni qaytarilmaydi (CLAUDE.md qoida 2) — faqat \"yetadi / yetmaydi\"."
           }
         },
         "required": [
@@ -12718,7 +13170,8 @@
           "sqm",
           "weightKg",
           "pricePerSqm",
-          "lineTotal"
+          "lineTotal",
+          "enoughStock"
         ]
       },
       "DeliveryResponseDto": {
@@ -12774,6 +13227,11 @@
               "$ref": "#/components/schemas/QuoteItemResponseDto"
             }
           },
+          "stockShortage": {
+            "type": "boolean",
+            "example": false,
+            "description": "T-005: kamida bitta mahsulotga zaxira yetmaydi."
+          },
           "totalPallets": {
             "type": "number",
             "example": 15
@@ -12811,6 +13269,7 @@
         },
         "required": [
           "items",
+          "stockShortage",
           "totalPallets",
           "totalSqm",
           "totalWeightKg",
@@ -14634,6 +15093,12 @@
             "type": "string",
             "description": "1 paddon og‘irligi (kg) — transport soni shu asosda hisoblanadi. Satr ko‘rinishida, verguldan keyin 3 tagacha raqam.",
             "example": "1250.5"
+          },
+          "stockPallets": {
+            "type": "number",
+            "description": "T-008: markaziy ombordagi boshlang‘ich miqdor (paddon). Berilmasa — 0 (zaxira yozuvi baribir yaratiladi). Keyinchalik `PUT /admin/product-stocks` bilan o‘zgartiriladi — mahsulotni tahrirlash orqali EMAS. Buyurtmada shu miqdordan ko‘p berib bo‘lmaydi (T-005).",
+            "example": 120,
+            "minimum": 0
           }
         },
         "required": [
@@ -15628,13 +16093,40 @@
           },
           "delivery": {
             "nullable": true,
-            "description": "Olib ketishda — `null`",
+            "description": "Yo‘nalish belgilangan yetkazib berish. Olib ketishda ham, yo‘nalish hali belgilanmaganda ham (`deliveryPending`) — `null`.",
             "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/OrderDeliveryDto"
               }
             ]
+          },
+          "deliveryRequested": {
+            "type": "boolean",
+            "example": true,
+            "description": "T-004: yetkazib berish so‘ralgan (`false` — olib ketish)."
+          },
+          "deliveryPending": {
+            "type": "boolean",
+            "example": false,
+            "description": "T-004: yetkazib berish so‘ralgan, lekin yo‘nalish va yo‘l kirani moderator hali belgilamagan — `deliveryTotal` hozircha 0."
+          },
+          "requestedTransportTypeName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Fura",
+            "description": "Mijoz afzal ko‘rgan transport (narxga ta’sir qilmaydi). Yo‘nalish belgilangach HAQIQIY transport — `delivery` da."
+          },
+          "exactLat": {
+            "type": "number",
+            "nullable": true,
+            "example": 40.386,
+            "description": "Xaritadagi nuqta — yo‘nalish belgilanmagan bo‘lsa ham."
+          },
+          "exactLng": {
+            "type": "number",
+            "nullable": true,
+            "example": 71.786
           },
           "payments": {
             "type": "array",
@@ -15672,6 +16164,8 @@
           "itemsTotal",
           "deliveryTotal",
           "grandTotal",
+          "deliveryRequested",
+          "deliveryPending",
           "payments",
           "statusHistory",
           "createdAt"
@@ -15688,17 +16182,18 @@
               "$ref": "#/components/schemas/QuoteItemDto"
             }
           },
-          "regionId": {
-            "type": "string",
-            "description": "Yetkazib berish viloyati — `transportTypeId` bilan BIRGA. Ikkalasi ham berilmasa — olib ketish (yo‘l kira 0)."
+          "deliveryRequested": {
+            "type": "boolean",
+            "default": false,
+            "description": "T-004: yetkazib berish kerakmi. `false` — olib ketish.\n\n⚠ Mijoz VILOYATNI TANLAMAYDI: yo‘nalish (viloyat + transport) va yo‘l kirani buyurtmadan keyin MODERATOR / SUPER_ADMIN belgilaydi (`PATCH /admin/orders/{id}/delivery`). Shungacha yo‘l kira 0 va javobda `deliveryPending: true`."
           },
           "transportTypeId": {
             "type": "string",
-            "description": "Transport turi — `regionId` bilan BIRGA"
+            "description": "Afzal ko‘rilgan transport turi — faqat `deliveryRequested` bilan. Narxga ta’sir qilmaydi: yakuniy transportni admin belgilaydi."
           },
           "exactLat": {
             "type": "number",
-            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda. ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
+            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda (`deliveryRequested`). ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
             "minimum": -90,
             "maximum": 90,
             "example": 41.311081
@@ -15728,23 +16223,85 @@
           "paymentMethod"
         ]
       },
-      "ManagerContactDto": {
+      "ContactPersonDto": {
         "type": "object",
         "properties": {
           "fullName": {
             "type": "string",
             "example": "Farg‘ona menejeri"
           },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+998900220001",
+            "description": "T-006: qo‘ng‘iroq qilish uchun."
+          },
           "telegramUrl": {
             "type": "string",
             "nullable": true,
             "example": "https://t.me/vk_fargona",
-            "description": "Telegram havolasi; menejerda username yo‘q bo‘lsa — `null`"
+            "description": "Telegram havolasi; username yo‘q yoki noto‘g‘ri bo‘lsa — `null`"
           }
         },
         "required": [
-          "fullName",
-          "telegramUrl"
+          "fullName"
+        ]
+      },
+      "BranchContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Vodiy Kafel — Farg‘ona"
+          },
+          "phones": {
+            "example": [
+              "+998911296666"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "type": "string",
+            "example": "Farg‘ona shahri, Mustaqillik 12"
+          },
+          "workingHours": {
+            "type": "string",
+            "example": "Du–Sh 09:00–18:00"
+          },
+          "telegramUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "phones",
+          "address",
+          "workingHours"
+        ]
+      },
+      "ManagerContactDto": {
+        "type": "object",
+        "properties": {
+          "manager": {
+            "nullable": true,
+            "description": "Biriktirilgan menejer; yo‘q bo‘lsa — `null` (filialga murojaat).",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactPersonDto"
+              }
+            ]
+          },
+          "branch": {
+            "$ref": "#/components/schemas/BranchContactDto"
+          }
+        },
+        "required": [
+          "branch"
         ]
       },
       "TrackStatusEntryDto": {
@@ -16173,13 +16730,40 @@
           },
           "delivery": {
             "nullable": true,
-            "description": "Olib ketishda — `null`",
+            "description": "Yo‘nalish belgilangan yetkazib berish. Olib ketishda ham, yo‘nalish hali belgilanmaganda ham (`deliveryPending`) — `null`.",
             "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/OrderDeliveryDto"
               }
             ]
+          },
+          "deliveryRequested": {
+            "type": "boolean",
+            "example": true,
+            "description": "T-004: yetkazib berish so‘ralgan (`false` — olib ketish)."
+          },
+          "deliveryPending": {
+            "type": "boolean",
+            "example": false,
+            "description": "T-004: yetkazib berish so‘ralgan, lekin yo‘nalish va yo‘l kirani moderator hali belgilamagan — `deliveryTotal` hozircha 0."
+          },
+          "requestedTransportTypeName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Fura",
+            "description": "Mijoz afzal ko‘rgan transport (narxga ta’sir qilmaydi). Yo‘nalish belgilangach HAQIQIY transport — `delivery` da."
+          },
+          "exactLat": {
+            "type": "number",
+            "nullable": true,
+            "example": 40.386,
+            "description": "Xaritadagi nuqta — yo‘nalish belgilanmagan bo‘lsa ham."
+          },
+          "exactLng": {
+            "type": "number",
+            "nullable": true,
+            "example": 71.786
           },
           "note": {
             "type": "string",
@@ -16204,6 +16788,16 @@
           },
           "branch": {
             "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchNameRefDto"
+              }
+            ]
+          },
+          "dispatchBranch": {
+            "nullable": true,
+            "description": "T-004: jo‘natiladigan CENTRAL ombor (moderator belgilaydi).",
             "type": "object",
             "allOf": [
               {
@@ -16269,6 +16863,8 @@
           "itemsTotal",
           "deliveryTotal",
           "grandTotal",
+          "deliveryRequested",
+          "deliveryPending",
           "createdAt",
           "orderingType",
           "isUrgent",
@@ -16288,17 +16884,18 @@
               "$ref": "#/components/schemas/QuoteItemDto"
             }
           },
-          "regionId": {
-            "type": "string",
-            "description": "Yetkazib berish viloyati — `transportTypeId` bilan BIRGA. Ikkalasi ham berilmasa — olib ketish (yo‘l kira 0)."
+          "deliveryRequested": {
+            "type": "boolean",
+            "default": false,
+            "description": "T-004: yetkazib berish kerakmi. `false` — olib ketish.\n\n⚠ Mijoz VILOYATNI TANLAMAYDI: yo‘nalish (viloyat + transport) va yo‘l kirani buyurtmadan keyin MODERATOR / SUPER_ADMIN belgilaydi (`PATCH /admin/orders/{id}/delivery`). Shungacha yo‘l kira 0 va javobda `deliveryPending: true`."
           },
           "transportTypeId": {
             "type": "string",
-            "description": "Transport turi — `regionId` bilan BIRGA"
+            "description": "Afzal ko‘rilgan transport turi — faqat `deliveryRequested` bilan. Narxga ta’sir qilmaydi: yakuniy transportni admin belgilaydi."
           },
           "exactLat": {
             "type": "number",
-            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda. ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
+            "description": "Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, faqat yetkazib berishda (`deliveryRequested`). ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.",
             "minimum": -90,
             "maximum": 90,
             "example": 41.311081
@@ -16351,6 +16948,10 @@
           "isUrgent": {
             "type": "boolean",
             "default": false
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Yetkazib berish viloyati — `transportTypeId` bilan BIRGA; yo‘l kira darhol hisoblanadi.\n\n🔒 T-004: faqat MODERATOR va SUPER_ADMIN. Filial xodimi yuborsa — 403 (u faqat `deliveryRequested` beradi, yo‘nalishni keyin moderator belgilaydi)."
           }
         },
         "required": [
@@ -16370,6 +16971,24 @@
         "required": [
           "isUrgent"
         ]
+      },
+      "SetOrderDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "dispatchBranchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Jo‘natiladigan CENTRAL ombor. `null` — tozalash."
+          },
+          "regionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "transportTypeId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "AssignableStaffDto": {
         "type": "object",
@@ -16690,13 +17309,40 @@
           },
           "delivery": {
             "nullable": true,
-            "description": "Olib ketishda — `null`",
+            "description": "Yo‘nalish belgilangan yetkazib berish. Olib ketishda ham, yo‘nalish hali belgilanmaganda ham (`deliveryPending`) — `null`.",
             "type": "object",
             "allOf": [
               {
                 "$ref": "#/components/schemas/OrderDeliveryDto"
               }
             ]
+          },
+          "deliveryRequested": {
+            "type": "boolean",
+            "example": true,
+            "description": "T-004: yetkazib berish so‘ralgan (`false` — olib ketish)."
+          },
+          "deliveryPending": {
+            "type": "boolean",
+            "example": false,
+            "description": "T-004: yetkazib berish so‘ralgan, lekin yo‘nalish va yo‘l kirani moderator hali belgilamagan — `deliveryTotal` hozircha 0."
+          },
+          "requestedTransportTypeName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Fura",
+            "description": "Mijoz afzal ko‘rgan transport (narxga ta’sir qilmaydi). Yo‘nalish belgilangach HAQIQIY transport — `delivery` da."
+          },
+          "exactLat": {
+            "type": "number",
+            "nullable": true,
+            "example": 40.386,
+            "description": "Xaritadagi nuqta — yo‘nalish belgilanmagan bo‘lsa ham."
+          },
+          "exactLng": {
+            "type": "number",
+            "nullable": true,
+            "example": 71.786
           },
           "payments": {
             "type": "array",
@@ -16757,6 +17403,8 @@
           "itemsTotal",
           "deliveryTotal",
           "grandTotal",
+          "deliveryRequested",
+          "deliveryPending",
           "payments",
           "statusHistory",
           "createdAt",
@@ -17072,7 +17720,8 @@
               "PAYMENT_RECEIVED",
               "NEW_PRODUCT",
               "COMMENT_REPLY",
-              "CONTRACT_READY"
+              "CONTRACT_READY",
+              "ANNOUNCEMENT"
             ]
           },
           "title": {
@@ -17090,6 +17739,12 @@
               "orderId": "cmtz0a1b2c3d4e5f6g7h8i9j"
             },
             "description": "Bosilganda qayerga o‘tish: `orderId`, `paymentId` yoki `productId`"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/uploads/announcements/abc.webp",
+            "description": "T-009: xabar rasmi (nisbiy `/uploads/...`). Kabinetda rasm USTIDA, matn uning OSTIDA ko‘rsatiladi."
           },
           "isRead": {
             "type": "boolean"
@@ -17112,6 +17767,7 @@
           "title",
           "body",
           "payload",
+          "imageUrl",
           "isRead",
           "readAt",
           "createdAt"
@@ -17260,6 +17916,145 @@
           "unreadCount",
           "truncated",
           "serverTime"
+        ]
+      },
+      "AnnouncementSenderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Bosh admin"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "AnnouncementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "example": "Navro‘z muborak!"
+          },
+          "body": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "ALL",
+              "SELECTED"
+            ]
+          },
+          "recipientCount": {
+            "type": "number",
+            "example": 42,
+            "description": "Nechta mijozga yuborildi"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/AnnouncementSenderDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "audience",
+          "recipientCount",
+          "createdBy",
+          "createdAt"
+        ]
+      },
+      "CreateAnnouncementDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Navro‘z muborak!",
+            "description": "Sarlavha. Berilmasa — \"Vodiy Kafel\"."
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Hurmatli mijozlar, bayram munosabati bilan…"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "ALL",
+              "SELECTED"
+            ],
+            "description": "`ALL` — doirangizdagi barcha faol mijozlar (menejerda — faqat o‘zingizga biriktirilganlar); `SELECTED` — `customerIds`."
+          },
+          "customerIds": {
+            "description": "Faqat `SELECTED` da. multipart da JSON massiv, vergul bilan yoki takrorlangan maydon.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "Rasm (ixtiyoriy): JPG/PNG/WEBP, 10 MB gacha"
+          }
+        },
+        "required": [
+          "body",
+          "audience"
+        ]
+      },
+      "PaginatedAnnouncementDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
         ]
       },
       "BranchPublicDto": {
@@ -18005,6 +18800,140 @@
           "stock",
           "customers",
           "generatedAt"
+        ]
+      },
+      "DailyStatsDayDto": {
+        "type": "object",
+        "properties": {
+          "ordersCount": {
+            "type": "number",
+            "example": 4,
+            "description": "Yangi buyurtmalar (bekor qilinganlari bilan)"
+          },
+          "ordersTotal": {
+            "type": "string",
+            "example": "12500000",
+            "description": "Buyurtmalar summasi — bekor QILINMAGANLARI (so‘m)"
+          },
+          "cancelledCount": {
+            "type": "number",
+            "example": 1,
+            "description": "Shu kuni berilib, hozir bekor qilingan"
+          },
+          "deliveredCount": {
+            "type": "number",
+            "example": 2,
+            "description": "Shu kuni berilib, hozir yetkazilgan"
+          },
+          "paymentsTotal": {
+            "type": "string",
+            "example": "8000000",
+            "description": "Shu kuni TUSHGAN to‘lovlar (PAID, `paidAt` bo‘yicha)"
+          },
+          "newCustomers": {
+            "type": "number",
+            "example": 1,
+            "description": "Yangi optom mijozlar"
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-09-25",
+            "description": "Toshkent kuni (YYYY-MM-DD)"
+          }
+        },
+        "required": [
+          "ordersCount",
+          "ordersTotal",
+          "cancelledCount",
+          "deliveredCount",
+          "paymentsTotal",
+          "newCustomers",
+          "date"
+        ]
+      },
+      "DailyStatsValuesDto": {
+        "type": "object",
+        "properties": {
+          "ordersCount": {
+            "type": "number",
+            "example": 4,
+            "description": "Yangi buyurtmalar (bekor qilinganlari bilan)"
+          },
+          "ordersTotal": {
+            "type": "string",
+            "example": "12500000",
+            "description": "Buyurtmalar summasi — bekor QILINMAGANLARI (so‘m)"
+          },
+          "cancelledCount": {
+            "type": "number",
+            "example": 1,
+            "description": "Shu kuni berilib, hozir bekor qilingan"
+          },
+          "deliveredCount": {
+            "type": "number",
+            "example": 2,
+            "description": "Shu kuni berilib, hozir yetkazilgan"
+          },
+          "paymentsTotal": {
+            "type": "string",
+            "example": "8000000",
+            "description": "Shu kuni TUSHGAN to‘lovlar (PAID, `paidAt` bo‘yicha)"
+          },
+          "newCustomers": {
+            "type": "number",
+            "example": 1,
+            "description": "Yangi optom mijozlar"
+          }
+        },
+        "required": [
+          "ordersCount",
+          "ordersTotal",
+          "cancelledCount",
+          "deliveredCount",
+          "paymentsTotal",
+          "newCustomers"
+        ]
+      },
+      "DailyStatsDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Davr boshi (UTC)"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Davr oxiri (UTC)"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Tashkent",
+            "description": "Kunlar shu vaqt bo‘yicha"
+          },
+          "days": {
+            "description": "Davrdagi HAR kun — bo‘sh kunlar ham (nol bilan)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyStatsDayDto"
+            }
+          },
+          "totals": {
+            "description": "Butun davr jami",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DailyStatsValuesDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "timezone",
+          "days",
+          "totals"
         ]
       },
       "SimulatePaymentResponseDto": {

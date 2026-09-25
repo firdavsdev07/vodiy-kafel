@@ -151,19 +151,20 @@ const urgentOptions = [
  * Buyurtmalar ro'yxati (D-024). Filtrlar URL'da — havolani hamkasbga
  * yuborsa o'sha ko'rinish ochiladi. Tezkor buyurtma qatori ajratiladi.
  *
- * 🔒 Filial filtri va ustuni — faqat SUPER_ADMIN (G5). Menejer filtri —
- *    `managers.manage` ruxsati borga (menejerlar ro'yxati faqat ularga ochiq).
+ * 🔒 Filial filtri va ustuni — SUPER_ADMIN va MODERATOR (G5, T-001: moderator
+ *    barcha filial mijoz buyurtmalarini ko'radi). Menejer filtri —
+ *    `managers.view` ruxsati borga (menejerlar ro'yxati faqat ularga ochiq).
  */
 export default function OrdersPage() {
   const profile = useProfile().data;
-  const isSuperAdmin = profile?.role === 'SUPER_ADMIN';
-  const canFilterManager = can(profile?.role, 'managers.manage');
-  const list = useListParams<OrderFilters>(isSuperAdmin ? superAdminOrderConfig : branchOrderConfig);
+  const allBranches = can(profile?.role, 'customers.allBranches');
+  const canFilterManager = can(profile?.role, 'managers.view');
+  const list = useListParams<OrderFilters>(allBranches ? superAdminOrderConfig : branchOrderConfig);
   const { filters } = list.params;
   const rangeInvalid = isDateRangeInvalid(filters);
 
   const orders = useOrders(list.params);
-  const branches = useBranches(isSuperAdmin);
+  const branches = useBranches(allBranches);
   const managers = useManagerFilterOptions(canFilterManager, filters.branchId);
   const page = orders.data;
 
@@ -217,7 +218,7 @@ export default function OrdersPage() {
           <FilterSelect label="To‘lov" value={filters.paymentStatus} onChange={(v) => list.setFilter('paymentStatus', v)} options={paymentOptions} />
           <FilterSelect label="Tezkorlik" value={filters.isUrgent} onChange={(v) => list.setFilter('isUrgent', v)} options={urgentOptions} />
           <FilterSelect label="Manba" value={filters.source} onChange={(v) => list.setFilter('source', v)} options={sourceOptions} />
-          {isSuperAdmin && (
+          {allBranches && (
             <FilterSelect
               label="Filial"
               value={filters.branchId}
@@ -249,7 +250,7 @@ export default function OrdersPage() {
 
       <DataTable
         caption="Buyurtmalar"
-        columns={isSuperAdmin ? superAdminColumns : branchColumns}
+        columns={allBranches ? superAdminColumns : branchColumns}
         data={page?.items}
         getRowId={(o) => o.id}
         isLoading={orders.isPending}

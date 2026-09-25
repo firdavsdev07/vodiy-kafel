@@ -3,15 +3,9 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { MAX_PALLETS, MIN_PALLETS, totalPallets, type CartLine } from '@/features/cabinet/cart';
 import { cartStore, useCart } from '@/features/cabinet/cart-store';
+import { PalletInput } from '@/features/cabinet/PalletInput';
 import { LocationPicker } from '@/features/cabinet/LocationPicker';
-import {
-  EMPTY_ROUTE,
-  isPickup,
-  isRouteReady,
-  useDeliveryOptions,
-  useQuote,
-  type RouteSelection,
-} from '@/features/cabinet/quote-api';
+import { EMPTY_ROUTE, useDeliveryOptions, useQuote } from '@/features/cabinet/quote-api';
 import { useCreateOrder, type PaymentMethod } from '@/features/cabinet/orders-api';
 import { errorMessage } from '@/shared/lib/error-message';
 import { paymentMethodLabel } from '@/shared/lib/labels';
@@ -27,26 +21,35 @@ const NOTE_MAX = 1000;
  *   backenddan (`POST /calculator/quote`). Frontend hech qanday narxni
  *   o'zi hisoblamaydi va yubormaydi (CLAUDE.md qoida 1).
  *
- * ⚠ Yetkazib berish: viloyat + transport BIRGA tanlanadi yoki ikkalasi
- *   ham bo'sh = olib ketish (yo'l kira 0). Yarmi tanlangan bo'lsa
- *   backend 400 beradi — bu holatda so'rov ham yuborilmaydi.
+ * ⚠ Yetkazib berish (T-004, 2026-09-25): mijoz VILOYAT TANLAMAYDI —
+ *   faqat "olib ketaman / yetkazib bering", afzal ko'rgan transport va
+ *   xaritadagi nuqta. Qaysi ombordan jo'natish, yo'nalish va yo'l kirani
+ *   buyurtmadan keyin moderator yoki bosh admin belgilaydi; shungacha
+ *   hisobda yo'l kira "belgilanadi" deb turadi (summa — faqat mahsulot).
  */
 export default function CabinetCartPage() {
   const navigate = useNavigate();
   const lines = useCart();
-  const [route, setRoute] = useState<RouteSelection>(EMPTY_ROUTE);
+  const [delivery, setDelivery] = useState<'PICKUP' | 'DELIVERY'>('PICKUP');
+  const [transportTypeId, setTransportTypeId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [note, setNote] = useState('');
   const [point, setPoint] = useState<{ lat: string; lng: string }>({ lat: '', lng: '' });
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { regions, transportTypes } = useDeliveryOptions();
-  const quote = useQuote(lines, route);
+  const { transportTypes } = useDeliveryOptions();
+  // Yo'nalishsiz — faqat mahsulot summasi; yo'l kirani moderator qo'shadi
+  const quote = useQuote(lines, EMPTY_ROUTE);
   const createOrder = useCreateOrder();
 
   const pallets = totalPallets(lines);
-  const routeHalfFilled = !isRouteReady(route);
-  const pickup = isPickup(route);
+  const pickup = delivery === 'PICKUP';
+  // T-005: zaxira yetmaydigan qatorlar — backend faqat "yetadi/yetmaydi" aytadi
+  // (aniq son sir). Buyurtma bunday holatda 409 bilan qaytardi — oldindan yopamiz.
+  const shortIds = new Set(
+    (quote.data?.items ?? []).filter((item) => !item.enoughStock).map((item) => item.productId),
+  );
+  const stockShortage = quote.data?.stockShortage ?? false;
 
   if (lines.length === 0) {
     return (
@@ -63,10 +66,6 @@ export default function CabinetCartPage() {
 
   const submit = () => {
     setFormError(null);
-    if (routeHalfFilled) {
-      setFormError('Viloyat va transport turi BIRGA tanlanadi. Ikkalasi ham bo‘sh bo‘lsa — olib ketish.');
-      return;
-    }
     // Koordinata — ixtiyoriy, lekin yarmi berilishi mumkin emas (backend 400)
     const hasLat = point.lat.trim() !== '';
     const hasLng = point.lng.trim() !== '';
@@ -82,7 +81,9 @@ export default function CabinetCartPage() {
     createOrder.mutate(
       {
         items: lines.map((line) => ({ productId: line.productId, pallets: line.pallets })),
-        ...(pickup ? {} : { regionId: route.regionId, transportTypeId: route.transportTypeId }),
+        ...(pickup
+          ? {}
+          : { deliveryRequested: true, ...(transportTypeId ? { transportTypeId } : {}) }),
         ...(hasLat && hasLng
           ? { exactLat: Number(point.lat), exactLng: Number(point.lng) }
           : {}),
@@ -105,7 +106,7 @@ export default function CabinetCartPage() {
       <div className="flex flex-col gap-4">
         <ul className="flex flex-col gap-2">
           {lines.map((line) => (
-            <CartRow key={line.productId} line={line} />
+            <CartRow key={line.productId} line={line} short={shortIds.has(line.productId)} />
           ))}
         </ul>
 
@@ -116,50 +117,61 @@ export default function CabinetCartPage() {
               Sig‘imni oldindan hisoblash →
             </Link>
           </div>
-          <p className="text-xs text-muted">
-            Viloyat va transport turini <strong>birga</strong> tanlang. Ikkalasi ham bo‘sh bo‘lsa —
-            o‘zingiz olib ketasiz, yo‘l kira 0.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              Viloyat
-              <select
-                value={route.regionId}
-                disabled={regions.isPending}
-                onChange={(event) => setRoute((r) => ({ ...r, regionId: event.target.value }))}
-                className="h-9 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
+          <div role="radiogroup" aria-label="Yetkazib berish usuli" className="grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                ['PICKUP', 'O‘zim olib ketaman', 'Yo‘l kira yo‘q'],
+                ['DELIVERY', 'Yetkazib berish kerak', 'Yo‘l kirani menejer belgilaydi'],
+              ] as const
+            ).map(([value, title, hint]) => (
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm ${
+                  delivery === value ? 'border-fg bg-surface-muted' : 'border-line-strong'
+                }`}
               >
-                <option value="">Olib ketish</option>
-                {(regions.data ?? []).map((region) => (
-                  <option key={region.id} value={region.id}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted">
-              Transport turi
-              <select
-                value={route.transportTypeId}
-                disabled={transportTypes.isPending}
-                onChange={(event) =>
-                  setRoute((r) => ({ ...r, transportTypeId: event.target.value }))
-                }
-                className="h-9 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
-              >
-                <option value="">Tanlanmagan</option>
-                {(transportTypes.data ?? []).map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name} · {type.capacityPallets} paddon
-                  </option>
-                ))}
-              </select>
-            </label>
+                <input
+                  type="radio"
+                  name="delivery"
+                  value={value}
+                  checked={delivery === value}
+                  onChange={() => {
+                    setDelivery(value);
+                    if (value === 'PICKUP') setPoint({ lat: '', lng: '' });
+                  }}
+                  className="mt-0.5 size-4 accent-accent"
+                />
+                <span className="flex flex-col">
+                  <span className="font-medium">{title}</span>
+                  <span className="text-xs text-muted">{hint}</span>
+                </span>
+              </label>
+            ))}
           </div>
-          {routeHalfFilled && (
-            <p role="alert" className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
-              Ikkinchisi ham tanlanmaguncha yo‘l kira hisoblanmaydi.
-            </p>
+
+          {!pickup && (
+            <>
+              <p className="rounded-md bg-surface-muted px-3 py-2 text-xs text-muted">
+                Yuk qaysi ombordan jo‘natilishi va yo‘l kira narxini buyurtmangizni ko‘rib chiqqach
+                menejer belgilaydi — u buyurtma sahifasida ko‘rinadi.
+              </p>
+              <label className="flex flex-col gap-1 text-xs text-muted sm:max-w-xs">
+                Afzal ko‘rgan transport (ixtiyoriy)
+                <select
+                  value={transportTypeId}
+                  disabled={transportTypes.isPending}
+                  onChange={(event) => setTransportTypeId(event.target.value)}
+                  className="h-9 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
+                >
+                  <option value="">Farqi yo‘q</option>
+                  {(transportTypes.data ?? []).map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name} · {type.capacityPallets} paddon
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
           )}
 
           {!pickup && (
@@ -227,17 +239,14 @@ export default function CabinetCartPage() {
             <Row label="Og‘irlik" value={`${quote.data.totalWeightKg} kg`} />
             <div className="border-t border-line pt-2">
               <Row label="Mahsulotlar" money={quote.data.itemsTotal} />
-              <Row
-                label={
-                  quote.data.transport
-                    ? `Yo‘l kira · ${quote.data.transport.transportTypeName} × ${quote.data.transport.vehicleCount}`
-                    : 'Yo‘l kira (olib ketish)'
-                }
-                money={quote.data.deliveryTotal}
-              />
+              {pickup ? (
+                <Row label="Yo‘l kira (olib ketish)" money={quote.data.deliveryTotal} />
+              ) : (
+                <Row label="Yo‘l kira" value="Menejer belgilaydi" />
+              )}
             </div>
             <div className="flex items-baseline justify-between gap-2 border-t border-line pt-2">
-              <dt className="font-medium">Jami</dt>
+              <dt className="font-medium">{pickup ? 'Jami' : 'Jami (yo‘l kirasiz)'}</dt>
               <dd>
                 <MoneyText value={quote.data.grandTotal} className="text-md font-semibold" />
               </dd>
@@ -249,6 +258,13 @@ export default function CabinetCartPage() {
           Yakuniy summa buyurtma berilganda backendda qayta hisoblanadi.
         </p>
 
+        {stockShortage && (
+          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">
+            Ba’zi mahsulot omborda so‘ralgan miqdorda yo‘q. Belgilangan qatorlarda paddon sonini
+            kamaytiring — shundan keyin buyurtma berish mumkin.
+          </p>
+        )}
+
         {formError && (
           <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs whitespace-pre-line text-danger">
             {formError}
@@ -258,7 +274,7 @@ export default function CabinetCartPage() {
         <Button
           variant="primary"
           pending={createOrder.isPending}
-          disabled={pallets === 0 || routeHalfFilled || quote.isPending || Boolean(quote.error)}
+          disabled={pallets === 0 || quote.isPending || Boolean(quote.error) || stockShortage}
           onClick={submit}
         >
           Buyurtma berish
@@ -285,11 +301,15 @@ function Row({ label, value, money }: { label: string; value?: string; money?: s
   );
 }
 
-function CartRow({ line }: { line: CartLine }) {
+function CartRow({ line, short }: { line: CartLine; short: boolean }) {
   const step = (delta: number) => cartStore.setPallets(line.productId, line.pallets + delta);
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface p-3">
+    <li
+      className={`flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-3 ${
+        short ? 'border-danger' : 'border-line'
+      }`}
+    >
       <div className="min-w-0 flex-1">
         <Link
           to={`/kabinet/mahsulot/${line.slug}`}
@@ -298,7 +318,13 @@ function CartRow({ line }: { line: CartLine }) {
           {line.name}
         </Link>
         {/* ⚠ Qatorda narx SAQLANMAYDI — u eskirib qolardi (backend beradi) */}
-        <p className="text-xs text-muted">Narx va summa hisobda ko‘rsatiladi</p>
+        {short ? (
+          <p role="alert" className="text-xs text-danger">
+            Omborda buncha yo‘q — paddon sonini kamaytiring
+          </p>
+        ) : (
+          <p className="text-xs text-muted">Narx va summa hisobda ko‘rsatiladi</p>
+        )}
       </div>
 
       <div className="flex items-center gap-1">
@@ -312,14 +338,10 @@ function CartRow({ line }: { line: CartLine }) {
         <label className="sr-only" htmlFor={`pallets-${line.productId}`}>
           {line.name} — paddon soni
         </label>
-        <input
+        <PalletInput
           id={`pallets-${line.productId}`}
-          type="number"
-          min={MIN_PALLETS}
-          max={MAX_PALLETS}
-          step={1}
           value={line.pallets}
-          onChange={(event) => cartStore.setPallets(line.productId, Number(event.target.value))}
+          onChange={(pallets) => cartStore.setPallets(line.productId, pallets)}
           className="h-9 w-20 rounded-md border border-line-strong bg-surface px-2 text-center text-sm text-fg tabular-nums"
         />
         <IconButton

@@ -74,7 +74,7 @@ export class CustomersAdminService {
     actor: Actor | undefined,
     query: AdminCustomerQueryDto,
   ): Promise<PaginatedResult<AdminCustomerListItemDto>> {
-    const scope = this.branchScope.resolve(actor, query.branchId);
+    const scope = this.branchScope.resolve(actor, query.branchId, 'CUSTOMERS');
     const debtFilter = this.debtFilter(query.hasDebt);
     const where: Prisma.CustomerWhereInput = {
       ...this.branchScope.toPrismaFilter(scope),
@@ -147,6 +147,7 @@ export class CustomersAdminService {
       actor,
       customer.branch.id,
       CUSTOMER_NOT_FOUND,
+      'CUSTOMERS',
     );
 
     const [account, transactions] = await Promise.all([
@@ -177,16 +178,17 @@ export class CustomersAdminService {
     actor: Actor | undefined,
     dto: CreateCustomerDto,
   ): Promise<CustomerCreatedResponseDto> {
-    const branchId = this.branchScope.requireBranchId(actor, dto.branchId);
+    const branchId = this.branchScope.requireBranchId(
+      actor,
+      dto.branchId,
+      'CUSTOMERS',
+    );
     await this.assertBranchActive(branchId);
 
-    // Menejer o'zi kiritgan mijozga avtomatik biriktiriladi.
-    const managerId =
-      dto.managerId !== undefined
-        ? dto.managerId
-        : actor?.type === 'USER' && actor.role === UserRole.MANAGER
-          ? actor.id
-          : null;
+    // T-007 (2026-09-25): AVTOMATIK biriktirish YO'Q — avval menejer o'zi
+    // kiritgan mijozga o'zi biriktirilardi. Endi faqat aniq `managerId`
+    // (yaratishda yoki keyin kartada, qo'lda).
+    const managerId = dto.managerId ?? null;
     if (managerId) await this.assertAssignable(managerId, branchId);
 
     // Qoidalar mijozdan OLDIN tekshiriladi (ruxsat, chegara, nishon) —
@@ -241,11 +243,12 @@ export class CustomersAdminService {
   ): Promise<AdminCustomerDetailDto> {
     const current = await this.requireInScope(actor, customerId);
 
-    // Filial ko'chirish — faqat SUPER_ADMIN. Filial xodimi o'zinikidan
-    // boshqasini bersa — 404 (resolve), o'zinikini bersa — o'zgarish yo'q.
+    // Filial ko'chirish — SUPER_ADMIN va MODERATOR (mijozlar domeni,
+    // T-001). Filial xodimi o'zinikidan boshqasini bersa — 404 (resolve),
+    // o'zinikini bersa — o'zgarish yo'q.
     const branchId =
       dto.branchId !== undefined
-        ? this.branchScope.requireBranchId(actor, dto.branchId)
+        ? this.branchScope.requireBranchId(actor, dto.branchId, 'CUSTOMERS')
         : current.branchId;
     const branchChanged = branchId !== current.branchId;
     if (branchChanged) await this.assertBranchActive(branchId);
@@ -318,6 +321,7 @@ export class CustomersAdminService {
       actor,
       customer.branchId,
       CUSTOMER_NOT_FOUND,
+      'CUSTOMERS',
     );
     return customer;
   }

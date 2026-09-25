@@ -81,7 +81,14 @@ export class StaffAdminService {
     kind: StaffKind,
     query: StaffQueryDto,
   ): Promise<StaffDto[]> {
-    const scope = this.branchScope.resolve(actor, query.branchId);
+    // Menejerlar ro'yxati — mijozga biriktirish uchun ham o'qiladi, shuning
+    // uchun u mijozlar domenida (MODERATOR barcha filialni ko'radi, T-001).
+    // Moderatorlar ro'yxati esa oddiy doirada qoladi.
+    const scope = this.branchScope.resolve(
+      actor,
+      query.branchId,
+      kind === 'MANAGER' ? 'CUSTOMERS' : 'DEFAULT',
+    );
     const search = query.search?.trim();
     const contains = { contains: search, mode: 'insensitive' as const };
     const rows = await this.prisma.user.findMany({

@@ -10,7 +10,7 @@ import { AuthShell } from '@/pages/login/AuthShell';
 import { AppLayout } from './layout/AppLayout';
 import { CabinetLayout } from './layout/CabinetLayout';
 import { RootLayout } from './layout/RootLayout';
-import { PERMISSIONS, rolesForAny } from '@/shared/lib/permissions';
+import { PERMISSIONS, rolesForAny, STAFF_ROLES } from '@/shared/lib/permissions';
 import { useCan } from '@/features/auth/hooks';
 import { NAV_SECTIONS, type SectionId } from './navigation';
 
@@ -23,6 +23,7 @@ const pages: Record<SectionId, LazyExoticComponent<ComponentType>> = {
   orders: lazy(() => import('@/pages/orders/OrdersPage')),
   supplyOrders: lazy(() => import('@/pages/supply-orders/SupplyOrdersPage')),
   customers: lazy(() => import('@/pages/customers/CustomersPage')),
+  announcements: lazy(() => import('@/pages/announcements/AnnouncementsPage')),
   products: lazy(() => import('@/pages/products/ProductsPage')),
   factories: lazy(() => import('@/pages/factories/FactoriesPage')),
   sizes: lazy(() => import('@/pages/sizes/SizesPage')),
@@ -61,6 +62,7 @@ const CabinetOrdersPage = lazy(() => import('@/pages/kabinet/OrdersPage'));
 const CabinetOrderDetailPage = lazy(() => import('@/pages/kabinet/OrderDetailPage'));
 const CabinetCalculatorPage = lazy(() => import('@/pages/kabinet/CalculatorPage'));
 const CabinetAccountPage = lazy(() => import('@/pages/kabinet/AccountPage'));
+const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage'));
 const CabinetNotificationsPage = lazy(() => import('@/pages/kabinet/NotificationsPage'));
 const CabinetContractsPage = lazy(() => import('@/pages/kabinet/ContractsPage'));
 
@@ -254,6 +256,16 @@ export const routes: RouteObject[] = [
               </RequireRole>
             ),
             handle: { title: 'Ta’minot buyurtmasi' },
+          },
+          // Xodim bildirishnomalari (T-011) — yuqori paneldagi qo'ng'iroqdan
+          {
+            path: 'notifications',
+            element: (
+              <RequireRole roles={STAFF_ROLES}>
+                <NotificationsPage />
+              </RequireRole>
+            ),
+            handle: { title: 'Bildirishnomalar' },
           },
           { path: '*', element: <NotFoundPage />, handle: { title: 'Sahifa topilmadi' } },
           // Sahifa yiqilsa — xato shu sahifa o'rnida, yon menyu va yuqori panel saqlanadi (D-042)

@@ -37,6 +37,16 @@ export class NotificationDto {
   })
   payload!: Record<string, unknown> | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '/uploads/announcements/abc.webp',
+    description:
+      'T-009: xabar rasmi (nisbiy `/uploads/...`). Kabinetda rasm USTIDA, ' +
+      'matn uning OSTIDA ko‘rsatiladi.',
+  })
+  imageUrl!: string | null;
+
   @ApiProperty()
   isRead!: boolean;
 

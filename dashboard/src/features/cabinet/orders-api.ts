@@ -75,13 +75,22 @@ export function useCreateOrder() {
   });
 }
 
-/** «Menejer bilan bog'lanish» — `GET /orders/{id}/manager-contact` (D-056). */
-export function useManagerContact(orderId: string, enabled: boolean) {
+/** «Menejer bilan bog'lanish» — `GET /orders/{id}/manager-contact` (D-056, T-006). */
+export function useManagerContact(orderId: string) {
   return useQuery({
     queryKey: queryKeys.cabinet.managerContact(orderId),
     queryFn: ({ signal }) =>
       api.get('/orders/{id}/manager-contact', { params: { id: orderId }, signal }),
-    enabled: enabled && orderId !== '',
+    enabled: orderId !== '',
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** «Menejer bilan aloqa» — mijozning o'z menejeri va filiali (T-006). */
+export function useMyManagerContact() {
+  return useQuery({
+    queryKey: queryKeys.cabinet.myManagerContact(),
+    queryFn: ({ signal }) => api.get('/me/manager-contact', { signal }),
     staleTime: 5 * 60_000,
   });
 }

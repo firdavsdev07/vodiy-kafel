@@ -1,8 +1,9 @@
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { MAX_PALLETS, MIN_PALLETS } from '@/features/cabinet/cart';
+import { MIN_PALLETS } from '@/features/cabinet/cart';
 import { addToCart } from '@/features/cabinet/cart-store';
+import { PalletInput } from '@/features/cabinet/PalletInput';
 import { useCabinetProduct } from '@/features/cabinet/catalog-api';
 import { resolveAssetUrl } from '@/shared/lib/asset-url';
 import { mediaTypeLabel, surfaceLabel } from '@/shared/lib/labels';
@@ -83,13 +84,9 @@ export default function CabinetProductPage() {
           <div className="flex flex-wrap items-end gap-3 rounded-lg border border-line bg-surface p-4">
             <label className="flex flex-col gap-1 text-xs text-muted">
               Paddon soni
-              <input
-                type="number"
-                min={MIN_PALLETS}
-                max={MAX_PALLETS}
-                step={1}
+              <PalletInput
                 value={pallets}
-                onChange={(event) => setPallets(Number(event.target.value))}
+                onChange={setPallets}
                 className="h-9 w-28 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg tabular-nums"
               />
             </label>

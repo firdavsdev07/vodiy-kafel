@@ -9,11 +9,11 @@ export const LOGIN_RE = /^[a-z0-9][a-z0-9._-]{2,63}$/;
 
 /**
  * Mijoz yaratish (D-021) — backend `CreateCustomerDto` bilan bir xil.
- * 🔒 `branchId` faqat SUPER_ADMIN uchun (majburiy); filial xodimi uchun
+ * 🔒 `branchId` faqat SUPER_ADMIN / MODERATOR uchun (majburiy); filial xodimi uchun
  * maydon umuman yo'q (G5) — backend o'z filialiga yozadi.
  * ⚠ Self-registration YO'Q — mijozni faqat xodim yaratadi.
  */
-export function customerCreateSchema(isSuperAdmin: boolean) {
+export function customerCreateSchema(allBranches: boolean) {
   return z.object({
     login: z
       .string()
@@ -27,7 +27,7 @@ export function customerCreateSchema(isSuperAdmin: boolean) {
       .refine((v) => v === '' || /^\d{9}$/.test(v), 'INN 9 ta raqamdan iborat bo‘lishi kerak'),
     contactName: zRequiredText(150),
     phone: zUzPhone(),
-    branchId: isSuperAdmin ? z.string().min(1, 'Filialni tanlang') : z.string(),
+    branchId: allBranches ? z.string().min(1, 'Filialni tanlang') : z.string(),
   });
 }
 
@@ -43,14 +43,14 @@ export const customerDefaults: CustomerFormInput = {
   branchId: '',
 };
 
-export function toCreateCustomerBody(v: CustomerFormValues, isSuperAdmin: boolean): CreateCustomerBody {
+export function toCreateCustomerBody(v: CustomerFormValues, allBranches: boolean): CreateCustomerBody {
   return {
     login: v.login,
     companyName: v.companyName,
     contactName: v.contactName,
     phone: v.phone,
     ...(v.inn ? { inn: v.inn } : {}),
-    ...(isSuperAdmin && v.branchId ? { branchId: v.branchId } : {}),
+    ...(allBranches && v.branchId ? { branchId: v.branchId } : {}),
   };
 }
 

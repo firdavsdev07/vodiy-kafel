@@ -1,4 +1,4 @@
-import { ArrowLeft, Phone, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
@@ -7,6 +7,7 @@ import {
   type CustomerOrder,
   type PaymentMethod,
 } from '@/features/cabinet/orders-api';
+import { ManagerContactCard } from '@/features/cabinet/ManagerContactCard';
 import { StatusHistoryCard } from '@/features/orders/OrderDetailParts';
 import {
   isFinalPaymentStatus,
@@ -114,6 +115,22 @@ export default function CabinetOrderDetailPage() {
                   />
                 )}
               </dl>
+            ) : data.deliveryPending ? (
+              // T-004: yo'nalish va yo'l kirani moderator belgilaydi
+              <div className="flex flex-col gap-2 text-sm">
+                <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+                  Yetkazib berish so‘ralgan. Yo‘nalish va yo‘l kira narxini menejer belgilaydi —
+                  shundan keyin summa shu yerda yangilanadi.
+                </p>
+                <dl className="grid gap-2 sm:grid-cols-2">
+                  {data.requestedTransportTypeName && (
+                    <Field label="Afzal ko‘rilgan transport" value={data.requestedTransportTypeName} />
+                  )}
+                  {data.exactLat != null && data.exactLng != null && (
+                    <Field label="Xaritadagi nuqta" value={`${data.exactLat}, ${data.exactLng}`} />
+                  )}
+                </dl>
+              </div>
             ) : (
               <p className="text-sm text-muted">Olib ketish — yo‘l kira yo‘q.</p>
             )}
@@ -134,7 +151,11 @@ export default function CabinetOrderDetailPage() {
             <h3 className="text-sm font-medium">Summa</h3>
             <dl className="flex flex-col gap-2 text-sm">
               <Row label="Mahsulotlar" money={data.itemsTotal} />
-              <Row label="Yo‘l kira" money={data.deliveryTotal} />
+              {data.deliveryPending ? (
+                <Row label="Yo‘l kira" value="Belgilanmoqda" />
+              ) : (
+                <Row label="Yo‘l kira" money={data.deliveryTotal} />
+              )}
               <div className="flex items-baseline justify-between gap-2 border-t border-line pt-2">
                 <dt className="font-medium">Jami</dt>
                 <dd>
@@ -272,52 +293,17 @@ function PaymentSection({ order }: { order: CustomerOrder }) {
   );
 }
 
-/** «Menejer bilan bog'lanish» (D-056) — telefon/Telegram faqat so'ralganda olinadi. */
+/** «Menejer bilan bog'lanish» (D-056, T-006) — darhol yuklanadi, tugmasiz. */
 function ManagerContact({ orderId }: { orderId: string }) {
-  const [asked, setAsked] = useState(false);
-  const contact = useManagerContact(orderId, asked);
-
-  return (
-    <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4">
-      <h3 className="text-sm font-medium">Menejer bilan bog‘lanish</h3>
-
-      {!asked ? (
-        <Button onClick={() => setAsked(true)}>
-          <Phone size={15} aria-hidden />
-          Aloqa ma’lumotini ko‘rsatish
-        </Button>
-      ) : contact.isPending ? (
-        <p className="text-sm text-muted">Yuklanmoqda…</p>
-      ) : contact.error ? (
-        <ErrorState error={contact.error} onRetry={() => void contact.refetch()} compact />
-      ) : (
-        <div className="flex flex-col gap-1 text-sm">
-          <p className="font-medium">{contact.data.fullName}</p>
-          {contact.data.telegramUrl ? (
-            <a
-              href={contact.data.telegramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-1.5 text-accent hover:underline"
-            >
-              <Send size={14} aria-hidden />
-              Telegram orqali yozish
-            </a>
-          ) : (
-            <p className="text-xs text-muted">Telegram havolasi ko‘rsatilmagan.</p>
-          )}
-        </div>
-      )}
-    </section>
-  );
+  return <ManagerContactCard query={useManagerContact(orderId)} title="Menejer bilan bog‘lanish" />;
 }
 
-function Row({ label, money }: { label: string; money: string }) {
+function Row({ label, money, value }: { label: string; money?: string; value?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
       <dt className="text-muted">{label}</dt>
       <dd>
-        <MoneyText value={money} />
+        {money !== undefined ? <MoneyText value={money} /> : <span className="text-muted">{value}</span>}
       </dd>
     </div>
   );

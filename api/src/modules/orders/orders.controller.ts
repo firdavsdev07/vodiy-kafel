@@ -89,12 +89,14 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Buyurtma menejeri bilan bog‘lanish',
     description:
-      'Menejer ismi va Telegram havolasi (TZ 3.12). Faqat o‘z buyurtmasi.',
+      'Menejer (buyurtmaniki, bo‘lmasa mijozniki): ism, telefon, Telegram ' +
+      '(TZ 3.12, T-006). Menejer yo‘q bo‘lsa `manager: null` — filial ' +
+      'aloqasi baribir qaytadi. Faqat o‘z buyurtmasi.',
   })
   @ApiParam({ name: 'id', description: 'Buyurtma ID' })
-  @ApiDataResponse(ManagerContactDto, { description: 'Menejer' })
+  @ApiDataResponse(ManagerContactDto, { description: 'Aloqa ma’lumoti' })
   @ApiNotFoundResponse({
-    description: 'Buyurtma topilmadi yoki menejer hali biriktirilmagan',
+    description: 'Buyurtma topilmadi (yoki begona)',
     type: ApiErrorDto,
   })
   managerContact(

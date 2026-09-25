@@ -179,7 +179,9 @@ async function main() {
         fullName: `${f.city} menejeri`,
         role: 'MANAGER',
         branchId: f.id,
-        telegramUsername: `vk_${f.city.toLowerCase()}`,
+        // Telegram username faqat [A-Za-z0-9_] — "Farg'ona" dagi apostrof
+        // havolani yaroqsiz qilardi (T-006)
+        telegramUsername: `vk_${f.city.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
       },
     });
     xodimlar[f.id] = {
@@ -569,7 +571,7 @@ async function main() {
         contactName: `${f.city} rahbari`,
         phone: uzPhone(`90333000${i + 1}`),
         branchId: f.id,
-        managerId: xodimlar[f.id].menejer,
+        // T-007: mijoz menejerga DEFAULT biriktirilmaydi — qo'lda beriladi
         createdByUserId: xodimlar[f.id].admin,
         account: { create: {} },
       },

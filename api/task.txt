@@ -1994,32 +1994,8 @@
 ║  EPIC 10 — OPTOM / DIDOX.UZ MODULI  (TZ 3.10)  ⚠ ENG RISKLI QISM             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [!] B-044 · SPIKE: Didox.uz tadqiqoti (KOD YOZILMAYDI)      ❓ ♻️ ──────────┐
-│                                                                              │
-│  ⚠ Bu task — TADQIQOT, implementatsiya emas. 1-2 kun.                        │
-│                                                                              │
-│  🔄 TUZATILDI (2026-09-09): xizmat nomi «Dedoc» emas — Didox.uz ekani        │
-│     aniqlandi. WebSearch orqali dastlabki ma'lumot topildi (rasmiy           │
-│     spike o'rnini bosmaydi):                                                 │
-│       • O'zbekistondagi eng katta EDI/EDO tizimi, 350 000+ korxona           │
-│       • INN orqali ishlaydi, E-IMZO bilan integratsiyalashgan                │
-│       • Rasmiy hamkor API: api-partners.didox.uz/integration                 │
-│       • Norasmiy Node.js/TS SDK bor (npm: didox)                             │
-│                                                                              │
-│  Aniqlanadi:                                                                 │
-│    [x] Didox.uz — aniq qaysi xizmat? ✅ ANIQLANDI (2026-09-09)               │
-│    [ ] INN bo'yicha kompaniya ma'lumotini olish mumkinmi? API orqali         │
-│    [ ] Shartnoma huquqiy kuchga egami — E-IMZO bilan imzolanadimi            │
-│        (rasmiy manbalarga ko'ra — ha, lekin tasdiqlash kerak)                │
-│    [ ] 🆕 Ikkala tomon ham (biz HAM mijoz) Didox'da ro'yxatdan               │
-│        o'tgan bo'lishi kerakmi? Agar ha — «Telegram orqali yuborish»         │
-│        rejasi (B-045) qayta ko'riladi                                        │
-│    [ ] Shartnoma shabloni — bitta yoki bir nechta                            │
-│                                                                              │
-│  Natija: qaror hujjati — "mumkin / mumkin emas / cheklangan holda mumkin"    │
-│  🔒 BLOKLANGAN — mijozdan javob kelmaguncha boshlanmaydi (TZ 7-bo'lim)       │
-│  Bog'liq: —                                                                  │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → B-044 · SPIKE: Didox.uz tadqiqoti (KOD YOZILMAYDI)
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 ┌─ [x] B-045 · Shartnoma moduli (mock)                                     🧪 ─┐
 │                                                                              │
@@ -2188,23 +2164,8 @@
 │  Bog‘liq: B-048                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [!] B-050 · Haqiqiy Payme integratsiyasi                                🔁 ─┐
-│                                                                              │
-│  ⚠ ENG OXIRIDA. Faqat mijoz Payme merchant ma'lumotlarini bergandan keyin.   │
-│  🔒 BLOKLANGAN (2026-09-16): mijoz talabi — haqiqiy to'lov tizimi hozircha   │
-│     ULANMAYDI. MockPaymentProvider (B-033) hamon ishlatiladi.                │
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • PaymeProvider klassi (PaymentProvider interfeysini implement qiladi)    │
-│    • Payme Merchant API: CheckPerformTransaction, CreateTransaction,         │
-│      PerformTransaction, CancelTransaction, CheckTransaction                 │
-│    • Signature verification (Basic auth + merchant key)                      │
-│    • Sandbox'da to'liq test                                                  │
-│    • .env: PAYMENT_PROVIDER=payme → mock o'rniga shu ishlaydi                │
-│                                                                              │
-│  ⚠ B-032 to'g'ri qilingan bo'lsa — boshqa HECH QANDAY fayl o'zgarmaydi.      │
-│  Bog'liq: B-049                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → B-050 · Haqiqiy Payme integratsiyasi
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 ┌─ [x] B-059 · OpenAPI: nullable maydonlar turi yo‘qolgan         🆕 ──────────┐
 │                                                                              │
@@ -2798,6 +2759,10 @@
                `GET /categories(/{slug})`, admin CRUD + muqova yuklash,
                `GET /products` ga `categoryId` filtri, 8 kategoriya seed
                → storefront S-022/S-024 blokini yechdi
+
+  ⚠ 2026-09-25: OCHIQ TASKLAR ILDIZDAGI `task.txt` GA KO'CHIRILDI.
+    Bu fayl endi faqat bajarilgan tasklar tarixi. Yangi ish, ochiq va
+    bloklangan tasklar — faqat o'sha yerda.
 
   KEYINGI TASK:  Backend'da ochiq task YO'Q — faqat B-050 (Payme) va
                  B-044 (Didox.uz spike) qoldi, ikkalasi ham mijoz

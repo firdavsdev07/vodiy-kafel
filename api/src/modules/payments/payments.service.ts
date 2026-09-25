@@ -174,6 +174,7 @@ export class PaymentsService {
       actor,
       payment.order.branchId ?? '',
       PAYMENT_NOT_FOUND,
+      'CUSTOMERS',
     );
 
     if (payment.method === PaymentMethod.CARD) {

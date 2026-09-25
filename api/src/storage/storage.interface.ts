@@ -39,7 +39,14 @@ export interface StoredFile {
 }
 
 export type StorageFolder =
-  'products' | 'branches' | 'partners' | 'categories' | 'gallery' | 'contracts';
+  | 'products'
+  | 'branches'
+  | 'partners'
+  | 'categories'
+  | 'gallery'
+  | 'contracts'
+  /** T-009: mijozlarga yuborilgan xabar rasmlari */
+  | 'announcements';
 
 /** DI tokeni — `@Inject(STORAGE_SERVICE) storage: StorageService`. */
 export const STORAGE_SERVICE = Symbol('STORAGE_SERVICE');

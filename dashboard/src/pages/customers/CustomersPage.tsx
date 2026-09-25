@@ -1,6 +1,6 @@
 import { KeyRound, Plus } from 'lucide-react';
 import { createContext, use, useState } from 'react';
-import { useProfile } from '@/features/auth/hooks';
+import { useCan } from '@/features/auth/hooks';
 import { useBranches } from '@/features/branches/api';
 import { useCustomers } from '@/features/customers/api';
 import { CreateCustomerModal } from '@/features/customers/CreateCustomerModal';
@@ -98,13 +98,13 @@ const debtOptions = [
 /**
  * Optom mijozlar (D-020). 🔒 Filial admini/menejeri faqat o'z filialini
  * ko'radi — BACKENDDA; frontendda qo'shimcha filtr QO'YILMAYDI. Filial
- * tanlagichi va ustuni — faqat SUPER_ADMIN.
+ * tanlagichi va ustuni — SUPER_ADMIN va MODERATOR (`customers.allBranches`).
  */
 export default function CustomersPage() {
-  const isSuperAdmin = useProfile().data?.role === 'SUPER_ADMIN';
-  const list = useListParams<CustomerFilters>(isSuperAdmin ? superAdminCustomerConfig : branchCustomerConfig);
+  const allBranches = useCan('customers.allBranches');
+  const list = useListParams<CustomerFilters>(allBranches ? superAdminCustomerConfig : branchCustomerConfig);
   const customers = useCustomers(list.params);
-  const branches = useBranches(isSuperAdmin);
+  const branches = useBranches(allBranches);
   const { filters } = list.params;
   const page = customers.data;
   const [creating, setCreating] = useState(false);
@@ -129,7 +129,7 @@ export default function CustomersPage() {
               </Button>
             }
           >
-            {isSuperAdmin && (
+            {allBranches && (
               <FilterSelect
                 label="Filial"
                 value={filters.branchId}
@@ -146,7 +146,7 @@ export default function CustomersPage() {
 
         <DataTable
           caption="Optom mijozlar"
-          columns={isSuperAdmin ? superAdminColumns : branchColumns}
+          columns={allBranches ? superAdminColumns : branchColumns}
           data={page?.items}
           getRowId={(c) => c.id}
           isLoading={customers.isPending}
@@ -172,7 +172,7 @@ export default function CustomersPage() {
 
         <CreateCustomerModal
           open={creating}
-          isSuperAdmin={isSuperAdmin}
+          allBranches={allBranches}
           onClose={() => setCreating(false)}
           onCreated={(c) => {
             setCreating(false);

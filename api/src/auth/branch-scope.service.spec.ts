@@ -203,4 +203,57 @@ describe('BranchScopeService (B-051)', () => {
       );
     });
   });
+
+  describe('CUSTOMERS domeni (T-001 — moderator optom mijozlarni boshqaradi)', () => {
+    it('MODERATOR → barcha filial mijozlari', () => {
+      expect(service.resolve(moderator, undefined, 'CUSTOMERS')).toEqual({
+        kind: 'ALL',
+      });
+    });
+
+    it('MODERATOR ko‘rsatgan RETAIL filial bo‘yicha filtrlaydi', () => {
+      expect(service.resolve(moderator, FARGONA, 'CUSTOMERS')).toEqual({
+        kind: 'SINGLE',
+        branchId: FARGONA,
+      });
+    });
+
+    it('MODERATOR begona filial mijoziga yetadi', () => {
+      expect(() =>
+        service.assertWithinScope(moderator, ANDIJON, 'x', 'CUSTOMERS'),
+      ).not.toThrow();
+    });
+
+    it('MODERATOR mijozni RETAIL filialga yaratadi, filialni aniq beradi', () => {
+      expect(service.requireBranchId(moderator, FARGONA, 'CUSTOMERS')).toBe(
+        FARGONA,
+      );
+      expect(() =>
+        service.requireBranchId(moderator, undefined, 'CUSTOMERS'),
+      ).toThrow(BadRequestException);
+    });
+
+    it('🔒 oddiy domenda MODERATOR avvalgidek faqat o‘z filialida', () => {
+      expect(() => service.assertWithinScope(moderator, ANDIJON)).toThrow(
+        NotFoundException,
+      );
+    });
+
+    it.each([
+      ['BRANCH_ADMIN', branchAdmin],
+      ['MANAGER', manager],
+      ['CUSTOMER', customer],
+    ])(
+      '🔒 %s uchun CUSTOMERS domeni hech narsani kengaytirmaydi',
+      (_, actor) => {
+        expect(() =>
+          service.assertWithinScope(actor, ANDIJON, 'x', 'CUSTOMERS'),
+        ).toThrow(NotFoundException);
+        expect(service.resolve(actor, undefined, 'CUSTOMERS')).toEqual({
+          kind: 'SINGLE',
+          branchId: FARGONA,
+        });
+      },
+    );
+  });
 });

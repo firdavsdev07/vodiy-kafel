@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository structure
 
+**Open work lives in the root [task.txt](task.txt)** (since 2026-09-25) — one list for all three packages: new client tasks `T-001`…, plus every task that was still open in the per-package files, moved there with its original ID (`B-044`, `B-050`, `S-032`…`S-045`). The per-package `task.txt` files are now **history only** (completed tasks and their BAJARILDI blocks) — read them for context on past decisions, but add and track new work only in the root file.
+
 This is a monorepo of three independent packages — there is no pnpm workspace at the root, each package has its own lockfile and must be installed/run from its own directory:
 
 - **`api/`** — NestJS 11 + Prisma 7 + PostgreSQL backend for "Vodiy Kafel", a ceramic-tile (kafel/keramogranit) B2B sales platform. This is the actively developed package. It has its own detailed [api/CLAUDE.md](api/CLAUDE.md) — **read it before making any change under `api/`**, it is the source of truth for backend business rules and conventions. `api/AGENTS.md` is an older, partially stale duplicate of the same guidance; prefer `api/CLAUDE.md` when the two disagree.
@@ -81,7 +83,7 @@ The full, current set of "unbreakable rules" (pricing resolution order, stock-vi
 - Branch-scoping (multi-tenant isolation) is centralized in `BranchScopeService` — every Prisma query needing branch isolation goes through it rather than reimplementing the filter per-service.
 - `src/storage/` handles uploaded files (local disk under `UPLOAD_DIR`), detecting file kind from content signature, not extension.
 - `/dev/*` endpoints (mock payment simulation) only register when `NODE_ENV=development`.
-- Development is task-driven: `api/task.txt` is a dependency-ordered (not numeric-ordered) checklist of backend tasks worked one at a time; a task is done when build+lint+test pass, new endpoints show up in Swagger, and the checklist + status summary at the bottom of the file are updated.
+- Development is task-driven (open tasks: root `task.txt`; `api/task.txt` keeps the history): a dependency-ordered (not numeric-ordered) checklist of backend tasks worked one at a time; a task is done when build+lint+test pass, new endpoints show up in Swagger, and the checklist + status summary at the bottom of the file are updated.
 
 ### storefront/ internals
 

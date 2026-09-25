@@ -59,6 +59,7 @@ const ALL_STAFF = [
  * Yaratish/tahrirlash — barcha xodim (TZ: hisobni filial admini YOKI
  * menejeri ochadi). Hisobni o'chirish/yoqish — admin va moderator.
  * 🔒 Filial izolyatsiyasi servisda: begona filial mijozi — 404.
+ *    MODERATOR mijozlar domenida barcha filialni ko'radi (T-001).
  */
 @ApiTags(SwaggerTag.Admin)
 @Controller('admin/customers')
@@ -77,8 +78,8 @@ export class CustomersAdminController {
     description:
       'Qidiruv (login / kompaniya / kontakt / telefon / INN), qarzdorlik, ' +
       'filial, menejer, faollik bo‘yicha filtr. Har qatorda joriy balans.\n\n' +
-      '🔒 Filial xodimi faqat o‘z filialini ko‘radi; SUPER_ADMIN `branchId` ' +
-      'bilan filtrlaydi.',
+      '🔒 Filial xodimi faqat o‘z filialini ko‘radi; SUPER_ADMIN va ' +
+      'MODERATOR hamma filialni ko‘radi va `branchId` bilan filtrlaydi.',
   })
   @ApiDataResponse(PaginatedAdminCustomers, { description: 'Sahifalangan' })
   @ApiNotFoundResponse({
@@ -120,8 +121,10 @@ export class CustomersAdminController {
       'Hisob yaratiladi va VAQTINCHALIK PAROL qaytadi.\n\n' +
       '⚠ Parol FAQAT shu javobda ko‘rinadi — mijozga telefon/Telegram ' +
       'orqali yetkazing. Birinchi kirishda almashtiriladi.\n\n' +
-      '🔒 Filial xodimi faqat O‘Z filialiga yaratadi; SUPER_ADMIN ' +
-      '`branchId` ni aniq beradi. Menejer yaratsa — mijoz unga biriktiriladi.',
+      '🔒 Filial xodimi faqat O‘Z filialiga yaratadi; SUPER_ADMIN va ' +
+      'MODERATOR `branchId` ni aniq beradi.\n\n' +
+      'T-007: menejer AVTOMATIK biriktirilmaydi (yaratgan menejerga ham) — ' +
+      'faqat aniq `managerId` yoki keyin kartada.',
   })
   @ApiDataResponse(CustomerCreatedResponseDto, {
     status: 201,
@@ -151,7 +154,7 @@ export class CustomersAdminController {
     summary: 'Mijoz ma’lumotlarini tahrirlash',
     description:
       'Login o‘zgarmaydi. `inn: null` / `managerId: null` — tozalash.\n\n' +
-      '🔒 Boshqa filialga ko‘chirish — faqat SUPER_ADMIN (mijoz narxi ' +
+      '🔒 Boshqa filialga ko‘chirish — SUPER_ADMIN va MODERATOR (mijoz narxi ' +
       'o‘zgaradi!). Ko‘chirilganda eski filial menejeri uziladi.',
   })
   @ApiParam({ name: 'id', description: 'Mijoz ID' })

@@ -1,5 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiOperation,
@@ -14,7 +15,7 @@ import { ApiErrorDto } from '../../common/dto/api-error.dto';
 import { UserRole } from '../../common/enums';
 import type { Actor } from '../../common/types/actor';
 import { BEARER_AUTH, SwaggerTag } from '../../swagger/tags';
-import { DashboardStatsDto } from './dto';
+import { DailyStatsDto, DailyStatsQueryDto, DashboardStatsDto } from './dto';
 import { StatsService } from './stats.service';
 
 /**
@@ -70,5 +71,30 @@ export class StatsAdminController {
     @Query('branchId') branchId?: string,
   ): Promise<DashboardStatsDto> {
     return this.stats.dashboard(actor, branchId);
+  }
+
+  @Get('daily')
+  @ApiOperation({
+    summary: 'Kunlik statistika (chart)',
+    description:
+      'T-010: davr — sana VA soat bilan (`from` kiradi, `to` kirmaydi), ' +
+      'eng ko‘pi 12 oy. Kunlar Toshkent vaqti bo‘yicha; bo‘sh kunlar ham ' +
+      'nol bilan. Har kun: buyurtmalar soni va summasi (bekor ' +
+      'qilinmaganlari), bekor qilingan, yetkazilgan, tushgan to‘lovlar, ' +
+      'yangi mijozlar; `totals` — butun davr.\n\n' +
+      '🔒 Doira buyurtmalar ro‘yxati bilan bir xil: SUPER_ADMIN va ' +
+      'MODERATOR — barcha filial (`branchId` bilan toraytiriladi), filial ' +
+      'xodimi — o‘z filiali.',
+  })
+  @ApiDataResponse(DailyStatsDto, { description: 'Kunlar va jami' })
+  @ApiBadRequestResponse({
+    description: 'Sana noto‘g‘ri, boshi oxiridan keyin yoki davr 12 oydan uzun',
+    type: ApiErrorDto,
+  })
+  daily(
+    @CurrentActor() actor: Actor,
+    @Query() query: DailyStatsQueryDto,
+  ): Promise<DailyStatsDto> {
+    return this.stats.daily(actor, query);
   }
 }

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useCan, useProfile } from '@/features/auth/hooks';
+import { useCan } from '@/features/auth/hooks';
 import { useBranches } from '@/features/branches/api';
 import { useBranchManagers, useUpdateCustomer } from '@/features/customers/api';
 import {
@@ -20,10 +20,10 @@ import { Button, DateText, InputField, PhoneField, SelectField, toast, UnsavedCh
 /** "Profil" tab (D-022). Login o'zgarmaydi. */
 export default function CustomerProfileTab() {
   const c = useCustomerOutlet();
-  const isSuperAdmin = useProfile().data?.role === 'SUPER_ADMIN';
-  const assignManager = useCan('managers.manage');
+  const allBranches = useCan('customers.allBranches');
+  const assignManager = useCan('managers.view');
   const update = useUpdateCustomer(c.id);
-  const branches = useBranches(isSuperAdmin);
+  const branches = useBranches(allBranches);
 
   const form = useForm<ProfileInput, unknown, ProfileValues>({
     resolver: zodResolver(customerProfileSchema),
@@ -37,7 +37,7 @@ export default function CustomerProfileTab() {
 
   const onSubmit = form.handleSubmit((values) => {
     if (update.isPending) return;
-    const body = toUpdateCustomerBody(values, c, { changeBranch: isSuperAdmin, assignManager });
+    const body = toUpdateCustomerBody(values, c, { changeBranch: allBranches, assignManager });
     if (Object.keys(body).length === 0) return form.reset(profileDefaults(c));
     update.mutate(body, {
       onSuccess: (updated) => {
@@ -64,7 +64,7 @@ export default function CustomerProfileTab() {
         <InputField control={form.control} name="contactName" label="Mas’ul shaxs" required maxLength={150} />
         <PhoneField control={form.control} name="phone" label="Telefon" required />
 
-        {isSuperAdmin && (
+        {allBranches && (
           <SelectField
             control={form.control}
             name="branchId"

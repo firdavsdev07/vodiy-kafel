@@ -22,12 +22,12 @@ const FORM_ID = 'create-customer-form';
  */
 export function CreateCustomerModal({
   open,
-  isSuperAdmin,
+  allBranches,
   onClose,
   onCreated,
 }: {
   open: boolean;
-  isSuperAdmin: boolean;
+  allBranches: boolean;
   onClose: () => void;
   onCreated: (credentials: { login: string; password: string }) => void;
 }) {
@@ -50,30 +50,30 @@ export function CreateCustomerModal({
         </>
       }
     >
-      {open && <CreateCustomerForm isSuperAdmin={isSuperAdmin} create={create} onCreated={onCreated} />}
+      {open && <CreateCustomerForm allBranches={allBranches} create={create} onCreated={onCreated} />}
     </Modal>
   );
 }
 
 function CreateCustomerForm({
-  isSuperAdmin,
+  allBranches,
   create,
   onCreated,
 }: {
-  isSuperAdmin: boolean;
+  allBranches: boolean;
   create: ReturnType<typeof useCreateCustomer>;
   onCreated: (credentials: { login: string; password: string }) => void;
 }) {
-  const branches = useBranches(isSuperAdmin);
+  const branches = useBranches(allBranches);
   const form = useForm<CustomerFormInput, unknown, CustomerFormValues>({
-    resolver: zodResolver(customerCreateSchema(isSuperAdmin)),
+    resolver: zodResolver(customerCreateSchema(allBranches)),
     defaultValues: customerDefaults,
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (create.isPending) return;
     try {
-      const result = await create.mutateAsync(toCreateCustomerBody(values, isSuperAdmin));
+      const result = await create.mutateAsync(toCreateCustomerBody(values, allBranches));
       // 🔒 Parol MutationCache'da qolmasin — natija olindi, holat darhol tozalanadi
       create.reset();
       if (!result) return;
@@ -116,7 +116,7 @@ function CreateCustomerForm({
         <InputField control={form.control} name="inn" label="INN" inputMode="numeric" maxLength={9} hint="9 raqam — shartnoma uchun" />
         <InputField control={form.control} name="contactName" label="Mas’ul shaxs" required maxLength={150} />
         <PhoneField control={form.control} name="phone" label="Telefon" required />
-        {isSuperAdmin && (
+        {allBranches && (
           <SelectField
             control={form.control}
             name="branchId"

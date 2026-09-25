@@ -11,7 +11,8 @@ export type UpdateProductBody = Schema<'UpdateProductDto'>;
  * Mahsulot formasi (D-012). Chegaralar backend `CreateProductDto` bilan bir
  * xil: name ≤150, color ≤60, description ≤2000, sqmPerPallet —
  * `@IsPositiveDecimalString(6, 4)`, weightPerPallet — `(7, 3)`.
- * ⚠ NARX ham, ZAXIRA ham bu yerda YO'Q — ular filial/ombor jadvalida.
+ * ⚠ NARX bu yerda YO'Q — u filial jadvalida. ZAXIRA — faqat yaratishda
+ *   boshlang'ich miqdor (T-008); keyin "Zaxira" bo'limida o'zgaradi.
  */
 export const productSchema = z.object({
   name: zRequiredText(150),
@@ -28,7 +29,16 @@ export const productSchema = z.object({
     required: 'Paddon og‘irligini kiriting',
     invalid: 'Musbat son, verguldan keyin 3 tagacha raqam',
   }),
+  /** T-008: faqat yaratishda. Bo'sh — 0. Backend: Int, 0 … 2 147 483 647. */
+  stockPallets: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || (/^\d{1,10}$/.test(v) && Number(v) <= MAX_STOCK_PALLETS), {
+      message: 'Butun son (0 yoki undan katta) kiriting',
+    }),
 });
+
+const MAX_STOCK_PALLETS = 2_147_483_647;
 
 export type ProductFormInput = z.input<typeof productSchema>;
 export type ProductFormValues = z.output<typeof productSchema>;
@@ -44,6 +54,7 @@ export function productDefaults(product?: Product): ProductFormInput {
     description: product?.description ?? '',
     sqmPerPallet: product ? normalizeDecimal(product.sqmPerPallet) : '',
     weightPerPallet: product ? normalizeDecimal(product.weightPerPallet) : '',
+    stockPallets: '',
   };
 }
 
@@ -57,6 +68,7 @@ export function toCreateBody(v: ProductFormValues): CreateProductBody {
     ...(v.description ? { description: v.description } : {}),
     sqmPerPallet: v.sqmPerPallet,
     weightPerPallet: v.weightPerPallet,
+    ...(v.stockPallets !== '' ? { stockPallets: Number(v.stockPallets) } : {}),
   };
 }
 

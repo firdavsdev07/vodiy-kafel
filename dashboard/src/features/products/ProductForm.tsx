@@ -120,11 +120,23 @@ export function ProductForm({
         <InputField control={form.control} name="color" label="Rang" maxLength={60} placeholder="Bej" />
 
         <div className="grid gap-4 rounded-lg border border-line p-4 md:col-span-2 md:grid-cols-2">
-          <p className="text-sm font-medium md:col-span-2">Kalkulyator ma’lumotlari</p>
+          <p className="text-sm font-medium md:col-span-2">
+            {product ? 'Kalkulyator ma’lumotlari' : 'Kalkulyator va ombor'}
+          </p>
           <DecimalField control={form.control} name="sqmPerPallet" label="1 paddondagi m²" required scale={4} suffix="m²"
             hint="Summa = paddon × m² × m² narxi" />
           <DecimalField control={form.control} name="weightPerPallet" label="1 paddon og‘irligi" required scale={3} suffix="kg"
             hint="Transport soni shu og‘irlikdan hisoblanadi" />
+          {!product && (
+            <InputField
+              control={form.control}
+              name="stockPallets"
+              label="Ombordagi miqdor"
+              inputMode="numeric"
+              placeholder="0"
+              hint="Paddon. Buyurtmada bundan ko‘p berib bo‘lmaydi; keyin «Zaxira» bo‘limida o‘zgaradi"
+            />
+          )}
           {calcWarning && (
             <p role="alert" className="flex gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning md:col-span-2">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />

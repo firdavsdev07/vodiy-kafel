@@ -50,6 +50,14 @@ function isLine(value: unknown): value is CartLine {
 }
 
 /**
+ * Paddon maydoniga terilgan matn — faqat raqamlar, bosh nollarsiz
+ * ("05" → "5"). `PalletInput` (T-002) shu bilan tozalaydi.
+ */
+export function normalizePalletDraft(raw: string): string {
+  return raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+}
+
+/**
  * `localStorage` dagi satr → savat.
  *
  * ⚠ Har bir qator ALOHIDA tekshiriladi va yaroqsizi tashlanadi: saqlangan

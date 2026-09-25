@@ -22,6 +22,7 @@ const NOTIFICATION_SELECT = {
   title: true,
   body: true,
   payload: true,
+  imageUrl: true,
   isRead: true,
   readAt: true,
   createdAt: true,

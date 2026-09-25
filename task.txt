@@ -1,0 +1,839 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║            V O D I Y   K A F E L   —   U M U M I Y   L O Y I H A             ║
+║              ADMIN PANEL VA MIJOZLAR TIZIMI — TASK RO'YXATI                  ║
+║                                                                              ║
+║   Manba : mijoz talablari (2026-09-25)                                       ║
+║   Doira : api/ + dashboard/ (admin panel va /kabinet/*)                      ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ISHLASH TARTIBI                                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  1. Bittada — bitta task.
+  2. Task boshlanganda  [ ]  →  [~]   (jarayonda)
+     Task tugaganda     [~]  →  [x]   (tugadi)
+     Bloklangan bo'lsa  [ ]  →  [!]   (javob kutilmoqda)
+  3. 2026-09-25 dan boshlab OCHIQ tasklarning YAGONA ro'yxati — shu fayl.
+     api/, dashboard/, storefront/ dagi task.txt lar faqat BAJARILGAN
+     tasklar tarixi sifatida qoldi; ulardagi ochiq tasklar pastdagi
+     "ESKI FAYLLARDAN KO'CHIRILGAN" bo'limiga o'z ID si bilan o'tkazildi.
+  4. Har bir task tugagach tegishli paketlarda `pnpm build` + `pnpm lint` +
+     `pnpm test` o'tishi shart, o'zgarish brauzerda haqiqiy backend bilan
+     tekshirilishi shart.
+  5. Backend qoidalari uchun manba — api/CLAUDE.md. Dashboard qoidalari —
+     dashboard/task.txt (GLOBAL QOIDALAR).
+  6. Backendda yangi endpoint qo'shilsa: `pnpm openapi:export` (api/), keyin
+     `pnpm api:types` (dashboard/).
+
+  Asosiy maqsad: tizimdagi mijoz, mahsulot, ombor, zakaz, admin/menejer
+  biriktirish va notification jarayonlarini to'g'ri bog'lash hamda har bir
+  admin roliga tegishli huquqlarni aniq ajratish.
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  BELGILAR                                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+  [ ] bajarilmagan    [~] jarayonda    [x] tugadi    [!] bloklangan
+  🔒 xavfsizlik / huquq muhim     ❓ ochiq savol bor     🐞 xatolik
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  TASKLAR                                                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+[x] T-001  🔒 Moderator uchun optom mijoz funksiyalari
+      Paket : api/ (RBAC), dashboard/ (menyu, sahifalar, tugmalar)
+      Talab :
+        • Moderatorga optom mijoz yaratish bo'yicha mavjud BARCHA
+          funksiyalarga to'liq dostup berilsin.
+        • Moderator optom mijoz yaratish, boshqarish va unga tegishli
+          barcha amallarni bajara olishi kerak.
+      Qabul :
+        • MODERATOR bilan kirilganda optom mijozlar bo'limi ko'rinadi.
+        • Yaratish / tahrirlash / boshqarish amallari backendda ham
+          ruxsat etilgan (faqat UI'da emas).
+
+      ✅ BAJARILDI (2026-09-25):
+        Sabab: rollarda MODERATOR bor edi, lekin uning filial doirasi —
+        faqat o'z CENTRAL filiali. Optom mijozlar RETAIL filiallarda
+        turgani uchun moderator ro'yxatda hech kimni ko'rmas, yarata
+        olmas edi (faqat CENTRAL'dagi `navoiy-agent` ko'rinardi).
+        api/:
+          • `BranchScopeService` ga `ScopeDomain` ('DEFAULT' | 'CUSTOMERS').
+            `CUSTOMERS` domenida MODERATOR ham SUPER_ADMIN kabi cheklovsiz;
+            BRANCH_ADMIN / MANAGER / mijoz uchun hech narsa o'zgarmaydi.
+          • `CUSTOMERS` domeniga o'tkazildi: mijoz ro'yxati/kartasi/
+            yaratish/tahrirlash/bloklash/parol tiklash, mijoz balansi,
+            admin buyurtmalari (ro'yxat, karta, status, qo'lda buyurtma),
+            to'lovni tasdiqlash, filiallar ro'yxati (faqat o'qish).
+          • `GET /admin/managers` — MODERATOR ga faqat O'QISH (mijozni
+            menejerga biriktirish uchun). Yaratish/tahrirlash yopiq.
+          • Qo'lda mehmon buyurtmasi: moderator filial bermasa —
+            avvalgidek o'z CENTRAL filialiga (regressiya bo'lmasin).
+        dashboard/:
+          • Yangi ruxsatlar: `customers.allBranches` (SUPER_ADMIN,
+            MODERATOR) va `managers.view` (+ MODERATOR).
+          • Mijozlar ro'yxati, yaratish oynasi, profil tabi, buyurtmalar
+            ro'yxati — filial filtri/ustuni/tanlagichi moderatorga ham.
+      ⚠ ATAYLAB OCHILMADI — mijoz narx qoidalari (`/pricing-rules`):
+        api/CLAUDE.md 11-qoida chegirma huquqini faqat SUPER_ADMIN va
+        BRANCH_ADMIN ga beradi, dashboard D-007 "MODERATOR ga narxlar
+        ko'rinmaydi". ❓ Moderatorga ham kerak bo'lsa — alohida qaror.
+      Tekshirildi:
+        • api: build + lint + openapi:export; `branch-scope.service.spec`
+          35/35 (7 ta yangi: CUSTOMERS domeni).
+        • dashboard: typecheck + lint + test 317/317 (permissions matritsasi).
+        • curl, haqiqiy API, MODERATOR: 5 filial mijozi ko'rinadi;
+          filialsiz yaratish → 400; Andijonga + menejer bilan yaratish ✓;
+          karta, tahrirlash, Farg'onaga ko'chirish (menejer uziladi),
+          parol tiklash, bloklash, balans ✓; narx qoidalari → 403;
+          menejer yaratish → 403; boshqa filialni tahrirlash → 404.
+        • 🔒 Farg'ona BRANCH_ADMIN: faqat o'z filiali (2 mijoz, 1 filial),
+          Andijon mijozi kartasi → 404 — izolyatsiya buzilmagan.
+        • Brauzer (puppeteer, moderator): ro'yxatda filial filtri va
+          ustuni, "Yangi mijoz" oynasida filial tanlagichi, kartada
+          filial + menejer tanlagichi; "Narx" tabi yo'q.
+        • Sinov mijozi (`t001-test`) bazadan o'chirildi.
+
+
+[x] T-002  🐞 Mahsulot sonini belgilashda oldiga 0 qo'shilib qolishi
+      Paket : dashboard/ (kabinet — mahsulot sahifasi)
+      Sahifa: https://vodiy-kafel-aqsd.vercel.app/kabinet/mahsulot/devor-klassik-oq
+      Muammo:
+        • Zakaz sonini kiritganda son oldiga avtomatik 0 qo'shiladi.
+          Masalan, foydalanuvchi 5 kiritsa — "05" bo'lib chiqadi.
+      Qabul :
+        • 5 kiritilsa — 5 ko'rinadi. Maydonni tozalab qayta yozish
+          ham to'g'ri ishlaydi.
+
+      ✅ BAJARILDI (2026-09-25):
+        Sabab: `<input type="number" value={son}>` — maydon tozalanganda
+        `Number('')` = 0 qaytib yozilardi, keyin "5" → "05". Savatda
+        esa qiymat darhol 1 ga chegaralanib, "5" → "15" bo'lardi (bu
+        xato ham shu yerda topildi va tuzatildi).
+        • Yangi `PalletInput` (features/cabinet): matn alohida saqlanadi,
+          tashqariga faqat to'g'ri son chiqadi, bosh nollar olinadi,
+          blur/Enter'da chegaraga keltiriladi, bo'sh qoldirilsa oxirgi
+          qiymat qaytadi. `max` — T-005 da ombor miqdori bilan toraytiriladi.
+        • Mahsulot sahifasi va savat shu komponentga o'tdi.
+      Tekshirildi:
+        • dashboard: typecheck + lint + test 330/330 (13 ta yangi:
+          `normalizePalletDraft` + `<PalletInput>` userEvent bilan).
+        • Brauzer (puppeteer, haqiqiy API, sinov mijozi): mahsulot
+          sahifasida tozalab "5" → 5, belgilab "12" → 12; savatda
+          tozalab "5" → 5, hisob (paddon, m², summa) yangilanadi.
+
+
+[x] T-003  "Xaritada joylashuvim" funksiyasi
+      Paket : dashboard/ (kabinet — LocationPicker)
+      Muammo:
+        • Tugma bosilganda faqat "Xaritadan bosib belgilang" holati
+          chiqib turibdi.
+      Talab :
+        • Tugma foydalanuvchining joylashuvini aniqlash/ko'rsatish
+          funksiyasini to'g'ri bajarishi kerak.
+        • Joylashuvni avtomatik aniqlash imkoniyati bo'lsa
+          (brauzer geolokatsiyasi) — undan foydalanilsin.
+      Qabul :
+        • Ruxsat berilsa — xarita joriy joylashuvga o'tadi va marker
+          qo'yiladi.
+        • Ruxsat berilmasa / aniqlab bo'lmasa — tushunarli xabar va
+          qo'lda belgilash imkoniyati qoladi.
+
+      ✅ BAJARILDI (2026-09-25):
+        Sabab: `navigator.geolocation.getCurrentPosition(ok, fail)`
+        PARAMETRSIZ chaqirilardi — standart `timeout` cheksiz. GPS yoki
+        tarmoq joylashuvi bo'lmagan qurilmada javob umuman kelmas,
+        tugma hech narsa ko'rsatmas edi: mijoz faqat "Xaritani bosib
+        nuqta belgilang" yozuvini ko'rib qolardi. Xato bo'lsa ham sababi
+        aytilmasdi (bitta umumiy toast).
+        • Yangi `features/cabinet/geolocation.ts` → `locate()`: avval
+          aniq (GPS, 10 s), bo'lmasa oddiy aniqlikda (Wi-Fi/tarmoq,
+          10 s) qayta urinadi; ruxsat berilmasa qayta so'ramaydi;
+          https emas / API yo'q — brauzerga murojaat qilmaydi.
+        • Har bir xato turi uchun "nima qilish kerak" matni (ruxsatni
+          qulf belgisidan yoqish, joylashuv xizmatini yoqish, …) —
+          toast emas, tugma ostida doimiy turadi.
+        • Tugma: "Aniqlanmoqda…" + spinner; muvaffaqiyatda
+          "Joylashuvingiz aniqlandi (±N m)", xaritada aniqlik doirasi;
+          aniqlik > 500 m bo'lsa — nuqtani tuzatish tavsiyasi.
+        • Belgilangan nuqtaning MANZILI ko'rsatiladi (Nominatim teskari
+          geokodlash) — raqamlar o'rniga ko'cha nomi.
+      Tekshirildi:
+        • dashboard: typecheck + lint + test 338/338 (8 ta yangi
+          `locate` testi, jumladan "timeout har doim beriladi").
+        • Brauzer (puppeteer, soxta geolokatsiya): ruxsat bor →
+          nuqta, ±25 m, manzil "Sayilgoh ko'chasi, Farg'ona"; ruxsat
+          yo'q → qulf belgisidan yoqish haqida aniq xabar.
+      ⚠ Xarita hozir faqat viloyat tanlanganda ko'rinadi — T-004 viloyat
+        tanlashni olib tashlaydi, xarita ko'rinish sharti o'sha yerda
+        qayta hal qilinadi.
+
+
+[x] T-004  🔒 Yetkazib berish — viloyat tanlashni olib tashlash
+      Paket : dashboard/ (kabinet savat + xodim buyurtma sahifasi), api/
+      Sahifa: https://vodiy-kafel-aqsd.vercel.app/kabinet/savat
+      Talab :
+        • Savatdagi yetkazib berish qismidan viloyat tanlash olib
+          tashlansin.
+        • Mahsulot qaysi joydan ketayotganini oddiy mijoz TANLAMAYDI.
+        • Mahsulot qaysi joydan yuborilishini faqat:
+            – MODERATOR
+            – SUPER_ADMIN
+          belgilashi mumkin.
+      Qabul :
+        • Mijoz buyurtmasida jo'natish joyi maydoni yo'q; backend ham
+          mijozdan bu qiymatni qabul qilmaydi.
+        • Moderator/Super Admin buyurtmaga jo'natish joyini belgilay
+          oladi.
+
+      ❓→✅ QAROR (2026-09-25, foydalanuvchi): savatdagi "Viloyat" aslida
+        yukning QAYERGA borishi edi (tarif: filial × viloyat × transport).
+        Tanlangan yo'l: mijoz viloyatni ham tanlamaydi — "olib ketaman /
+        yetkazib bering", afzal transport va xaritadagi nuqta; jo'natish
+        ombori, viloyat, transport va yo'l kirani MODERATOR / SUPER_ADMIN
+        buyurtmadan keyin belgilaydi. Mijoz buyurtma paytida yo'l kirani
+        ko'rmaydi.
+
+      ✅ BAJARILDI (2026-09-25):
+        api/:
+          • Migratsiyalar: `orders.delivery_requested`, `dispatch_branch_id`
+            (CENTRAL ombor), `requested_transport_type_id`; eski buyurtmalar
+            to'ldirildi; CHECK: viloyat bor ⇒ yetkazib berish so'ralgan.
+            (Mavjud `orders_delivery_complete_check` saqlandi: `transport
+            TypeId` — faqat HAQIQIY, yo'l kirasi hisoblangan transport.)
+          • `POST /orders` (mijoz): `regionId` YO'Q; `deliveryRequested`,
+            ixtiyoriy `transportTypeId` (afzallik), nuqta. Yo'l kira 0.
+          • `POST /admin/orders` (qo'lda): `regionId` faqat MODERATOR /
+            SUPER_ADMIN — filial xodimi yuborsa 403, u faqat so'raydi.
+          • 🆕 `PATCH /admin/orders/{id}/delivery` (MODERATOR, SUPER_ADMIN):
+            jo'natish ombori + viloyat/transport (ikkalasi null — olib
+            ketish). Yo'l kira kalkulyator yo'lidan (filial tarifi + mijoz
+            transport qoidalari, `QuoteService.deliveryForOrder`); BITTA
+            tranzaksiyada buyurtma summasi, kutilayotgan to'lov va balans
+            (farq: oshsa DEBT, kamaysa teskari ADJUSTMENT). Mahsulot narxi
+            o'zgarmaydi. 🔒 Faqat NEW / SEARCHING_TRANSPORT va to'lanmagan
+            bo'lsa — aks holda 409.
+          • Javoblarda: `deliveryRequested`, `deliveryPending`,
+            `requestedTransportTypeName`, `exactLat/Lng`; admin kartasida
+            `dispatchBranch` (mijozga chiqmaydi).
+          • Status oqimi endi `deliveryRequested` bo'yicha (yo'nalishsiz
+            so'ralgan yetkazib berishda ham mashina qidiriladi).
+          • 🐞 Bekor qilishda qaytariladigan summa = DEBT + buyurtmaga
+            bog'langan ADJUSTMENT (faqat DEBT qaytarilsa, yo'l kira
+            kamaytirilgan buyurtmada farq mijozga IKKI marta berilardi).
+        dashboard/:
+          • Savat: viloyat o'rniga "O'zim olib ketaman / Yetkazib berish
+            kerak" + afzal transport + xarita; hisobda "Yo'l kira —
+            Menejer belgilaydi", "Jami (yo'l kirasiz)".
+          • Kabinet buyurtmasi: "Yetkazib berish so'ralgan…", yo'l kira
+            "Belgilanmoqda".
+          • Admin buyurtma kartasi: so'ralgan holat, jo'natish joyi va
+            yangi "Yetkazib berishni belgilash" formasi (`orders.setDelivery`).
+          • Qo'lda buyurtma: filial xodimida viloyat yo'q — afzal transport.
+      Tekshirildi:
+        • api: build + lint + openapi:export. ⚠ Buyurtma servislarining
+          jest testlari bu mashinada ishga tushmaydi (Node 22, ESM — bu
+          o'zgarishdan oldin ham shunday), shuning uchun tekshiruv curl
+          bilan haqiqiy API'da:
+          mijoz so'raydi → pending, yo'l kira 0; filial admini PATCH → 403;
+          yarim yo'nalish → 400; RETAIL jo'natish joyi → 400; moderator
+          Fura → 4 000 000 (to'lov + balans yangilandi); Vagon → 9 000 000;
+          Fura'ga qaytish → teskari ADJUSTMENT; olib ketishga → 0, status
+          oqimi LOADING; bekor qilish → balans 0; bekor qilingandan keyin
+          → 409; qo'lda buyurtmada filial admini viloyat → 403.
+        • dashboard: typecheck + lint + test 339/339 (qo'lda buyurtma:
+          filial xodimi viloyat yubormaydi).
+        • Brauzer (puppeteer): mijoz savati → buyurtma (pending) →
+          moderator formasi (ombor + Farg'ona + Fura) → 4 066 960 →
+          mijoz sahifasida yangilangan summa.
+      ⚠ E'tibor: "Sig'im kalkulyatori" sahifasida (`/kabinet/kalkulyator`)
+        viloyat tanlash HALI BOR — u buyurtma emas, taxminiy hisob.
+        ❓ U ham olib tashlansinmi — mijoz qarori.
+
+
+[x] T-005  Ombordagi mahsulot miqdorini nazorat qilish
+      Paket : api/ (buyurtma/savat validatsiyasi), dashboard/ (kabinet)
+      Bog'liq: T-008
+      Talab :
+        • Omborda mahsulot yetarli bo'lmasa, mijoz unga zakaz bera
+          olmasin. Ombordagi mavjud miqdor hisobga olinsin.
+        • Miqdor yetarli bo'lmasa:
+            – mahsulotni savatga qo'shib bo'lmasin;
+            – yoki mavjud miqdordan ko'p sonni zakaz qilishga ruxsat
+              berilmasin.
+        • Maqsad: ombordagi real sondan ko'p zakaz berilishining oldini
+          olish.
+      Qabul :
+        • Tekshiruv backendda (UI'ni chetlab o'tgan so'rov ham rad
+          etiladi).
+        • UI'da ruxsat etilgan maksimal miqdordan oshirib bo'lmaydi va
+          sababi ko'rsatiladi.
+
+      ✅ BAJARILDI (2026-09-25):
+        🔴 Topildi: buyurtma berilganda zaxira UMUMAN kamaymasdi — faqat har
+        bir buyurtma alohida tekshirilardi. 7 paddon zaxirada ikki mijoz 5
+        tadan (jami 10) buyurtma bera olardi.
+        api/:
+          • Zaxira BAND qilinadi: buyurtma tranzaksiyasi ichida shartli
+            kamaytirish (`stockPallets >= kerak`); yetmasa butun buyurtma
+            orqaga qaytadi (409 "Omborda yetarli emas: …"). Parallel
+            buyurtmalar poygasida ham manfiyga tushmaydi (+ bazada CHECK).
+            Bir mahsulot ikki qatorda kelsa — JAMI bo'yicha.
+          • Bekor qilinganda zaxira qaytadi. Yangi `orders.stock_reserved`
+            belgisi: bu o'zgarishdan OLDINGI buyurtmalar zaxirani band
+            qilmagan — ularni bekor qilish zaxiraga soxta qo'shimcha
+            bermaydi; ikki marta qaytarish ham yo'q.
+          • Qo'lda va ta'minot buyurtmalari ham shu yo'ldan (`place`) —
+            ular ham markaziy zaxiradan band qiladi.
+          • `POST /calculator/quote`: har qatorda `enoughStock`, umumiy
+            `stockShortage`. 🔒 Aniq son qaytmaydi (CLAUDE.md qoida 2).
+        dashboard/:
+          • Savat: yetmaydigan qator qizil, "Omborda buncha yo'q — paddon
+            sonini kamaytiring"; "Buyurtma berish" yopiq. Tugagan mahsulotni
+            savatga qo'shish (katalog va mahsulot sahifasi) avvaldan yopiq.
+      ⚠ MA'NO O'ZGARDI: "Zaxira" bo'limidagi son endi BUYURTMA
+        QILINMAGAN (sotuvga ochiq) qoldiq — har buyurtma uni kamaytiradi.
+        Moderator inventarizatsiyadan keyin sonni yozganda, hali
+        jo'natilmagan faol buyurtmalarni ayirib yozishi kerak.
+      Tekshirildi:
+        • api: tsc (build config) + lint + openapi:export. Jest bu mashinada
+          ishlamaydi (Node 22) — curl bilan haqiqiy API'da:
+          zaxira 5 → 3 lik buyurtma → 2; yana 3 → 409; bekor → 5;
+          PARALLEL 2 × 3 → bittasi o'tdi, bittasi 409, zaxira 2;
+          quote 6 → enoughStock false, javobda aniq son yo'q.
+          Zaxira asl qiymatiga (12) qaytarildi, mijoz balansi 0.
+        • dashboard: typecheck + lint + test 340/340.
+        • Brauzer: zaxira 2, savatda 3 → qizil qator + tugma yopiq; 2 ga
+          tushirilganda ogohlantirish yo'qoladi, tugma ochiladi.
+
+
+[x] T-006  🐞 "Menejer bilan aloqa" qismi
+      Paket : dashboard/ (kabinet), api/ (/me/* javobi)
+      Muammo:
+        • "Menejer bilan aloqa" bo'limida ma'lumotlar chiqmayapti.
+      Talab :
+        • Bo'limni tekshirib, mijozga biriktirilgan menejerning
+          ma'lumotlari to'g'ri ko'rinishini ta'minlash.
+      Qabul :
+        • Menejer biriktirilgan mijozda — ism va aloqa ma'lumotlari
+          ko'rinadi.
+        • Menejer biriktirilmagan mijozda — bo'sh emas, tushunarli
+          holat ko'rsatiladi.
+
+      ✅ BAJARILDI (2026-09-25):
+        Sabablar (uchalasi birga "ma'lumot chiqmayapti" ko'rinishini
+        berardi):
+          1. Buyurtmaga menejer biriktirilmagan bo'lsa backend 404
+             qaytarardi — mijoz faqat xato ko'rardi (T-007 dan keyin bu
+             holat ko'payadi).
+          2. Menejer bo'lsa ham faqat ISM qaytardi: telefon ataylab
+             berilmasdi, Telegram esa seed'dagi username apostrofli
+             (`vk_farg'ona`) bo'lgani uchun `null` edi.
+          3. Ma'lumot "Aloqa ma'lumotini ko'rsatish" tugmasi ortida edi.
+        api/:
+          • `ManagerContactDto` yangi shakl: `manager` (ism, TELEFON,
+            Telegram) yoki `null` + `branch` (telefonlar, manzil, ish vaqti,
+            Telegram) — DOIM.
+          • `GET /orders/{id}/manager-contact`: buyurtma menejeri, bo'lmasa
+            mijozning menejeri; menejer yo'q — 404 EMAS, filial aloqasi.
+            Begona buyurtma — baribir 404 (qoida 6).
+          • 🆕 `GET /me/manager-contact` — buyurtmaga bog'liq emas.
+          • Seed: Telegram username faqat [a-z0-9_].
+        dashboard/:
+          • Yagona `ManagerContactCard`: buyurtma sahifasida (tugmasiz,
+            darhol) va "Hisobim" sahifasida "Menejer bilan aloqa";
+            telefon `tel:` havola, Telegram, filial aloqasi.
+      Tekshirildi:
+        • api: tsc (build config) + lint + openapi:export;
+          dashboard: typecheck + lint + test 340/340.
+        • curl: menejeri yo'q buyurtma → mijoz menejeri (ism + telefon);
+          begona buyurtma → 404.
+        • Brauzer: menejersiz mijoz → "Sizga hali shaxsiy menejer
+          biriktirilmagan…" + filial aloqasi; moderator biriktirgach →
+          "Farg'ona menejeri, +998 90 022 00 01" + filial.
+      ⚠ Kuzatuv (T-006 ga tegishli emas, o'zgartirilmadi): "Hisobim" da
+        bekor qilingan buyurtmalarning teskari ADJUSTMENT lari "Jami
+        to'langan" ga qo'shiladi (B-035: manfiy harakat = to'langan).
+        Balans to'g'ri, lekin mijozga "ko'p to'laganman" bo'lib ko'rinadi.
+        ❓ Alohida task kerakmi — qaror.
+      ⚠ Kuzatuv: kabinet sahifasi to'g'ridan-to'g'ri ochilganda /me/*
+        so'rovlari token tiklanishidan OLDIN ketib 401 oladi, keyin
+        refresh + qayta so'rov 200 — foydalanuvchi sezmaydi, faqat shovqin.
+      Bog'liq: T-007 (default biriktirish olib tashlangach bu holat
+               tez-tez uchraydi)
+
+
+[x] T-007  🔒 Adminlarga biriktirilgan default mijozlarni olib tashlash
+      Paket : api/ (seed, mijoz yaratish mantig'i), dashboard/
+      Muammo:
+        • Hozir umumiy adminlarga oldindan biriktirilgan default
+          mijozlar mavjud.
+      Talab :
+        • Default biriktirishlar olib tashlansin.
+        • Mijozlarni avtomatik/default tarzda biriktirish bo'lmasin.
+        • Mijozni kerakli admin/menejerga QO'LDA biriktirish imkoniyati
+          bo'lsin.
+      Qabul :
+        • Yangi mijoz yaratilganda hech kimga avtomatik biriktirilmaydi.
+        • Admin panelda mijozni menejerga biriktirish/almashtirish/olib
+          tashlash mumkin.
+
+      ✅ BAJARILDI (2026-09-25):
+        Avtomatik biriktirishning UCHTA manbasi topildi va o'chirildi:
+          1. Seed — har bir optom mijoz filial menejeriga biriktirilardi
+             (serverdagi "default" biriktirishlar shundan).
+          2. Mijoz yaratish — menejer yaratgan mijoz AVTOMATIK o'ziga
+             biriktirilardi. Endi faqat aniq `managerId`.
+          3. Buyurtma strategiyasi `BY_BRANCH` — menejeri yo'q mijoz
+             buyurtmasini filialning eng bo'sh menejeriga O'ZI berardi.
+             Yangi `CustomerManagerOnlyStrategy`: faqat mijozning o'z
+             menejeri (yoki buyurtmani qo'lda kiritayotgan menejer), aks
+             holda biriktirilmagan — admin qo'lda beradi.
+        ❓→✅ QAROR (foydalanuvchi): mavjud biriktirishlar MIGRATSIYA bilan
+          tozalanadi — `20260925130524_clear_default_customer_managers`
+          (`customers.manager_id = NULL`). ⚠ Serverda `migrate deploy`
+          qilinganda u yerda ham ishlaydi; kerakli mijozlar qayta
+          biriktiriladi. Buyurtmalarning menejeri ATAYLAB tegilmadi.
+        Qo'lda biriktirish: mijoz kartasi → "Menejer" (SUPER_ADMIN,
+          BRANCH_ADMIN, T-001 dan MODERATOR ham).
+      Tekshirildi:
+        • api: tsc (build config) + lint; migratsiya qo'llandi — lokal
+          bazada menejerli mijoz 0.
+        • curl: menejeri yo'q mijoz buyurtmasi → `manager: null` (avval
+          "Farg'ona menejeri" avtomatik tushgan edi); yangi mijoz →
+          `manager: null`.
+        • Menejer yaratgan mijoz → `manager: null` (Andijon menejeri bilan,
+          T-009 sinovida; Farg'ona menejerining lokal paroli o'zgargan).
+
+
+[x] T-008  Mahsulot yaratishda ombor miqdorini kiritish
+      Paket : api/ (mahsulot yaratish DTO), dashboard/ (mahsulot formasi)
+      Talab :
+        • Mahsulot yaratilayotganda nomi va boshqa ma'lumotlar bilan
+          birga mavjud sonini (ombordagi miqdorini) ham kiritish
+          imkoniyati bo'lsin.
+        • Keyinchalik bu miqdor zakaz berish jarayonida avtomatik
+          hisobga olinsin (→ T-005).
+      Qabul :
+        • Yaratish formasida miqdor maydoni bor; saqlangach qiymat
+          markaziy ombor zaxirasida (ProductStock) ko'rinadi.
+
+      ✅ BAJARILDI (2026-09-25):
+        api/:
+          • `CreateProductDto.stockPallets` (ixtiyoriy, butun, 0 …
+            2 147 483 647 — `UpsertProductStockDto` bilan bir xil chegara).
+          • Mahsulot va zaxira yozuvi BITTA so'rovda (nested create);
+            miqdor berilmasa ham 0 bilan yoziladi — ro'yxatda bo'sh qator
+            qolmaydi.
+          • `UpdateProductDto` dan `stockPallets` ATAYLAB chiqarildi: keyingi
+            o'zgarish — `PUT /admin/product-stocks` (MODERATOR ham qila
+            oladi, mahsulot tahriri esa faqat SUPER_ADMIN).
+        dashboard/:
+          • Yaratish formasida "Ombordagi miqdor" (paddon) — faqat yangi
+            mahsulotda; tahrirda ko'rinmaydi va yuborilmaydi.
+      Tekshirildi:
+        • api: build + lint + openapi:export; dashboard: typecheck + lint +
+          test 340/340 (miqdor validatsiyasi va "tahrirda yuborilmaydi").
+        • curl (SUPER_ADMIN): miqdor 7 → zaxira 7 (LOW); miqdorsiz → 0
+          (OUT_OF_STOCK); −2 → 400; PATCH da stockPallets e'tiborsiz; zaxira
+          ro'yxatida ko'rinadi.
+        • Brauzer: yaratish formasida maydon va xato matni.
+        • Sinov mahsulotlari bazadan o'chirildi.
+
+
+[x] T-009  Mijozlarga oddiy xabar yuborish funksiyasi
+      Paket : api/ (notification + fayl yuklash), dashboard/ (admin
+              forma + kabinet ko'rinishi)
+      Talab :
+        • Mijozlarga oddiy xabar yuborish imkoniyati:
+            – bayramlarda;
+            – oddiy holatlarda;
+            – kerakli boshqa e'lon yoki ma'lumotlar uchun.
+        • Xabarga 1 ta rasm yuklash mumkin bo'lsin.
+        • Rasmning pastki qismida xabar matni yozilsin.
+          Ya'ni: rasm + uning ostida xabar matni ko'rinishidagi
+          notification.
+        • Qabul qiluvchini tanlash (2026-09-25 aniqlashtirildi):
+            – BARCHA mijozlarga yuborish;
+            – TANLANGAN mijozlarga yuborish (ro'yxatdan bir yoki bir
+              nechta mijozni belgilash).
+        • Kim yubora oladi — barcha admin rollari:
+
+          Rol           Kimga yubora oladi
+          ────────────  ──────────────────────────────────────────────
+          SUPER_ADMIN   Barcha mijozlarga (hammaga dostup)
+          MODERATOR     Barcha mijozlarga (hammaga dostup)
+          MANAGER       Faqat O'ZIGA biriktirilgan mijozlarga
+
+      Qabul :
+        • 🔒 Menejer uchun "barchasiga" = faqat o'ziga biriktirilgan
+          mijozlarning barchasi. Tanlash ro'yxatida ham faqat o'z
+          mijozlari chiqadi.
+        • 🔒 Doira backendda tekshiriladi: menejer so'rovga boshqa
+          menejerning mijoz ID sini qo'shsa — so'rov rad etiladi.
+        • Mijoz kabinetida xabar rasm + ostida matn ko'rinishida
+          chiqadi. Rasmsiz xabar ham yuborish mumkin.
+
+      ✅ BAJARILDI (2026-09-25):
+        api/:
+          • Migratsiya: `Announcement` (tarix: sarlavha, matn, rasm, kimga,
+            nechta mijoz, kim yubordi), `notifications.image_url`,
+            `NotificationType.ANNOUNCEMENT`, `AnnouncementAudience`.
+          • 🆕 `POST /admin/announcements` (multipart: title?, body,
+            audience ALL|SELECTED, customerIds, image?) va
+            `GET /admin/announcements` (tarix). Yetkazish — umumiy
+            bildirishnoma yo'li (`NotificationService.dispatch`, qoida 10),
+            100 tadan bo'lib.
+          • 🔒 Doira: SUPER_ADMIN/MODERATOR — hamma; BRANCH_ADMIN — o'z
+            filiali; MANAGER — faqat o'ziga biriktirilganlar. "Barchasiga" =
+            shu doiradagi barcha FAOL mijozlar. Tanlanganlarda doiradan
+            tashqari bitta ID ham — 404, hech kimga yuborilmaydi.
+          • Rasm: JPG/PNG/WEBP, 10 MB, tur MAZMUNDAN; faqat barcha
+            tekshiruvdan keyin saqlanadi (rad etilganda yetim fayl yo'q).
+          • Tarix: SUPER_ADMIN/MODERATOR — hammasi, qolganlar — o'ziniki.
+        dashboard/:
+          • 🆕 "Xabarlar" bo'limi (Savdo): rasm tanlash (ko'rinishi bilan),
+            sarlavha, matn, "Barchasiga / Tanlangan mijozlarga" + qidiruv
+            (menejerda faqat o'z mijozlari), tarix.
+          • Kabinet bildirishnomasi: rasm yuqorida, matn OSTIDA.
+      Tekshirildi:
+        • api: tsc (build config) + lint + openapi:export; dashboard:
+          typecheck + lint + test 342/342 (FormData testi).
+        • curl: moderator ALL (rasm bilan) → 7; SELECTED [2] → 2; filial
+          admini → Andijon mijozi 404, ALL → 3 (o'z filiali); Andijon
+          menejeri: biriktirilmagan holatda ALL → 400 "faol mijoz yo'q",
+          biriktirilgach ALL → 1, begona mijoz → 404; soxta rasm → 400;
+          bo'sh tanlov → 400 "Kamida bitta mijozni tanlang"; rasm URL 200.
+        • Brauzer: moderator formadan rasm + tanlangan mijoz → "1 ta mijozga
+          yuborildi", tarixda; mijoz kabinetida rasm (320px yuklandi) +
+          ostida matn.
+      Bog'liq: T-007 (menejer ↔ mijoz biriktirish)
+
+
+[x] T-010  Bosh sahifaga Chart qo'shish
+      Paket : dashboard/ (bosh sahifa), api/ (kunlik statistika)
+      Talab :
+        • Asosiy bosh sahifaga chart/statistika qo'shilsin.
+        • Chart orqali:
+            – ma'lumot qaysi kunga tegishli ekanligi ko'rinsin;
+            – kunlar bo'yicha statistikani ko'rish imkoniyati bo'lsin;
+            – foydalanuvchi qaysi kunning natijasini ko'rayotganini
+              aniq tushuna olsin (sana yozuvi, tooltip).
+        • Ko'rsatkichlar (2026-09-25 aniqlashtirildi): barcha
+          ma'lumotlar ko'rinsin.
+        • Chart tepasida — sana va soat filtri:
+            – kalendar: yil, oy va sanani tanlash;
+            – yonida soat tanlash;
+            – yonida tezkor davr tugmalari:
+                3 kunlik · 7 kunlik · 15 kunlik · 1 oylik ·
+                3 oylik · 6 oylik · 12 oylik
+        • Chartda joriy tanlangan davr (qaysi kundan qaysi kungacha,
+          qaysi soat) aniq yozib qo'yiladi.
+      Qabul :
+        • Tezkor tugma bosilganda kalendar ham shu davrga mos
+          yangilanadi va aksincha — ikkalasi bir-biriga zid turmaydi.
+        • Statistika backendda tanlangan davr bo'yicha hisoblanadi
+          (frontendda xom ma'lumotni yig'ib hisoblash emas).
+        • Soat filtri (2026-09-25 aniqlashtirildi): davrning BOSHLANISH
+          va TUGASH soati tanlanadi — masalan 25-sen 09:00 → 26-sen
+          18:00. Chart kunlar bo'yicha qoladi; soat faqat davr
+          chegarasini aniqlaydi.
+        • Tezkor tugmalar (3 kun … 12 oy) davrni hozirgi vaqtdan
+          orqaga hisoblaydi; kalendar va soat maydonlari shu qiymatga
+          to'ldiriladi.
+
+      ✅ BAJARILDI (2026-09-25):
+        api/:
+          • 🆕 `GET /admin/dashboard/daily?from&to[&branchId]` — davr sana
+            VA soat bilan (`from` kiradi, `to` kirmaydi), eng ko'pi 12 oy.
+            Kunlar TOSHKENT vaqti bo'yicha, bo'sh kunlar ham nol bilan. Har
+            kun: buyurtmalar soni, summasi (bekor qilinmaganlari), bekor
+            qilingan, yetkazilgan, TUSHGAN to'lovlar (`paidAt` bo'yicha),
+            yangi mijozlar; `totals` — butun davr. Hisob backendda.
+          • 🔒 Doira buyurtmalar ro'yxati bilan bir xil (mijozlar domeni):
+            SUPER_ADMIN/MODERATOR — hamma filial, filial xodimi — o'ziniki,
+            begona `branchId` — 404.
+        dashboard/:
+          • Bosh sahifada "Kunlik statistika": Dan/Gacha — kalendar (yil,
+            oy, sana) + soat; tezkor tugmalar 3/7/15 kun, 1/3/6/12 oy;
+            qo'lda o'zgartirilsa tugma belgisi olinadi (zid holat yo'q).
+          • "Davr: 18-sentabr 2026, 09:00 → 25-sentabr 2026, 18:00
+            (Toshkent vaqti)" yozuvi; ko'rsatkich yorliqlari (so'm va dona
+            bitta o'qda aralashmaydi); jami qatori.
+          • Chart — kutubxonasiz SVG: ustun ustida (yoki ←/→, Home/End)
+            "25-sentabr 2026, juma — 7 ta"; o'qda sana yozuvlari.
+      Tekshirildi:
+        • api: tsc (build config) + lint + openapi:export. curl: 7 kunlik
+          jami (9) = buyurtmalar ro'yxati (9); 18:00→18:20 soat chegarasi;
+          teskari davr / 13 oy → 400; 12 oy → 365 kun; filial admini
+          begona filial → 404.
+        • dashboard: typecheck + lint + test 347/347 (5 ta yangi: Toshkent
+          vaqti, tezkor davrlar, oy oxiri, davr tekshiruvi, sana yozuvlari).
+        • Brauzer (SUPER_ADMIN): 7 kunlik → hover "25-sentabr 2026, juma —
+          7 ta"; 1 oylik → kalendar 25-avgust; soat qo'lda 09:00 → tugma
+          belgisi yo'qoladi, davr yozuvi yangilanadi; summa yorlig'i,
+          klaviatura; 12 oylik chart.
+
+
+[x] T-011  🔒 Adminlar uchun Notification tizimi
+      Paket : api/ (notification doirasi), dashboard/ (xodim paneli)
+      Talab :
+        • Barcha admin rollariga notification tizimi qo'shilsin.
+
+          Rol           Notification
+          ────────────  ──────────────────────────────────────────────
+          SUPER_ADMIN   Barcha notificationlar
+          MODERATOR     Barcha notificationlar
+          MANAGER       Faqat o'ziga biriktirilgan mijozlarning
+                        notificationlari
+
+        • Menejerga boshqa menejerlarga yoki boshqa mijozlarga tegishli
+          notificationlar ko'rinmasligi kerak.
+      Qabul :
+        • Doira backendda filtrlanadi (menejer boshqa mijozning
+          notificationini ID bo'yicha ham ololmaydi — 404).
+
+      ✅ BAJARILDI (2026-09-25):
+        Topildi: backendda xodim bildirishnomalari bor edi, lekin admin
+        panelda ularni ko'rish UMUMAN yo'q edi; SUPER_ADMIN hech narsa
+        olmasdi ("shovqin" deb), MODERATOR — faqat markaziy ombor
+        buyurtmalari; buyurtma holati o'zgarishi xodimlarga bormasdi.
+        api/ (`NotificationService.staffOf`):
+          • SUPER_ADMIN, MODERATOR — BARCHA xodim bildirishnomalari;
+          • BRANCH_ADMIN — o'z filiali buyurtmalari (avvalgidek);
+          • MANAGER — faqat buyurtmaga YOKI mijozga o'zi biriktirilgan
+            bo'lsa (T-007 dan keyin biriktirish faqat qo'lda).
+          • Holat o'zgarishi endi xodimlarga ham boradi (xaridor nomi bilan).
+          • Har yozuv egasiga (`userId`) bog'langan — begona bildirishnoma
+            ID bo'yicha ham 404 (mavjud inbox `owner` filtri).
+        dashboard/:
+          • Yuqori panelda qo'ng'iroq + o'qilmaganlar soni (30 s, sahifa
+            ko'rinib turganda), `/notifications` sahifasi.
+          • Kabinetdagi ro'yxat umumiy `NotificationsView` ga ajratildi;
+            "Buyurtmani ochish" havolasi (bosilganda o'qilgan bo'ladi).
+      Tekshirildi:
+        • api: tsc (build config) + lint; dashboard: typecheck + lint +
+          test 340/340.
+        • Haqiqiy API + baza: t002-test (Farg'ona menejeriga biriktirilgan)
+          buyurtmasi va bekor qilinishi → yozuvlar: SUPER_ADMIN, MODERATOR,
+          Farg'ona filial admini, Farg'ona menejeri, mijoz. Andijon /
+          Namangan / Qo'qon menejerlari — YO'Q. Moderator SUPER_ADMIN
+          bildirishnomasini o'qilgan qilmoqchi → 404.
+        • Brauzer (SUPER_ADMIN): qo'ng'iroq "2 ta o'qilmagan" → ro'yxat →
+          "Buyurtmani ochish" → buyurtma kartasi; qaytganda "1 ta".
+      ⚠ O'zgarishdan OLDINGI hodisalar uchun admin/moderatorga yozuv
+        qo'shilmadi (orqaga to'ldirish yo'q) — faqat yangilari.
+      Bog'liq: T-007 (menejer ↔ mijoz biriktirish)
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ESKI FAYLLARDAN KO'CHIRILGAN (2026-09-25)                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  api/task.txt va storefront/task.txt dagi ochiq tasklar — asl ID si
+  bilan. dashboard/task.txt da ochiq task yo'q edi (64/64 tugagan).
+  Tarix (bajarilgan qismlar, BAJARILDI bloklari) eski fayllarda qoldi.
+
+
+  ── api/ ────────────────────────────────────────────────────────────────────
+
+[!] B-044  ❓ SPIKE: Didox.uz tadqiqoti (KOD YOZILMAYDI)
+      Paket : api/
+      ⚠ Bu — TADQIQOT, implementatsiya emas. 1-2 kun.
+      Ma'lum (2026-09-09, WebSearch — rasmiy spike o'rnini bosmaydi):
+        • Xizmat nomi «Dedoc» emas — Didox.uz
+        • O'zbekistondagi eng katta EDI/EDO tizimi, 350 000+ korxona
+        • INN orqali ishlaydi, E-IMZO bilan integratsiyalashgan
+        • Rasmiy hamkor API: api-partners.didox.uz/integration
+        • Norasmiy Node.js/TS SDK bor (npm: didox)
+      Aniqlanadi:
+        [x] Didox.uz — aniq qaysi xizmat? ✅ ANIQLANDI (2026-09-09)
+        [ ] INN bo'yicha kompaniya ma'lumotini API orqali olish mumkinmi
+        [ ] Shartnoma huquqiy kuchga egami — E-IMZO bilan imzolanadimi
+            (rasmiy manbalarga ko'ra — ha, lekin tasdiqlash kerak)
+        [ ] Ikkala tomon ham (biz HAM mijoz) Didox'da ro'yxatdan o'tgan
+            bo'lishi kerakmi? Ha bo'lsa — «Telegram orqali yuborish»
+            rejasi (B-045) qayta ko'riladi
+        [ ] Shartnoma shabloni — bitta yoki bir nechta
+      Natija: qaror hujjati — "mumkin / mumkin emas / cheklangan holda".
+      🔒 BLOKLANGAN — mijozdan javob kelmaguncha boshlanmaydi (TZ 7-bo'lim).
+         Hech narsani to'xtatmaydi: B-045 mock bilan bajarilgan.
+
+
+[!] B-050  Haqiqiy Payme integratsiyasi
+      Paket : api/
+      ⚠ ENG OXIRIDA. Faqat mijoz Payme merchant ma'lumotlarini bergach.
+      🔒 BLOKLANGAN (2026-09-16): mijoz talabi — haqiqiy to'lov tizimi
+         hozircha ULANMAYDI. MockPaymentProvider (B-033) ishlatiladi.
+      Nima qilinadi:
+        • PaymeProvider klassi (PaymentProvider interfeysini implement qiladi)
+        • Payme Merchant API: CheckPerformTransaction, CreateTransaction,
+          PerformTransaction, CancelTransaction, CheckTransaction
+        • Signature verification (Basic auth + merchant key)
+        • Sandbox'da to'liq test
+        • .env: PAYMENT_PROVIDER=payme → mock o'rniga shu ishlaydi
+      ⚠ B-032 to'g'ri qilingan bo'lsa — boshqa HECH QANDAY fayl o'zgarmaydi.
+      Bog'liq: B-049 (tugagan)
+
+
+  ── storefront/ ─────────────────────────────────────────────────────────────
+
+[!] S-032  Rasmlar API'dan (`/uploads/...`) va optimallashtirish
+      Paket : storefront/, api/
+      ⚠ QISMAN (2026-09-21). Bajarilgan:
+        • Mahsulot (S-023) va galereya (S-027) rasmlari backenddan;
+          `assetUrl()` nisbiy `/uploads/...` ni to'liq manzilga aylantiradi
+        • `SmartImage`: lazy, async decoding, `fetchPriority`,
+          `aspect-ratio` (layout sakramaydi), yuklanmasa o'rin egallovchi
+      🔴 Qolgani BLOKLANGAN — `srcset` yasab bo'lmaydi:
+        • Backend rasm o'lchamini o'zgartirmaydi (resize yo'q) — bitta
+          manzil, bitta o'lcham. "Telefon 3.5 MB rasm yuklab olmasligi
+          kerak" bandini frontendda hal qilib bo'lmaydi.
+        • Kerak: T-014 (backendda rasm variantlari). Tayyor bo'lgach
+          `SmartImage` ga `srcSet` qo'shiladi — u `sizes` ni allaqachon
+          qabul qiladi.
+      Bog'liq: T-014
+
+
+[ ] S-033  🔒 ⚖️ Marazzi rasmlarini almashtirish — EFIRGA CHIQISHNI BLOKLAYDI
+      Paket : storefront/ (+ admin panel orqali yuklash)
+      ⚠ SAYT SHU HOLDA TIJORIY EFIRGA CHIQA OLMAYDI.
+      Topildi (`ASSETS.md` ning o'zi yozgan):
+        • `public/images/materials/` — 43 ta rasm, 3.5 MB: Marazzi
+          Marbleplay va Mystone Travertino kolleksiyalari
+        • Mualliflik huquqi Marazzi'da, CC0 emas, tijoriy tarqatishga
+          ruxsat yo'q — chiqarishdan oldin ruxsat olish yoki almashtirish
+        • Ular Vodiy Kafel'ning haqiqiy mahsulotini ko'rsatmaydi
+      Nima qilinadi:
+        • Haqiqiy mahsulot suratlari olinadi (yoki litsenziyalanadi)
+        • Admin panel orqali yuklanadi → sayt API'dan oladi (S-032)
+        • Marazzi rasmlari va `image-assets.json`/`sources.json` o'chiriladi
+        • `ASSETS.md` yangilanadi
+      ⚠ Bu — DIZAYN emas, HUQUQIY masala. Mijoz bilan muhokama qilinadi:
+        suratga olish kimning zimmasida va qachon.
+      Bog'liq: S-032
+
+
+[ ] S-034  ⚖️ `audio.mp3` litsenziyasi aniqlanmagan
+      Paket : storefront/
+      Topildi: `public/audio.mp3` — 1.5 MB, `src/lib/sound.js` uni fon
+        musiqasi sifatida aylantirib chaladi. `ASSETS.md` esa "Original
+        Web Audio sine/triangle tones... No downloaded music" deydi —
+        faylning manbasi va litsenziyasi hujjatlashtirilmagan.
+      Nima qilinadi:
+        • Fayl qayerdan olingani aniqlanadi
+        • Litsenziya tozami — tekshiriladi, `ASSETS.md` ga yoziladi
+        • Tiniq bo'lmasa — olib tashlanadi yoki litsenziyali bilan
+          almashtiriladi
+        • 1.5 MB katta — hajmi kamaytiriladi yoki faqat ovoz yoqilganda
+          yuklanadi
+      Bog'liq: S-033
+
+
+[ ] S-035  Kontent: o'ylab topilgan matnlarni almashtirish
+      Paket : storefront/
+      Nima qilinadi:
+        • Mahsulot nomlari va tavsiflari — haqiqiysi (API'dan)
+        • "20 yildan ortiq tajriba", "50 000+ mijoz", "EST. 2006/2008"
+          ⚠ `index.html` da 2008, saytda 2006 — ZIDDIYAT, aniqlanadi
+        • Telefon, manzil, ish vaqti — mijozdan tasdiqlanadi
+        • Kolleksiya nomlari ("Atelier 2026", "Marble Study") — haqiqiymi
+          yoki mock uchun o'ylab topilganmi
+      ❓ Mijozdan haqiqiy kontent kerak.
+      Bog'liq: S-034, T-012
+
+
+[ ] S-038  ❓ QAROR: SPA'ni qidiruv tizimlari ko'radimi
+      Paket : storefront/
+      Muammo: sayt — toza SPA. Robot `/catalog` yoki `/product/...` ni
+        so'raganda BO'SH HTML oladi. Google odatda uddalaydi, lekin
+        kechikadi; Telegram, Facebook, Yandex ko'pincha umuman ko'rmaydi —
+        ulashilgan havola bo'sh ko'rinadi. S-036 dan keyin xom HTML'da
+        sarlavha ham yo'q.
+      Uch yo'l:
+        A) Prerender (build paytida statik HTML) — sayt kichik, mahsulot
+           kam o'zgaradi, mos keladi
+        B) SSR ga o'tish (Next.js / Remix) — katta qayta yozish, GSAP/Lenis
+           kompozitsiyasini qayta qurish kerak
+        C) Hech narsa qilinmaydi — faqat Google'ga tayaniladi
+        → Tavsiya: A.
+      Bog'liq: S-037 (tugagan)
+
+
+[ ] S-045  «Optom kirish» tugmasi (TZ 2-bo'lim)
+      Paket : storefront/
+      TZ 2-bo'limi: «Header'da «Optom kirish» tugmasi — rangi bilan
+        ajralib turadigan, mobil va desktopda ko'rinadigan joyda».
+      Kabinet dashboard'da (`/kabinet/*`), shuning uchun tugma HAVOLA —
+        bosilganda kabinet manziliga olib chiqadi.
+      Nima qilinadi:
+        • `Nav` da ajralib turadigan tugma — desktop va mobil menyuda
+        • Manzil `.env` dan: `VITE_CABINET_URL` (dev: localhost:5174) —
+          o'zgaruvchi `.env` da bor, kodda hali ishlatilmagan
+        • ⚠ Bu YAGONA joy bo'lib qolsin: storefront'da login formasi,
+          token, `/me/*` so'rovi YOZILMAYDI
+        • Chakana mijozga tushunarli bo'lsin — u hisob ocholmaydi:
+          «Optom mijozlar uchun» degan qisqa izoh yoki tooltip
+      Bog'liq: S-005 (tugagan — tugma matni ≥ 16px)
+
+
+  ── Tavsiyalar — eski fayllarda "ticket olinmagan" deb qolganlar ──────────
+
+[ ] T-012  Bosh sahifadagi `CollectionsSection` ni API'ga ulash
+      Paket : storefront/
+      Manba : storefront/task.txt UMUMIY HOLAT (S-022 dan keyin)
+      Muammo: "Tanlangan kolleksiyalar" bo'limi hamon
+        `src/data/products.js` mock'iga bog'liq. Shu sababli mock fayl
+        o'chirilmagan.
+      Qabul : bo'lim `GET /products` (yoki tanlangan mahsulotlar) dan
+        oladi; `src/data/products.js` o'chiriladi.
+
+
+[ ] T-013  `POST /leads` — saytdagi aloqa formasi
+      Paket : api/, storefront/
+      Manba : storefront/task.txt S-030 (C yo'li — forma olib tashlangan)
+      Talab : ism, telefon, xabar qabul qiluvchi ochiq endpoint; xabar
+        admin panelga tushadi. Shundan keyin storefront'da forma qaytadi.
+      ⚠ Ochiq endpoint — spam/rate-limit himoyasi shart.
+
+
+[ ] T-014  Yuklangan rasm uchun variantlar (thumbnail) generatsiyasi
+      Paket : api/ (`src/storage`)
+      Manba : storefront/task.txt S-032
+      Talab : yuklangan rasmdan 400 / 800 / 1600 px webp variantlari;
+        javobda variant manzillari. Ularsiz `srcset` yasab bo'lmaydi va
+        telefon to'liq o'lchamdagi rasmni yuklab oladi.
+      → S-032 ning blokini yechadi.
+
+
+[ ] T-015  Filialga `landmark` (oriyentir) maydoni
+      Paket : api/, dashboard/ (filial formasi), storefront/ (Aloqa)
+      Manba : storefront/task.txt S-025
+      Talab : `Branch` ga ixtiyoriy `landmark` ("Urjuza klinikasi
+        yaqinida"); `BranchPublicDto` ga chiqadi. O'zbekistonda oriyentir
+        ko'cha manzilidan ko'ra ko'proq ish beradi.
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  HOLAT                                                                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  Jami: 23    Tugadi: 11    Jarayonda: 0    Bloklangan: 3
+
+    Yangi (T-001 … T-011) ........ 11 / 11
+    Ko'chirilgan api/ ............ 0 / 2    (B-044, B-050 — mijoz javobini kutadi)
+    Ko'chirilgan storefront/ ..... 0 / 6    (S-032 T-014 ni kutadi;
+                                             S-033/S-034/S-035/S-038 —
+                                             mijoz qarori yoki kontenti)
+    Tavsiyalar (T-012 … T-015) ... 0 / 4
+
+  KEYINGI TASK:  Yangi tasklar (T-001 … T-011) TUGADI.
+                 Qolganlari mijoz qarorini kutadi: B-044, B-050, S-033,
+                 S-034, S-035, S-038; S-032 → T-014. Kod bilan qilinadigan
+                 navbatdagilar: T-012, T-013, T-014, T-015, S-045.

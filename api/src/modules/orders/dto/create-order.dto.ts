@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -39,17 +40,22 @@ export class CreateOrderDto {
   items!: QuoteItemDto[];
 
   @ApiPropertyOptional({
+    default: false,
     description:
-      'Yetkazib berish viloyati — `transportTypeId` bilan BIRGA. Ikkalasi ' +
-      'ham berilmasa — olib ketish (yo‘l kira 0).',
+      'T-004: yetkazib berish kerakmi. `false` — olib ketish.\n\n' +
+      '⚠ Mijoz VILOYATNI TANLAMAYDI: yo‘nalish (viloyat + transport) va ' +
+      'yo‘l kirani buyurtmadan keyin MODERATOR / SUPER_ADMIN belgilaydi ' +
+      '(`PATCH /admin/orders/{id}/delivery`). Shungacha yo‘l kira 0 va ' +
+      'javobda `deliveryPending: true`.',
   })
   @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  regionId?: string;
+  @IsBoolean()
+  deliveryRequested?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Transport turi — `regionId` bilan BIRGA',
+    description:
+      'Afzal ko‘rilgan transport turi — faqat `deliveryRequested` bilan. ' +
+      'Narxga ta’sir qilmaydi: yakuniy transportni admin belgilaydi.',
   })
   @IsOptional()
   @IsString()
@@ -59,7 +65,8 @@ export class CreateOrderDto {
   @ApiPropertyOptional({
     description:
       'Xaritada belgilangan aniq nuqta (TZ 3.13) — `exactLng` bilan birga, ' +
-      'faqat yetkazib berishda. ⚠ Narxga TA’SIR QILMAYDI — faqat logistika.',
+      'faqat yetkazib berishda (`deliveryRequested`). ⚠ Narxga TA’SIR ' +
+      'QILMAYDI — faqat logistika.',
     minimum: -90,
     maximum: 90,
     example: 41.311081,

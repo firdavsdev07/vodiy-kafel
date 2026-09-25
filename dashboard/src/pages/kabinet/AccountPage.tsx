@@ -5,6 +5,8 @@ import {
   type AccountTransaction,
   type TransactionFilters,
 } from '@/features/cabinet/account-api';
+import { ManagerContactCard } from '@/features/cabinet/ManagerContactCard';
+import { useMyManagerContact } from '@/features/cabinet/orders-api';
 import { transactionTypeLabel } from '@/shared/lib/labels';
 import type { ListParamsConfig } from '@/shared/lib/list-params';
 import { useListParams } from '@/shared/lib/use-list-params';
@@ -37,6 +39,7 @@ export default function CabinetAccountPage() {
   const account = useMyAccount();
   const list = useListParams<TransactionFilters>(config);
   const transactions = useMyTransactions(list.params);
+  const contact = useMyManagerContact();
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,6 +66,8 @@ export default function CabinetAccountPage() {
           </>
         )}
       </section>
+
+      <ManagerContactCard query={contact} />
 
       <div className="overflow-hidden rounded-lg border border-line bg-surface">
         <FilterBar hasFilters={list.hasFilters} onReset={list.resetFilters}>

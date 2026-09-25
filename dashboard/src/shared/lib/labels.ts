@@ -139,6 +139,7 @@ export const notificationTypeLabel = {
   NEW_PRODUCT: 'Yangi mahsulot',
   COMMENT_REPLY: 'Javob keldi',
   CONTRACT_READY: 'Shartnoma tayyor',
+  ANNOUNCEMENT: 'Xabar',
 } as const satisfies Record<NotificationType, string>;
 
 /** Narx qoidasi domeni (PricingDomain, D-019). */

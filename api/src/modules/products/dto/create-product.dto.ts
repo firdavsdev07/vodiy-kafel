@@ -1,20 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { IsPositiveDecimalString } from '../../../common/validators/decimal-string';
 import { ProductSurface } from '../../../prisma';
 
+/** Postgres `integer` chegarasi — `UpsertProductStockDto` bilan bir xil. */
+const MAX_STOCK_PALLETS = 2_147_483_647;
+
 /**
  * Yangi mahsulot — UMUMIY tavsif (B-021).
  *
- * ⚠ Bu yerda NARX ham, ZAXIRA ham YO'Q: narx filialga xos
- *   (`PUT /admin/branch-products`), zaxira markaziy omborda
- *   (`PUT /admin/product-stocks`). CLAUDE.md qoida 5.
+ * ⚠ Bu yerda NARX YO'Q: narx filialga xos (`PUT /admin/branch-products`).
+ *   Zaxira markaziy omborda (`PUT /admin/product-stocks`) — faqat
+ *   BOSHLANG'ICH miqdor yaratishda beriladi (`stockPallets`, T-008).
+ *   CLAUDE.md qoida 5.
  *
  * ⚠ `slug` yuborilmaydi — nom va o'lchamdan avtomatik yasaladi va keyin
  *   o'zgarmaydi (katalog havolalari buzilmasligi uchun).
@@ -77,4 +84,19 @@ export class CreateProductDto {
   })
   @IsPositiveDecimalString(7, 3)
   weightPerPallet!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'T-008: markaziy ombordagi boshlang‘ich miqdor (paddon). Berilmasa — ' +
+      '0 (zaxira yozuvi baribir yaratiladi). Keyinchalik `PUT ' +
+      '/admin/product-stocks` bilan o‘zgartiriladi — mahsulotni tahrirlash ' +
+      'orqali EMAS. Buyurtmada shu miqdordan ko‘p berib bo‘lmaydi (T-005).',
+    example: 120,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(MAX_STOCK_PALLETS)
+  stockPallets?: number;
 }

@@ -6,7 +6,7 @@ export type CustomerListItem = Schema<'AdminCustomerListItemDto'>;
 export type CustomerFilters = { search: string; branchId: string; isActive: string; hasDebt: string };
 
 /**
- * 🔒 Filial filtri FAQAT SUPER_ADMIN ga (G5). Filial admini o'z filialini
+ * 🔒 Filial filtri FAQAT SUPER_ADMIN va MODERATOR ga (G5, T-001). Filial admini o'z filialini
  * backenddan oladi — frontendda qo'shimcha filtr QO'YILMAYDI.
  */
 export const superAdminCustomerConfig: ListParamsConfig<CustomerFilters> = {

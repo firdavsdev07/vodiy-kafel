@@ -8,7 +8,7 @@ export type UpdateCustomerBody = Schema<'UpdateCustomerDto'>;
 
 /**
  * Mijoz profili (D-022). Login O'ZGARMAYDI. `inn: null` / `managerId: null` —
- * tozalash. 🔒 Filialni o'zgartirish — faqat SUPER_ADMIN (mijoz narxi
+ * tozalash. 🔒 Filialni o'zgartirish — faqat SUPER_ADMIN / MODERATOR (mijoz narxi
  * o'zgaradi, eski menejer uziladi).
  */
 export const customerProfileSchema = z.object({

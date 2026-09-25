@@ -8,9 +8,9 @@ export type Notification = Schema<'NotificationDto'>;
 export type NotificationFilters = { isRead: string };
 
 /**
- * Bildirishnomalar (D-058) — FAQAT optom mijoz uchun
- * (`CustomerOnlyGuard`). ⚠ Xodimda bildirishnoma endpointi umuman yo'q
- * (ochiq savol ❓ 4): bu hooklar xodim sahifalarida ishlatilmaydi.
+ * Bildirishnomalar (D-058, T-011) — mijoz ham, xodim ham: `/me/notifications`
+ * egani tokendan oladi. (Avvalgi "xodimda endpoint yo'q" izohi eskirgan edi —
+ * controller `CustomerOnlyGuard` siz.)
  */
 export function useNotifications(params: ListParams<NotificationFilters>) {
   // `isRead` URL'da satr, API'da mantiqiy qiymat — boshqa qiymat filtrsiz
@@ -29,13 +29,17 @@ export function useNotifications(params: ListParams<NotificationFilters>) {
   });
 }
 
-/** O'qilmaganlar soni — sarlavhadagi qo'ng'iroq uchun (D-051). */
-export function useUnreadCount(enabled = true) {
+/**
+ * O'qilmaganlar soni — sarlavhadagi qo'ng'iroq uchun (D-051).
+ * `pollMs` — admin panelda fon yangilanishi (`/me/updates` o'rniga; T-011).
+ */
+export function useUnreadCount(enabled = true, pollMs?: number) {
   return useQuery({
     queryKey: queryKeys.cabinet.unreadCount,
     queryFn: ({ signal }) => api.get('/me/notifications/unread-count', { signal }),
     enabled,
     staleTime: 30_000,
+    ...(pollMs ? { refetchInterval: pollMs, refetchIntervalInBackground: false } : {}),
   });
 }
 

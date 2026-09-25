@@ -190,6 +190,13 @@ export class AdminOrderDetailDto extends OmitType(OrderCustomerResponseDto, [
   @ApiPropertyOptional({ type: BranchNameRefDto, nullable: true })
   branch!: BranchNameRefDto | null;
 
+  @ApiPropertyOptional({
+    type: BranchNameRefDto,
+    nullable: true,
+    description: 'T-004: jo‘natiladigan CENTRAL ombor (moderator belgilaydi).',
+  })
+  dispatchBranch!: BranchNameRefDto | null;
+
   @ApiPropertyOptional({ type: OrderBuyerDto, nullable: true })
   buyer!: OrderBuyerDto | null;
 
@@ -280,4 +287,50 @@ export class CreateManualOrderDto extends CreateOrderDto {
   @IsOptional()
   @IsBoolean()
   isUrgent?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Yetkazib berish viloyati — `transportTypeId` bilan BIRGA; yo‘l kira ' +
+      'darhol hisoblanadi.\n\n🔒 T-004: faqat MODERATOR va SUPER_ADMIN. ' +
+      'Filial xodimi yuborsa — 403 (u faqat `deliveryRequested` beradi, ' +
+      'yo‘nalishni keyin moderator belgilaydi).',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  regionId?: string;
+}
+
+/**
+ * Buyurtmaning yetkazib berishini belgilash (T-004) — MODERATOR / SUPER_ADMIN.
+ *
+ * `regionId` + `transportTypeId` BIRGA: yo'l kira tarif va mijoz qoidalari
+ * bo'yicha qayta hisoblanadi. Ikkalasi `null` — olib ketish (yo'l kira 0).
+ * Maydon umuman berilmasa — o'zgarmaydi.
+ */
+export class SetOrderDeliveryDto {
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: 'Jo‘natiladigan CENTRAL ombor. `null` — tozalash.',
+  })
+  @IsOptional()
+  @ValidateIf((dto: SetOrderDeliveryDto) => dto.dispatchBranchId !== null)
+  @IsString()
+  @IsNotEmpty()
+  dispatchBranchId?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  @IsOptional()
+  @ValidateIf((dto: SetOrderDeliveryDto) => dto.regionId !== null)
+  @IsString()
+  @IsNotEmpty()
+  regionId?: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  @IsOptional()
+  @ValidateIf((dto: SetOrderDeliveryDto) => dto.transportTypeId !== null)
+  @IsString()
+  @IsNotEmpty()
+  transportTypeId?: string | null;
 }

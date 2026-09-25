@@ -49,6 +49,31 @@ describe('qo‘lda buyurtma (D-028)', () => {
     expect(r.success && toManualOrderBody(r.data)).toMatchObject({ regionId: 'r1', transportTypeId: 't1', paymentMethod: 'BANK_TRANSFER' });
   });
 
+  it('🔒 T-004: filial xodimi viloyat YUBORMAYDI — faqat yetkazib berishni so‘raydi', () => {
+    const r = manualOrderSchema({ branchRequired: false, canRoute: false }).safeParse({
+      ...manualOrderDefaults,
+      items: [item],
+      customer,
+      delivery: 'DELIVERY',
+      regionId: 'r1',
+      transportTypeId: 't1',
+    });
+    expect(r.success).toBe(true);
+    const body = r.success ? toManualOrderBody(r.data, false) : null;
+    expect(body).toMatchObject({ deliveryRequested: true, transportTypeId: 't1' });
+    expect(body).not.toHaveProperty('regionId');
+
+    // Transport ixtiyoriy — tanlanmasa faqat so'rov ketadi
+    const bare = manualOrderSchema({ branchRequired: false, canRoute: false }).safeParse({
+      ...manualOrderDefaults,
+      items: [item],
+      customer,
+      delivery: 'DELIVERY',
+    });
+    expect(bare.success && toManualOrderBody(bare.data, false)).toMatchObject({ deliveryRequested: true });
+    expect(bare.success && toManualOrderBody(bare.data, false)).not.toHaveProperty('transportTypeId');
+  });
+
   it('WEBSITE manbasi qo‘lda tanlanmaydi', () => {
     expect(parse({ customer, source: 'WEBSITE' as never }).success).toBe(false);
   });

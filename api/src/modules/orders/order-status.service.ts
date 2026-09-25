@@ -66,7 +66,7 @@ export class OrderStatusService {
       select: {
         status: true,
         branchId: true,
-        transportTypeId: true,
+        deliveryRequested: true,
         customerId: true,
         orderNumber: true,
       },
@@ -79,9 +79,12 @@ export class OrderStatusService {
       actor,
       order.branchId ?? '',
       ORDER_NOT_FOUND,
+      'CUSTOMERS',
     );
 
-    const hasDelivery = order.transportTypeId !== null;
+    // T-004: yetkazib berish SO'RALGAN bo'lsa — yo'nalish hali belgilanmagan
+    // (transport yo'q) bo'lsa ham mashina qidiriladi.
+    const hasDelivery = order.deliveryRequested;
     if (dto.status === order.status) {
       throw new BadRequestException('Buyurtma allaqachon shu holatda');
     }
@@ -128,14 +131,49 @@ export class OrderStatusService {
           data: { status: PaymentStatus.CANCELLED },
         });
 
+        // T-005: band qilingan zaxira omborga qaytadi. Belgi (`stockReserved`)
+        // shartli yechiladi — ikki marta qaytarilmasin; zaxirani band
+        // qilmagan eski buyurtmada esa umuman qo'shilmaydi.
+        const released = await tx.order.updateMany({
+          where: { id: orderId, stockReserved: true },
+          data: { stockReserved: false },
+        });
+        if (released.count > 0) {
+          const items = await tx.orderItem.groupBy({
+            by: ['productId'],
+            where: { orderId },
+            _sum: { pallets: true },
+          });
+          for (const item of items) {
+            await tx.productStock.updateMany({
+              where: { productId: item.productId },
+              data: { stockPallets: { increment: item._sum.pallets ?? 0 } },
+            });
+          }
+        }
+
         // Qarzni qaytarish (B-035): buyurtma bo'yicha yozilgan qarz qancha
         // bo'lsa, shuncha teskari ADJUSTMENT. Summa buyurtmadan emas,
         // HISOBDAN olinadi — qarz yozilmagan eski buyurtmada ikki marta
         // "kamaytirib" yubormaslik uchun. To'langan pul qaytmaydi: mijozda
         // avans (manfiy balans) qoladi, qaytarish — alohida ADJUSTMENT.
+        //
+        // T-004: SOF qarz = DEBT + buyurtmaga bog'langan ADJUSTMENT. Moderator
+        // yo'l kirani kamaytirsa, farq teskari ADJUSTMENT bilan yoziladi —
+        // faqat DEBT qaytarilsa, mijozga o'sha farq IKKINCHI marta berilardi.
+        // (Qo'lda kiritilgan harakat buyurtmaga bog'lanmaydi, bekor qilish
+        // ADJUSTMENT i esa faqat shu yerda va bir marta — CANCELLED yakuniy.)
         if (order.customerId) {
           const { _sum } = await tx.accountTransaction.aggregate({
-            where: { orderId, type: AccountTransactionType.DEBT },
+            where: {
+              orderId,
+              type: {
+                in: [
+                  AccountTransactionType.DEBT,
+                  AccountTransactionType.ADJUSTMENT,
+                ],
+              },
+            },
             _sum: { amount: true },
           });
           if (_sum.amount?.isPositive() && !_sum.amount.isZero()) {
@@ -216,7 +254,7 @@ export class OrderStatusService {
         id: true,
         orderNumber: true,
         status: true,
-        transportTypeId: true,
+        deliveryRequested: true,
         statusHistory: {
           orderBy: { createdAt: 'asc' },
           select: {
@@ -234,7 +272,7 @@ export class OrderStatusService {
       orderNumber: order.orderNumber,
       status: order.status,
       allowedNextStatuses: [
-        ...allowedNextStatuses(order.status, order.transportTypeId !== null),
+        ...allowedNextStatuses(order.status, order.deliveryRequested),
       ] as OrderStatus[],
       statusHistory: order.statusHistory,
     };

@@ -7,7 +7,8 @@ import { ConfirmPaymentDialog } from '@/features/orders/ConfirmPaymentDialog';
 import { AssignManagerModal, UrgentToggle } from '@/features/orders/OrderAssignControls';
 import { BackLink, Card, DeliveryCard, OrderItemsCard, StatusHistoryCard } from '@/features/orders/OrderDetailParts';
 import { OrderStatusActions } from '@/features/orders/OrderStatusActions';
-import { buyerOf, isManuallyConfirmable, type OrderDetail, type OrderPayment } from '@/features/orders/detail';
+import { SetDeliveryForm } from '@/features/orders/SetDeliveryForm';
+import { buyerOf, canEditDelivery, isManuallyConfirmable, type OrderDetail, type OrderPayment } from '@/features/orders/detail';
 import { formatUzPhone } from '@/shared/lib/format';
 import { orderingTypeLabel, orderSourceLabel, paymentMethodLabel } from '@/shared/lib/labels';
 import { Badge, Button, DateText, ErrorState, MoneyText, PageLoading, StatusBadge } from '@/shared/ui';
@@ -27,6 +28,8 @@ export default function OrderDetailPage() {
   const canAssign = useCan('orders.assign');
   const [assigning, setAssigning] = useState(false);
   const canConfirmPayment = useCan('payments.confirm');
+  // T-004: yo'nalish va yo'l kira — faqat moderator va bosh admin
+  const canSetDelivery = useCan('orders.setDelivery');
   const [confirming, setConfirming] = useState<OrderPayment | null>(null);
 
   if (order.isPending) return <PageLoading />;
@@ -89,7 +92,9 @@ export default function OrderDetailPage() {
       <OrderItemsCard order={o} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <DeliveryCard order={o} pickupText="Olib ketish — mijoz omborning o‘zidan oladi" />
+        <DeliveryCard order={o} pickupText="Olib ketish — mijoz omborning o‘zidan oladi">
+          {canSetDelivery && canEditDelivery(o) && <SetDeliveryForm key={o.id} order={o} />}
+        </DeliveryCard>
 
         <Card title="To‘lov">
           {o.payments.length === 0 ? (

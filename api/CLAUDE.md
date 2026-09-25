@@ -57,6 +57,15 @@ Zaxira uch darajada ko'rinadi (TZ 3.2, 3.7.1) — **ular bir xil emas**:
 
 → Har bir entity uchun ikki xil DTO: `PublicDto` va `AdminDto`.
 
+### 2a. Zaxira buyurtmada BAND qilinadi (T-005, 2026-09-25)
+
+Buyurtma yaratilgan tranzaksiyaning o'zida `ProductStock.stockPallets`
+shartli kamayadi (`stockPallets >= kerak`) — parallel buyurtmalar ham
+zaxiradan oshib ketolmaydi; bekor qilinganda qaytadi (`Order.stockReserved`
+belgisi — ikki marta qaytarilmasin, eski buyurtmalar zaxiraga soxta
+qo'shimcha bermasin). Ya'ni "Zaxira" soni = hali buyurtma qilinmagan qoldiq.
+Mijozga faqat "yetadi / yetmaydi" (`enoughStock`) — aniq son sirligicha.
+
 ### 3. Tashqi xizmatlar — interfeys ortida
 To'lov, SMS, Telegram, Didox.uz, fayl saqlash — hammasi interfeys + mock.
 Biznes-servis konkret provayder nomini **bilmaydi**.
@@ -91,6 +100,17 @@ Buyurtma, kabinet, balans, bildirishnoma — faqat shu toifa uchun.
 Telefon yoki Telegram orqali kelgan buyurtmani menejer admin panelidan
 qo'lda kiritadi — mehmon checkout yo'q.
 
+**Yetkazib berish yo'nalishini mijoz TANLAMAYDI** (T-004, 2026-09-25): u
+faqat "yetkazib bering" deydi (`deliveryRequested`, afzal transport,
+xaritadagi nuqta). Jo'natish ombori, viloyat, transport va yo'l kirani
+MODERATOR / SUPER_ADMIN buyurtmadan keyin belgilaydi (`PATCH
+/admin/orders/{id}/delivery`) — summa, kutilayotgan to'lov va balans shu
+yerda qayta hisoblanadi.
+
+**Mijoz ↔ menejer biriktirish faqat qo'lda** (T-007): avtomatik/default
+biriktirish yo'q — na seed'da, na mijoz yaratishda, na buyurtma
+taqsimlashda (`CustomerManagerOnlyStrategy`).
+
 > ⚠ Bu TZ 3.5 ga ZID (TZ chakana mijoz ro'yxatdan o'tadi deydi).
 > Mijozning 2026-09-08 dagi og'zaki talabi ustun.
 
@@ -119,7 +139,12 @@ Andijonda turli summa beradi.
 - `BRANCH_ADMIN` / `MANAGER` faqat **o'z filialini** ko'radi — narx,
   mijoz, buyurtma, balans. Boshqa filialniki → **404**
   (403 emas — mavjudligini oshkor qilmaslik uchun)
-- `MODERATOR` — faqat o'z CENTRAL filiali
+- `MODERATOR` — o'z CENTRAL filiali; lekin **mijozlar domenida** (optom
+  mijoz, uning balansi, mijoz buyurtmalari, to'lovni tasdiqlash, filial va
+  menejerlar ro'yxatini o'qish, kunlik statistika) — SUPER_ADMIN kabi
+  hamma filial (T-001, 2026-09-25): `BranchScopeService.resolve(actor,
+  branchId, 'CUSTOMERS')`. Narx qoidalari, xodim boshqaruvi, sozlamalar —
+  avvalgidek yopiq
 - `SUPER_ADMIN` hammasini ko'radi (`branchId = null`)
 - Optom mijozning `branchId` si majburiy — u o'z filialining narxini ko'radi
   va buyurtmani o'sha filialga beradi

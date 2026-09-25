@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api';
 import { queryKeys } from '@/shared/query';
 import type { KpiSource } from './kpi';
@@ -48,5 +48,18 @@ export function useKpiCount(
     },
     enabled,
     refetchInterval: REFETCH_INTERVAL,
+  });
+}
+
+/**
+ * Kunlik statistika (T-010) — chart. Davr Toshkent vaqtida, ISO bilan
+ * (`toIso`). Hisob BACKENDDA; bo'sh kunlar ham keladi.
+ */
+export function useDailyStats(range: { from: string; to: string } | null) {
+  return useQuery({
+    queryKey: [...queryKeys.dashboardStats, 'daily', range] as const,
+    queryFn: ({ signal }) => api.get('/admin/dashboard/daily', { query: range!, signal }),
+    enabled: range !== null,
+    placeholderData: keepPreviousData,
   });
 }

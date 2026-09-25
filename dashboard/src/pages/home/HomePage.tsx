@@ -2,6 +2,7 @@ import { ArrowLeftRight, ArrowRight, Boxes, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { useCan, useProfile } from '@/features/auth/hooks';
 import { useDashboardStats, useKpiCount } from '@/features/home/api';
+import { DailyStatsCard } from '@/features/home/DailyStatsCard';
 import {
   kpiCards,
   statsCount,
@@ -44,6 +45,9 @@ export default function HomePage() {
           <KpiTile key={card.id} card={card} stats={stats} />
         ))}
       </section>
+
+      {/* T-010: kunlar bo'yicha statistika — sana/soat davri va tezkor tugmalar */}
+      <DailyStatsCard />
 
       <section aria-label="Tezkor amallar" className="flex flex-wrap gap-3">
         {canOrder && (

@@ -132,10 +132,18 @@ export class ProductsAdminService {
       dto.categoryId && this.requireCategory(dto.categoryId),
     ]);
     const slug = buildProductSlug(dto.name, size.label);
+    const { stockPallets, ...productData } = dto;
 
     try {
+      // Zaxira yozuvi mahsulot bilan BIRGA (bitta so'rov): miqdor berilmasa
+      // ham 0 bilan — buyurtma tekshiruvi (T-005) yozuvsiz mahsulotni
+      // "0 bor" deb o'qiydi, lekin admin ro'yxatida bo'sh qator qolmasin.
       const row = await this.prisma.product.create({
-        data: { ...dto, slug },
+        data: {
+          ...productData,
+          slug,
+          stock: { create: { stockPallets: stockPallets ?? 0 } },
+        },
         select: ADMIN_SELECT,
       });
       if (row.isActive) this.emitActivated(row.id);

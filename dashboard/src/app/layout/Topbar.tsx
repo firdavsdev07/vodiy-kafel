@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { LogOut, Menu, Store } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Bell, LogOut, Menu, Store } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router';
 import { useLogout, useProfile } from '@/features/auth/hooks';
+import { useUnreadCount } from '@/features/cabinet/notifications-api';
 import { api } from '@/shared/api';
 import { roleLabel } from '@/shared/lib/labels';
 import { queryKeys } from '@/shared/query';
@@ -13,6 +14,9 @@ export function Topbar({ title, onOpenMenu }: { title: string; /** Telefonda —
   const { data: profile } = useProfile();
   const logout = useLogout();
   const branchId = profile?.branchId ?? null;
+  // T-011: xodim bildirishnomalari — har 30 soniyada (sahifa ko'rinib turganda)
+  const unread = useUnreadCount(Boolean(profile), 30_000);
+  const unreadCount = unread.data?.count ?? 0;
 
   const branch = useQuery({
     queryKey: queryKeys.branches.detail(branchId ?? ''),
@@ -55,6 +59,23 @@ export function Topbar({ title, onOpenMenu }: { title: string; /** Telefonda —
             <p className="text-xs text-muted">{roleLabel[profile.role]}</p>
           </div>
         )}
+        <NavLink
+          to="/notifications"
+          aria-label={unreadCount > 0 ? `Bildirishnomalar — ${unreadCount} ta o‘qilmagan` : 'Bildirishnomalar'}
+          title="Bildirishnomalar"
+          className={({ isActive }) =>
+            `relative inline-flex size-9 items-center justify-center rounded-md border border-line bg-surface hover:bg-surface-muted ${
+              isActive ? 'text-fg' : 'text-muted'
+            }`
+          }
+        >
+          <Bell size={16} aria-hidden />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 inline-flex min-w-4.5 items-center justify-center rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-white tabular-nums">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </NavLink>
         <ThemeToggle />
         <button
           type="button"

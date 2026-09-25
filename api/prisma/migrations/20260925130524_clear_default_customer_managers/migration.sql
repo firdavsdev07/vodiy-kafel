@@ -1,0 +1,13 @@
+-- T-007 (2026-09-25): mijoz ↔ menejer DEFAULT biriktirishlarini olib tashlash.
+--
+-- Mijoz talabi: "Adminlarga oldindan biriktirilgan default mijozlar bor —
+-- ularni olib tashlash kerak; mijozni kerakli admin/menejerga QO'LDA
+-- biriktiramiz". Ular seed'dan (har bir optom mijoz — filial menejeriga)
+-- va menejer yaratgan mijozni avtomatik o'ziga biriktirish qoidasidan
+-- kelgan; ikkala manba ham kodda o'chirildi.
+--
+-- ⚠ Foydalanuvchi qarori bilan HAMMASI tozalanadi (qo'lda qilinganlari ham) —
+--   kerakli mijozlar admin panelda qayta biriktiriladi.
+-- Buyurtmalarning menejeri (`orders.manager_id`) ATAYLAB tegilmaydi:
+-- ochiq buyurtma ustida ishlayotgan xodim o'z ishidan uzilmasin.
+UPDATE "customers" SET "manager_id" = NULL WHERE "manager_id" IS NOT NULL;

@@ -233,7 +233,7 @@ export class SupplyOrdersService {
       ...this.orders.toCustomerDto(order),
       orderingBranch: order.orderingBranch,
       allowedNextStatuses: [
-        ...allowedNextStatuses(order.status, order.transportTypeId !== null),
+        ...allowedNextStatuses(order.status, order.deliveryRequested),
       ] as OrderStatus[],
     };
   }

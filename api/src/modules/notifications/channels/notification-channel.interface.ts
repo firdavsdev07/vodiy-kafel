@@ -23,6 +23,8 @@ export interface NotificationMessage {
   body: string;
   /** Bosilganda qayerga: `{ orderId }` yoki `{ productId }`. */
   payload?: Record<string, string>;
+  /** T-009: xabar rasmi — kabinetda matn USTIDA ko'rsatiladi. */
+  imageUrl?: string | null;
 }
 
 /**

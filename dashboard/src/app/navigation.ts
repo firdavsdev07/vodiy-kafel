@@ -6,6 +6,7 @@ import {
   Handshake,
   Images,
   LayoutDashboard,
+  Megaphone,
   Package,
   Ruler,
   Settings,
@@ -32,6 +33,7 @@ export type SectionId =
   | 'orders'
   | 'supplyOrders'
   | 'customers'
+  | 'announcements'
   | 'products'
   | 'factories'
   | 'sizes'
@@ -94,6 +96,13 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         title: 'Optom mijozlar',
         icon: Users,
         roles: PERMISSIONS['customers.manage'],
+      },
+      {
+        id: 'announcements',
+        path: '/announcements',
+        title: 'Xabarlar',
+        icon: Megaphone,
+        roles: PERMISSIONS['announcements.send'],
       },
     ],
   },

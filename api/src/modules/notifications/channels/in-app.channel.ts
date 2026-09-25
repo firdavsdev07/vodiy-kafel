@@ -37,6 +37,7 @@ export class InAppChannel implements NotificationChannel {
         title: message.title,
         body: message.body,
         payload: message.payload,
+        imageUrl: message.imageUrl ?? null,
       },
     });
   }

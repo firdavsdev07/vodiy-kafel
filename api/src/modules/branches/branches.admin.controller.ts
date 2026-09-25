@@ -75,7 +75,9 @@ export class BranchesAdminController {
   )
   @ApiOperation({
     summary: 'Filiallar (RETAIL + CENTRAL, yopilganlari bilan)',
-    description: '🔒 Filial xodimi faqat o‘z filialini ko‘radi.',
+    description:
+      '🔒 Filial xodimi faqat o‘z filialini ko‘radi. MODERATOR — hamma ' +
+      'filialni (optom mijozni RETAIL filialga ochish uchun).',
   })
   @ApiDataResponse(BranchAdminDto, { isArray: true, description: 'Filiallar' })
   findAll(

@@ -24,6 +24,7 @@ import { ApiError } from '@/shared/api';
 import { errorMessage } from '@/shared/lib/error-message';
 import { formatMoney } from '@/shared/lib/format';
 import { orderSourceLabel, paymentMethodLabel } from '@/shared/lib/labels';
+import { can } from '@/shared/lib/permissions';
 import { useDebouncedValue } from '@/shared/lib/use-debounced-value';
 import { useUnsavedChanges } from '@/shared/lib/use-unsaved-changes';
 import {
@@ -53,11 +54,12 @@ export default function OrderCreatePage() {
   const navigate = useNavigate();
   const profile = useProfile().data;
   const isSuperAdmin = profile?.role === 'SUPER_ADMIN';
+  const canRoute = can(profile?.role, 'orders.setDelivery');
   const create = useCreateManualOrder();
   const branches = useBranches(isSuperAdmin);
 
   const form = useForm<ManualOrderInput, unknown, ManualOrderValues>({
-    resolver: zodResolver(manualOrderSchema({ branchRequired: isSuperAdmin })),
+    resolver: zodResolver(manualOrderSchema({ branchRequired: isSuperAdmin, canRoute })),
     defaultValues: manualOrderDefaults,
   });
   const items = useFieldArray({ control: form.control, name: 'items' });
@@ -68,7 +70,7 @@ export default function OrderCreatePage() {
 
   const onSubmit = form.handleSubmit((values) => {
     if (create.isPending) return;
-    create.mutate(toManualOrderBody(values), {
+    create.mutate(toManualOrderBody(values, canRoute), {
       onSuccess: (order) => {
         // Summa faqat SHU yerda ma'lum bo'ladi — xodim mijozga aytishi uchun xabarda
         toast.success(`${order.orderNumber} yaratildi — jami ${formatMoney(order.grandTotal)}`);
@@ -227,7 +229,7 @@ export default function OrderCreatePage() {
               required
               options={MANUAL_SOURCES.map((s) => ({ value: s, label: orderSourceLabel[s] }))}
             />
-            {delivery === 'DELIVERY' && (
+            {delivery === 'DELIVERY' && canRoute && (
               <>
                 <SelectField
                   control={form.control}
@@ -245,6 +247,21 @@ export default function OrderCreatePage() {
                   placeholder={transports.isPending ? 'Yuklanmoqda…' : 'Tanlang…'}
                   options={(transports.data ?? []).map((t) => ({ value: t.id, label: `${t.name} — ${t.capacityPallets} paddongacha` }))}
                 />
+              </>
+            )}
+            {/* T-004: filial xodimi yo'nalish bermaydi — moderator belgilaydi */}
+            {delivery === 'DELIVERY' && !canRoute && (
+              <>
+                <SelectField
+                  control={form.control}
+                  name="transportTypeId"
+                  label="Afzal transport (ixtiyoriy)"
+                  placeholder="Farqi yo‘q"
+                  options={(transports.data ?? []).map((t) => ({ value: t.id, label: `${t.name} — ${t.capacityPallets} paddongacha` }))}
+                />
+                <p className="self-end pb-2 text-xs text-muted">
+                  Yo‘nalish va yo‘l kirani moderator belgilaydi — buyurtma yaratilgach summaga qo‘shiladi.
+                </p>
               </>
             )}
             <SelectField

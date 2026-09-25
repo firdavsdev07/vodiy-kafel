@@ -2843,57 +2843,8 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [!] S-032 · Rasmlar API'dan (`/uploads/...`) va optimallashtirish ──────────┐
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • Mahsulot rasmlari backend `/uploads/...` manzilidan olinadi             │
-│    • `SmartImage` kengaytiriladi: `loading="lazy"`, `decoding="async"`,      │
-│      aniq `width`/`height` (layout sakrashini oldini olish)                  │
-│    • `srcset`/`sizes` — telefon 3.5 MB rasm yuklab olmasligi kerak           │
-│    • Rasm yuklanmasa — o'rin egallovchi (placeholder)                        │
-│    • ⚠ Backend hozir rasm o'lchamlarini o'zgartirmaydi (resize yo'q) —       │
-│      katta rasm yuklansa, o'sha katta holda keladi. 🆕 Kerak bo'lsa          │
-│      `api/task.txt` ga task (thumbnail generatsiyasi)                        │
-│                                                                              │
-│                                                                              │
-│  ⚠ QISMAN — 2026-09-21 · QOLGANI BACKENDNI KUTADI                            │
-│                                                                              │
-│    ── BAJARILDI ──                                                           │
-│                                                                              │
-│      Mahsulot rasmlari backenddan (`S-023`), galereya rasmlari ham           │
-│      (`S-027`). `assetUrl()` nisbiy `/uploads/...` ni to'liq manzilga        │
-│      aylantiradi, tashqi (`https://`) manzilga tegmaydi.                     │
-│                                                                              │
-│      `SmartImage`: `loading="lazy"`, `decoding="async"`,                     │
-│      `fetchPriority`, ramkada `aspect-ratio` (joy oldindan band              │
-│      qilinadi — layout sakramaydi), yuklanmasa o'rin egallovchi.             │
-│                                                                              │
-│      ⚠ Manba UMUMAN yo'q bo'lsa mahalliy zaxiraga TUSHMAYDI: u               │
-│        Marazzi namunasining rasmi, mahsulotniki emas (S-033).                │
-│                                                                              │
-│    ── 🔴 BLOKLANGAN: `srcset` YASAB BO'LMAYDI ──                             │
-│                                                                              │
-│      Taskning o'zi yozib qo'ygan: backend rasm o'lchamini                    │
-│      o'zgartirmaydi (resize yo'q). Bitta manzil, bitta o'lcham.              │
-│                                                                              │
-│      `srcset` — bu "shu rasmning 400px, 800px, 1600px nusxalari"             │
-│      degani. Nusxalar YO'Q ekan, frontend ularni o'zidan yasay               │
-│      olmaydi: brauzerga bir xil faylni uch marta ko'rsatish hech             │
-│      narsani tejamaydi.                                                      │
-│                                                                              │
-│      Ya'ni "telefon 3.5 MB rasm yuklab olmasligi kerak" bandi                │
-│      HOZIRCHA BAJARILMAYDI va uni frontendda hal qilib bo'lmaydi.            │
-│                                                                              │
-│      🆕 KERAK: `api/task.txt` ga task — yuklangan rasm uchun                 │
-│         thumbnail/variant generatsiyasi (masalan 400/800/1600 px             │
-│         webp). Shu tayyor bo'lgach `SmartImage` ga `srcSet`                  │
-│         qo'shiladi — u allaqachon `sizes` ni qabul qiladi.                   │
-│                                                                              │
-│      Shu sababli task [x] emas, [!] qilib qoldirildi.                        │
-│                                                                              │
-│  Bog'liq: S-031                                                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-032 · Rasmlar API'dan (`/uploads/...`) va optimallashtirish
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 
 
@@ -2902,66 +2853,14 @@
 ║  Maqsad: sayt efirga chiqishi uchun hal qilinishi SHART bo'lgan narsalar.    ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-┌─ [ ] S-033 · 🔒 ⚖️ Marazzi rasmlarini almashtirish — BLOKLOVCHI ───────────┐
-│                                                                              │
-│  ⚠ SAYT SHU HOLDA EFIRGA CHIQA OLMAYDI.                                      │
-│                                                                              │
-│  TOPILDI (`ASSETS.md` ning O'ZI yozib qo'ygan):                              │
-│    `public/images/materials/` — 43 ta rasm, 3.5 MB, manbasi:                 │
-│    Marazzi Marbleplay va Marazzi Mystone Travertino kolleksiyalari.          │
-│                                                                              │
-│    ASSETS.md dan aynan: mualliflik huquqi Marazzi'da qoladi, CC0 emas,       │
-│    tijoriy tarqatishga ruxsat yo'q, va tijoriy sayt chiqarishdan oldin       │
-│    ruxsat olish yoki almashtirish kerak.                                     │
-│                                                                              │
-│    Ular Vodiy Kafel'ning haqiqiy mahsulotini ham ko'rsatmaydi —              │
-│    mahsulot nomlari va xususiyatlari ham o'ylab topilgan.                    │
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • Haqiqiy mahsulot suratlari olinadi (yoki litsenziyalanadi)              │
-│    • Ular admin panel orqali yuklanadi → sayt API'dan oladi (S-032)          │
-│    • Marazzi rasmlari va `image-assets.json`/`sources.json` o'chiriladi      │
-│    • `ASSETS.md` yangilanadi                                                 │
-│                                                                              │
-│  ⚠ Bu — DIZAYN emas, HUQUQIY masala. Mijoz bilan muhokama qilinishi          │
-│    shart: suratga olish kimning zimmasida va qachon.                         │
-│                                                                              │
-│  Bog'liq: S-032                                                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-033 · 🔒 ⚖️ Marazzi rasmlarini almashtirish — BLOKLOVCHI
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
-┌─ [ ] S-034 · ⚖️ `audio.mp3` litsenziyasi aniqlanmagan ─────────────────────┐
-│                                                                              │
-│  TOPILDI: `public/audio.mp3` — 1.5 MB, `src/lib/sound.js` uni fon            │
-│  musiqasi sifatida aylantirib chaladi.                                       │
-│                                                                              │
-│  ⚠ Lekin `ASSETS.md` da: "Original Web Audio sine/triangle tones...          │
-│    **No downloaded music**" deyilgan — bu 1.5 MB faylga ZID.                 │
-│    Ya'ni faylning manbasi va litsenziyasi HUJJATLASHTIRILMAGAN.              │
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • Fayl qayerdan olingani aniqlanadi                                       │
-│    • Litsenziya tozami — tekshiriladi, `ASSETS.md` ga yoziladi               │
-│    • Tiniq bo'lmasa — olib tashlanadi yoki litsenziyali bilan almashtiriladi │
-│    • 1.5 MB katta — hajmi kamaytiriladi yoki faqat ovoz yoqilganda yuklanadi │
-│                                                                              │
-│  Bog'liq: S-033                                                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-034 · ⚖️ `audio.mp3` litsenziyasi aniqlanmagan
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
-┌─ [ ] S-035 · Kontent: o'ylab topilgan matnlarni almashtirish ────────────────┐
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • Mahsulot nomlari va tavsiflari — haqiqiysi (API'dan, S-022)             │
-│    • "20 yildan ortiq tajriba", "50 000+ mijoz", "EST. 2006" / "EST. 2008"   │
-│      ⚠ `index.html` da 2008, saytda 2006 — ZIDDIYAT, aniqlanadi              │
-│    • Telefon, manzil, ish vaqti — mijozdan tasdiqlanadi                      │
-│    • Kolleksiya nomlari ("Atelier 2026", "Marble Study") — haqiqiymi         │
-│      yoki mock uchun o'ylab topilganmi (S-021 bilan bog'liq)                 │
-│                                                                              │
-│  Bog'liq: S-034                                                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-035 · Kontent: o'ylab topilgan matnlarni almashtirish
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 
 
@@ -3075,27 +2974,8 @@
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-┌─ [ ] S-038 · ❓ QAROR: SPA'ni qidiruv tizimlari ko'radimi ───────────────────┐
-│                                                                              │
-│  ⚠ MUAMMO: sayt — toza SPA. Qidiruv roboti `/catalog` yoki                   │
-│    `/product/calacatta-oro` ni so'raganda BO'SH HTML oladi, kontent          │
-│    faqat JS ishlagach paydo bo'ladi. Google buni odatda uddalaydi,           │
-│    lekin kechikadi va boshqa robotlar (Telegram, Facebook, Yandex)           │
-│    ko'pincha UMUMAN ko'rmaydi — ulashilgan havola bo'sh ko'rinadi.           │
-│                                                                              │
-│  Uch yo'l:                                                                   │
-│    A) Prerender (`vite-plugin-prerender` yoki build paytida statik           │
-│       HTML) — sayt hajmi kichik, mahsulotlar kam o'zgaradi, mos keladi       │
-│    B) SSR ga o'tish (Next.js / Remix) — katta qayta yozish, hozirgi          │
-│       GSAP/Lenis kompozitsiyasini qayta qurish kerak                         │
-│    C) Hech narsa qilinmaydi — faqat Google'ga tayaniladi                     │
-│                                                                              │
-│    → Tavsiya: A. Katalog kichik (o'nlab mahsulot), kontent kam               │
-│      o'zgaradi — prerender arzon va yetarli.                                 │
-│                                                                              │
-│  Bog'liq: S-037                                                              │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-038 · ❓ QAROR: SPA'ni qidiruv tizimlari ko'radimi
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 ┌─ [x] S-039 · Structured data (Schema.org) ───────────────────────────────────┐
 │                                                                              │
@@ -3524,31 +3404,8 @@
         qo'shiladi (🆕 `api/task.txt`).
 
 
-┌─ [ ] S-045 · «Optom kirish» tugmasi (TZ 2-bo'lim) 🆕 ─────────────────────────┐
-│                                                                              │
-│  🆕 2026-09-17 da qo'shildi — kabinet dashboard'ga ko'chgani uchun.           │
-│                                                                              │
-│  TZ 2-bo'limi (dizayn talablari) aniq talab qiladi:                          │
-│    «Header'da «Optom kirish» tugmasi — rangi bilan ajralib turadigan,        │
-│     mobil va desktopda ko'rinadigan joyda»                                   │
-│                                                                              │
-│  TZ bu tugmani saytda LOGIN FORMASI ochadi deb ko'zda tutgan edi.            │
-│  Endi kabinet dashboard'da (dashboard/task.txt EPIC 10), shuning uchun       │
-│  tugma HAVOLA bo'ladi — bosilganda kabinet manziliga olib chiqadi.           │
-│                                                                              │
-│  Nima qilinadi:                                                              │
-│    • `Nav` da ajralib turadigan tugma — desktop va mobil menyuda             │
-│    • Manzil `.env` dan: `VITE_CABINET_URL` (dev: localhost:5174)             │
-│    • ⚠ Bu YAGONA joy bo'lib qolsin: storefront'da login formasi,             │
-│      token, `/me/*` so'rovi YOZILMAYDI (G1)                                  │
-│                                                                              │
-│  ⚠ Chakana mijozga bu tugma nima ekani tushunarli bo'lishi kerak —           │
-│    u hisob ocholmaydi (G1). Matn shuni bildirsin: «Optom mijozlar            │
-│    uchun» degan qisqa izoh yoki tooltip.                                     │
-│                                                                              │
-│  Bog'liq: S-005 (tipografika — tugma o'lchami ≥ 16px)                        │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+  → S-045 · «Optom kirish» tugmasi (TZ 2-bo'lim)
+    ildizdagi task.txt ga ko'chirildi (2026-09-25) — ochiq tasklar endi o'sha yerda.
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -3573,6 +3430,10 @@
     (S-045 — TZ 2-bo'lim, kabinet dashboard'ga ko'chgani uchun qo'shildi)
 
   ──────────────────────────────────────────────────────────────────────────
+  ⚠ 2026-09-25: OCHIQ TASKLAR ILDIZDAGI `task.txt` GA KO'CHIRILDI.
+    Bu fayl endi faqat bajarilgan tasklar tarixi. Yangi ish, ochiq va
+    bloklangan tasklar — faqat o'sha yerda.
+
   KEYINGI TASK:  ❓ QAROR KUTILMOQDA — o'zim hal qila olmaydiganlari:
 
     S-038  SPA'ni qidiruv tizimlari ko'radimi (prerender / SSR / hech

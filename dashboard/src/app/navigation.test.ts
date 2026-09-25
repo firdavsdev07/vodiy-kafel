@@ -11,6 +11,7 @@ describe('navigatsiya (D-003)', () => {
     expect(NAV_SECTIONS.map((s) => s.path).sort()).toEqual(
       [
         '/',
+        '/announcements', // T-009
         '/branches',
         '/customers',
         '/delivery',

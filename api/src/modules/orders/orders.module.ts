@@ -3,9 +3,10 @@ import { AuthModule } from '../../auth/auth.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { CalculatorModule } from '../calculator/calculator.module';
 import {
-  ByBranchAssignmentStrategy,
+  CustomerManagerOnlyStrategy,
   MANAGER_ASSIGNMENT_STRATEGY,
 } from './manager-assignment';
+import { MeManagerContactController } from './me-manager-contact.controller';
 import { MeOrdersController } from './me-orders.controller';
 import { OrderStatusService } from './order-status.service';
 import { OrderTrackingController } from './order-tracking.controller';
@@ -25,6 +26,7 @@ import { SupplyOrdersService } from './supply-orders.service';
     OrderTrackingController,
     OrdersAdminController,
     MeOrdersController,
+    MeManagerContactController,
     SupplyOrdersController,
     SupplyOrdersAdminController,
   ],
@@ -34,9 +36,11 @@ import { SupplyOrdersService } from './supply-orders.service';
     OrdersAdminService,
     SupplyOrdersService,
     // ❓ Menejer biriktirish (B-043) — boshqa strategiya = shu qator.
+    // T-007: avtomatik taqsimlash (BY_BRANCH) o'chirildi — faqat mijozning
+    // o'z menejeri, bo'lmasa biriktirilmagan.
     {
       provide: MANAGER_ASSIGNMENT_STRATEGY,
-      useClass: ByBranchAssignmentStrategy,
+      useClass: CustomerManagerOnlyStrategy,
     },
   ],
   exports: [OrdersService, OrderStatusService],

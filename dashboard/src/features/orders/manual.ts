@@ -20,8 +20,12 @@ export type CustomerPick = { id: string; companyName: string; login: string; bra
  *    narxi va shaxsiy qoidalari; hisobsiz xaridorda — filial bazaviy narxi).
  * 🔒 Filial: mijozda — mijozniki (yuborilmaydi); hisobsiz xaridorda — xodimniki,
  *    faqat SUPER_ADMIN tanlaydi (`branchRequired`, G5).
+ * 🔒 T-004: yo'nalishni (viloyat → yo'l kira) faqat MODERATOR / SUPER_ADMIN
+ *    beradi (`canRoute`). Filial xodimi yetkazib berishni SO'RAYDI —
+ *    transport ixtiyoriy afzallik, yo'nalishni keyin moderator belgilaydi.
  */
-export function manualOrderSchema(ctx: { branchRequired: boolean }) {
+export function manualOrderSchema(ctx: { branchRequired: boolean; canRoute?: boolean }) {
+  const canRoute = ctx.canRoute ?? true;
   return z
     .object({
       buyerKind: z.enum(['CUSTOMER', 'GUEST']),
@@ -56,7 +60,7 @@ export function manualOrderSchema(ctx: { branchRequired: boolean }) {
           c.addIssue({ code: 'custom', path: ['branchId'], message: 'Filialni tanlang' });
         }
       }
-      if (v.delivery === 'DELIVERY') {
+      if (v.delivery === 'DELIVERY' && canRoute) {
         if (!v.regionId) c.addIssue({ code: 'custom', path: ['regionId'], message: 'Viloyatni tanlang' });
         if (!v.transportTypeId) c.addIssue({ code: 'custom', path: ['transportTypeId'], message: 'Transportni tanlang' });
       }
@@ -86,7 +90,7 @@ export const manualOrderDefaults: ManualOrderInput = {
  * Forma → so'rov. Xaridorning faqat BIR turi ketadi (backend: ikkalasi — 400).
  * Olib ketishda viloyat/transport yuborilmaydi. Mijozda `branchId` yuborilmaydi.
  */
-export function toManualOrderBody(v: ManualOrderValues): CreateManualOrderBody {
+export function toManualOrderBody(v: ManualOrderValues, canRoute = true): CreateManualOrderBody {
   const buyer =
     v.buyerKind === 'CUSTOMER' && v.customer
       ? { customerId: v.customer.id }
@@ -99,7 +103,11 @@ export function toManualOrderBody(v: ManualOrderValues): CreateManualOrderBody {
   return {
     items: v.items.map((i) => ({ productId: i.product.id, pallets: Number(i.pallets) })),
     ...buyer,
-    ...(v.delivery === 'DELIVERY' ? { regionId: v.regionId, transportTypeId: v.transportTypeId } : {}),
+    ...(v.delivery !== 'DELIVERY'
+      ? {}
+      : canRoute
+        ? { regionId: v.regionId, transportTypeId: v.transportTypeId }
+        : { deliveryRequested: true, ...(v.transportTypeId ? { transportTypeId: v.transportTypeId } : {}) }),
     source: v.source,
     paymentMethod: v.paymentMethod,
     ...(v.isUrgent ? { isUrgent: true } : {}),

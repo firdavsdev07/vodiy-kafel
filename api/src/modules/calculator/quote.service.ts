@@ -86,9 +86,12 @@ export class QuoteService {
       items,
       route,
     );
+    const enough = await this.stockSufficiency(result.items);
 
     return {
+      stockShortage: result.items.some((item) => !enough(item.productId)),
       items: result.items.map((item) => ({
+        enoughStock: enough(item.productId),
         productId: item.productId,
         name: productNames.get(item.productId) ?? '',
         pallets: item.pallets,
@@ -132,6 +135,61 @@ export class QuoteService {
       rules.transport,
     );
     return this.toDeliveryDto(transport, tariff);
+  }
+
+  /**
+   * Zaxira yetadimi — mahsulot bo'yicha JAMI paddon (bir mahsulot ikki
+   * qatorda kelishi mumkin). Buyurtma (`OrdersService.place`) aynan shu
+   * shart bilan zaxirani band qiladi (T-005).
+   *
+   * 🔒 Faqat `boolean` qaytadi — aniq son sir (CLAUDE.md qoida 2).
+   */
+  private async stockSufficiency(
+    items: readonly { productId: string; pallets: number }[],
+  ): Promise<(productId: string) => boolean> {
+    const wanted = new Map<string, number>();
+    for (const item of items) {
+      wanted.set(
+        item.productId,
+        (wanted.get(item.productId) ?? 0) + item.pallets,
+      );
+    }
+    const stocks = await this.prisma.productStock.findMany({
+      where: { productId: { in: [...wanted.keys()] } },
+      select: { productId: true, stockPallets: true },
+    });
+    const available = new Map(stocks.map((s) => [s.productId, s.stockPallets]));
+    return (productId) =>
+      (available.get(productId) ?? 0) >= (wanted.get(productId) ?? 0);
+  }
+
+  /**
+   * Mavjud buyurtmaning yo'l kirasi (T-004) — moderator yo'nalishni
+   * belgilaganda. Kalkulyator bilan AYNAN bir yo'l: filial tarifi → mijoz
+   * transport qoidalari → hisob. Mahsulot narxiga TEGILMAYDI (snapshot,
+   * CLAUDE.md qoida 8) — faqat yo'l kira.
+   */
+  async deliveryForOrder(
+    context: QuotePricingContext,
+    route: Required<QuoteRoute>,
+    totalPallets: number,
+  ): Promise<{ transport: CalculatedTransport; tariff: ActiveTariff }> {
+    const [tariff, rules] = await Promise.all([
+      this.delivery.requireActiveTariff(
+        context.branchId,
+        route.regionId,
+        route.transportTypeId,
+      ),
+      context.customerId
+        ? this.pricingRules.findForCustomer(context.customerId)
+        : Promise.resolve({ product: [], transport: [] }),
+    ]);
+    const transport = this.calculator.calculateDelivery(
+      this.toTransportInput(tariff),
+      totalPallets,
+      rules.transport,
+    );
+    return { transport, tariff };
   }
 
   /**

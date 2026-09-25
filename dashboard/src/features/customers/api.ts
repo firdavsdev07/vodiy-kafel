@@ -60,7 +60,7 @@ export function useSetCustomerActive(id: string) {
   });
 }
 
-/** Filialning faol menejerlari — biriktirish uchun (SUPER_ADMIN, BRANCH_ADMIN). */
+/** Filialning faol menejerlari — biriktirish uchun (`managers.view`: SUPER_ADMIN, BRANCH_ADMIN, MODERATOR). */
 export function useBranchManagers(branchId: string, enabled: boolean) {
   const query = { branchId, isActive: true };
   return useQuery({

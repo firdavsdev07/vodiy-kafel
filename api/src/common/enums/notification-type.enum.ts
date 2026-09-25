@@ -8,6 +8,8 @@
  *   PAYMENT_RECEIVED     — "To'landi" xabarnomasi
  *   NEW_PRODUCT          — yangi mahsulot qo'shildi
  *   COMMENT_REPLY        — izoh/javob keldi
+ *   CONTRACT_READY       — shartnoma tayyor (B-045)
+ *   ANNOUNCEMENT         — xodim yuborgan xabar: bayram, e'lon (T-009)
  *
  * ⚠ Bildirishnoma faqat OPTOM mijozga yoki XODIMGA boradi — chakana
  *   mijozda hisob yo'q (TZ 3.5, 3.6).

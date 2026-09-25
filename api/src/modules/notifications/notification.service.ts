@@ -45,7 +45,7 @@ const ORDER_SELECT = {
   guestName: true,
   guestPhone: true,
   orderingBranch: { select: { id: true, name: true } },
-  customer: { select: { id: true, companyName: true } },
+  customer: { select: { id: true, companyName: true, managerId: true } },
   manager: {
     select: { id: true, telegramUsername: true, isActive: true },
   },
@@ -58,6 +58,14 @@ const ORDER_SELECT = {
  *   • optom mijoz — faqat kabinet (in-app); SMS emas (pullik, kabinet bor);
  *   • hisobsiz xaridor — faqat SMS (kabineti yo'q);
  *   • xodim — admin panel (in-app) + Telegram (username bo'lsa).
+ *
+ * Xodim doirasi (T-011, 2026-09-25) — `staffOf`:
+ *   SUPER_ADMIN, MODERATOR — BARCHA xodim bildirishnomalari;
+ *   BRANCH_ADMIN           — o'z filiali buyurtmalari;
+ *   MANAGER                — FAQAT o'ziga biriktirilgan mijoz (yoki o'ziga
+ *                            biriktirilgan buyurtma) bo'yicha.
+ * 🔒 Har yozuv egasiga (`userId`) bog'lanadi — boshqa menejerning
+ *    bildirishnomasini ID bo'yicha so'rash ham 404 (inbox `owner` filtri).
  *
  * 🔒 Bildirishnoma hech qachon biznes amalini buzmaydi: tinglovchi asinxron,
  *    har kanal xatosi alohida ushlanib logga yoziladi. Buyurtma/to'lov
@@ -88,11 +96,7 @@ export class NotificationService {
         payload,
       });
 
-      const buyerName =
-        order.customer?.companyName ??
-        order.guestName ??
-        (order.orderingBranch && `Ta’minot: ${order.orderingBranch.name}`) ??
-        'Xaridor';
+      const buyerName = buyerLabel(order);
       const staff = await this.staffOf(order);
       await this.dispatch(staff, {
         type: NotificationType.ORDER_CREATED,
@@ -125,11 +129,18 @@ export class NotificationService {
       if (!order) return;
 
       const note = event.note ? ` Izoh: ${event.note}` : '';
-      await this.dispatch(await this.buyerOf(order), {
+      const message = {
         type: NotificationType.ORDER_STATUS_CHANGED,
         title: `Buyurtma: ${ORDER_STATUS_LABEL[event.to]}`,
         body: `${order.orderNumber} — ${ORDER_STATUS_LABEL[event.to]}.${note}`,
         payload: { orderId: order.id },
+      };
+      await this.dispatch(await this.buyerOf(order), message);
+      // T-011: xodimlar ham ko'rsin (admin/moderator — hammasi, menejer —
+      // o'z mijozi). Avval holat o'zgarishi faqat xaridorga borardi.
+      await this.dispatch(await this.staffOf(order), {
+        ...message,
+        body: `${order.orderNumber} (${buyerLabel(order)}) — ${ORDER_STATUS_LABEL[event.to]}.${note}`,
       });
     });
   }
@@ -325,27 +336,33 @@ export class NotificationService {
   }
 
   /**
-   * Buyurtma bilan ishlaydigan xodimlar: biriktirilgan menejer + filial
-   * rahbariyati (RETAIL — filial admini, CENTRAL — moderator). Takrorsiz,
-   * faqat faollar. SUPER_ADMIN har buyurtmaga xabar olmaydi (shovqin).
+   * Buyurtma haqida xabar oladigan xodimlar (T-011). Takrorsiz, faqat
+   * faollar:
+   *   • BARCHA SUPER_ADMIN va MODERATOR — "hammasini ko'radi";
+   *   • buyurtma filialining admini (RETAIL — filial admini);
+   *   • menejer — buyurtmaga YOKI mijozga biriktirilgan bo'lsa. Boshqa
+   *     menejerlar olmaydi (avval ham, endi ham).
+   *
+   * ⚠ Avval SUPER_ADMIN umuman olmasdi ("shovqin"), MODERATOR esa faqat
+   *   markaziy ombor buyurtmalarini olardi — mijoz talabi bilan o'zgardi.
    */
   private async staffOf(order: {
     branchId: string | null;
     manager: { id: string } | null;
+    customer?: { managerId: string | null } | null;
   }): Promise<NotificationRecipient[]> {
+    const assigned = [order.manager?.id, order.customer?.managerId].filter(
+      (id): id is string => Boolean(id),
+    );
     const users = await this.prisma.user.findMany({
       where: {
         isActive: true,
         OR: [
+          { role: { in: [UserRole.SUPER_ADMIN, UserRole.MODERATOR] } },
           ...(order.branchId
-            ? [
-                {
-                  branchId: order.branchId,
-                  role: { in: [UserRole.BRANCH_ADMIN, UserRole.MODERATOR] },
-                },
-              ]
+            ? [{ branchId: order.branchId, role: UserRole.BRANCH_ADMIN }]
             : []),
-          ...(order.manager ? [{ id: order.manager.id }] : []),
+          ...(assigned.length > 0 ? [{ id: { in: assigned } }] : []),
         ],
       },
       select: { id: true, telegramUsername: true },
@@ -369,4 +386,18 @@ export class NotificationService {
       );
     }
   }
+}
+
+/** Xodimga ko'rinadigan xaridor nomi. */
+function buyerLabel(order: {
+  customer: { companyName: string } | null;
+  guestName: string | null;
+  orderingBranch: { name: string } | null;
+}): string {
+  return (
+    order.customer?.companyName ??
+    order.guestName ??
+    (order.orderingBranch && `Ta’minot: ${order.orderingBranch.name}`) ??
+    'Xaridor'
+  );
 }

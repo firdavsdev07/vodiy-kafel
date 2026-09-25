@@ -63,6 +63,8 @@ model Branch {
 
   orders       Order[] @relation("BranchOrders")
   placedOrders Order[] @relation("BranchPlacedOrders")
+  /// T-004: shu (CENTRAL) ombordan jo'natilgan buyurtmalar.
+  dispatchedOrders Order[] @relation("BranchDispatchedOrders")
 
   @@index([type, isActive])
   @@index([isActive, sortOrder])
@@ -137,6 +139,9 @@ model User {
   notifications Notification[]
 
   pricingRules PricingRule[] @relation("PricingRules")
+
+  /// T-009: shu xodim yuborgan xabarlar (bayram tabrigi, e'lon).
+  announcements Announcement[] @relation("Announcements")
 
   @@index([branchId, role])
   @@index([role, isActive])
@@ -491,7 +496,9 @@ model TransportType {
 
   tariffs BranchRegionTariff[]
 
-  orders Order[]
+  orders          Order[] @relation("OrderTransportType")
+  /// T-004: mijoz afzal ko'rgan transport (yo'nalish hali belgilanmagan).
+  requestedOrders Order[] @relation("OrderRequestedTransportType")
 
   @@index([isActive, sortOrder])
   @@map("transport_types")
@@ -652,12 +659,33 @@ model Order {
   deliveryTotal Decimal @default(0) @map("delivery_total") @db.Decimal(14, 2)
   grandTotal    Decimal @map("grand_total") @db.Decimal(14, 2)
 
+  /// T-004 (2026-09-25): mijoz yetkazib berishni SO'RAYDI, yo'nalishni
+  /// (viloyat + transport) va yo'l kirani esa MODERATOR / SUPER_ADMIN
+  /// belgilaydi (`PATCH /admin/orders/:id/delivery`). Yo'nalish hali
+  /// belgilanmagan bo'lsa `regionId`/`transportTypeId` null va
+  /// `deliveryTotal` 0; mijozning afzal ko'rgan transporti —
+  /// `requestedTransportTypeId` (`transportTypeId` esa faqat HAQIQIY,
+  /// yo'l kirasi hisoblangan transport — `orders_delivery_complete_check`).
+  /// 🔒 `regionId` bor ⇒ `deliveryRequested` — baza CHECK bilan qulflangan.
+  deliveryRequested Boolean @default(false) @map("delivery_requested")
+
+  /// T-004: mijoz afzal ko'rgan transport. Narxga ta'sir qilmaydi — faqat
+  /// moderatorga ishora; yakuniy transport `transportTypeId` da.
+  requestedTransportTypeId String?        @map("requested_transport_type_id")
+  requestedTransportType   TransportType? @relation("OrderRequestedTransportType", fields: [requestedTransportTypeId], references: [id], onDelete: Restrict)
+
+  /// T-004: yuk qaysi (CENTRAL) ombordan jo'natiladi. Faqat MODERATOR /
+  /// SUPER_ADMIN belgilaydi; mijozga ko'rinmaydi. Narxga ta'sir qilmaydi —
+  /// tarif buyurtma filiali (`branchId`) bo'yicha.
+  dispatchBranchId String? @map("dispatch_branch_id")
+  dispatchBranch   Branch? @relation("BranchDispatchedOrders", fields: [dispatchBranchId], references: [id], onDelete: Restrict)
+
   /// Yetkazib berish (TZ 3.13). Olib ketish bo'lsa — uchchalasi ham null.
   regionId String? @map("region_id")
   region   Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
 
   transportTypeId String?        @map("transport_type_id")
-  transportType   TransportType? @relation(fields: [transportTypeId], references: [id], onDelete: Restrict)
+  transportType   TransportType? @relation("OrderTransportType", fields: [transportTypeId], references: [id], onDelete: Restrict)
 
   /// Nechta transport vositasi kerak (kalkulyator hisoblaydi, B-026).
   transportCount Int? @map("transport_count")
@@ -671,6 +699,13 @@ model Order {
   totalSqm      Decimal @map("total_sqm") @db.Decimal(12, 4)
   totalWeightKg Decimal @map("total_weight_kg") @db.Decimal(12, 3)
   totalPallets  Int     @map("total_pallets")
+
+  /// T-005 (2026-09-25): buyurtma markaziy ombor zaxirasini BAND qildimi.
+  /// Buyurtma yaratilganda zaxira shu tranzaksiyada kamayadi va `true`;
+  /// bekor qilinganda qaytariladi va `false`. Bu o'zgarishdan OLDINGI
+  /// buyurtmalar zaxirani band qilmagan (`false`) — ularni bekor qilish
+  /// zaxiraga soxta qo'shimcha bermasligi uchun belgi kerak.
+  stockReserved Boolean @default(false) @map("stock_reserved")
 
   note      String?
   createdAt DateTime @default(now()) @map("created_at")
@@ -917,6 +952,8 @@ enum NotificationType {
   COMMENT_REPLY
   /// Shartnoma tayyor bo'ldi va yuborildi (B-045, TZ 3.10)
   CONTRACT_READY
+  /// Xodim yuborgan oddiy xabar — bayram, e'lon (T-009)
+  ANNOUNCEMENT
 
   @@map("notification_type")
 }
@@ -946,6 +983,9 @@ model Notification {
 
   /// Bosilganda qayerga o'tish kerakligi: { orderId } yoki { productId }.
   payload Json?
+
+  /// T-009: xabar rasmi (`/uploads/announcements/...`) — matn rasm OSTIDA.
+  imageUrl String? @map("image_url")
 
   isRead Boolean   @default(false) @map("is_read")
   readAt DateTime? @map("read_at")
@@ -1130,3 +1170,44 @@ model Contract {
   @@index([orderId])
   @@map("contracts")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// T-009 · Mijozlarga oddiy xabar (bayram, e'lon)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum AnnouncementAudience {
+  /// Yuboruvchi doirasidagi BARCHA faol mijozlar (menejerda — o'z mijozlari)
+  ALL
+  /// Tanlangan mijozlar
+  SELECTED
+
+  @@map("announcement_audience")
+}
+
+/// Xodim yuborgan xabar — tarix. Har qabul qiluvchiga alohida
+/// `Notification` (ANNOUNCEMENT) yoziladi; bu yozuv — "kim, qachon, nima,
+/// nechta kishiga" jurnali.
+///
+/// 🔒 Kim kimga (T-009): SUPER_ADMIN, MODERATOR — hamma mijozga;
+///    BRANCH_ADMIN — o'z filiali; MANAGER — faqat o'ziga biriktirilgan
+///    mijozlarga. Doira `AnnouncementsService` da tekshiriladi.
+model Announcement {
+  id String @id @default(cuid())
+
+  title    String
+  body     String
+  imageUrl String? @map("image_url")
+
+  audience       AnnouncementAudience
+  recipientCount Int                  @map("recipient_count")
+
+  createdByUserId String @map("created_by_user_id")
+  createdBy       User   @relation("Announcements", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdByUserId, createdAt])
+  @@index([createdAt])
+  @@map("announcements")
+}
+

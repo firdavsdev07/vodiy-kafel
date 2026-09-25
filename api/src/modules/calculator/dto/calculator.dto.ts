@@ -117,6 +117,16 @@ export class QuoteItemResponseDto {
 
   @ApiProperty({ type: String, example: '1101600' })
   lineTotal!: string;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'T-005: markaziy omborda so‘ralgan paddon BORMI. `false` bo‘lsa ' +
+      'buyurtma 409 bilan rad etiladi — kamroq kiriting.\n\n' +
+      '🔒 Aniq zaxira soni qaytarilmaydi (CLAUDE.md qoida 2) — faqat ' +
+      '"yetadi / yetmaydi".',
+  })
+  enoughStock!: boolean;
 }
 
 export class DeliveryResponseDto {
@@ -149,6 +159,12 @@ export class DeliveryResponseDto {
 export class QuoteResponseDto {
   @ApiProperty({ type: [QuoteItemResponseDto] })
   items!: QuoteItemResponseDto[];
+
+  @ApiProperty({
+    example: false,
+    description: 'T-005: kamida bitta mahsulotga zaxira yetmaydi.',
+  })
+  stockShortage!: boolean;
 
   @ApiProperty({ example: 15 })
   totalPallets!: number;

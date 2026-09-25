@@ -22,6 +22,12 @@ type Totals = {
   deliveryTotal: string;
   grandTotal: string;
   delivery?: Schema<'OrderDeliveryDto'> | null;
+  /** T-004: yetkazib berish so'ralgan, yo'nalishni moderator hali bermagan */
+  deliveryPending?: boolean;
+  requestedTransportTypeName?: string | null;
+  exactLat?: number | null;
+  exactLng?: number | null;
+  dispatchBranch?: { name: string } | null;
   note?: string | null;
 };
 
@@ -103,11 +109,47 @@ export function OrderItemsCard({ order, linkProducts = true }: { order: Totals; 
   );
 }
 
-/** Yetkazib berish + summa taqsimoti. Hammasi API qiymatlari — frontendda qo'shilmaydi (G1). */
-export function DeliveryCard({ order, pickupText }: { order: Totals; pickupText: string }) {
+/**
+ * Yetkazib berish + summa taqsimoti. Hammasi API qiymatlari — frontendda
+ * qo'shilmaydi (G1). `children` — kartaning pastida (masalan moderatorning
+ * "yetkazib berishni belgilash" formasi, T-004).
+ */
+export function DeliveryCard({
+  order,
+  pickupText,
+  children,
+}: {
+  order: Totals;
+  pickupText: string;
+  children?: ReactNode;
+}) {
   return (
     <Card title="Yetkazib berish">
-      {order.delivery ? (
+      {order.dispatchBranch && (
+        <p className="mb-2 text-sm">
+          <span className="text-muted">Jo‘natish joyi: </span>
+          {order.dispatchBranch.name}
+        </p>
+      )}
+      {order.deliveryPending ? (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+            Mijoz yetkazib berishni so‘ragan — yo‘nalish va yo‘l kira hali belgilanmagan.
+          </p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+            <dt className="text-muted">Afzal transport</dt>
+            <dd>{order.requestedTransportTypeName ?? 'Farqi yo‘q'}</dd>
+            {order.exactLat != null && order.exactLng != null && (
+              <>
+                <dt className="text-muted">Manzil</dt>
+                <dd className="tabular-nums">
+                  {order.exactLat}, {order.exactLng}
+                </dd>
+              </>
+            )}
+          </dl>
+        </div>
+      ) : order.delivery ? (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
           <dt className="text-muted">Viloyat</dt>
           <dd>{order.delivery.regionName}</dd>
@@ -132,7 +174,13 @@ export function DeliveryCard({ order, pickupText }: { order: Totals; pickupText:
         <dd className="text-right"><MoneyText value={order.itemsTotal} /></dd>
         <dt className="text-muted">Yo‘l kira</dt>
         <dd className="text-right">
-          {isZeroAmount(order.deliveryTotal) ? <span className="text-muted">—</span> : <MoneyText value={order.deliveryTotal} />}
+          {order.deliveryPending ? (
+            <span className="text-warning">Belgilanmagan</span>
+          ) : isZeroAmount(order.deliveryTotal) ? (
+            <span className="text-muted">—</span>
+          ) : (
+            <MoneyText value={order.deliveryTotal} />
+          )}
         </dd>
         <dt className="font-medium">Jami</dt>
         <dd className="text-right"><MoneyText value={order.grandTotal} className="font-semibold" /></dd>
@@ -143,6 +191,7 @@ export function DeliveryCard({ order, pickupText }: { order: Totals; pickupText:
           {order.note}
         </p>
       )}
+      {children}
     </Card>
   );
 }

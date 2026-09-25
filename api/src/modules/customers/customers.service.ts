@@ -90,6 +90,7 @@ export class CustomersService {
       actor,
       customer.branchId,
       CUSTOMER_NOT_FOUND,
+      'CUSTOMERS',
     );
 
     const temporaryPassword = generateTemporaryPassword();

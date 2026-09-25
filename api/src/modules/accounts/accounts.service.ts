@@ -159,6 +159,7 @@ export class AccountsService {
       actor,
       customer.branchId,
       CUSTOMER_NOT_FOUND,
+      'CUSTOMERS',
     );
   }
 
