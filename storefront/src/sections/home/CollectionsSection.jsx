@@ -19,7 +19,6 @@ export default function CollectionsSection() {
         <span className="type-label text-clay">04 — Tanlov</span>
         <Link
           to="/catalog"
-          data-cursor="Ochish"
           className="group -my-3.5 flex items-center gap-3 py-3.5 type-action"
         >
           Butun katalog
@@ -48,7 +47,6 @@ export default function CollectionsSection() {
             >
               <Link
                 to={`/catalog/${product.slug}`}
-                data-cursor="Ko‘rish"
                 className={`group block md:[direction:ltr] ${
                   flipped ? 'md:col-span-7 md:col-start-6' : 'md:col-span-8'
                 }`}
@@ -75,7 +73,7 @@ export default function CollectionsSection() {
                   <span className="type-label text-clay">{product.collection}</span>
                 </div>
                 <h3 className="r-fade mt-4 type-sub">
-                  <Link to={`/catalog/${product.slug}`} data-cursor="Ko‘rish">
+                  <Link to={`/catalog/${product.slug}`}>
                     {product.name}
                   </Link>
                 </h3>

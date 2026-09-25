@@ -149,7 +149,7 @@ export default function Menu({ open, onClose }) {
           </div>
         )}
 
-        <div className="relative flex h-full flex-col justify-between edge py-8 md:py-10">
+        <div className="relative flex h-full flex-col justify-between edge pb-8 pt-24 md:py-10">
           <div className="flex items-baseline justify-between">
             <span className="type-label text-clay">Indeks</span>
             <span className="type-label text-clay">{company.location}</span>
@@ -163,7 +163,6 @@ export default function Menu({ open, onClose }) {
                   <li key={item.to} className="line-mask">
                     <Link
                       to={item.to}
-                      data-cursor=""
                       aria-current={active ? 'page' : undefined}
                       onMouseEnter={() => {
                         setHovered(i)
@@ -177,7 +176,7 @@ export default function Menu({ open, onClose }) {
                           o'zgarmas qoladi: xira holatda ular AA kontrastdan (S-006)
                           pastga tushib, o'qib bo'lmas edi. */}
                       <span
-                        className="type-head transition-opacity duration-500"
+                        className="type-head transition-opacity duration-500 max-md:text-[length:min(var(--text-head),9.5vw)]"
                         style={{ opacity: hovered === i || isTouch ? 1 : 0.42 }}
                       >
                         {item.label}
@@ -206,7 +205,6 @@ export default function Menu({ open, onClose }) {
                 <a
                   key={phone}
                   href={`tel:${company.contact.phoneHref[i]}`}
-                  data-cursor=""
                   className="text-[clamp(1rem,1.6vw,1.35rem)] transition-colors hover:text-clay"
                 >
                   {phone}
@@ -224,10 +222,10 @@ export default function Menu({ open, onClose }) {
               </div>
             )}
             <div className="flex gap-6">
-              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="type-label text-clay transition-colors hover:text-bone">
+              <a href={company.contact.telegram} target="_blank" rel="noreferrer" className="type-label text-clay transition-colors hover:text-bone">
                 Telegram
               </a>
-              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="type-label text-clay transition-colors hover:text-bone">
+              <a href={company.contact.instagram} target="_blank" rel="noreferrer" className="type-label text-clay transition-colors hover:text-bone">
                 Instagram
               </a>
             </div>

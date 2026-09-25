@@ -120,7 +120,7 @@ function ProductView({ product, similar }) {
         <div className="flex items-baseline justify-between">
           {/* Touch target ≥44px (S-015): invisible `::before` extends the
               hit area without changing the visible link's size/position. */}
-          <Link to="/catalog" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
+          <Link to="/catalog" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
             ← Katalog
           </Link>
           <span className="type-label text-clay">
@@ -263,13 +263,12 @@ function ProductView({ product, similar }) {
             <div className="r-fade flex flex-wrap gap-x-10 gap-y-4">
               <a
                 href={`tel:${company.contact.phoneHref[0]}`}
-                data-cursor=""
                 className="group type-action flex items-center gap-3"
               >
                 Bog‘lanish
                 <span className="block h-px w-10 origin-left bg-bone transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
               </a>
-              <Link to="/contact" data-cursor="" className="group type-action flex items-center gap-3 text-clay hover:text-bone">
+              <Link to="/contact" className="group type-action flex items-center gap-3 text-clay hover:text-bone">
                 Manzil va ish vaqti
                 <span className="block h-px w-10 origin-left bg-clay transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
               </Link>
@@ -283,7 +282,7 @@ function ProductView({ product, similar }) {
         <section className="relative z-10 edge py-[clamp(5rem,12vw,10rem)]">
           <div className="hairline flex items-baseline justify-between pt-4 text-charcoal">
             <span className="type-label text-clay">Shunga o‘xshash</span>
-            <Link to="/catalog" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
+            <Link to="/catalog" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
               Barchasi →
             </Link>
           </div>
@@ -351,14 +350,13 @@ function ProductError({ error, onRetry }) {
           <button
             type="button"
             onClick={onRetry}
-            data-cursor=""
             className="group type-action flex items-center gap-3"
           >
             Qayta urinish
             <span className="block h-px w-10 origin-left bg-charcoal transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
           </button>
         )}
-        <Link to="/catalog" data-cursor="" className="group type-action flex items-center gap-3 text-clay hover:text-charcoal">
+        <Link to="/catalog" className="group type-action flex items-center gap-3 text-clay hover:text-charcoal">
           Katalogga qaytish
           <span className="block h-px w-10 origin-left bg-clay transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-x-[2.0]" />
         </Link>

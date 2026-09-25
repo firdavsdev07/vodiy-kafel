@@ -122,7 +122,7 @@ export default function Preloader({ onDone }) {
 
       <footer className="entry-bottom">
         <span className="entry-fade entry-corner-label">Sifat<br />Dizayn<br />Makoningiz</span>
-        <button type="button" className="entry-enter" onClick={enter} data-cursor="">
+        <button type="button" className="entry-enter" onClick={enter}>
           <span>Kashf eting</span><span className="entry-arrow" aria-hidden="true">↗</span>
         </button>
         <div className="entry-fade entry-badge" aria-hidden="true">

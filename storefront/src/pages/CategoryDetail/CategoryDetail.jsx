@@ -33,7 +33,7 @@ export default function CategoryDetail() {
         <div className="flex items-baseline justify-between">
           {/* Touch target ≥44px (S-015): invisible `::before` extends the
               hit area without changing the visible link's size/position. */}
-          <Link to="/categories" data-cursor="" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
+          <Link to="/categories" className="relative type-label text-clay before:absolute before:-inset-4 before:content-[''] hover:text-charcoal">
             ← Indeks
           </Link>
           <span className="type-label text-clay">{items.length} mahsulot</span>
@@ -78,7 +78,6 @@ export default function CategoryDetail() {
               <Link
                 key={c.slug}
                 to={`/categories/${c.slug}`}
-                data-cursor=""
                 className={`-my-4 type-label shrink-0 whitespace-nowrap border-b py-4 transition-colors duration-500 ${
                   c.slug === category.slug
                     ? 'border-charcoal text-charcoal'

@@ -191,7 +191,6 @@ export default function Catalog() {
                 <button
                   key={cat.slug}
                   type="button"
-                  data-cursor=""
                   onClick={() => selectCategory(cat.slug)}
                   aria-pressed={on}
                   className={`-my-4 type-label shrink-0 whitespace-nowrap border-b py-4 transition-colors duration-500 ${
@@ -287,7 +286,6 @@ export default function Catalog() {
                   <article key={product.id} className={`${r.span} ${r.offset}`}>
                     <Link
                       to={`/catalog/${product.slug}`}
-                      data-cursor="Ko‘rish"
                       onClick={() => playTone('click')}
                       className="group block"
                     >
@@ -329,7 +327,6 @@ export default function Catalog() {
               <div className="mt-[clamp(3rem,7vw,5rem)] flex justify-center">
                 <button
                   type="button"
-                  data-cursor=""
                   disabled={loadingMore}
                   onClick={() => setPage((p) => p + 1)}
                   className="group flex items-center gap-3 type-action disabled:opacity-50"
@@ -400,7 +397,6 @@ function CatalogError({ error, onRetry }) {
         <button
           type="button"
           onClick={onRetry}
-          data-cursor=""
           className="group mt-8 flex items-center gap-3 type-action"
         >
           Qayta urinish

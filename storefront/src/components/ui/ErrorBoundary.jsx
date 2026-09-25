@@ -52,7 +52,6 @@ export default class ErrorBoundary extends Component {
           <button
             type="button"
             onClick={this.reset}
-            data-cursor=""
             className="group type-action flex items-center gap-3"
           >
             Qayta urinish
@@ -62,7 +61,6 @@ export default class ErrorBoundary extends Component {
               to'liq qayta yuklash ishonchliroq. */}
           <a
             href="/"
-            data-cursor=""
             className="group type-action flex items-center gap-3 text-clay hover:text-charcoal"
           >
             Bosh sahifa

@@ -13,8 +13,10 @@ import { useIsMobile } from '@/hooks/useMediaQuery'
  * (DESIGN.md §5). Not a card grid: each category owns most of the viewport
  * and is read one at a time.
  *
- * Below the md breakpoint the pin is dropped and the panels stack, because a
- * pinned horizontal rail on a phone fights the user's scroll.
+ * Below the md breakpoint the pin is dropped, because a pinned horizontal
+ * rail on a phone fights the user's scroll. Instead the panels become a
+ * native swipe carousel (CSS scroll-snap) — stacking all eight full-width
+ * 3:4 photos made the phone page ~4000px longer for one section.
  *
  * S-020: ZAIF QURILMADA HAM shunday ustma-ust yotadi. Bu shart: pin
  * bo'lmasa `md:` tartibi (gorizontal, 100svh) lentani `overflow-hidden`
@@ -33,6 +35,9 @@ export default function CategoriesSection() {
   // o'rtada sakrab ketmasin
   const [heavy] = useState(() => allowHeavyMotion())
   const stacked = isMobile || !heavy
+  // Telefonda — gorizontal swipe lenta; zaif kompyuterda — ustma-ust
+  const carousel = isMobile
+  const railRef = useRef(null)
 
   useEffect(() => {
     const section = sectionRef.current
@@ -116,6 +121,41 @@ export default function CategoriesSection() {
     return cancel
   }, [stacked])
 
+  // Swipe lentasi: hisoblagich va progress chizig'i nativ skrolldan
+  useEffect(() => {
+    const rail = railRef.current
+    if (!carousel || !rail) return
+
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const max = rail.scrollWidth - rail.clientWidth
+      const progress = max > 0 ? rail.scrollLeft / max : 0
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${Math.max(0.08, progress)})`
+      }
+      if (counterRef.current) {
+        const cards = [...rail.querySelectorAll('article')]
+        const edge = rail.getBoundingClientRect().left
+        let current = 0
+        cards.forEach((card, i) => {
+          if (card.getBoundingClientRect().left - edge < card.offsetWidth / 2) current = i
+        })
+        counterRef.current.textContent = String(current + 1).padStart(2, '0')
+      }
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+
+    update()
+    rail.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      rail.removeEventListener('scroll', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [carousel])
+
   // Revert in useLayoutEffect so pin-spacer is removed BEFORE React unmounts
   useLayoutEffect(() => {
     return () => {
@@ -123,6 +163,20 @@ export default function CategoriesSection() {
       ctxRef.current = null
     }
   }, [])
+
+  const opening = (
+    <div className={`shrink-0 edge ${stacked ? '' : 'md:flex md:h-full md:w-[52vw] md:flex-col md:justify-center'}`}>
+      <h2 className="type-head">
+        Yuzani
+        <br />
+        tanlang.
+      </h2>
+      <p className="mt-8 max-w-[34ch] text-clay">
+        Sakkiz toifa — keramogranitdan 20 mm tashqi qoplamagacha. Har biri
+        boshqa vazifa uchun ishlab chiqilgan.
+      </p>
+    </div>
+  )
 
   return (
     <section
@@ -137,33 +191,34 @@ export default function CategoriesSection() {
         </span>
       </div>
 
+      {carousel && <div className="pt-32">{opening}</div>}
+
       <div
-        ref={trackRef}
-        className={`flex flex-col gap-16 py-32 ${
-          stacked ? '' : 'md:h-[100svh] md:flex-row md:items-center md:gap-0 md:py-0 md:pt-10'
-        }`}
+        ref={(el) => {
+          trackRef.current = el
+          railRef.current = carousel ? el : null
+        }}
+        className={
+          carousel
+            ? 'no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-[clamp(1.25rem,4vw,4.5rem)] px-[clamp(1.25rem,4vw,4.5rem)] pb-2'
+            : `flex flex-col gap-16 py-32 ${
+                stacked ? '' : 'md:h-[100svh] md:flex-row md:items-center md:gap-0 md:py-0 md:pt-10'
+              }`
+        }
       >
-        {/* opening panel */}
-        <div className={`shrink-0 edge ${stacked ? '' : 'md:flex md:h-full md:w-[52vw] md:flex-col md:justify-center'}`}>
-          <h2 className="type-head">
-            Yuzani
-            <br />
-            tanlang.
-          </h2>
-          <p className="mt-8 max-w-[34ch] text-clay">
-            Sakkiz toifa — keramogranitdan 20 mm tashqi qoplamagacha. Har biri
-            boshqa vazifa uchun ishlab chiqilgan.
-          </p>
-        </div>
+        {!carousel && opening}
 
         {categories.map((cat) => (
           <article
             key={cat.slug}
-            className={`group shrink-0 edge ${stacked ? '' : 'md:h-full md:w-[46vw] md:px-[2vw]'}`}
+            className={`group shrink-0 ${
+              carousel
+                ? 'w-[76vw] max-w-[22rem] snap-start'
+                : `edge ${stacked ? '' : 'md:h-full md:w-[46vw] md:px-[2vw]'}`
+            }`}
           >
             <Link
               to={`/categories/${cat.slug}`}
-              data-cursor="Ko‘rish"
               className="flex h-full flex-col justify-center"
             >
               <div className="flex items-baseline gap-4">
@@ -178,7 +233,7 @@ export default function CategoriesSection() {
                   id={cat.cover}
                   alt={cat.name}
                   ratio="3 / 4"
-                  sizes="(max-width: 767px) 92vw, 46vw"
+                  sizes="(max-width: 767px) 76vw, 46vw"
                   reveal={false}
                   className="w-full"
                   imgClassName="transition-transform duration-[1400ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.06]"
@@ -186,17 +241,22 @@ export default function CategoriesSection() {
                 <span className="pointer-events-none absolute inset-0 bg-ink/0 transition-colors duration-700 group-hover:bg-ink/15" />
               </div>
 
-              <h3 className="mt-6 type-sub">{cat.name}</h3>
-              <p className="mt-3 max-w-[30ch] text-clay">{cat.tagline}</p>
+              <h3 className={`type-sub ${carousel ? 'mt-5' : 'mt-6'}`}>{cat.name}</h3>
+              <p className={`max-w-[30ch] text-clay ${carousel ? 'mt-2' : 'mt-3'}`}>{cat.tagline}</p>
             </Link>
           </article>
         ))}
 
         {/* closing panel */}
-        <div className={`shrink-0 edge ${stacked ? '' : 'md:flex md:h-full md:w-[34vw] md:flex-col md:justify-center'}`}>
+        <div
+          className={`shrink-0 ${
+            carousel
+              ? 'flex w-[52vw] snap-start flex-col justify-center pr-[clamp(1.25rem,4vw,4.5rem)]'
+              : `edge ${stacked ? '' : 'md:flex md:h-full md:w-[34vw] md:flex-col md:justify-center'}`
+          }`}
+        >
           <Link
             to="/categories"
-            data-cursor="Ochish"
             className="group inline-flex flex-col"
           >
             <span className="type-label text-clay">Barchasi</span>
@@ -215,12 +275,20 @@ export default function CategoriesSection() {
       </div>
 
       {/* rail progress */}
-      <div className={`absolute inset-x-0 bottom-0 hidden h-px bg-bone/15 ${stacked ? '' : 'md:block'}`}>
-        <div
-          ref={progressRef}
-          className="h-full origin-left scale-x-0 bg-bone"
-        />
-      </div>
+      {carousel ? (
+        <div className="edge pb-24 pt-10">
+          <div className="h-px bg-bone/15">
+            <div ref={progressRef} className="h-full origin-left scale-x-[0.08] bg-bone transition-transform duration-200" />
+          </div>
+        </div>
+      ) : (
+        <div className={`absolute inset-x-0 bottom-0 hidden h-px bg-bone/15 ${stacked ? '' : 'md:block'}`}>
+          <div
+            ref={progressRef}
+            className="h-full origin-left scale-x-0 bg-bone"
+          />
+        </div>
+      )}
     </section>
   )
 }

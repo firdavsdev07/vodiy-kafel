@@ -88,7 +88,6 @@ export default function PartnerLogo({ partner }) {
       href={partner.websiteUrl}
       target="_blank"
       rel="noreferrer"
-      data-cursor="Ochish"
       // Ochiluvchi havola ekanini ekran o'quvchi ham bilsin.
       aria-label={`${partner.name} — sayti (yangi oynada ochiladi)`}
       className={`${box} transition-colors hover:text-clay`}

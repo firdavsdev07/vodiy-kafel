@@ -26,7 +26,6 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
         <article key={product.id} className={i % 3 === 1 ? 'lg:mt-[5vw]' : ''}>
           <Link
             to={`/catalog/${product.slug}`}
-            data-cursor="Ko‘rish"
             onClick={() => playTone('click')}
             className="group block"
           >

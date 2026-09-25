@@ -62,7 +62,6 @@ export default function Product360({ frames, alt, ratio = '4 / 3', className = '
         aria-valuemax={frames.length}
         aria-valuenow={index + 1}
         aria-valuetext={`${index + 1} / ${frames.length} kadr`}
-        data-cursor="Aylantiring"
         className="relative w-full cursor-ew-resize touch-pan-y select-none overflow-hidden bg-stone outline-none focus-visible:ring-2 focus-visible:ring-charcoal"
         style={{ aspectRatio: ratio }}
         onPointerDown={onPointerDown}

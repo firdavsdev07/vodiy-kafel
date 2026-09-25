@@ -67,7 +67,6 @@ export default function ShowroomSection() {
                     href={branch.mapUrl}
                     target="_blank"
                     rel="noreferrer"
-                    data-cursor="Ochish"
                     className="group type-action flex items-center gap-3 md:justify-end"
                   >
                     Xaritada ko‘rish

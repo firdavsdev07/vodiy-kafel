@@ -191,7 +191,6 @@ export default function About() {
             )}
             <Link
               to="/contact"
-              data-cursor="Ochish"
               className="group relative mt-8 inline-flex items-center gap-3 type-label before:absolute before:-inset-4 before:content-['']"
             >
               Aloqa sahifasi

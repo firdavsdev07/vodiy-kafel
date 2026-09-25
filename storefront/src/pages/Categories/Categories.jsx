@@ -133,7 +133,6 @@ export default function Categories() {
               <li key={cat.slug} className="border-b border-charcoal/12">
                 <Link
                   to={`/categories/${cat.slug}`}
-                  data-cursor="Ochish"
                   onMouseEnter={() => {
                     setHovered(i)
                     playTone('hover')

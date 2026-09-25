@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom'
 
 import { gsapLoaded } from '@/animations/gsap'
 import { prefersReducedMotion } from '@/lib/motion'
-import Cursor from '@/components/Cursor/Cursor'
 import Footer from '@/components/Footer/Footer'
 import Menu from '@/components/Menu/Menu'
 import Nav from '@/components/Nav/Nav'
@@ -140,7 +139,6 @@ export default function Layout() {
       {/* Aloqa yo'qligi — butun sayt uchun BITTA xabar (S-031), har bir
           bo'lim alohida qichqirmasin. */}
       <OfflineBanner />
-      <Cursor />
       {/* z-140: menyu (150) va Nav (160) dan past — o'tish paytida ham
           menyu tugmasi bosiladigan holda qoladi */}
       <div

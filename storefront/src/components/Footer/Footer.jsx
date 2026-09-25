@@ -47,7 +47,6 @@ export default function Footer() {
                 <a
                   key={phone}
                   href={`tel:${company.contact.phoneHref[i]}`}
-                  data-cursor=""
                   className="group -my-3 block w-fit py-3"
                 >
                   <span className="line-mask block">
@@ -64,7 +63,6 @@ export default function Footer() {
                 elements don't move. */}
             <a
               href={`mailto:${company.contact.email}`}
-              data-cursor=""
               className="r-fade -my-2.5 mt-8 inline-block border-b border-bone/25 py-2.5 text-[clamp(1rem,1.5vw,1.25rem)] transition-colors hover:border-bone/70 hover:text-clay"
             >
               {company.contact.email}
@@ -99,7 +97,6 @@ export default function Footer() {
                 <li key={item.to}>
                   <Link
                     to={item.to}
-                    data-cursor=""
                     className="group -my-2.5 flex items-baseline gap-3 py-2.5 transition-colors hover:text-clay"
                   >
                     <span className="type-label text-clay">{item.index}</span>
@@ -109,10 +106,10 @@ export default function Footer() {
               ))}
             </ul>
             <div className="mt-8 flex flex-col gap-3">
-              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
+              <a href={company.contact.telegram} target="_blank" rel="noreferrer" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Telegram ↗
               </a>
-              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
+              <a href={company.contact.instagram} target="_blank" rel="noreferrer" className="-my-3.5 block py-3.5 type-action text-clay transition-colors hover:text-bone">
                 Instagram ↗
               </a>
             </div>

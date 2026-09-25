@@ -108,7 +108,7 @@ function GalleryImage({ item, index }) {
   if (!item.product) return <div className="block">{picture}</div>
 
   return (
-    <Link to={item.product.to} data-cursor="Mahsulot" className="group block">
+    <Link to={item.product.to} className="group block">
       {picture}
     </Link>
   )
@@ -162,7 +162,6 @@ function GalleryError({ error, onRetry }) {
           <button
             type="button"
             onClick={onRetry}
-            data-cursor=""
             className="group mt-8 flex items-center gap-3 type-action"
           >
             Qayta urinish

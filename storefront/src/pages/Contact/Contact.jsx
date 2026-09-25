@@ -54,7 +54,6 @@ export default function Contact() {
                   <a
                     key={phone}
                     href={`tel:${company.contact.phoneHref[i]}`}
-                    data-cursor=""
                     className="-my-3 block py-3 text-[clamp(1.4rem,3vw,2.4rem)] font-semibold leading-none tracking-[-0.03em] transition-colors hover:text-clay"
                   >
                     {phone}
@@ -69,13 +68,13 @@ export default function Contact() {
                 below it; padding grows each link's own box instead, so
                 wrapped rows space apart automatically. */}
             <div className="r-fade mt-12 flex flex-wrap gap-x-8 gap-y-3">
-              <a href={`mailto:${company.contact.email}`} data-cursor="" className="-my-3.5 inline-block border-b border-charcoal/25 py-3.5 type-label hover:border-charcoal">
+              <a href={`mailto:${company.contact.email}`} className="-my-3.5 inline-block border-b border-charcoal/25 py-3.5 type-label hover:border-charcoal">
                 {company.contact.email}
               </a>
-              <a href={company.contact.telegram} target="_blank" rel="noreferrer" data-cursor="" className="-my-4 inline-block py-4 type-label text-clay hover:text-charcoal">
+              <a href={company.contact.telegram} target="_blank" rel="noreferrer" className="-my-4 inline-block py-4 type-label text-clay hover:text-charcoal">
                 Telegram ↗
               </a>
-              <a href={company.contact.instagram} target="_blank" rel="noreferrer" data-cursor="" className="-my-4 inline-block py-4 type-label text-clay hover:text-charcoal">
+              <a href={company.contact.instagram} target="_blank" rel="noreferrer" className="-my-4 inline-block py-4 type-label text-clay hover:text-charcoal">
                 Instagram ↗
               </a>
             </div>
@@ -111,7 +110,6 @@ export default function Contact() {
                 <a
                   key={phone}
                   href={`tel:${company.contact.phoneHref[i]}`}
-                  data-cursor=""
                   className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
                 >
                   <span className="type-label text-clay">
@@ -127,7 +125,6 @@ export default function Contact() {
                 href={company.contact.telegram}
                 target="_blank"
                 rel="noreferrer"
-                data-cursor="Ochish"
                 className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
               >
                 <span className="type-label text-clay">Telegram</span>
@@ -138,7 +135,6 @@ export default function Contact() {
 
               <a
                 href={`mailto:${company.contact.email}`}
-                data-cursor=""
                 className="group flex items-baseline justify-between gap-4 border-y border-charcoal/25 py-5 transition-colors hover:text-clay"
               >
                 <span className="type-label text-clay">Pochta</span>
@@ -200,7 +196,6 @@ function BranchList() {
             <button
               type="button"
               onClick={refetch}
-              data-cursor=""
               className="group mt-8 flex items-center gap-3 type-action"
             >
               Qayta urinish
@@ -229,7 +224,6 @@ function BranchList() {
                   <a
                     key={phone.href}
                     href={`tel:${phone.href}`}
-                    data-cursor=""
                     className="-my-2.5 block py-2.5 transition-colors hover:text-clay"
                   >
                     {phone.display}
@@ -242,7 +236,6 @@ function BranchList() {
                   href={branch.mapUrl}
                   target="_blank"
                   rel="noreferrer"
-                  data-cursor="Ochish"
                   className="group mt-6 flex items-center gap-3 type-action"
                 >
                   Xaritada ochish

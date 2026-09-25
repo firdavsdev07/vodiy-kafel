@@ -9,7 +9,6 @@ export default function SoundToggle({ className = '' }) {
   return (
     <button
       type="button"
-      data-cursor=""
       onClick={toggleSound}
       aria-pressed={on}
       aria-label={on ? 'Ovozni o‘chirish' : 'Ovozni yoqish'}
