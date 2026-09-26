@@ -291,9 +291,12 @@ async function main() {
     }),
   ]);
 
+  // `k` — `kategoriyalar` indeksi (B-067). "Outdoor" ATAYLAB bo'sh: ochiq
+  // saytdagi "bu toifada hozircha mahsulot yo'q" holati ham ko'rinsin.
   const mahsulotTavsifi = [
     {
       n: 'Lyuks Granit Bej',
+      k: 0,
       z: 0,
       s: k60,
       sur: 'POL',
@@ -303,6 +306,7 @@ async function main() {
     },
     {
       n: 'Lyuks Granit Kulrang',
+      k: 5,
       z: 0,
       s: k60,
       sur: 'POL',
@@ -312,6 +316,7 @@ async function main() {
     },
     {
       n: 'Marmar Oq',
+      k: 2,
       z: 1,
       s: k60,
       sur: 'POL',
@@ -321,6 +326,7 @@ async function main() {
     },
     {
       n: 'Marmar Qora',
+      k: 2,
       z: 1,
       s: k60,
       sur: 'POL',
@@ -330,6 +336,7 @@ async function main() {
     },
     {
       n: 'Devor Klassik Bej',
+      k: 4,
       z: 1,
       s: k30,
       sur: 'DEVOR',
@@ -339,6 +346,7 @@ async function main() {
     },
     {
       n: 'Devor Klassik Oq',
+      k: 1,
       z: 2,
       s: k30,
       sur: 'DEVOR',
@@ -348,6 +356,7 @@ async function main() {
     },
     {
       n: 'Crown Premium Pol',
+      k: 6,
       z: 2,
       s: k60,
       sur: 'POL',
@@ -357,6 +366,7 @@ async function main() {
     },
     {
       n: 'Crown Mozaika',
+      k: 1,
       z: 2,
       s: k30,
       sur: 'DEVOR',
@@ -366,6 +376,7 @@ async function main() {
     },
     {
       n: 'Metro Loft',
+      k: 3,
       z: 3,
       s: k60,
       sur: 'POL',
@@ -375,6 +386,7 @@ async function main() {
     },
     {
       n: 'Metro Vintage',
+      k: 4,
       z: 3,
       s: k30,
       sur: 'DEVOR',
@@ -406,6 +418,7 @@ async function main() {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, ''),
         factoryId: zavodlar[p.z].id,
+        categoryId: kategoriyalar[p.k].id,
         sizeId: p.s.id,
         surface: p.sur,
         color: p.c,
@@ -691,6 +704,8 @@ async function main() {
       itemsTotal,
       deliveryTotal,
       grandTotal,
+      // 🔒 Yo'nalish bor ⇒ yetkazib berish so'ralgan (T-004, baza CHECK).
+      deliveryRequested: true,
       regionId: viloyatlar[0].id,
       transportTypeId: fura.id,
       transportCount: mashina,

@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 import { apiPost } from './client.js'
 import { assetUrl } from './config.js'
 import { useApiQuery } from './useApiQuery.js'
@@ -47,6 +49,22 @@ export function useProducts(params, options) {
 /** Kategoriya filtri qatori (B-067) — sahifalanmagan, soni chegaralangan. */
 export function useCategories() {
   return useApiQuery('/categories')
+}
+
+/**
+ * Kategoriya slug'i → vitrinadagi mahsulot soni (T-012).
+ *
+ * `productCount` o'sha `GET /categories` javobida keladi — sakkizta
+ * alohida `/products?categoryId=` so'rovi kerak emas, katalog filtri
+ * bilan kesh ham umumiy. Javob kelmaguncha yoki xato bo'lsa — bo'sh
+ * obyekt: "N mahsulot" yozuvi shunchaki chiqmaydi (soxta 0 emas).
+ */
+export function useCategoryCounts() {
+  const { data } = useCategories()
+  return useMemo(
+    () => Object.fromEntries((data ?? []).map((c) => [c.slug, c.productCount])),
+    [data],
+  )
 }
 
 /** Zavod filtri (S-024) — sahifalanmagan. */
@@ -119,8 +137,8 @@ export function groupMedia(media) {
 /**
  * `ProductListItemResponseDto` → `ProductGrid` kutadigan shakl.
  *
- * `productCardModel` — API javobining YAGONA iste'molchisi (S-022):
- * `src/data/products.js` katalog sahifasida endi ishlatilmaydi.
+ * `productCardModel` — API javobining YAGONA iste'molchisi (S-022).
+ * Mahalliy mock katalog (`src/data/products.js`) T-012 da o'chirildi.
  */
 export function productCardModel(dto) {
   return {

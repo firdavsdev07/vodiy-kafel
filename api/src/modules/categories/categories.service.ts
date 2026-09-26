@@ -32,6 +32,22 @@ const PUBLIC_SELECT = {
   coverImageUrl: true,
 } as const;
 
+/**
+ * Ochiq javobdagi mahsulot soni — faqat vitrinada KO'RINADIGANLARI.
+ *
+ * Filtr [[products.service]] `visibilityWhere()` bilan bir xil bo'lishi
+ * shart: aks holda "12 mahsulot" deb yozilgan toifani ochgan mijoz
+ * kamroq mahsulot ko'radi (o'chirilgan zavodning mahsulotlari).
+ */
+const PUBLIC_WITH_COUNT_SELECT = {
+  ...PUBLIC_SELECT,
+  _count: {
+    select: {
+      products: { where: { isActive: true, factory: { isActive: true } } },
+    },
+  },
+} as const;
+
 /** Admin javobi: ochiq maydonlar + holat + bog'langan mahsulotlar soni. */
 const ADMIN_SELECT = {
   ...PUBLIC_SELECT,
@@ -55,6 +71,9 @@ const ORDER: Prisma.CategoryOrderByWithRelationInput[] = [
 ];
 
 type AdminRow = Prisma.CategoryGetPayload<{ select: typeof ADMIN_SELECT }>;
+type PublicRow = Prisma.CategoryGetPayload<{
+  select: typeof PUBLIC_WITH_COUNT_SELECT;
+}>;
 
 const CATEGORY_NOT_FOUND = 'Kategoriya topilmadi';
 
@@ -69,21 +88,22 @@ export class CategoriesService {
 
   /** Ochiq vitrina (TZ 3.8) — faqat FAOL kategoriyalar. */
   async findAllPublic(): Promise<CategoryPublicResponseDto[]> {
-    return this.prisma.category.findMany({
+    const rows = await this.prisma.category.findMany({
       where: { isActive: true },
-      select: PUBLIC_SELECT,
+      select: PUBLIC_WITH_COUNT_SELECT,
       orderBy: ORDER,
     });
+    return rows.map((row) => this.toPublicDto(row));
   }
 
   /** Bitta kategoriya — slug bo'yicha, faqat FAOL. */
   async findOneBySlug(slug: string): Promise<CategoryPublicResponseDto> {
     const row = await this.prisma.category.findFirst({
       where: { slug, isActive: true },
-      select: PUBLIC_SELECT,
+      select: PUBLIC_WITH_COUNT_SELECT,
     });
     if (!row) throw new NotFoundException(CATEGORY_NOT_FOUND);
-    return row;
+    return this.toPublicDto(row);
   }
 
   /** Admin ro'yxati — o'chirilganlari ham ko'rinadi. */
@@ -209,6 +229,12 @@ export class CategoriesService {
         `Fayl o‘chmadi: ${url} — ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  /** Prisma `_count` ni javob shakliga o'tkazadi. */
+  private toPublicDto(row: PublicRow): CategoryPublicResponseDto {
+    const { _count, ...rest } = row;
+    return { ...rest, productCount: _count.products };
   }
 
   /** Prisma `_count` ni javob shakliga o'tkazadi. */

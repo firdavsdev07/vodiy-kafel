@@ -46,4 +46,13 @@ export class CategoryPublicResponseDto {
     example: '/uploads/categories/keramogranit.webp',
   })
   coverImageUrl!: string | null;
+
+  @ApiProperty({
+    description:
+      'Vitrinada KO‘RINADIGAN mahsulotlar soni (faol mahsulot, faol ' +
+      'zavod) — `/products?categoryId=` shuncha natija qaytaradi. ' +
+      'Admin javobidagi `productCount` boshqa: u hammasini sanaydi.',
+    example: 12,
+  })
+  productCount!: number;
 }

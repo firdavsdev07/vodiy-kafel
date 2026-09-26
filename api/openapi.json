@@ -14167,12 +14167,18 @@
             "type": "string",
             "nullable": true,
             "example": "/uploads/categories/keramogranit.webp"
+          },
+          "productCount": {
+            "type": "number",
+            "description": "Vitrinada KO‘RINADIGAN mahsulotlar soni (faol mahsulot, faol zavod) — `/products?categoryId=` shuncha natija qaytaradi. Admin javobidagi `productCount` boshqa: u hammasini sanaydi.",
+            "example": 12
           }
         },
         "required": [
           "id",
           "name",
-          "slug"
+          "slug",
+          "productCount"
         ]
       },
       "CategoryAdminResponseDto": {

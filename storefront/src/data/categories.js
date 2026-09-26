@@ -104,5 +104,3 @@ export const categories = [
 ]
 
 export const categoryBySlug = (slug) => categories.find((c) => c.slug === slug)
-
-export const categoryName = (slug) => categoryBySlug(slug)?.name ?? slug

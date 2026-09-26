@@ -6,6 +6,7 @@ import assert from 'node:assert/strict'
 import Gallery from '../src/pages/Gallery/Gallery.jsx'
 import NotFound from '../src/pages/NotFound/NotFound.jsx'
 import ProductDetail from '../src/pages/ProductDetail/ProductDetail.jsx'
+import CategoryDetail from '../src/pages/CategoryDetail/CategoryDetail.jsx'
 import CollectionsSection from '../src/sections/home/CollectionsSection.jsx'
 import { resetQueries } from '../src/shared/api/query-store.js'
 
@@ -205,4 +206,66 @@ test('Bosh sahifa «Tanlangan kolleksiyalar» — bo‘sh katalogda bo‘lim chi
   stubApi({ '/products': { items: [], total: 0, page: 1, limit: 4, totalPages: 0 } })
   const { container } = draw(<CollectionsSection />)
   await waitFor(() => assert.equal(container.querySelector('section'), null))
+})
+
+const drawCategory = (slug) =>
+  render(
+    <MemoryRouter initialEntries={[`/categories/${slug}`]}>
+      <Routes>
+        <Route path="/categories/:slug" element={<CategoryDetail />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+
+const apiCategories = [
+  { id: 'c3', slug: 'marmar-effekt', name: 'Marmar effekt', productCount: 30 },
+  { id: 'c8', slug: 'outdoor', name: 'Outdoor', productCount: 0 },
+]
+
+test('Toifa sahifasi — mahsulotlar API dan, slug → categoryId (T-012)', async () => {
+  stubApi({
+    '/categories': apiCategories,
+    '/products': {
+      items: [
+        {
+          id: 'p3',
+          name: 'Marmar Oq',
+          slug: 'marmar-oq',
+          factory: { id: 'f2', name: 'Oltin Kafel', slug: 'oltin' },
+          size: { id: 's1', label: '60x60', widthCm: 60, heightCm: 60 },
+          category: { id: 'c3', name: 'Marmar effekt', slug: 'marmar-effekt' },
+          surface: 'POL',
+          color: 'oq',
+          primaryImageUrl: null,
+          availability: 'AVAILABLE',
+        },
+      ],
+      total: 30,
+      page: 1,
+      limit: 24,
+      totalPages: 2,
+    },
+  })
+  drawCategory('marmar-effekt')
+
+  await waitFor(() => screen.getByText('Marmar Oq'))
+  // Sarlavhadagi son — javobdagi `total`, sahifadagi kartalar soni emas.
+  assert.ok(screen.getByText('30 mahsulot'))
+  const productsCall = vi
+    .mocked(fetch)
+    .mock.calls.map(([url]) => new URL(String(url)))
+    .find((url) => url.pathname.endsWith('/products'))
+  assert.equal(productsCall.searchParams.get('categoryId'), 'c3')
+  // 24 tadan ko'pi — katalogga havola, toifa filtri bilan.
+  const more = screen.getByRole('link', { name: /Hammasi katalogda/ })
+  assert.equal(more.getAttribute('href'), '/catalog?toifa=marmar-effekt')
+})
+
+test('Toifa sahifasi — mahsulotsiz toifada "hozircha yo‘q"', async () => {
+  stubApi({
+    '/categories': apiCategories,
+    '/products': { items: [], total: 0, page: 1, limit: 24, totalPages: 0 },
+  })
+  drawCategory('outdoor')
+  await waitFor(() => screen.getByText(/hozircha mahsulot yo‘q/))
 })

@@ -11,6 +11,7 @@ export {
   productCardModel,
   recordProductView,
   useCategories,
+  useCategoryCounts,
   useFactories,
   useProduct,
   useProducts,

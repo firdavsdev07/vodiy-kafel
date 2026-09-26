@@ -5,8 +5,8 @@ import { loadGsapNear } from '@/animations/gsap'
 import { allowHeavyMotion } from '@/lib/motion'
 import SmartImage from '@/components/ui/SmartImage'
 import { categories } from '@/data/categories'
-import { countByCategory } from '@/data/products'
 import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useCategoryCounts } from '@/shared/api'
 
 /**
  * The collection browser — horizontal movement driven by vertical scroll
@@ -31,6 +31,7 @@ export default function CategoriesSection() {
   const counterRef = useRef(null)
   const ctxRef = useRef(null)
   const isMobile = useIsMobile()
+  const counts = useCategoryCounts()
   // Bir marta hal qilinadi: batareya javobi kech kelib tartib
   // o'rtada sakrab ketmasin
   const [heavy] = useState(() => allowHeavyMotion())
@@ -223,9 +224,9 @@ export default function CategoriesSection() {
             >
               <div className="flex items-baseline gap-4">
                 <span className="type-label text-clay">{cat.index}</span>
-                <span className="type-label text-clay">
-                  {countByCategory(cat.slug)} mahsulot
-                </span>
+                {counts[cat.slug] != null && (
+                  <span className="type-label text-clay">{counts[cat.slug]} mahsulot</span>
+                )}
               </div>
 
               <div className="relative mt-5 overflow-hidden">

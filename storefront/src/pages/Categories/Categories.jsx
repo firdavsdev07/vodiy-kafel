@@ -5,10 +5,10 @@ import { gsapLoaded, loadGsapNear } from '@/animations/gsap'
 import PageHeader from '@/components/ui/PageHeader'
 import SmartImage from '@/components/ui/SmartImage'
 import { categories } from '@/data/categories'
-import { countByCategory } from '@/data/products'
 import { useIsTouch } from '@/hooks/useMediaQuery'
 import { useReveal } from '@/hooks/useReveal'
 import { playTone } from '@/lib/sound'
+import { useCategoryCounts } from '@/shared/api'
 import Seo from '@/components/ui/Seo'
 
 /** The index. A cursor-tracked still answers whichever row is being read. */
@@ -16,6 +16,7 @@ export default function Categories() {
   const listRef = useRef(null)
   const previewRef = useRef(null)
   const [hovered, setHovered] = useState(null)
+  const counts = useCategoryCounts()
   const isTouch = useIsTouch()
   const revealRef = useReveal({ start: 'top 85%', stagger: 0.06 })
 
@@ -173,9 +174,11 @@ export default function Categories() {
 
                   <span className="hidden shrink-0 text-right md:block">
                     <span className="type-label block text-clay">{cat.nameEn}</span>
-                    <span className="mt-2 block type-label">
-                      {countByCategory(cat.slug)} mahsulot
-                    </span>
+                    {counts[cat.slug] != null && (
+                      <span className="mt-2 block type-label">
+                        {counts[cat.slug]} mahsulot
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>

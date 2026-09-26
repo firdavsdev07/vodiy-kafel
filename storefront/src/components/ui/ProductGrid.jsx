@@ -1,16 +1,13 @@
 import { Link } from 'react-router-dom'
 
 import SmartImage from '@/components/ui/SmartImage'
-import { categoryName } from '@/data/categories'
 import { playTone } from '@/lib/sound'
 
 /**
  * Shared product listing. Alternating ratios keep the rows from reading as cards.
  *
- * Ikki manbani ko'radi (S-023): mahalliy namuna katalogi (`product.image`,
- * `product.category`) va API (`product.src`, `product.categoryLabel` —
- * `productCardModel` tayyorlaydi). Mock S-022 da o'chadi, o'shanda
- * `image`/`category` shoxlari ham ketadi.
+ * `items` — `productCardModel` shakli (API). Mahalliy mock katalogning
+ * `image`/`category` shoxlari T-012 da mock bilan birga ketdi.
  */
 export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
   const cols =
@@ -30,7 +27,6 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
             className="group block"
           >
             <SmartImage
-              id={product.image}
               src={product.src}
               alt={product.name}
               ratio={i % 4 === 0 ? '4 / 5' : '3 / 4'}
@@ -47,7 +43,7 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
               </h3>
               <div className="mt-3 flex items-baseline justify-between gap-4 type-meta">
                 <span className="opacity-60">
-                  {product.categoryLabel ?? categoryName(product.category)}
+                  {product.categoryLabel}
                 </span>
                 <span>
                   {product.size} · {product.finish}

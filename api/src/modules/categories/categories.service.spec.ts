@@ -97,6 +97,29 @@ describe('CategoriesService (B-067)', () => {
       const arg = (findMany.mock.calls as [{ orderBy: unknown }][])[0][0];
       expect(arg.orderBy).toEqual([{ sortOrder: 'asc' }, { name: 'asc' }]);
     });
+
+    it('productCount — faqat vitrinada KO‘RINADIGAN mahsulotlar', async () => {
+      findMany.mockResolvedValue([
+        { ...row(), _count: { products: 3 } },
+      ] as unknown[]);
+      const [dto] = await service.findAllPublic();
+
+      const arg = (
+        findMany.mock.calls as [
+          {
+            select: {
+              _count: { select: { products: { where: unknown } } };
+            };
+          },
+        ][]
+      )[0][0];
+      expect(arg.select._count.select.products.where).toEqual({
+        isActive: true,
+        factory: { isActive: true },
+      });
+      expect(dto.productCount).toBe(3);
+      expect(dto).not.toHaveProperty('_count');
+    });
   });
 
   describe('findOneBySlug', () => {

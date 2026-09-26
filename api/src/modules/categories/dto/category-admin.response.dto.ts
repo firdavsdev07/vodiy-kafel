@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { CategoryPublicResponseDto } from './category-public.response.dto';
 
 /**
@@ -6,8 +6,15 @@ import { CategoryPublicResponseDto } from './category-public.response.dto';
  *
  * CLAUDE.md qoida 2: har bir entity uchun ikki xil DTO
  * ([[factory-admin.response.dto]] bilan bir xil naqsh).
+ *
+ * `productCount` ochiq javobdan OLINMAYDI — ma'nosi boshqa (ochiqda faqat
+ * vitrinada ko'rinadiganlar, bu yerda hammasi), shuning uchun qayta e'lon
+ * qilinadi.
  */
-export class CategoryAdminResponseDto extends CategoryPublicResponseDto {
+export class CategoryAdminResponseDto extends OmitType(
+  CategoryPublicResponseDto,
+  ['productCount'] as const,
+) {
   @ApiProperty({
     description: 'Vitrinada chiqish tartibi (kichik son — oldinroq)',
     example: 10,
