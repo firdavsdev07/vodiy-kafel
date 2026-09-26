@@ -766,7 +766,7 @@
       Bog'liq: S-037 (tugagan)
 
 
-[ ] S-045  «Optom kirish» tugmasi (TZ 2-bo'lim)
+[x] S-045  «Optom kirish» tugmasi (TZ 2-bo'lim)
       Paket : storefront/
       TZ 2-bo'limi: «Header'da «Optom kirish» tugmasi — rangi bilan
         ajralib turadigan, mobil va desktopda ko'rinadigan joyda».
@@ -782,10 +782,32 @@
           «Optom mijozlar uchun» degan qisqa izoh yoki tooltip
       Bog'liq: S-005 (tugagan — tugma matni ≥ 16px)
 
+      ✅ BAJARILDI (2026-09-26):
+        storefront/:
+          • `src/lib/cabinet.js` — `CABINET_URL` = `VITE_CABINET_URL` +
+            `/kabinet`. Berilmasa: dev → localhost:5174, prod → sayt bilan
+            bir domen (jimgina `localhost` ga ketmasin). Kirmagan mijozni
+            dashboard o'zi login sahifasiga yo'naltiradi, kirgan mijoz
+            to'g'ridan-to'g'ri kabinetga tushadi.
+          • `Nav` — «Optom kirish» havolasi «Menyu» chipi yonida, desktop
+            va telefonda header'da. Teskari rang (to'q fon, qog'oz matn),
+            `type-action` (16px), 49px balandlik (≥ 44px tegish maydoni).
+            Telefonda skrollda menyu chipi bilan birga yashirinadi.
+            Chakana mijozga izoh: `title` tooltip + `aria-describedby`.
+          • `Menu` — pastki blokda «Optom kirish →» + ochiq yozilgan
+            «Faqat optom mijozlar uchun» (telefonda tooltip yo'q).
+          • Login formasi / token / `/me/*` YOZILMADI (G1).
+        Tekshirildi: lint, test (58/58), build. Brauzerda (headless
+          Chrome) 1440 / 390 / 360 px — havola `…:5174/kabinet`, logo bilan
+          ustma-ust tushmaydi (360 px da 17 px oraliq), gorizontal skroll
+          yo'q, konsolda xato yo'q; kabinet → dashboard login sahifasi.
+        ⚠ Build byudjet ogohlantirishi (birinchi ekran JS 150 KB) — AVVAL
+          HAM bor edi (155 KB); bu task +1 KB qo'shdi.
+
 
   ── Tavsiyalar — eski fayllarda "ticket olinmagan" deb qolganlar ──────────
 
-[ ] T-012  Bosh sahifadagi `CollectionsSection` ni API'ga ulash
+[~] T-012  Bosh sahifadagi `CollectionsSection` ni API'ga ulash
       Paket : storefront/
       Manba : storefront/task.txt UMUMIY HOLAT (S-022 dan keyin)
       Muammo: "Tanlangan kolleksiyalar" bo'limi hamon
@@ -824,11 +846,11 @@
 ║  HOLAT                                                                       ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami: 23    Tugadi: 11    Jarayonda: 0    Bloklangan: 3
+  Jami: 23    Tugadi: 12    Jarayonda: 0    Bloklangan: 3
 
     Yangi (T-001 … T-011) ........ 11 / 11
     Ko'chirilgan api/ ............ 0 / 2    (B-044, B-050 — mijoz javobini kutadi)
-    Ko'chirilgan storefront/ ..... 0 / 6    (S-032 T-014 ni kutadi;
+    Ko'chirilgan storefront/ ..... 1 / 6    (S-045 tugadi; S-032 T-014 ni kutadi;
                                              S-033/S-034/S-035/S-038 —
                                              mijoz qarori yoki kontenti)
     Tavsiyalar (T-012 … T-015) ... 0 / 4
@@ -836,4 +858,4 @@
   KEYINGI TASK:  Yangi tasklar (T-001 … T-011) TUGADI.
                  Qolganlari mijoz qarorini kutadi: B-044, B-050, S-033,
                  S-034, S-035, S-038; S-032 → T-014. Kod bilan qilinadigan
-                 navbatdagilar: T-012, T-013, T-014, T-015, S-045.
+                 navbatdagilar: T-012, T-013, T-014, T-015.

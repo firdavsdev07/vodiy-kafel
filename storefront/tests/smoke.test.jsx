@@ -6,6 +6,7 @@ import assert from 'node:assert/strict'
 import Gallery from '../src/pages/Gallery/Gallery.jsx'
 import NotFound from '../src/pages/NotFound/NotFound.jsx'
 import ProductDetail from '../src/pages/ProductDetail/ProductDetail.jsx'
+import CollectionsSection from '../src/sections/home/CollectionsSection.jsx'
 import { resetQueries } from '../src/shared/api/query-store.js'
 
 /**
@@ -161,4 +162,47 @@ test('Mahsulot — 404 bo‘lsa "topilmadi" sahifasi', async () => {
   stubApi({}) // hamma so'rov 404
   drawProduct('yoq-mahsulot')
   await waitFor(() => screen.getByText(/mavjud emas/i))
+})
+
+test('Bosh sahifa «Tanlangan kolleksiyalar» — API dan, eng ko‘p ko‘rilganlar (T-012)', async () => {
+  stubApi({
+    '/products': {
+      items: [
+        {
+          id: 'p1',
+          name: 'Metro Vintage',
+          slug: 'metro-vintage',
+          factory: { id: 'f1', name: 'Metro Ceramics', slug: 'metro' },
+          size: { id: 's1', label: '30x60', widthCm: 30, heightCm: 60 },
+          category: { id: 'c1', name: 'Keramogranit', slug: 'keramogranit' },
+          surface: 'DEVOR',
+          color: 'terrakota',
+          primaryImageUrl: 'https://cdn/1.jpg',
+          availability: 'AVAILABLE',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 4,
+      totalPages: 1,
+    },
+  })
+
+  draw(<CollectionsSection />)
+
+  await waitFor(() => screen.getByText('Metro Vintage'))
+  assert.ok(screen.getByText('Metro Ceramics'))
+  assert.ok(screen.getByText('Keramogranit'))
+  const url = new URL(String(vi.mocked(fetch).mock.calls[0][0]))
+  assert.equal(url.searchParams.get('sortBy'), 'viewCount')
+  assert.equal(url.searchParams.get('limit'), '4')
+  for (const link of screen.getAllByRole('link', { name: 'Metro Vintage' })) {
+    assert.equal(link.getAttribute('href'), '/catalog/metro-vintage')
+  }
+})
+
+test('Bosh sahifa «Tanlangan kolleksiyalar» — bo‘sh katalogda bo‘lim chiqmaydi', async () => {
+  stubApi({ '/products': { items: [], total: 0, page: 1, limit: 4, totalPages: 0 } })
+  const { container } = draw(<CollectionsSection />)
+  await waitFor(() => assert.equal(container.querySelector('section'), null))
 })

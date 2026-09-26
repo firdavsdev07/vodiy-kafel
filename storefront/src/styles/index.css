@@ -43,6 +43,12 @@
 .floating-nav a, .floating-nav button { color: #232321; border-radius: 2px; }
 .floating-nav .nav-veil, .floating-nav .nav-chip { background: #eeece5f5; }
 .floating-nav .nav-chip { padding: 14px 16px; border: 1px solid #d1cabc; }
+/* «Optom kirish» (S-045): TZ talabi — rangi bilan ajralib tursin. Menyu
+   chipi bilan bir xil o'lcham, lekin teskari: to'q fon, qog'oz matn.
+   `.floating-nav a` ning majburiy siyoh rangi shu yerda bekor qilinadi. */
+.floating-nav .nav-cta { display: flex; align-items: center; background: #232321; color: #eeece5; border-color: #232321; transition: background-color .3s ease-out, translate .5s cubic-bezier(.16,1,.3,1); }
+.floating-nav .nav-cta:hover { background: #0b0b0a; }
+@media (max-width: 767px) { .floating-nav .nav-cta { padding-inline: 12px; } }
 /* Telefondagi nav bari (Nav.jsx `useMobileNavState`). Tepada ko'rinmaydi —
    hero bilan bir xil qog'oz ustida chiziq kerak emas; skroll boshlanganda
    paydo bo'ladi, pastga skrollda logo + tugma bilan birga yuqoriga

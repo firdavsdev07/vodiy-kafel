@@ -6,6 +6,7 @@ import { prefersReducedMotion } from '@/lib/motion'
 import SoundToggle from '@/components/Nav/SoundToggle'
 import SmartImage from '@/components/ui/SmartImage'
 import { company } from '@/data/company'
+import { CABINET_URL } from '@/lib/cabinet'
 import { BATH, INTERIOR, MARBLE, TILE, TRAVERTINE } from '@/data/images'
 import { useIsTouch } from '@/hooks/useMediaQuery'
 import { startScroll, stopScroll } from '@/lib/lenis'
@@ -221,6 +222,14 @@ export default function Menu({ open, onClose }) {
                 <span className="text-bone">{branch.workingHours}</span>
               </div>
             )}
+            {/* Kabinet havolasi (S-045). Header'dagi tugmaning `title`
+                izohi telefonda ko'rinmaydi — shu yerda ochiq yozilgan. */}
+            <div className="flex flex-col gap-1">
+              <a href={CABINET_URL} className="type-action transition-colors hover:text-clay">
+                Optom kirish →
+              </a>
+              <span className="type-label text-clay">Faqat optom mijozlar uchun</span>
+            </div>
             <div className="flex gap-6">
               <a href={company.contact.telegram} target="_blank" rel="noreferrer" className="type-label text-clay transition-colors hover:text-bone">
                 Telegram

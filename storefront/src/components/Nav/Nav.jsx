@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import SoundToggle from '@/components/Nav/SoundToggle'
 import { company } from '@/data/company'
+import { CABINET_URL } from '@/lib/cabinet'
 import { playTone } from '@/lib/sound'
 
 /**
@@ -37,32 +38,51 @@ export default function Nav({ open, onToggle, toggleRef }) {
           <img src="/favicon-192.png" alt="" width="52" height="52" className="block size-11 md:size-[3.25rem]" />
         </Link>
 
-        <button
-          ref={toggleRef}
-          type="button"
-          onClick={() => {
-            playTone(open ? 'close' : 'open')
-            onToggle()
-          }}
-          aria-expanded={open}
-          aria-label={open ? 'Menyuni yopish' : 'Menyuni ochish'}
-          className="nav-chip pointer-events-auto absolute right-[clamp(1.25rem,4vw,4.5rem)] top-4 type-label md:top-8"
-        >
-          <span className="relative block h-[1em] w-[5.6em] overflow-hidden text-right">
-            <span
-              className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)]"
-              style={{ transform: open ? 'translateY(-120%)' : 'none' }}
-            >
-              Menyu
-            </span>
-            <span
-              className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)]"
-              style={{ transform: open ? 'none' : 'translateY(120%)' }}
-            >
-              Yopish
-            </span>
+        {/* «Optom kirish» (S-045, TZ 2-bo'lim) — ajralib turadigan to'q
+            tugma, desktop va telefonda ham header'da. Bu faqat HAVOLA:
+            kabinet dashboard'da, storefront'da hisob yo'q (G1). Chakana
+            mijoz uchun izoh `title` + ekran o'qigichga `aria-describedby`. */}
+        <div className="pointer-events-auto absolute right-[clamp(1.25rem,4vw,4.5rem)] top-4 flex items-stretch gap-2 md:top-8">
+          <a
+            href={CABINET_URL}
+            onClick={() => playTone('click')}
+            title="Optom mijozlar uchun — shaxsiy kabinet"
+            aria-describedby="nav-cabinet-hint"
+            className="nav-chip nav-cta type-action whitespace-nowrap"
+          >
+            Optom kirish
+          </a>
+          <span id="nav-cabinet-hint" className="sr-only">
+            Optom mijozlar uchun shaxsiy kabinet. Chakana xaridorlarga hisob kerak emas.
           </span>
-        </button>
+
+          <button
+            ref={toggleRef}
+            type="button"
+            onClick={() => {
+              playTone(open ? 'close' : 'open')
+              onToggle()
+            }}
+            aria-expanded={open}
+            aria-label={open ? 'Menyuni yopish' : 'Menyuni ochish'}
+            className="nav-chip type-label"
+          >
+            <span className="relative block h-[1em] w-[5.6em] overflow-hidden text-right">
+              <span
+                className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)]"
+                style={{ transform: open ? 'translateY(-120%)' : 'none' }}
+              >
+                Menyu
+              </span>
+              <span
+                className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)]"
+                style={{ transform: open ? 'none' : 'translateY(120%)' }}
+              >
+                Yopish
+              </span>
+            </span>
+          </button>
+        </div>
 
         <a
           href={`tel:${company.contact.phoneHref[0]}`}
