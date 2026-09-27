@@ -6,6 +6,7 @@ const branch: Branch = {
   name: 'Vodiy Kafel — Farg‘ona',
   city: 'Farg‘ona',
   address: 'Mustaqillik 12',
+  landmark: null,
   latitude: 40.3864,
   longitude: 71.7864,
   workingHours: 'Du–Sh 09:00–18:00',
@@ -54,6 +55,19 @@ describe('filial formasi (D-033)', () => {
     expect(toUpdateBranchBody(unchanged, branch, true)).toEqual({});
     const r = branchSchema.parse({ ...branchDefaults(branch), name: 'Yangi nom', telegramUrl: '', workingHours: '10–19' });
     expect(toUpdateBranchBody(r, branch, true)).toEqual({ name: 'Yangi nom', telegramUrl: null, workingHours: '10–19' });
+  });
+
+  it('oriyentir (T-015): yaratishda bo‘sh — yuborilmaydi; tahrirda bo‘shatilsa null; filial admini ham o‘zgartiradi', () => {
+    const created = branchSchema.parse({ ...branchDefaults(), name: 'Y', city: 'Q', address: 'A', latitude: '40', longitude: '70', workingHours: '9–18', phones: '+998901234567', landmark: '  ' });
+    expect(toCreateBranchBody(created)).not.toHaveProperty('landmark');
+
+    const set = branchSchema.parse({ ...branchDefaults(branch), landmark: ' Bozor yonida ' });
+    expect(toUpdateBranchBody(set, branch, false)).toEqual({ landmark: 'Bozor yonida' });
+
+    const withLandmark = { ...branch, landmark: 'Bozor yonida' };
+    const cleared = branchSchema.parse({ ...branchDefaults(withLandmark), landmark: '' });
+    expect(toUpdateBranchBody(cleared, withLandmark, true)).toEqual({ landmark: null });
+    expect(parse({ landmark: 'x'.repeat(201) }).success).toBe(false);
   });
 
   it('🔒 filial admini: faqat kontakt maydonlari — nom o‘zgarsa ham yuborilmaydi (403 bo‘lmasin)', () => {

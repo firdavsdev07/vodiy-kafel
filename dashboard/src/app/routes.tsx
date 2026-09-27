@@ -24,6 +24,7 @@ const pages: Record<SectionId, LazyExoticComponent<ComponentType>> = {
   supplyOrders: lazy(() => import('@/pages/supply-orders/SupplyOrdersPage')),
   customers: lazy(() => import('@/pages/customers/CustomersPage')),
   announcements: lazy(() => import('@/pages/announcements/AnnouncementsPage')),
+  leads: lazy(() => import('@/pages/leads/LeadsPage')),
   products: lazy(() => import('@/pages/products/ProductsPage')),
   factories: lazy(() => import('@/pages/factories/FactoriesPage')),
   sizes: lazy(() => import('@/pages/sizes/SizesPage')),

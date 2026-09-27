@@ -9,6 +9,7 @@ import { MediaType, PrismaService } from '../../prisma';
 import {
   IMAGE_KINDS,
   requireFileKind,
+  ImageStorageService,
   STORAGE_SERVICE,
   VIDEO_KINDS,
   type FileKind,
@@ -44,6 +45,7 @@ export class ProductMediaService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly images: ImageStorageService,
   ) {}
 
   async findAll(productId: string): Promise<ProductMediaAdminResponseDto[]> {
@@ -69,11 +71,12 @@ export class ProductMediaService {
     );
     await this.assertProductExists(productId);
 
-    const { url } = await this.storage.save({
-      buffer,
-      folder: 'products',
-      extension: kind,
-    });
+    // Suratga `srcset` variantlari (T-014); 360° video — asl holicha.
+    const input = { buffer, folder: 'products', extension: kind } as const;
+    const { url } =
+      type === MediaType.VIDEO_360
+        ? await this.storage.save(input)
+        : await this.images.save(input);
 
     try {
       const last = await this.prisma.productMedia.aggregate({

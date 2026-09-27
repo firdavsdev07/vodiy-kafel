@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Handshake,
   Images,
+  Inbox,
   LayoutDashboard,
   Megaphone,
   Package,
@@ -34,6 +35,7 @@ export type SectionId =
   | 'supplyOrders'
   | 'customers'
   | 'announcements'
+  | 'leads'
   | 'products'
   | 'factories'
   | 'sizes'
@@ -103,6 +105,13 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         title: 'Xabarlar',
         icon: Megaphone,
         roles: PERMISSIONS['announcements.send'],
+      },
+      {
+        id: 'leads',
+        path: '/leads',
+        title: 'Murojaatlar',
+        icon: Inbox,
+        roles: PERMISSIONS['leads.manage'],
       },
     ],
   },

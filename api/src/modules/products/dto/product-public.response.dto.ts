@@ -1,4 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
 import { PublicAvailability } from '../../../common/enums';
 import { ProductSurface } from '../../../prisma';
 
@@ -115,6 +119,13 @@ export class ProductListItemResponseDto {
     nullable: true,
   })
   primaryImageUrl!: string | null;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: IMAGE_VARIANTS_DESCRIPTION,
+  })
+  primaryImageVariants!: ImageVariantsDto | null;
 
   @ApiProperty({
     enum: PublicAvailability,

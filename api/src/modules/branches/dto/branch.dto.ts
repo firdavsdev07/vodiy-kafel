@@ -23,6 +23,10 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
+import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
 import { BranchType } from '../../../common/enums';
 import { toOptionalBoolean } from '../../../common/utils/query-boolean.util';
 
@@ -58,6 +62,24 @@ export class CreateBranchDto {
   @IsNotEmpty()
   @MaxLength(300)
   address!: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    maxLength: 200,
+    example: 'Urjuza klinikasi yaqinida',
+    description:
+      'Oriyentir — odam ko‘cha nomidan ko‘ra shunga qarab topadi. Bo‘sh ' +
+      'satr yoki `null` — olib tashlash.',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() || null : value,
+  )
+  @ValidateIf((_o, value) => value !== null)
+  @IsString()
+  @MaxLength(200)
+  landmark?: string | null;
 
   @ApiProperty({ example: 40.3864, minimum: -90, maximum: 90 })
   @IsNumber({ allowNaN: false, allowInfinity: false })
@@ -172,6 +194,14 @@ export class BranchPublicDto {
   @ApiProperty()
   address!: string;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Urjuza klinikasi yaqinida',
+    description: 'Oriyentir (T-015). `null` — ko‘rsatilmagan.',
+  })
+  landmark!: string | null;
+
   @ApiProperty({ example: 40.3864 })
   latitude!: number;
 
@@ -186,6 +216,13 @@ export class BranchPublicDto {
 
   @ApiProperty({ type: String, nullable: true })
   buildingImageUrl!: string | null;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: IMAGE_VARIANTS_DESCRIPTION,
+  })
+  buildingImageVariants!: ImageVariantsDto | null;
 
   @ApiProperty({ type: String, nullable: true })
   telegramUrl!: string | null;

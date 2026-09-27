@@ -11,6 +11,10 @@ import {
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
+import {
   toOptionalBoolean,
   toOptionalInt,
 } from '../../../common/utils/query-boolean.util';
@@ -37,6 +41,13 @@ export class GalleryPublicItemDto {
 
   @ApiProperty({ example: '/uploads/gallery/0b6f1c1e.jpg' })
   imageUrl!: string;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: IMAGE_VARIANTS_DESCRIPTION,
+  })
+  imageVariants!: ImageVariantsDto | null;
 
   @ApiPropertyOptional({
     example: 'Farg‘ona, xususiy uy — oshxona',

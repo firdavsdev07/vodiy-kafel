@@ -63,6 +63,15 @@ export const envSchema = z.object({
   // Vergul bilan ajratilgan ro'yxat yoki '*'
   CORS_ORIGINS: z.string().default('*'),
 
+  // — Proksi (T-013) —
+  // API oldida nechta ishonchli proksi (nginx, caddy …) turibdi. 0 — yo'q:
+  // `req.ip` = ulanish manzili. Proksi ortida 0 qolsa, HAMMA mehmon
+  // proksining bitta IP si bo'lib ko'rinadi va rate-limit (login, aloqa
+  // formasi) butun sayt uchun BITTA hisoblagichga aylanadi.
+  // ⚠ Proksi yo'q joyda 0 dan katta qo'yilmasin — mijoz `X-Forwarded-For`
+  //   ni o'zi yozib, chegarani chetlab o'tadi.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
+
   // — Fayl saqlash (B-022) —
   // Yuklangan fayllar papkasi (loyiha ildiziga nisbatan yoki absolyut yo'l).
   // `/uploads/...` manzili orqali beriladi.

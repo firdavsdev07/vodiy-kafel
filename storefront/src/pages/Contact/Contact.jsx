@@ -5,6 +5,8 @@ import { useReveal } from '@/hooks/useReveal'
 import { branchModel, useBranches, usePaymentRequisites } from '@/shared/api'
 import Seo from '@/components/ui/Seo'
 
+import ContactForm from './ContactForm'
+
 export default function Contact() {
   const headRef = useReveal({ start: 'top 92%', stagger: 0.08 })
   const bodyRef = useReveal({ start: 'top 85%' })
@@ -90,65 +92,18 @@ export default function Contact() {
             </div>
           </div>
 
-          {/* Aloqa yo'llari (S-030).
-
-              ⚠ FORMA OLIB TASHLANDI. U ochiq-oydin "demo rejimida —
-                ma'lumot hech qayerga yuborilmaydi" deb yozib turardi.
-                Backendda ochiq "murojaat/lead" endpointi YO'Q:
-                `POST /orders` faqat optom mijoz tokeni bilan ishlaydi,
-                chakana mijozda esa hisob yo'q (G1). Ishlamaydigan
-                forma ishonchni yo'qotadi — odam yozadi, javob kelmaydi.
-
-              🆕 Keyingi qadam — api'da `POST /leads` (task.txt, S-030
-                 dagi "A yo'li"). U tayyor bo'lgach forma shu yerga
-                 qaytadi. */}
+          {/* Aloqa formasi (T-013) — `POST /leads`, xabar admin panelga
+              tushadi. S-030 da vaqtincha olib tashlangan edi: backendda
+              ochiq endpoint yo'q edi va forma "demo rejimida" ishlardi. */}
           <div className="md:col-span-6 md:col-start-7">
-            <div className="r-fade type-label text-clay">Qanday bog‘lanish mumkin</div>
-
-            <div className="r-fade mt-8 flex flex-col">
-              {company.contact.phones.map((phone, i) => (
-                <a
-                  key={phone}
-                  href={`tel:${company.contact.phoneHref[i]}`}
-                  className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
-                >
-                  <span className="type-label text-clay">
-                    {i === 0 ? 'Qo‘ng‘iroq' : 'Qo‘shimcha'}
-                  </span>
-                  <span className="text-[clamp(1.1rem,2vw,1.6rem)] font-semibold tracking-[-0.02em]">
-                    {phone}
-                  </span>
-                </a>
-              ))}
-
-              <a
-                href={company.contact.telegram}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-baseline justify-between gap-4 border-t border-charcoal/25 py-5 transition-colors hover:text-clay"
-              >
-                <span className="type-label text-clay">Telegram</span>
-                <span className="text-[clamp(1.1rem,2vw,1.6rem)] font-semibold tracking-[-0.02em]">
-                  {company.contact.handle} ↗
-                </span>
-              </a>
-
-              <a
-                href={`mailto:${company.contact.email}`}
-                className="group flex items-baseline justify-between gap-4 border-y border-charcoal/25 py-5 transition-colors hover:text-clay"
-              >
-                <span className="type-label text-clay">Pochta</span>
-                <span className="break-all text-[clamp(0.95rem,1.5vw,1.2rem)]">
-                  {company.contact.email}
-                </span>
-              </a>
-            </div>
-
-            <p className="r-fade mt-8 max-w-[42ch] leading-relaxed text-clay">
-              Qo‘ng‘iroq qiling yoki Telegramga yozing — ish vaqtida darhol
-              javob beramiz. Qaysi yuza kerakligini bilmasangiz ham bo‘ladi:
-              xonani aytsangiz, o‘zimiz tanlab beramiz.
+            <div className="r-fade type-label text-clay">Xabar qoldiring</div>
+            <p className="r-fade mt-6 max-w-[42ch] leading-relaxed text-clay">
+              Qaysi yuza kerakligini bilmasangiz ham bo‘ladi: xonani aytsangiz,
+              o‘zimiz tanlab beramiz. Ish vaqtida qo‘ng‘iroq qilamiz.
             </p>
+            <div className="r-fade">
+              <ContactForm />
+            </div>
           </div>
         </div>
       </section>
@@ -213,6 +168,7 @@ function BranchList() {
 
               <address className="mt-4 not-italic leading-relaxed text-clay">
                 {branch.address}
+                {branch.landmark && <span className="mt-1 block text-charcoal">{branch.landmark}</span>}
               </address>
 
               <p className="mt-4 type-meta">{branch.workingHours}</p>

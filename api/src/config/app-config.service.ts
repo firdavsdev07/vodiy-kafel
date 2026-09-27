@@ -89,6 +89,12 @@ export class AppConfigService {
     };
   }
 
+  // — Proksi —
+  /** Ishonchli proksi soni (Express `trust proxy`). 0 — proksi yo'q. */
+  get trustProxy(): number {
+    return this.get('TRUST_PROXY');
+  }
+
   // — CORS —
   /** '*' bo'lsa true (hamma ruxsat), aks holda domenlar ro'yxati */
   get corsOrigins(): string[] | true {

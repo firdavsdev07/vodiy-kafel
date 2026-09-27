@@ -1,4 +1,4 @@
-import { assetUrl } from './config.js'
+import { assetUrl, variantSrcSet } from './config.js'
 import { useApiQuery } from './useApiQuery.js'
 
 /**
@@ -67,12 +67,16 @@ export function branchModel(dto) {
     name: dto.name,
     city: dto.city,
     address: dto.address,
+    // Oriyentir (T-015): "bozor yonida" — odam ko'cha nomidan ko'ra
+    // shunga qarab topadi. Yo'q bo'lsa `null` — bo'sh qator chizilmaydi.
+    landmark: dto.landmark?.trim() || null,
     workingHours: dto.workingHours,
     phones: (dto.phones ?? []).map((phone) => ({
       display: formatPhone(phone),
       href: String(phone).replace(/[^\d+]/g, ''),
     })),
     image: assetUrl(dto.buildingImageUrl),
+    imageSrcSet: variantSrcSet(dto.buildingImageVariants),
     telegramUrl: dto.telegramUrl ?? null,
     instagramUrl: dto.instagramUrl ?? null,
     mapUrl: mapLink(dto.latitude, dto.longitude),

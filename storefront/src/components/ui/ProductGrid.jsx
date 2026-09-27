@@ -28,6 +28,7 @@ export default function ProductGrid({ items, columns = 3, startIndex = 0 }) {
           >
             <SmartImage
               src={product.src}
+              srcSet={product.srcSet}
               alt={product.name}
               ratio={i % 4 === 0 ? '4 / 5' : '3 / 4'}
               sizes="(max-width: 767px) 92vw, (max-width: 1023px) 46vw, 30vw"

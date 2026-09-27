@@ -8,6 +8,7 @@ import { BranchType, UserRole } from '../../common/enums';
 import type { Actor } from '../../common/types/actor';
 import type { PrismaService } from '../../prisma';
 import { BranchesService } from './branches.service';
+import type { ImageStorageService } from '../../storage';
 
 /** B-041 · filiallar. */
 describe('BranchesService (B-041)', () => {
@@ -56,6 +57,9 @@ describe('BranchesService (B-041)', () => {
       { branch } as unknown as PrismaService,
       new BranchScopeService(),
       storage,
+      // Rasm yuklash (T-014) — `save` imzosi bir xil; variant yasash
+      // `image-storage.service.spec.ts` da alohida tekshiriladi.
+      storage as unknown as ImageStorageService,
     );
   });
 
@@ -69,6 +73,8 @@ describe('BranchesService (B-041)', () => {
       expect(args.select).not.toHaveProperty('type');
       expect(args.select).not.toHaveProperty('isActive');
       expect(args.select).not.toHaveProperty('sortOrder');
+      // T-015: oriyentir ochiq — saytdagi "Do'konlar" ro'yxatiga kerak
+      expect(args.select).toHaveProperty('landmark', true);
     });
 
     it('bitta — CENTRAL yoki yopilgan bo‘lsa 404', async () => {
@@ -119,6 +125,17 @@ describe('BranchesService (B-041)', () => {
       expect(branch.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { phones: ['+998 73 244 00 00'], workingHours: 'Du–Sh' },
+        }),
+      );
+    });
+
+    it('filial admini oriyentirni ham tahrirlaydi (T-015)', async () => {
+      await service.update(fargonaAdmin, 'fargona', {
+        landmark: 'Markaziy bozor yonida',
+      });
+      expect(branch.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { landmark: 'Markaziy bozor yonida' },
         }),
       );
     });

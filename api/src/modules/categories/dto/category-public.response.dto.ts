@@ -1,4 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
 
 /**
  * Kategoriya — OCHIQ javob (B-067, TZ 3.8: bosh sahifa/katalog vitrinasi).
@@ -46,6 +50,13 @@ export class CategoryPublicResponseDto {
     example: '/uploads/categories/keramogranit.webp',
   })
   coverImageUrl!: string | null;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: IMAGE_VARIANTS_DESCRIPTION,
+  })
+  coverImageVariants!: ImageVariantsDto | null;
 
   @ApiProperty({
     description:

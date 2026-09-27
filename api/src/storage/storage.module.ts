@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { AppConfigService } from '../config';
+import { ImageStorageService } from './image-storage.service';
 import { LocalDiskStorage } from './local-disk.storage';
 import { STORAGE_SERVICE } from './storage.interface';
 
@@ -18,7 +19,8 @@ import { STORAGE_SERVICE } from './storage.interface';
       useFactory: (config: AppConfigService) =>
         new LocalDiskStorage(config.uploadDir),
     },
+    ImageStorageService,
   ],
-  exports: [STORAGE_SERVICE],
+  exports: [STORAGE_SERVICE, ImageStorageService],
 })
 export class StorageModule {}

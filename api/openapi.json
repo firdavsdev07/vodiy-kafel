@@ -10802,6 +10802,420 @@
         ]
       }
     },
+    "/api/v1/leads": {
+      "post": {
+        "description": "Token talab qilinmaydi — chakana mehmon ism, telefon va xabar qoldiradi, xodim uni admin panelda (`/admin/leads`) ko‘radi.\n\n🔒 Spamga qarshi: bitta IP dan 10 daqiqada 5 ta so‘rov (keyin `429`); `website` — bot tuzog‘i, har doim bo‘sh yuboriladi; shu telefon + matn 10 daqiqa ichida qayta kelsa, yangi yozuv ochilmaydi — avvalgi ma’lumotnoma qaytadi.\n\n`branchId` — ixtiyoriy, `GET /branches` dagi do‘kon.",
+        "operationId": "LeadsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLeadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Qabul qilindi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeadCreatedDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydon xato yoki do‘kon topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Juda ko‘p murojaat — birozdan keyin urinib ko‘ring",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Murojaat qoldirish (aloqa formasi)",
+        "tags": [
+          "Leads"
+        ]
+      }
+    },
+    "/api/v1/admin/leads": {
+      "get": {
+        "description": "Yangilari birinchi (`sortOrder=desc`). 🔒 Filial xodimi faqat o‘z do‘koniga yozilganlarni ko‘radi; do‘kon tanlanmagan murojaat — faqat SUPER_ADMIN va MODERATOR ga.",
+        "operationId": "LeadsAdminController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Saralanadigan maydon nomi",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "IN_PROGRESS",
+                "DONE",
+                "SPAM"
+              ]
+            }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filial bo‘yicha (SUPER_ADMIN / MODERATOR). Filial xodimiga e’tiborsiz — har doim o‘z filiali; boshqasi → 404.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Ism, telefon yoki ma’lumotnoma (`VK-…`) bo‘yicha qidiruv",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sahifalangan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedLeadAdminDtoDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Begona `branchId` so‘raldi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Murojaatlar ro‘yxati",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/leads/new-count": {
+      "get": {
+        "description": "Menyudagi nishon uchun — doiradagi `NEW` murojaatlar.",
+        "operationId": "LeadsAdminController_countNew",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Soni",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeadNewCountDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Yangi murojaatlar soni",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/leads/{id}": {
+      "get": {
+        "operationId": "LeadsAdminController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Murojaat ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Murojaat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeadAdminDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Murojaat",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "patch": {
+        "description": "Holat o‘zgarsa — `handledBy` (siz) va `handledAt` yoziladi. Izoh ichki, mehmonga ko‘rinmaydi.",
+        "operationId": "LeadsAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Murojaat ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Yangilandi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LeadAdminDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Maydon xato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat xodim",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Topilmadi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Holat / izohni o‘zgartirish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/admin/managers": {
       "get": {
         "description": "Filtr: filial, holat, qidiruv (ism / telefon / Telegram).\n\nMODERATOR — faqat o‘qish (mijozni menejerga biriktirish uchun), barcha filiallar bo‘yicha.",
@@ -11914,6 +12328,10 @@
     {
       "name": "Contracts",
       "description": "Optom mijoz uchun shartnoma moduli (🧪 mock — Didox.uz o‘rniga, TZ 3.10)"
+    },
+    {
+      "name": "Leads",
+      "description": "Saytdagi aloqa formasi — mehmon murojaati (ochiq)"
     }
   ],
   "servers": [],
@@ -14132,6 +14550,28 @@
           }
         }
       },
+      "ImageVariantsDto": {
+        "type": "object",
+        "properties": {
+          "w400": {
+            "type": "string",
+            "example": "/uploads/products/0b6f1c1e-400w.webp"
+          },
+          "w800": {
+            "type": "string",
+            "example": "/uploads/products/0b6f1c1e-800w.webp"
+          },
+          "w1600": {
+            "type": "string",
+            "example": "/uploads/products/0b6f1c1e-1600w.webp"
+          }
+        },
+        "required": [
+          "w400",
+          "w800",
+          "w1600"
+        ]
+      },
       "CategoryPublicResponseDto": {
         "type": "object",
         "properties": {
@@ -14167,6 +14607,16 @@
             "type": "string",
             "nullable": true,
             "example": "/uploads/categories/keramogranit.webp"
+          },
+          "coverImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "productCount": {
             "type": "number",
@@ -14216,6 +14666,16 @@
             "type": "string",
             "nullable": true,
             "example": "/uploads/categories/keramogranit.webp"
+          },
+          "coverImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "sortOrder": {
             "type": "number",
@@ -14470,6 +14930,16 @@
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
           },
+          "primaryImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
+          },
           "availability": {
             "type": "string",
             "enum": [
@@ -14538,6 +15008,16 @@
           "url": {
             "type": "string",
             "example": "/uploads/products/lyuks-1.jpg"
+          },
+          "variants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. `VIDEO_360` da har doim `null`.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "type": {
             "type": "string",
@@ -14616,6 +15096,16 @@
             "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
+          },
+          "primaryImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "availability": {
             "type": "string",
@@ -14712,6 +15202,16 @@
             "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
+          },
+          "primaryImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "pricePerSqm": {
             "type": "string",
@@ -14838,6 +15338,16 @@
             "description": "Kartada ko‘rsatiladigan birinchi surat. Butun media ro‘yxati `GET /products/:slug` da keladi.",
             "example": "/uploads/products/lyuks-1.jpg",
             "nullable": true
+          },
+          "primaryImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "description": {
             "type": "string",
@@ -15589,6 +16099,16 @@
           "imageUrl": {
             "type": "string",
             "example": "/uploads/gallery/0b6f1c1e.jpg"
+          },
+          "imageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "title": {
             "type": "string",
@@ -18081,6 +18601,12 @@
           "address": {
             "type": "string"
           },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "example": "Urjuza klinikasi yaqinida",
+            "description": "Oriyentir (T-015). `null` — ko‘rsatilmagan."
+          },
           "latitude": {
             "type": "number",
             "example": 40.3864
@@ -18103,6 +18629,16 @@
             "type": "string",
             "nullable": true
           },
+          "buildingImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
+          },
           "telegramUrl": {
             "type": "string",
             "nullable": true
@@ -18117,6 +18653,7 @@
           "name",
           "city",
           "address",
+          "landmark",
           "latitude",
           "longitude",
           "workingHours",
@@ -18144,6 +18681,12 @@
           "address": {
             "type": "string"
           },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "example": "Urjuza klinikasi yaqinida",
+            "description": "Oriyentir (T-015). `null` — ko‘rsatilmagan."
+          },
           "latitude": {
             "type": "number",
             "example": 40.3864
@@ -18165,6 +18708,16 @@
           "buildingImageUrl": {
             "type": "string",
             "nullable": true
+          },
+          "buildingImageVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "telegramUrl": {
             "type": "string",
@@ -18201,6 +18754,7 @@
           "name",
           "city",
           "address",
+          "landmark",
           "latitude",
           "longitude",
           "workingHours",
@@ -18239,6 +18793,13 @@
           "address": {
             "type": "string",
             "example": "Mustaqillik ko‘chasi 12, bozor yonida"
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "example": "Urjuza klinikasi yaqinida",
+            "description": "Oriyentir — odam ko‘cha nomidan ko‘ra shunga qarab topadi. Bo‘sh satr yoki `null` — olib tashlash."
           },
           "latitude": {
             "type": "number",
@@ -18311,6 +18872,13 @@
           "address": {
             "type": "string",
             "example": "Mustaqillik ko‘chasi 12, bozor yonida"
+          },
+          "landmark": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "example": "Urjuza klinikasi yaqinida",
+            "description": "Oriyentir — odam ko‘cha nomidan ko‘ra shunga qarab topadi. Bo‘sh satr yoki `null` — olib tashlash."
           },
           "latitude": {
             "type": "number",
@@ -18389,6 +18957,16 @@
             "type": "string",
             "example": "/uploads/partners/0b6f1c1e.png"
           },
+          "logoVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
+          },
           "websiteUrl": {
             "type": "string",
             "nullable": true
@@ -18415,6 +18993,16 @@
           "logoUrl": {
             "type": "string",
             "example": "/uploads/partners/0b6f1c1e.png"
+          },
+          "logoVariants": {
+            "nullable": true,
+            "description": "Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageVariantsDto"
+              }
+            ]
           },
           "websiteUrl": {
             "type": "string",
@@ -18508,6 +19096,237 @@
         "required": [
           "file"
         ]
+      },
+      "LeadCreatedDto": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "example": "VK-7H2K9Q",
+            "description": "Ma’lumotnoma — mehmon qo‘ng‘iroq qilganda aytadi, xodim panelda shu bo‘yicha topadi."
+          }
+        },
+        "required": [
+          "reference"
+        ]
+      },
+      "CreateLeadDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Aziz",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "phone": {
+            "type": "string",
+            "example": "+998 90 123 45 67",
+            "description": "Telefon — bo‘shliq, qavs, tire bilan ham bo‘ladi. 9 xonali mahalliy raqamga `+998` o‘zi qo‘shiladi."
+          },
+          "message": {
+            "type": "string",
+            "example": "Hammom uchun 20 m² keramogranit kerak, narxini bilsam",
+            "maxLength": 2000
+          },
+          "branchId": {
+            "type": "string",
+            "description": "Mehmon tanlagan do‘kon (`GET /branches` dagi `id`). Berilmasa — murojaatni markaz ko‘radi."
+          },
+          "website": {
+            "type": "string",
+            "description": "Har doim BO‘SH yuboriladi (formada yashirin maydon). To‘ldirilgan so‘rov saqlanmaydi."
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "message"
+        ]
+      },
+      "LeadBranchDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Farg‘ona"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "LeadHandlerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Aliyev Vali"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "LeadAdminDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "example": "VK-7H2K9Q"
+          },
+          "name": {
+            "type": "string",
+            "example": "Aziz"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+998901234567"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "DONE",
+              "SPAM"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "branch": {
+            "nullable": true,
+            "description": "`null` — mehmon do‘kon tanlamagan",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeadBranchDto"
+              }
+            ]
+          },
+          "handledBy": {
+            "nullable": true,
+            "description": "Holatni oxirgi o‘zgartirgan xodim",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeadHandlerDto"
+              }
+            ]
+          },
+          "handledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "name",
+          "phone",
+          "message",
+          "status",
+          "note",
+          "branch",
+          "handledBy",
+          "handledAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaginatedLeadAdminDtoDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeadAdminDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 128,
+            "description": "Jami elementlar soni"
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Jami sahifalar soni"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "LeadNewCountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 3,
+            "description": "Doiradagi `NEW` murojaatlar"
+          }
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "UpdateLeadDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "NEW",
+              "IN_PROGRESS",
+              "DONE",
+              "SPAM"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000,
+            "description": "Ichki izoh (mehmonga ko‘rinmaydi). `null` — o‘chirish."
+          }
+        }
       },
       "StaffBranchRefDto": {
         "type": "object",

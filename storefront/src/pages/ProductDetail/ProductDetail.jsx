@@ -20,6 +20,7 @@ import {
   useMainBranch,
   useProduct,
   useSimilarProducts,
+  variantSrcSet,
 } from '@/shared/api'
 
 /**
@@ -70,6 +71,9 @@ function ProductView({ product, similar }) {
   // Asosiy surat: birinchi oddiy rasm, bo'lmasa kartadagi rasm
   // (`primaryImageUrl` — `/uploads/...`, ya'ni to'liq manzilga keltiriladi).
   const hero = images[0]?.src || assetUrl(product.primaryImageUrl)
+  const heroSrcSet = images[0]
+    ? images[0].srcSet
+    : variantSrcSet(product.primaryImageVariants)
   const rest = images.slice(1)
 
   const spec = [
@@ -141,6 +145,7 @@ function ProductView({ product, similar }) {
           <div className="md:col-span-9">
             <SmartImage
               src={hero}
+              srcSet={heroSrcSet}
               alt={product.name}
               ratio="16 / 10"
               sizes="(max-width: 767px) 92vw, 72vw"
@@ -222,6 +227,7 @@ function ProductView({ product, similar }) {
               >
                 <SmartImage
                   src={media.src}
+                  srcSet={media.srcSet}
                   alt={`${product.name} — ${i + 1}`}
                   ratio={i === 1 ? '3 / 4' : '4 / 3'}
                   sizes="(max-width: 767px) 92vw, 58vw"

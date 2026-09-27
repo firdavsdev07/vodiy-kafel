@@ -15,6 +15,10 @@ import {
   toOptionalBoolean,
   toOptionalInt,
 } from '../../../common/utils/query-boolean.util';
+import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
 
 const WEBSITE_URL = { protocols: ['http', 'https'], require_protocol: true };
 
@@ -108,6 +112,13 @@ export class PartnerPublicDto {
 
   @ApiProperty({ example: '/uploads/partners/0b6f1c1e.png' })
   logoUrl!: string;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: IMAGE_VARIANTS_DESCRIPTION,
+  })
+  logoVariants!: ImageVariantsDto | null;
 
   @ApiProperty({ type: String, nullable: true })
   websiteUrl!: string | null;

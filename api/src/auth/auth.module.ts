@@ -33,7 +33,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     // 🔒 B-049: auth endpointlari (login, parol almashtirish) — bir IP
     // daqiqasiga 10 so'rov bilan cheklanadi. Parol qo'pol kuch (brute force)
     // bilan taxmin qilishning oldini oladi.
-    ThrottlerModule.forRoot([{ ttl: seconds(60), limit: 10 }]),
+    // `errorMessage` — standart matn inglizcha ("ThrottlerException: Too
+    // Many Requests") va u frontendda odamga shu holicha chiqardi (T-013:
+    // ochiq aloqa formasi ham shu chegaraga tayanadi).
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: seconds(60), limit: 10 }],
+      errorMessage: 'Juda ko‘p urinish. Birozdan keyin qayta urinib ko‘ring.',
+    }),
   ],
   controllers: [AuthController],
   providers: [

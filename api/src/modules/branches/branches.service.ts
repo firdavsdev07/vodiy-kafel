@@ -12,6 +12,8 @@ import { PrismaService } from '../../prisma';
 import {
   IMAGE_KINDS,
   requireFileKind,
+  ImageStorageService,
+  imageVariants,
   STORAGE_SERVICE,
   type StorageService,
   type UploadedFileData,
@@ -31,6 +33,7 @@ const PUBLIC_SELECT = {
   name: true,
   city: true,
   address: true,
+  landmark: true,
   latitude: true,
   longitude: true,
   workingHours: true,
@@ -55,6 +58,7 @@ const ADMIN_SELECT = {
  */
 const CONTACT_FIELDS: ReadonlySet<string> = new Set([
   'address',
+  'landmark',
   'latitude',
   'longitude',
   'workingHours',
@@ -79,16 +83,18 @@ export class BranchesService {
     private readonly prisma: PrismaService,
     private readonly branchScope: BranchScopeService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly images: ImageStorageService,
   ) {}
 
   // — Ochiq —
 
-  findAllPublic(): Promise<BranchPublicDto[]> {
-    return this.prisma.branch.findMany({
+  async findAllPublic(): Promise<BranchPublicDto[]> {
+    const rows = await this.prisma.branch.findMany({
       where: { isActive: true, type: BranchType.RETAIL },
       select: PUBLIC_SELECT,
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
+    return rows.map(withImageVariants);
   }
 
   async findOnePublic(id: string): Promise<BranchPublicDto> {
@@ -97,12 +103,12 @@ export class BranchesService {
       select: PUBLIC_SELECT,
     });
     if (!branch) throw new NotFoundException(BRANCH_NOT_FOUND);
-    return branch;
+    return withImageVariants(branch);
   }
 
   // — Admin —
 
-  findAllAdmin(
+  async findAllAdmin(
     actor: Actor | undefined,
     query: BranchAdminQueryDto,
   ): Promise<BranchAdminDto[]> {
@@ -111,7 +117,7 @@ export class BranchesService {
     // filialga yaratadi, shuning uchun hamma filialni ko'rishi kerak.
     // Tahrirlash (`update`) esa oddiy doirada — faqat o'z filiali.
     const scope = this.branchScope.resolve(actor, undefined, 'CUSTOMERS');
-    return this.prisma.branch.findMany({
+    const rows = await this.prisma.branch.findMany({
       where: {
         ...(scope.kind === 'SINGLE' && { id: scope.branchId }),
         ...(query.type && { type: query.type }),
@@ -120,6 +126,7 @@ export class BranchesService {
       select: ADMIN_SELECT,
       orderBy: [{ type: 'asc' }, { sortOrder: 'asc' }, { name: 'asc' }],
     });
+    return rows.map(withImageVariants);
   }
 
   async findOneAdmin(
@@ -132,11 +139,13 @@ export class BranchesService {
       select: ADMIN_SELECT,
     });
     if (!branch) throw new NotFoundException(BRANCH_NOT_FOUND);
-    return branch;
+    return withImageVariants(branch);
   }
 
-  create(dto: CreateBranchDto): Promise<BranchAdminDto> {
-    return this.prisma.branch.create({ data: dto, select: ADMIN_SELECT });
+  async create(dto: CreateBranchDto): Promise<BranchAdminDto> {
+    return withImageVariants(
+      await this.prisma.branch.create({ data: dto, select: ADMIN_SELECT }),
+    );
   }
 
   async update(
@@ -159,11 +168,13 @@ export class BranchesService {
       }
     }
 
-    return this.prisma.branch.update({
-      where: { id },
-      data: dto,
-      select: ADMIN_SELECT,
-    });
+    return withImageVariants(
+      await this.prisma.branch.update({
+        where: { id },
+        data: dto,
+        select: ADMIN_SELECT,
+      }),
+    );
   }
 
   /**
@@ -172,11 +183,13 @@ export class BranchesService {
    */
   async deactivate(id: string): Promise<BranchAdminDto> {
     await this.assertExists(id);
-    return this.prisma.branch.update({
-      where: { id },
-      data: { isActive: false },
-      select: ADMIN_SELECT,
-    });
+    return withImageVariants(
+      await this.prisma.branch.update({
+        where: { id },
+        data: { isActive: false },
+        select: ADMIN_SELECT,
+      }),
+    );
   }
 
   /** Bino surati — eskisi yangisi saqlangandan KEYIN o'chiriladi. */
@@ -192,7 +205,7 @@ export class BranchesService {
       'Rasm faqat JPG, PNG yoki WEBP bo‘lishi mumkin',
     );
 
-    const { url } = await this.storage.save({
+    const { url } = await this.images.save({
       buffer,
       folder: 'branches',
       extension: kind,
@@ -200,11 +213,13 @@ export class BranchesService {
 
     let updated: BranchAdminDto;
     try {
-      updated = await this.prisma.branch.update({
-        where: { id },
-        data: { buildingImageUrl: url },
-        select: ADMIN_SELECT,
-      });
+      updated = withImageVariants(
+        await this.prisma.branch.update({
+          where: { id },
+          data: { buildingImageUrl: url },
+          select: ADMIN_SELECT,
+        }),
+      );
     } catch (error) {
       await this.removeFileQuietly(url);
       throw error;
@@ -233,4 +248,11 @@ export class BranchesService {
       );
     }
   }
+}
+
+/** Bino surati + `srcset` variantlari (T-014). */
+function withImageVariants<T extends { buildingImageUrl: string | null }>(
+  row: T,
+): T & { buildingImageVariants: ReturnType<typeof imageVariants> } {
+  return { ...row, buildingImageVariants: imageVariants(row.buildingImageUrl) };
 }

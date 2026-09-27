@@ -17,3 +17,4 @@ export * from './sort-order.enum';
 export * from './product-sort.enum';
 export * from './contract-status.enum';
 export * from './announcement-audience.enum';
+export * from './lead-status.enum';

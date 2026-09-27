@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   branchTypeLabel,
+  leadStatusLabel,
   contractStatusLabel,
   mediaTypeLabel,
   notificationTypeLabel,
@@ -20,7 +21,7 @@ import {
   surfaceLabel,
   transactionTypeLabel,
 } from './labels';
-import { orderStatusTone, paymentStatusTone, stockStatusTone, transactionTypeTone } from './status-tone';
+import { leadStatusTone, orderStatusTone, paymentStatusTone, stockStatusTone, transactionTypeTone } from './status-tone';
 
 type Schemas = Record<string, { properties?: Record<string, { enum?: string[] }> }>;
 const openapi = JSON.parse(readFileSync(resolve(__dirname, '../../../../api/openapi.json'), 'utf8')) as {
@@ -35,6 +36,7 @@ describe('lug‘at (G7, D-043)', () => {
     expect(keys(paymentStatusLabel)).toEqual(keys(paymentStatusTone));
     expect(keys(stockStatusLabel)).toEqual(keys(stockStatusTone));
     expect(keys(transactionTypeLabel)).toEqual(keys(transactionTypeTone));
+    expect(keys(leadStatusLabel)).toEqual(keys(leadStatusTone));
   });
 
   it('🛡 lug‘at openapi.json enum’lari bilan AYNAN mos (backend yangi qiymat qo‘shsa — yiqiladi)', () => {
@@ -56,6 +58,7 @@ describe('lug‘at (G7, D-043)', () => {
       [pricingDomainLabel, 'CreatePricingRuleDto', 'domain'],
       [pricingScopeLabel, 'CreatePricingRuleDto', 'scope'],
       [pricingValueTypeLabel, 'CreatePricingRuleDto', 'type'],
+      [leadStatusLabel, 'LeadAdminDto', 'status'],
     ];
     for (const [dict, schema, prop] of pairs) {
       const expected = enumOf(schema, prop);

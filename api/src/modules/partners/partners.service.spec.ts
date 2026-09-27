@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma';
+import type { ImageStorageService } from '../../storage';
 import { PartnersService } from './partners.service';
 
 /** B-042 · hamkorlar. */
@@ -28,6 +29,9 @@ describe('PartnersService (B-042)', () => {
     service = new PartnersService(
       { partner } as unknown as PrismaService,
       storage,
+      // Rasm yuklash (T-014) — `save` imzosi bir xil; variant yasash
+      // `image-storage.service.spec.ts` da alohida tekshiriladi.
+      storage as unknown as ImageStorageService,
     );
   });
 

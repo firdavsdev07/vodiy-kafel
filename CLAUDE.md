@@ -88,6 +88,6 @@ The full, current set of "unbreakable rules" (pricing resolution order, stock-vi
 ### storefront/ internals
 
 - Pages under `src/pages/` (React Router), homepage marketing sections under `src/sections/home/`, scroll/entry animation in `src/animations/` (GSAP) and `src/hooks/`, 3D scenes (hero ceramic model, material scene) in `src/three/` (React Three Fiber).
-- All content is local mock data in `src/data/` (`products.js`, `categories.js`, `company.js`) — there is no API integration; the contact form is an explicit local demo, not wired to anything.
+- Catalog, branches, partners, gallery and public settings come from `api/` through `src/shared/api/` (thin `fetch` client + small query store); `src/data/` keeps only static content (`categories.js`, `company.js`, images). The mock `products.js` is gone (T-012). The contact form posts to the open `POST /leads` endpoint (T-013) and lands in the dashboard's «Murojaatlar» section.
 - Deployed on Vercel; `vercel.json` rewrites all non-asset paths to `index.html` for client-side routing.
 - `ASSETS.md` tracks image/model licensing and attribution — check it before using or adding reference photography for anything beyond internal review.

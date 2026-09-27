@@ -85,6 +85,7 @@ async function main() {
         name: "Vodiy Kafel — Farg'ona",
         city: "Farg'ona",
         address: 'Mustaqillik 12',
+        landmark: 'Markaziy bozor yonida',
         lat: 40.3864,
         lng: 71.7864,
         tel: '+998730000010',
@@ -93,6 +94,7 @@ async function main() {
         name: 'Vodiy Kafel — Andijon',
         city: 'Andijon',
         address: 'Bobur shoh 45',
+        landmark: 'Bobur bog‘i ro‘parasida',
         lat: 40.7821,
         lng: 72.3442,
         tel: '+998740000010',
@@ -101,6 +103,7 @@ async function main() {
         name: 'Vodiy Kafel — Namangan',
         city: 'Namangan',
         address: 'Navoiy 78',
+        landmark: 'Viloyat shifoxonasi yaqinida',
         lat: 40.9983,
         lng: 71.6726,
         tel: '+998690000010',
@@ -109,6 +112,7 @@ async function main() {
         name: "Vodiy Kafel — Qo'qon",
         city: "Qo'qon",
         address: 'Istiqlol 3',
+        landmark: null, // oriyentirsiz holat ham ko'rinsin (T-015)
         lat: 40.5286,
         lng: 70.9425,
         tel: '+998730000020',
@@ -120,6 +124,7 @@ async function main() {
           name: b.name,
           city: b.city,
           address: b.address,
+          landmark: b.landmark,
           latitude: b.lat,
           longitude: b.lng,
           workingHours: ish,
@@ -838,6 +843,35 @@ async function main() {
       },
     ],
   });
+
+  // ─── T-013 · Saytdagi aloqa formasidan murojaatlar ───────────────────────
+  // Uchala doira ham ko'rinsin: Farg'ona do'koniga (filial xodimi ko'radi),
+  // Andijonga (Farg'ona xodimi KO'RMAYDI) va do'konsiz (faqat markaz).
+  await prisma.lead.createMany({
+    data: [
+      {
+        name: 'Dilnoza',
+        phone: '+998911234501',
+        message:
+          'Hammom uchun 18 m² devor kafeli kerak, och rangli. Qachon borsam bo‘ladi?',
+        branchId: fargona.id,
+      },
+      {
+        name: 'Sardor',
+        phone: '+998931234502',
+        message: 'Uyga 60x60 keramogranit, taxminan 90 m². Yetkazib berasizmi?',
+        branchId: andijon.id,
+        status: 'IN_PROGRESS',
+        note: 'Ertaga o‘lchov uchun usta boradi',
+      },
+      {
+        name: 'Aziz',
+        phone: '+998901234503',
+        message: 'Katalogdagi Metro Vintage qaysi do‘konda bor?',
+      },
+    ],
+  });
+  console.log('📨 3 murojaat (saytdagi aloqa formasi)');
 
   // ─── Xulosa ──────────────────────────────────────────────────────────────
   console.log('\n─────────────────────────────────────────────');

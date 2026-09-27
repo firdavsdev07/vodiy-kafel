@@ -85,6 +85,12 @@ export const queryKeys = {
   gallery: domainKeys('gallery'),
   /** Mijozlarga yuborilgan xabarlar (T-009). */
   announcements: domainKeys('announcements'),
+  /** Saytdagi aloqa formasidan murojaatlar (T-013). */
+  leads: {
+    ...domainKeys('leads'),
+    /** GET /admin/leads/new-count — menyu nishoni; `leads.all` ostida (holat o'zgarsa yangilanadi). */
+    newCount: ['admin', 'leads', 'new-count'] as const,
+  },
   /** Filial narxlari — GET /admin/branch-products */
   branchProducts: domainKeys('branch-products'),
   productStocks: domainKeys('product-stocks'),

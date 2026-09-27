@@ -13,6 +13,7 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { FactoriesModule } from './modules/factories/factories.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
+import { LeadsModule } from './modules/leads/leads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DevPaymentsModule } from './modules/payments/dev/dev-payments.module';
@@ -53,6 +54,7 @@ import { AppService } from './app.service';
     NotificationsModule,
     BranchesModule,
     PartnersModule,
+    LeadsModule,
     StaffModule,
     StatsModule,
     // 🧪 /dev/* — faqat development. `validateEnv` standart qiymatlarni

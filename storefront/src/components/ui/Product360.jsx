@@ -27,7 +27,7 @@ export default function Product360({ frames, alt, ratio = '4 / 3', className = '
 
   // Bitta kadr — aylantiradigan narsa yo'q, oddiy surat.
   if (frames.length < 2) {
-    return <SmartImage src={frames[0]?.src} alt={alt} ratio={ratio} className={className} />
+    return <SmartImage src={frames[0]?.src} srcSet={frames[0]?.srcSet} alt={alt} ratio={ratio} className={className} />
   }
 
   const step = (delta) => setIndex((current) => wrap(current + delta, frames.length))

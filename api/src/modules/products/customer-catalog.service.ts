@@ -17,6 +17,7 @@ import type {
   CustomerCatalogItemDto,
   ProductQueryDto,
 } from './dto';
+import { mediaItem, primaryImage } from './product-images';
 
 /**
  * Kabinet katalogi uchun tanlanadigan maydonlar.
@@ -153,16 +154,13 @@ export class CustomerCatalogService {
 
     if (!row) throw new NotFoundException('Mahsulot topilmadi');
 
-    const media = row.media.map((item) => ({
-      id: item.id,
-      url: item.url,
-      type: item.type,
-    }));
+    const media = row.media.map(mediaItem);
 
     return {
       ...this.toItem({ ...row, media: [] }, rules, globalThreshold),
-      primaryImageUrl:
+      ...primaryImage(
         row.media.find((item) => item.type === 'IMAGE')?.url ?? null,
+      ),
       description: row.description,
       media,
     };
@@ -267,7 +265,7 @@ export class CustomerCatalogService {
       color: row.color,
       sqmPerPallet: row.sqmPerPallet.toString(),
       weightPerPallet: row.weightPerPallet.toString(),
-      primaryImageUrl: row.media[0]?.url ?? null,
+      ...primaryImage(row.media[0]?.url ?? null),
       pricePerSqm: finalPrice.toString(),
       stockStatus: toStockStatus(
         row.stock?.stockPallets,

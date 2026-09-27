@@ -97,6 +97,18 @@ Faqat optom mijoz yoki xodimga boradi — chakana mijozda hisob yo'q.
 | `SENT`    | Mijozga Telegram orqali yuborildi (🧪 mock)               |
 | `SIGNED`  | E-IMZO bilan imzolangan — haqiqiy integratsiya kelgach   |
 
+## LeadStatus — saytdagi murojaat holati (T-013)
+
+Chakana mehmon saytdagi aloqa formasidan qoldirgan "qo'ng'iroq qiling"
+iltimosi (`POST /leads`). Buyurtma emas — hisob yo'q.
+
+| Qiymat        | O'zbekcha        |
+| ------------- | ---------------- |
+| `NEW`         | Yangi            |
+| `IN_PROGRESS` | Bog'lanilmoqda   |
+| `DONE`        | Yopildi          |
+| `SPAM`        | Spam             |
+
 ## UserRole — xodim rollari
 
 | Qiymat          | `branchId`              | O'zbekcha                                          |

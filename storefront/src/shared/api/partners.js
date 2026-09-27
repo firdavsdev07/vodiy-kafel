@@ -1,4 +1,4 @@
-import { assetUrl } from './config.js'
+import { assetUrl, variantSrcSet } from './config.js'
 import { useApiQuery } from './useApiQuery.js'
 
 /**
@@ -25,6 +25,7 @@ export function partnerModel(dto) {
     id: dto.id,
     name: dto.name,
     logo: assetUrl(dto.logoUrl),
+    logoSrcSet: variantSrcSet(dto.logoVariants),
     websiteUrl: dto.websiteUrl || null,
   }
 }

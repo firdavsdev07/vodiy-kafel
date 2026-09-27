@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaType, PrismaService } from '../../prisma';
-import { STORAGE_SERVICE } from '../../storage';
+import { ImageStorageService, STORAGE_SERVICE } from '../../storage';
 import { ProductMediaService } from './product-media.service';
 
 const SAMPLE = {
@@ -59,6 +59,8 @@ describe('ProductMediaService (B-022)', () => {
         ProductMediaService,
         { provide: PrismaService, useValue: prisma },
         { provide: STORAGE_SERVICE, useValue: storage },
+        // Rasm yuklash (T-014) — `save` imzosi bir xil; variantlar alohida spec'da.
+        { provide: ImageStorageService, useValue: storage },
       ],
     }).compile();
 

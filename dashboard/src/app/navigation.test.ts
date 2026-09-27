@@ -12,6 +12,7 @@ describe('navigatsiya (D-003)', () => {
       [
         '/',
         '/announcements', // T-009
+        '/leads', // T-013
         '/branches',
         '/customers',
         '/delivery',

@@ -109,4 +109,78 @@ describe('LocalDiskStorage (B-022)', () => {
       await rm(outside, { recursive: true, force: true });
     }
   });
+
+  describe('bog‘liq fayllar (T-014)', () => {
+    const saveOriginal = () =>
+      storage.save({
+        buffer: SAMPLE.jpg,
+        folder: 'products',
+        extension: 'jpg',
+      });
+
+    it('asl fayl nomidan saqlaydi; delete — asl bilan birga o‘chiradi', async () => {
+      const { url } = await saveOriginal();
+      const other = await saveOriginal();
+      const variant = await storage.saveDerived({
+        of: url,
+        suffix: '800w',
+        extension: 'webp',
+        buffer: SAMPLE.webp,
+      });
+      await storage.saveDerived({
+        of: other.url,
+        suffix: '800w',
+        extension: 'webp',
+        buffer: SAMPLE.webp,
+      });
+
+      expect(variant.url).toBe(url.replace(/\.jpg$/, '-800w.webp'));
+      expect(await storage.read(variant.url)).toEqual(SAMPLE.webp);
+
+      await storage.delete(url);
+      const left = (await readdir(join(root, 'products'))).sort();
+      // Boshqa rasm va uning varianti TEGILMADI
+      const otherName = other.url.split('/').pop()!;
+      expect(left).toEqual(
+        [otherName, otherName.replace('.jpg', '-800w.webp')].sort(),
+      );
+    });
+
+    it('qayta yasalsa — ustidan yoziladi (eski rasmlar skripti)', async () => {
+      const { url } = await saveOriginal();
+      const input = { of: url, suffix: '400w', extension: 'webp' };
+      await storage.saveDerived({ ...input, buffer: SAMPLE.png });
+      const { url: v } = await storage.saveDerived({
+        ...input,
+        buffer: SAMPLE.webp,
+      });
+      expect(await storage.read(v)).toEqual(SAMPLE.webp);
+    });
+
+    it('🔒 qo‘shimcha / kengaytmada faqat harf-raqam; begona manzil — rad', async () => {
+      const { url } = await saveOriginal();
+      for (const [suffix, extension] of [
+        ['../x', 'webp'],
+        ['800w', 'we/bp'],
+        ['', 'webp'],
+      ]) {
+        await expect(
+          storage.saveDerived({
+            of: url,
+            suffix,
+            extension,
+            buffer: SAMPLE.webp,
+          }),
+        ).rejects.toThrow();
+      }
+      await expect(
+        storage.saveDerived({
+          of: '/uploads/../../etc/passwd',
+          suffix: '800w',
+          extension: 'webp',
+          buffer: SAMPLE.webp,
+        }),
+      ).rejects.toThrow();
+    });
+  });
 });

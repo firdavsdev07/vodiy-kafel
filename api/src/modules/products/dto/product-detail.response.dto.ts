@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MediaType } from '../../../prisma';
+import {
+  IMAGE_VARIANTS_DESCRIPTION,
+  ImageVariantsDto,
+} from '../../../storage/image-variants';
 import { ProductListItemResponseDto } from './product-public.response.dto';
 
 /** Mahsulot media fayli — surat, 360° to'plam yoki 360° video. */
@@ -9,6 +13,13 @@ export class ProductMediaResponseDto {
 
   @ApiProperty({ example: '/uploads/products/lyuks-1.jpg' })
   url!: string;
+
+  @ApiPropertyOptional({
+    type: ImageVariantsDto,
+    nullable: true,
+    description: `${IMAGE_VARIANTS_DESCRIPTION} \`VIDEO_360\` da har doim \`null\`.`,
+  })
+  variants!: ImageVariantsDto | null;
 
   @ApiProperty({
     enum: MediaType,

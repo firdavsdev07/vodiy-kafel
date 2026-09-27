@@ -684,7 +684,7 @@
 
   ── storefront/ ─────────────────────────────────────────────────────────────
 
-[!] S-032  Rasmlar API'dan (`/uploads/...`) va optimallashtirish
+[x] S-032  Rasmlar API'dan (`/uploads/...`) va optimallashtirish
       Paket : storefront/, api/
       ⚠ QISMAN (2026-09-21). Bajarilgan:
         • Mahsulot (S-023) va galereya (S-027) rasmlari backenddan;
@@ -699,6 +699,27 @@
           `SmartImage` ga `srcSet` qo'shiladi — u `sizes` ni allaqachon
           qabul qiladi.
       Bog'liq: T-014
+
+      ✅ BAJARILDI (2026-09-27, T-014 bilan birga):
+        • `variantSrcSet()` (`src/shared/api/config.js`) — backend
+          `{ w400, w800, w1600 }` → `srcset`. Modellar: mahsulot kartasi,
+          mahsulot media (360° kadrlar ham), galereya, filial binosi,
+          hamkor logotipi (`sizes` bilan).
+        • `SmartImage` — yangi `srcSet` prop. Variant topilmasa (eski rasm,
+          serverda `pnpm images:variants` hali ishlatilmagan) BIR MARTA
+          asl `src` ga qaytadi.
+          🐞 Brauzerda ushlandi va tuzatildi: birinchi variantda "variant
+          yiqildi" belgisi `loaded` holatida turardi — asl rasm yuklangach
+          u `ready` ga almashib, `srcset` qaytib kelardi va variant yana
+          yiqilardi: 5 soniyada 1521 so'rov. Endi belgi alohida holatda;
+          smoke test shu stsenariyni tekshiradi.
+        • Kategoriya muqovalari saytda hali MAHALLIY rasmlardan (`cat.cover`)
+          — API `coverImageVariants` beradi, lekin sayt uni ishlatmaydi.
+          Kategoriya rasmlari API'ga o'tkazilganda ulanadi.
+        Natija (headless Chrome, mahalliy API, 3200×2000 JPG, 324 KB):
+          390 px @2x — 800w webp (4.4 KB), 1440 px — 1600w webp (13.5 KB);
+          asl JPG umuman yuklanmaydi. Variantlar o'chirilsa — 2 so'rov,
+          asl rasm ko'rinadi.
 
 
 [ ] S-033  🔒 ⚖️ Marazzi rasmlarini almashtirish — EFIRGA CHIQISHNI BLOKLAYDI
@@ -807,7 +828,7 @@
 
   ── Tavsiyalar — eski fayllarda "ticket olinmagan" deb qolganlar ──────────
 
-[~] T-012  Bosh sahifadagi `CollectionsSection` ni API'ga ulash
+[x] T-012  Bosh sahifadagi `CollectionsSection` ni API'ga ulash
       Paket : storefront/
       Manba : storefront/task.txt UMUMIY HOLAT (S-022 dan keyin)
       Muammo: "Tanlangan kolleksiyalar" bo'limi hamon
@@ -816,16 +837,115 @@
       Qabul : bo'lim `GET /products` (yoki tanlangan mahsulotlar) dan
         oladi; `src/data/products.js` o'chiriladi.
 
+      ✅ BAJARILDI (2026-09-27):
+        storefront/:
+          • `CollectionsSection` — `useProducts({ sortBy: 'viewCount',
+            sortOrder: 'desc', limit: 4 })`. "Tanlangan" = eng ko'p
+            ko'rilgan: backendda `featured` bayrog'i yo'q, `viewCount`
+            ochiq API'dagi yagona tanlov mezoni va o'zi yangilanadi.
+          • Yuklanishda skelet (yakuniy joylashuv bilan bir xil — sakrash
+            yo'q); xato yoki bo'sh katalogda bo'lim umuman chiqmaydi.
+          • Har qator o'z reveal'iga ega (ma'lumot kech keladi — bo'lim
+            reveal'i ularni yashirin qoldirardi); javobdan keyin
+            `refreshScrollTriggers()`.
+          • `src/data/products.js` O'CHIRILDI; `categories.js` dagi
+            mahsulot bog'lanishlari ham olib tashlandi.
+          • Test: bo'sh katalog testida DOM tugunini `assert.equal` ga
+            berish olib tashlandi — xatoda Node uni `util.inspect` qilib,
+            `waitFor` har urinishda gigabaytlab xotira yeyardi.
+        Tekshirildi: lint, test (62/62), build. Brauzerda (headless
+          Chrome, `pnpm preview` + haqiqiy API) 1440 / 390 px — 4 ta
+          mahsulot chiqadi, hammasi ko'rinadi (opacity 1), gorizontal
+          skroll yo'q, konsolda xato yo'q.
+        ⚠ Serverdagi mahsulotlarda hozircha rasm yo'q — `SmartImage`
+          o'rinbosar ko'rsatadi. Bu ma'lumot masalasi, kod emas.
+        ⚠ Build byudjet ogohlantirishi (155 KB / 150 KB) — AVVAL HAM bor
+          edi, bu task o'zgartirmadi.
 
-[ ] T-013  `POST /leads` — saytdagi aloqa formasi
+
+[x] T-013  `POST /leads` — saytdagi aloqa formasi
       Paket : api/, storefront/
       Manba : storefront/task.txt S-030 (C yo'li — forma olib tashlangan)
       Talab : ism, telefon, xabar qabul qiluvchi ochiq endpoint; xabar
         admin panelga tushadi. Shundan keyin storefront'da forma qaytadi.
       ⚠ Ochiq endpoint — spam/rate-limit himoyasi shart.
 
+      ✅ BAJARILDI (2026-09-27):
+        api/:
+          • `Lead` modeli + `LeadStatus` (NEW / IN_PROGRESS / DONE / SPAM),
+            migratsiya `…_leads`. Ixtiyoriy `branchId` (mehmon tanlagan
+            do'kon), ichki `note`, `handledBy` + `handledAt`. Bazada CHECK:
+            ism ≤ 100, telefon 9–20, xabar ≤ 2000, izoh ≤ 1000 belgi.
+          • `POST /leads` — ochiq. Spamga qarshi 3 qatlam: IP bo'yicha
+            5 so'rov / 10 daqiqa (429); `website` — bot tuzog'i (to'lsa
+            jimgina tashlanadi, javob baribir 201); shu telefon + matn
+            10 daqiqa ichida qayta kelsa — yangi yozuv yo'q, eski
+            ma'lumotnoma qaytadi. Telefon `+998…` ko'rinishiga keltiriladi
+            (9 xonali mahalliy raqamga `998` qo'shiladi). Do'kon — faqat
+            faol RETAIL. Javob: `{ reference: "VK-XXXXXX" }`.
+          • `GET /admin/leads` (sahifalash, holat / do'kon / qidiruv — ism,
+            telefon, `VK-…`), `GET /admin/leads/new-count`,
+            `GET /admin/leads/{id}`, `PATCH /admin/leads/{id}` (holat,
+            izoh). Doira — `BranchScopeService`, `CUSTOMERS` domeni:
+            SUPER_ADMIN, MODERATOR — hammasi; BRANCH_ADMIN / MANAGER —
+            faqat o'z do'koni, do'konsiz murojaat ularga ko'rinmaydi;
+            begona → 404.
+          • `lead.created` hodisasi chiqadi (hozircha tinglovchi yo'q —
+            Telegram/SMS xabari keyin shunga ulanadi, qoida 10).
+          • 🆕 `TRUST_PROXY` (standart 0 — o'zgarish yo'q). Proksi (nginx)
+            ortida 0 qolsa rate-limit HAMMA mehmonni bitta IP deb sanaydi
+            — aloqa formasi ham, login ham butun sayt uchun bitta
+            hisoblagichga aylanadi. ⚠ Serverda nginx bo'lsa
+            `TRUST_PROXY=1` qo'yilishi kerak.
+          • Throttler xabari o'zbekchaga o'girildi (avval
+            "ThrottlerException: Too Many Requests" odamga shu holicha
+            chiqardi) — login uchun ham.
+          • Seed: 3 namunaviy murojaat (Farg'ona, Andijon, do'konsiz);
+            `docs/enums.md` ga `LeadStatus`.
+        dashboard/:
+          • «Murojaatlar» bo'limi (`/leads`, Savdo guruhi, barcha xodim):
+            ro'yxat, qidiruv, holat filtri, do'kon filtri (SUPER_ADMIN /
+            MODERATOR), qatordan holatni o'zgartirish, ichki izoh
+            (modal), kim/qachon ishlagani. Yangi murojaat chap chiziq
+            bilan ajraladi; ro'yxat 60 soniyada yangilanadi.
+          • Yon menyuda yangi murojaatlar soni (nishon), yig'ilgan menyuda
+            nuqta.
+        storefront/:
+          • Aloqa sahifasiga forma qaytdi (`ContactForm.jsx`): ism,
+            telefon, "qaysi do'kon yaqinroq" (ixtiyoriy), xabar, yashirin
+            tuzoq maydoni. Oldindan tekshiruv backend bilan bir xil;
+            server xatosi (400/429/tarmoq) o'zbekcha matn bilan
+            ko'rinadi, forma tozalanmaydi. Yuborilgach ma'lumotnoma
+            (`VK-…`). O'ng ustundagi vaqtinchalik aloqa ro'yxati
+            (S-030 o'rinbosari) forma bilan almashtirildi — telefon,
+            pochta, Telegram chap ustunda qoldi.
+        Tekshirildi:
+          • api: lint, build, `openapi:export`. Jest — Node 22 da
+            `@nestjs/config` / `event-emitter` ESM bo'lgani uchun oddiy
+            `pnpm test` bu suite'ni yuklay olmaydi; vaqtinchalik (repoga
+            yozilmagan) konfiguratsiya bilan ular stub qilinib
+            `leads.service.spec.ts` + `branch-scope` — 53/53 o'tdi. Butun
+            to'plam shu usulda: 541 o'tdi, 9 suite yiqildi — 8 tasi
+            `@nestjs/jwt` ESM, 1 tasi stub'da `OnEvent` yo'qligi; bundan
+            tashqari `quote.service.spec.ts` 4 testi AVVALDAN eskirgan
+            (mock'da `productStock` yo'q — T-005 dan keyin yangilanmagan).
+          • api curl bilan: yaratish, takror, tuzoq, 400, begona do'kon,
+            429 (6-so'rov), doira (Farg'ona menejeri — 1 ta, Andijon — 0,
+            begona PATCH — 404, mijoz tokeni — 403), qidiruv (`VK-…`,
+            telefon raqamlari), holat → `handledBy`.
+          • dashboard: typecheck, lint, test (349/349), build.
+          • storefront: lint, test (67/67), build (birinchi ekran JS
+            o'zgarmadi — 155 KB, ogohlantirish avvaldan bor).
+          • Brauzerda (headless Chrome, mahalliy API): storefront 1440 /
+            390 px — gorizontal skroll yo'q, tuzoq ekrandan tashqarida,
+            bo'sh forma xatolari, yuborish → «Qabul qilindi» +
+            ma'lumotnoma; dashboard (Farg'ona menejeri, 1440 px) — yangi
+            murojaat ro'yxatda, nishon 2 → holat o'zgargach 1; SUPER_ADMIN
+            390 px — do'konsizlar ham ko'rinadi, do'kon filtri bor.
+          • Sinovdan keyin `pnpm db:seed` bilan baza tozalandi.
 
-[ ] T-014  Yuklangan rasm uchun variantlar (thumbnail) generatsiyasi
+
+[x] T-014  Yuklangan rasm uchun variantlar (thumbnail) generatsiyasi
       Paket : api/ (`src/storage`)
       Manba : storefront/task.txt S-032
       Talab : yuklangan rasmdan 400 / 800 / 1600 px webp variantlari;
@@ -833,29 +953,104 @@
         telefon to'liq o'lchamdagi rasmni yuklab oladi.
       → S-032 ning blokini yechadi.
 
+      ✅ BAJARILDI (2026-09-27):
+        api/:
+          • 🆕 bog'liqlik: `sharp` (tayyor binar, build skripti shart emas).
+          • `src/storage/image-variants.ts` — 400 / 800 / 1600 px webp
+            (sifat 78): EXIF bo'yicha buriladi, EXIF (GPS ham) variantga
+            o'tmaydi, kichik rasm kattalashtirilmaydi. 🔒 40 MP dan katta
+            yoki ichi buzuq rasm — 400 (dekompressiya bombasi).
+          • `StorageService.saveDerived` — nomi asl fayldan
+            (`<uuid>-800w.webp`, `derivedFileUrl` — yagona nomlash
+            shartnomasi). `delete(asl)` bog'liq fayllarni ham o'chiradi —
+            chaqiruvchi servislar o'zgarmadi.
+          • `ImageStorageService` — avval variantlar XOTIRADA yasaladi (rasm
+            ochilmasa diskka hech narsa yozilmaydi), keyin asl + variantlar;
+            variant saqlanmasa asl ham qaytarib o'chiriladi.
+          • Rasm yuklash shunga o'tdi: mahsulot media (360° video —
+            yo'q), galereya, kategoriya, filial binosi, hamkor logotipi.
+            E'lon rasmlari (kabinet) — o'zgarmadi, variant kerak emas.
+          • Javobda `…Variants: { w400, w800, w1600 } | null`:
+            `primaryImageVariants` (katalog + kabinet katalogi), media
+            `variants`, `imageVariants` (galereya), `coverImageVariants`,
+            `buildingImageVariants`, `logoVariants`. Tashqi havola / video
+            — `null`.
+          • 🆕 `pnpm images:variants [--force]` — T-014 dan OLDIN
+            yuklangan rasmlar uchun (bazadagi manzillar bo'yicha,
+            `StorageService` orqali). Qayta ishga tushirish xavfsiz.
+            ⚠ DEPLOY'DAN KEYIN SERVERDA BIR MARTA ISHGA TUSHIRILSIN —
+            aks holda eski rasmlar uchun sayt avval variantni so'raydi,
+            404 olib asl rasmga qaytadi (ishlaydi, lekin sekinroq).
+        Tekshirildi:
+          • lint, build, `openapi:export`; dashboard tiplari qayta
+            generatsiya qilindi — typecheck, test (349/349), build.
+          • Jest (Node 22, stub konfiguratsiya bilan — T-013 ga qara):
+            yangi spec'lar (`image-variants`, `image-storage.service`,
+            storage `saveDerived`/o'chirish) + tegishli servislar — 15
+            suite, 200/200. Butun to'plam: 557 o'tdi, yiqilgan 9 suite
+            T-013 dagi bilan AYNAN o'sha (muhit / avvaldan eskirgan).
+          • Haqiqiy API: 3000×2000 JPG (EXIF orientation 6) → 400×600 /
+            800×1200 / 1600×2400 webp, EXIF yo'q, `/uploads` orqali
+            `image/webp`; o'chirishda 4 fayl ham ketdi; buzuq JPG → 400,
+            diskka hech narsa yozilmadi; skript: variantlari o'chirilgan
+            rasm tiklandi, ikkinchi ishga tushirishda "bor edi".
+          • Sinov fayllari o'chirildi, `pnpm db:seed` bilan baza tozalandi.
+        storefront/ — S-032 ga qarang.
 
-[ ] T-015  Filialga `landmark` (oriyentir) maydoni
+
+[x] T-015  Filialga `landmark` (oriyentir) maydoni
       Paket : api/, dashboard/ (filial formasi), storefront/ (Aloqa)
       Manba : storefront/task.txt S-025
       Talab : `Branch` ga ixtiyoriy `landmark` ("Urjuza klinikasi
         yaqinida"); `BranchPublicDto` ga chiqadi. O'zbekistonda oriyentir
         ko'cha manzilidan ko'ra ko'proq ish beradi.
 
+      ✅ BAJARILDI (2026-09-27):
+        api/:
+          • `Branch.landmark String?`, migratsiya `…_branch_landmark`;
+            CHECK: `NULL` yoki bo'shliqsiz 1–200 belgi (bo'sh satr "yo'q"
+            EMAS — u `NULL`, sayt bo'sh qator chizmasin).
+          • DTO: ixtiyoriy, trim; bo'sh satr → `null` (olib tashlash),
+            ≤ 200. Ochiq va admin javobida `landmark: string | null`.
+          • Kontakt maydoni — filial admini / moderator ham tahrirlaydi
+            (`CONTACT_FIELDS`).
+          • Seed: Farg'ona, Andijon, Namangan — oriyentir bilan; Qo'qon —
+            `null` (bo'sh holat ham ko'rinsin).
+        dashboard/: filial formasida «Oriyentir» maydoni (izohi bilan),
+          filial admini uchun ham ochiq; tahrirda bo'shatilsa `null`;
+          ro'yxatda manzil ostida. Modal izohi yangilandi.
+        storefront/: `branchModel.landmark`; Aloqa sahifasidagi do'konlar
+          ro'yxati va bosh sahifadagi showroom blokida manzil ostida.
+          Footer / menyu — ixcham joy, qo'shilmadi.
+        Tekshirildi:
+          • api: lint, build, `openapi:export`; jest (stub konfiguratsiya)
+            — branches 22/22, butun to'plam 564 o'tdi, yiqilgan o'sha 9
+            suite (muhit / avvaldan). curl: ochiq ro'yxatda oriyentir,
+            filial admini PATCH (trim), `""` → `null`, 201 belgi → 400.
+          • dashboard: typecheck, lint, test (350/350), build.
+          • storefront: lint, test (71/71), build (155 KB — o'zgarmadi).
+          • Brauzerda: Aloqa 390 / 1440 px — oriyentir manzil ostida,
+            Qo'qon'da bo'sh qator yo'q, gorizontal skroll yo'q; dashboard
+            (Farg'ona filial admini) — formadan saqlandi, 403 yo'q.
+          • `pnpm db:seed` bilan baza tozalandi.
+
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  HOLAT                                                                       ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami: 23    Tugadi: 12    Jarayonda: 0    Bloklangan: 3
+  Jami: 23    Tugadi: 17    Jarayonda: 0    Bloklangan: 2
 
     Yangi (T-001 … T-011) ........ 11 / 11
     Ko'chirilgan api/ ............ 0 / 2    (B-044, B-050 — mijoz javobini kutadi)
-    Ko'chirilgan storefront/ ..... 1 / 6    (S-045 tugadi; S-032 T-014 ni kutadi;
+    Ko'chirilgan storefront/ ..... 2 / 6    (S-045, S-032 tugadi;
                                              S-033/S-034/S-035/S-038 —
                                              mijoz qarori yoki kontenti)
-    Tavsiyalar (T-012 … T-015) ... 0 / 4
+    Tavsiyalar (T-012 … T-015) ... 4 / 4
 
-  KEYINGI TASK:  Yangi tasklar (T-001 … T-011) TUGADI.
-                 Qolganlari mijoz qarorini kutadi: B-044, B-050, S-033,
-                 S-034, S-035, S-038; S-032 → T-014. Kod bilan qilinadigan
-                 navbatdagilar: T-012, T-013, T-014, T-015.
+  KEYINGI TASK:  Kod bilan qilinadigan ochiq task QOLMADI.
+                 Qolgan 6 tasi mijoz qarori yoki kontentini kutadi:
+                 B-044 (Didox), B-050 (Payme), S-033 (Marazzi rasmlari),
+                 S-034 (audio litsenziyasi), S-035 (matnlar), S-038.
+                 Deploy eslatmalari: `TRUST_PROXY=1` (T-013),
+                 `pnpm images:variants` bir marta (T-014).

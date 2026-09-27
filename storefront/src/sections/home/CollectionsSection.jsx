@@ -102,6 +102,7 @@ function FeaturedProduct({ product, index }) {
       <Link to={href} className={`group block ${media}`}>
         <SmartImage
           src={product.src}
+          srcSet={product.srcSet}
           alt={product.name}
           ratio={ratio}
           sizes="(max-width: 767px) 92vw, 60vw"

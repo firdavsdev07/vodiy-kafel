@@ -1,6 +1,6 @@
 import type { Schema } from '@/shared/api/types';
 import type { StaffRole } from '@/shared/auth/profile';
-import type { OrderingType, OrderSource, OrderStatus, PaymentMethod, PaymentStatus, StockStatus, TransactionType } from './status-tone';
+import type { LeadStatus, OrderingType, OrderSource, OrderStatus, PaymentMethod, PaymentStatus, StockStatus, TransactionType } from './status-tone';
 
 /**
  * Enum → o'zbekcha matn — YAGONA lug'at (G7, D-043). Manba — `api/docs/enums.md`.
@@ -178,3 +178,11 @@ export const commonText = {
   reset: 'Tozalash',
   unexpectedError: 'Kutilmagan xato. Sahifani yangilab ko‘ring.',
 } as const;
+
+/** Saytdagi aloqa formasidan murojaat (T-013). */
+export const leadStatusLabel = {
+  NEW: 'Yangi',
+  IN_PROGRESS: 'Bog‘lanilmoqda',
+  DONE: 'Yopildi',
+  SPAM: 'Spam',
+} as const satisfies Record<LeadStatus, string>;

@@ -62,6 +62,11 @@ export const PERMISSIONS = {
    * DOIRA backendda (menejer — faqat o'z mijozlari).
    */
   'announcements.send': ALL_STAFF,
+  /**
+   * GET/PATCH /admin/leads — saytdagi aloqa formasidan murojaatlar (T-013).
+   * Barcha xodim; DOIRA backendda (filial xodimi — faqat o'z do'koni).
+   */
+  'leads.manage': ALL_STAFF,
 
   // ── Buyurtmalar ──
   /** GET/POST /admin/orders, PATCH …/urgent, …/status */

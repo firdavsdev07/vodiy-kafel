@@ -66,6 +66,7 @@ const columns: DataTableColumn<Branch>[] = [
     cell: ({ row }) => (
       <div className="min-w-0">
         <p className="truncate">{row.original.address}</p>
+        {row.original.landmark && <p className="truncate text-xs text-muted">{row.original.landmark}</p>}
         <p className="truncate text-xs text-muted">{row.original.workingHours}</p>
       </div>
     ),

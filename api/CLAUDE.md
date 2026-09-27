@@ -305,6 +305,10 @@ Yuklangan fayllar `UPLOAD_DIR` (standart `uploads/`, git'da yo'q) papkasida,
 `/uploads/...` orqali beriladi. Fayl yuklaydigan har bir endpoint
 `StorageService` (`src/storage`) orqali ishlaydi va turni
 `detectFileKind` bilan fayl mazmunidan aniqlaydi.
+Saytda ko'rinadigan RASM esa `ImageStorageService.save` orqali saqlanadi —
+u 400 / 800 / 1600 px webp variantlarini ham yasaydi (T-014), javobga
+`imageVariants(url)` bilan `…Variants` maydoni qo'shiladi. T-014 dan oldingi
+rasmlar uchun: `pnpm images:variants` (deploy'dan keyin bir marta).
 
 `/dev/*` endpointlar (mock to'lovni simulyatsiya qilish) faqat
 `NODE_ENV=development` da ro'yxatdan o'tadi.

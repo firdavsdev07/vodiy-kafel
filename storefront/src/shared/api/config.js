@@ -70,3 +70,23 @@ export function assetUrl(path) {
   if (/^(https?:)?\/\//i.test(path) || path.startsWith('data:') || path.startsWith('blob:')) return path
   return `${API_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`
 }
+
+/** Backend beradigan variant kengliklari (T-014) — `ImageVariantsDto`. */
+const VARIANT_WIDTHS = [400, 800, 1600]
+
+/**
+ * Backend variantlari (`{ w400, w800, w1600 }`, T-014) → `srcset` satri.
+ * Variant yo'q (`null`, video, tashqi havola) — `undefined`: rasm bitta
+ * manzil bilan chiqadi.
+ *
+ * ⚠ Asl rasm kichik bo'lsa backend uni kattalashtirmaydi — `1600w` fayli
+ *   aslida 600 px bo'lishi mumkin. Bu zararsiz: brauzer ortiqcha narsa
+ *   yuklamaydi, sifat — aslniki.
+ */
+export function variantSrcSet(variants) {
+  if (!variants) return undefined
+  const parts = VARIANT_WIDTHS.filter((w) => variants[`w${w}`]).map(
+    (w) => `${assetUrl(variants[`w${w}`])} ${w}w`,
+  )
+  return parts.length ? parts.join(', ') : undefined
+}

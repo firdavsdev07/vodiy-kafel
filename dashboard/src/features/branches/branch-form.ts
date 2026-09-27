@@ -17,6 +17,7 @@ export const MAX_PHONES = 5;
  */
 export const CONTACT_FIELDS = [
   'address',
+  'landmark',
   'latitude',
   'longitude',
   'workingHours',
@@ -47,6 +48,8 @@ export const branchSchema = z.object({
   name: zRequiredText(150),
   city: zRequiredText(100),
   address: zRequiredText(300),
+  // Oriyentir (T-015) — ixtiyoriy; bo'sh qoldirilsa backendga `null`.
+  landmark: z.string().trim().max(200, 'Ko‘pi bilan 200 ta belgi'),
   latitude: zCoordinate(90, 'Kenglik'),
   longitude: zCoordinate(180, 'Uzunlik'),
   workingHours: zRequiredText(100),
@@ -71,6 +74,7 @@ export function branchDefaults(branch?: Branch): BranchFormInput {
     name: branch?.name ?? '',
     city: branch?.city ?? '',
     address: branch?.address ?? '',
+    landmark: branch?.landmark ?? '',
     latitude: branch ? String(branch.latitude) : '',
     longitude: branch ? String(branch.longitude) : '',
     workingHours: branch?.workingHours ?? '',
@@ -87,6 +91,7 @@ export function toCreateBranchBody(v: BranchFormValues): CreateBranchBody {
     name: v.name,
     city: v.city,
     address: v.address,
+    ...(v.landmark ? { landmark: v.landmark } : {}),
     latitude: v.latitude,
     longitude: v.longitude,
     workingHours: v.workingHours,
@@ -99,7 +104,7 @@ export function toCreateBranchBody(v: BranchFormValues): CreateBranchBody {
 
 /**
  * PATCH — faqat O'ZGARGAN maydonlar. `type` HECH QACHON yuborilmaydi (keyin
- * o'zgarmaydi). Havola bo'shatilsa — `null` (backend nullable).
+ * o'zgarmaydi). Havola yoki oriyentir bo'shatilsa — `null` (backend nullable).
  * 🔒 `fullAccess: false` (filial admini, moderator) — faqat `CONTACT_FIELDS`;
  *    aks holda bitta begona maydon butun so'rovni 403 qilardi.
  */
@@ -108,6 +113,7 @@ export function toUpdateBranchBody(v: BranchFormValues, branch: Branch, fullAcce
     name: v.name,
     city: v.city,
     address: v.address,
+    landmark: v.landmark || null,
     latitude: v.latitude,
     longitude: v.longitude,
     workingHours: v.workingHours,
@@ -120,6 +126,7 @@ export function toUpdateBranchBody(v: BranchFormValues, branch: Branch, fullAcce
     name: branch.name,
     city: branch.city,
     address: branch.address,
+    landmark: branch.landmark ?? null,
     latitude: branch.latitude,
     longitude: branch.longitude,
     workingHours: branch.workingHours,

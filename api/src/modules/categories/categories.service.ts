@@ -10,6 +10,8 @@ import { slugify } from '../../common/utils';
 import {
   IMAGE_KINDS,
   requireFileKind,
+  ImageStorageService,
+  imageVariants,
   STORAGE_SERVICE,
   type StorageService,
   type UploadedFileData,
@@ -84,6 +86,7 @@ export class CategoriesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly images: ImageStorageService,
   ) {}
 
   /** Ochiq vitrina (TZ 3.8) — faqat FAOL kategoriyalar. */
@@ -189,7 +192,7 @@ export class CategoriesService {
       'Rasm faqat JPG, PNG yoki WEBP bo‘lishi mumkin',
     );
 
-    const { url } = await this.storage.save({
+    const { url } = await this.images.save({
       buffer,
       folder: 'categories',
       extension: kind,
@@ -234,12 +237,20 @@ export class CategoriesService {
   /** Prisma `_count` ni javob shakliga o'tkazadi. */
   private toPublicDto(row: PublicRow): CategoryPublicResponseDto {
     const { _count, ...rest } = row;
-    return { ...rest, productCount: _count.products };
+    return {
+      ...rest,
+      coverImageVariants: imageVariants(rest.coverImageUrl),
+      productCount: _count.products,
+    };
   }
 
   /** Prisma `_count` ni javob shakliga o'tkazadi. */
   private toAdminDto(row: AdminRow): CategoryAdminResponseDto {
     const { _count, ...rest } = row;
-    return { ...rest, productCount: _count.products };
+    return {
+      ...rest,
+      coverImageVariants: imageVariants(rest.coverImageUrl),
+      productCount: _count.products,
+    };
   }
 }

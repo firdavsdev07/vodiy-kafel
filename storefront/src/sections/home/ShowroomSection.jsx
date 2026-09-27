@@ -27,6 +27,7 @@ export default function ShowroomSection() {
           <SmartImage
             id={INTERIOR[4]}
             src={branch?.image}
+            srcSet={branch?.imageSrcSet}
             alt="Travertin bilan bezatilgan namunaviy interyer"
             className="h-full w-full"
             sizes="100vw"
@@ -53,7 +54,10 @@ export default function ShowroomSection() {
                 sahifada teshik ochilmaydi. */}
             {branch && (
               <div className="r-fade flex flex-col gap-6 md:items-end md:text-right">
-                <address className="not-italic leading-relaxed">{branch.address}</address>
+                <address className="not-italic leading-relaxed">
+                  {branch.address}
+                  {branch.landmark && <span className="block text-clay">{branch.landmark}</span>}
+                </address>
 
                 <div>
                   <div className="type-label text-clay">Ochiq</div>

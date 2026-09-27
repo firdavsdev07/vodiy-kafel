@@ -11,12 +11,16 @@ import { img, imgSrcSet } from '@/data/images'
  *
  * Ikki manba (S-023): `id` — mahalliy namuna rasmi (`src/data/images.js`),
  * `src` — backend bergan tayyor manzil (`assetUrl`). `src` berilsa u
- * ustun: `srcSet` yo'q, chunki backend hozircha bitta o'lchamni beradi
- * (turli o'lchamlar — S-032).
+ * ustun; uning `srcSet` i — backend variantlari (T-014, `variantSrcSet`).
+ *
+ * Variant topilmasa (eski rasm, serverda `pnpm images:variants` hali
+ * ishlatilmagan) — bir marta asl `src` ga qaytadi: `srcset` tufayli rasm
+ * butunlay yo'qolib qolmasin.
  */
 export default function SmartImage({
   id,
   src,
+  srcSet,
   alt = '',
   className = '',
   imgClassName = '',
@@ -27,6 +31,10 @@ export default function SmartImage({
   width = 1600,
 }) {
   const [loaded, setLoaded] = useState(null)
+  // Variantlari yiqilgan manba. ALOHIDA saqlanadi: `loaded` asl rasm
+  // yuklangach `ready` ga o'tadi — belgi o'sha yerda tursa, `srcset`
+  // qaytib kelib yana yiqilar va cheksiz so'rov sikli bo'lardi.
+  const [variantsFailed, setVariantsFailed] = useState(null)
   // Manba almashganda holat nolga qaytsin — aks holda yangi rasm
   // oldingisining "ready" bayrog'i bilan darhol ko'rinib qolardi.
   const key = src || id
@@ -34,6 +42,7 @@ export default function SmartImage({
   // ning mahalliy zaxirasiga tushib ketmaslik kerak: u namuna
   // katalogining rasmi, mahsulotning rasmi emas (ASSETS.md).
   const status = !key ? 'error' : loaded?.key === key ? loaded.status : 'loading'
+  const useVariants = Boolean(src && srcSet) && variantsFailed !== key
 
   const frame = [
     'relative overflow-hidden bg-stone',
@@ -64,7 +73,7 @@ export default function SmartImage({
       ) : (
         <img
           src={src || img(id, width)}
-          srcSet={src ? undefined : imgSrcSet(id)}
+          srcSet={src ? (useVariants ? srcSet : undefined) : imgSrcSet(id)}
           sizes={sizes}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
@@ -79,7 +88,9 @@ export default function SmartImage({
                (S-018). Chaqiruvlar bitta kadrga yig'iladi. */
             if (!ratio) refreshScrollTriggers()
           }}
-          onError={() => setLoaded({ key, status: 'error' })}
+          onError={() =>
+            useVariants ? setVariantsFailed(key) : setLoaded({ key, status: 'error' })
+          }
           className={[
             'absolute inset-0 h-full w-full object-cover',
             reveal ? 'r-zoom' : '',

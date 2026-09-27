@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma';
 import {
   IMAGE_KINDS,
   requireFileKind,
+  ImageStorageService,
+  imageVariants,
   STORAGE_SERVICE,
   type StorageService,
   type UploadedFileData,
@@ -48,22 +50,25 @@ export class PartnersService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly images: ImageStorageService,
   ) {}
 
-  findPublic(): Promise<PartnerPublicDto[]> {
-    return this.prisma.partner.findMany({
+  async findPublic(): Promise<PartnerPublicDto[]> {
+    const rows = await this.prisma.partner.findMany({
       where: { isActive: true },
       select: PUBLIC_SELECT,
       orderBy: [...ORDER],
     });
+    return rows.map(withLogoVariants);
   }
 
-  findAdmin(query: PartnerAdminQueryDto): Promise<PartnerAdminDto[]> {
-    return this.prisma.partner.findMany({
+  async findAdmin(query: PartnerAdminQueryDto): Promise<PartnerAdminDto[]> {
+    const rows = await this.prisma.partner.findMany({
       where: query.isActive !== undefined ? { isActive: query.isActive } : {},
       select: ADMIN_SELECT,
       orderBy: [...ORDER],
     });
+    return rows.map(withLogoVariants);
   }
 
   async create(
@@ -75,17 +80,19 @@ export class PartnersService {
       IMAGE_KINDS,
       LOGO_KIND_MESSAGE,
     );
-    const { url } = await this.storage.save({
+    const { url } = await this.images.save({
       buffer,
       folder: 'partners',
       extension: kind,
     });
 
     try {
-      return await this.prisma.partner.create({
-        data: { ...dto, name: dto.name.trim(), logoUrl: url },
-        select: ADMIN_SELECT,
-      });
+      return withLogoVariants(
+        await this.prisma.partner.create({
+          data: { ...dto, name: dto.name.trim(), logoUrl: url },
+          select: ADMIN_SELECT,
+        }),
+      );
     } catch (error) {
       await this.removeFileQuietly(url);
       throw error;
@@ -94,11 +101,13 @@ export class PartnersService {
 
   async update(id: string, dto: UpdatePartnerDto): Promise<PartnerAdminDto> {
     await this.require(id);
-    return this.prisma.partner.update({
-      where: { id },
-      data: { ...dto, ...(dto.name && { name: dto.name.trim() }) },
-      select: ADMIN_SELECT,
-    });
+    return withLogoVariants(
+      await this.prisma.partner.update({
+        where: { id },
+        data: { ...dto, ...(dto.name && { name: dto.name.trim() }) },
+        select: ADMIN_SELECT,
+      }),
+    );
   }
 
   /** Logotipni almashtirish — eskisi YANGISI saqlangach o'chiriladi. */
@@ -112,7 +121,7 @@ export class PartnersService {
       IMAGE_KINDS,
       LOGO_KIND_MESSAGE,
     );
-    const { url } = await this.storage.save({
+    const { url } = await this.images.save({
       buffer,
       folder: 'partners',
       extension: kind,
@@ -120,11 +129,13 @@ export class PartnersService {
 
     let updated: PartnerAdminDto;
     try {
-      updated = await this.prisma.partner.update({
-        where: { id },
-        data: { logoUrl: url },
-        select: ADMIN_SELECT,
-      });
+      updated = withLogoVariants(
+        await this.prisma.partner.update({
+          where: { id },
+          data: { logoUrl: url },
+          select: ADMIN_SELECT,
+        }),
+      );
     } catch (error) {
       await this.removeFileQuietly(url);
       throw error;
@@ -150,7 +161,7 @@ export class PartnersService {
       select: ADMIN_SELECT,
     });
     if (!partner) throw new NotFoundException(PARTNER_NOT_FOUND);
-    return partner;
+    return withLogoVariants(partner);
   }
 
   private async removeFileQuietly(url: string): Promise<void> {
@@ -162,4 +173,11 @@ export class PartnersService {
       );
     }
   }
+}
+
+/** Logotip + `srcset` variantlari (T-014). */
+function withLogoVariants<T extends { logoUrl: string }>(
+  row: T,
+): T & { logoVariants: ReturnType<typeof imageVariants> } {
+  return { ...row, logoVariants: imageVariants(row.logoUrl) };
 }

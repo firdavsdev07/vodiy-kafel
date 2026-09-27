@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 import { apiPost } from './client.js'
-import { assetUrl } from './config.js'
+import { assetUrl, variantSrcSet } from './config.js'
 import { useApiQuery } from './useApiQuery.js'
 
 /**
@@ -125,7 +125,7 @@ export function groupMedia(media) {
 
   for (const item of media ?? []) {
     if (!item?.url) continue
-    const entry = { id: item.id, type: item.type, src: assetUrl(item.url) }
+    const entry = { id: item.id, type: item.type, src: assetUrl(item.url), srcSet: variantSrcSet(item.variants) }
     if (item.type === 'IMAGE_360') frames.push(entry)
     else if (item.type === 'VIDEO_360') videos.push(entry)
     else images.push(entry)
@@ -154,5 +154,6 @@ export function productCardModel(dto) {
     size: dto.size?.label ?? '',
     finish: dto.color ?? SURFACE_LABEL[dto.surface] ?? '',
     src: assetUrl(dto.primaryImageUrl),
+    srcSet: variantSrcSet(dto.primaryImageVariants),
   }
 }

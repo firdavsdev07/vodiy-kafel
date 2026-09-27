@@ -55,11 +55,17 @@ test('branchModel — hamma maydon joyida', () => {
   const branch = branchModel(FARGONA)
   assert.equal(branch.city, "Farg'ona")
   assert.equal(branch.address, 'Mustaqillik 12')
+  assert.equal(branch.landmark, null) // javobda yo'q — `null`, bo'sh satr emas
   assert.equal(branch.workingHours, 'Du–Sh 09:00–18:00, Yakshanba dam')
   assert.equal(branch.coordinates, '40.3864 / 71.7864')
   assert.ok(branch.mapUrl.includes('40.3864,71.7864'))
   // Seed'da bino surati yo'q — bo'sh satr, `SmartImage` o'z zaxirasini oladi.
   assert.equal(branch.image, '')
+})
+
+test('branchModel — oriyentir (T-015): bo‘shliqlar olinadi, bo‘sh satr — null', () => {
+  assert.equal(branchModel({ ...FARGONA, landmark: ' Markaziy bozor yonida ' }).landmark, 'Markaziy bozor yonida')
+  assert.equal(branchModel({ ...FARGONA, landmark: '  ' }).landmark, null)
 })
 
 test('branchModel — telefonsiz do‘kon sahifani yiqitmaydi', () => {

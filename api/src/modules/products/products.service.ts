@@ -14,6 +14,7 @@ import type {
   ProductListItemResponseDto,
   ProductQueryDto,
 } from './dto';
+import { mediaItem, primaryImage } from './product-images';
 
 /**
  * Ochiq katalog uchun tanlanadigan maydonlar.
@@ -110,14 +111,11 @@ export class ProductsService {
     return {
       ...this.toListItem({ ...row, media: [] }),
       // Karta uchun birinchi surat — to'liq ro'yxatdan olinadi.
-      primaryImageUrl:
+      ...primaryImage(
         row.media.find((item) => item.type === 'IMAGE')?.url ?? null,
+      ),
       description: row.description,
-      media: row.media.map((item) => ({
-        id: item.id,
-        url: item.url,
-        type: item.type,
-      })),
+      media: row.media.map(mediaItem),
     };
   }
 
@@ -230,7 +228,7 @@ export class ProductsService {
       // yo'qolardi (CLAUDE.md qoida 7).
       sqmPerPallet: row.sqmPerPallet.toString(),
       weightPerPallet: row.weightPerPallet.toString(),
-      primaryImageUrl: row.media[0]?.url ?? null,
+      ...primaryImage(row.media[0]?.url ?? null),
       availability: this.toAvailability(row.stock?.stockPallets),
     };
   }

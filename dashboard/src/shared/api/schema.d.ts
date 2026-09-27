@@ -2308,6 +2308,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Murojaat qoldirish (aloqa formasi)
+         * @description Token talab qilinmaydi — chakana mehmon ism, telefon va xabar qoldiradi, xodim uni admin panelda (`/admin/leads`) ko‘radi.
+         *
+         *     🔒 Spamga qarshi: bitta IP dan 10 daqiqada 5 ta so‘rov (keyin `429`); `website` — bot tuzog‘i, har doim bo‘sh yuboriladi; shu telefon + matn 10 daqiqa ichida qayta kelsa, yangi yozuv ochilmaydi — avvalgi ma’lumotnoma qaytadi.
+         *
+         *     `branchId` — ixtiyoriy, `GET /branches` dagi do‘kon.
+         */
+        post: operations["LeadsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Murojaatlar ro‘yxati
+         * @description Yangilari birinchi (`sortOrder=desc`). 🔒 Filial xodimi faqat o‘z do‘koniga yozilganlarni ko‘radi; do‘kon tanlanmagan murojaat — faqat SUPER_ADMIN va MODERATOR ga.
+         */
+        get: operations["LeadsAdminController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/new-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Yangi murojaatlar soni
+         * @description Menyudagi nishon uchun — doiradagi `NEW` murojaatlar.
+         */
+        get: operations["LeadsAdminController_countNew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/leads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Murojaat */
+        get: operations["LeadsAdminController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Holat / izohni o‘zgartirish
+         * @description Holat o‘zgarsa — `handledBy` (siz) va `handledAt` yoziladi. Izoh ichki, mehmonga ko‘rinmaydi.
+         */
+        patch: operations["LeadsAdminController_update"];
+        trace?: never;
+    };
     "/api/v1/admin/managers": {
         parameters: {
             query?: never;
@@ -3590,6 +3675,14 @@ export interface components {
              */
             sortOrder?: number;
         };
+        ImageVariantsDto: {
+            /** @example /uploads/products/0b6f1c1e-400w.webp */
+            w400: string;
+            /** @example /uploads/products/0b6f1c1e-800w.webp */
+            w800: string;
+            /** @example /uploads/products/0b6f1c1e-1600w.webp */
+            w1600: string;
+        };
         CategoryPublicResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
             id: string;
@@ -3608,6 +3701,13 @@ export interface components {
             description?: string | null;
             /** @example /uploads/categories/keramogranit.webp */
             coverImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            coverImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
+            /**
+             * @description Vitrinada KO‘RINADIGAN mahsulotlar soni (faol mahsulot, faol zavod) — `/products?categoryId=` shuncha natija qaytaradi. Admin javobidagi `productCount` boshqa: u hammasini sanaydi.
+             * @example 12
+             */
+            productCount: number;
         };
         CategoryAdminResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
@@ -3627,6 +3727,8 @@ export interface components {
             description?: string | null;
             /** @example /uploads/categories/keramogranit.webp */
             coverImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            coverImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /**
              * @description Vitrinada chiqish tartibi (kichik son — oldinroq)
              * @example 10
@@ -3764,6 +3866,8 @@ export interface components {
              * @example /uploads/products/lyuks-1.jpg
              */
             primaryImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            primaryImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /**
              * @description 🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.
              * @example AVAILABLE
@@ -3793,6 +3897,8 @@ export interface components {
             id: string;
             /** @example /uploads/products/lyuks-1.jpg */
             url: string;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. `VIDEO_360` da har doim `null`. */
+            variants?: components["schemas"]["ImageVariantsDto"] | null;
             /**
              * @description `IMAGE` — oddiy surat, `IMAGE_360` — aylanuvchi surat to‘plami, `VIDEO_360` — 360° video.
              * @example IMAGE
@@ -3836,6 +3942,8 @@ export interface components {
              * @example /uploads/products/lyuks-1.jpg
              */
             primaryImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            primaryImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /**
              * @description 🔒 FAQAT ikki holat. Ombordagi aniq son hech qachon berilmaydi (TZ 3.2). Uch rangli indikator (🟢🟡🔴) auth bor joyda — optom mijoz kabinetida va admin panelida.
              * @example AVAILABLE
@@ -3883,6 +3991,8 @@ export interface components {
              * @example /uploads/products/lyuks-1.jpg
              */
             primaryImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            primaryImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /**
              * @description Mijozga tegishli YAKUNIY narx (1 m² uchun, so‘m). Narx zanjiri bo‘yicha hisoblangan: mijoz+mahsulot > mijoz+zavod > mijoz umumiy > filialning bazaviy narxi.
              *
@@ -3954,6 +4064,8 @@ export interface components {
              * @example /uploads/products/lyuks-1.jpg
              */
             primaryImageUrl?: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            primaryImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /** @example Yuqori sifatli keramogranit, sirti silliq. */
             description?: string | null;
             /** @description Suratlar va 360° materiallar — ko‘rsatish tartibida. */
@@ -4324,6 +4436,8 @@ export interface components {
             id: string;
             /** @example /uploads/gallery/0b6f1c1e.jpg */
             imageUrl: string;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            imageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             /** @example Farg‘ona, xususiy uy — oshxona */
             title?: string | null;
             /** @description Rasmdagi mahsulot (TZ 3.1). Bog‘lanmagan yoki mahsulot vitrinadan olib tashlangan bo‘lsa — `null`. */
@@ -5321,6 +5435,11 @@ export interface components {
             /** @example Farg‘ona */
             city: string;
             address: string;
+            /**
+             * @description Oriyentir (T-015). `null` — ko‘rsatilmagan.
+             * @example Urjuza klinikasi yaqinida
+             */
+            landmark: string | null;
             /** @example 40.3864 */
             latitude: number;
             /** @example 71.7864 */
@@ -5329,6 +5448,8 @@ export interface components {
             workingHours: string;
             phones: string[];
             buildingImageUrl: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            buildingImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             telegramUrl: string | null;
             instagramUrl: string | null;
         };
@@ -5340,6 +5461,11 @@ export interface components {
             /** @example Farg‘ona */
             city: string;
             address: string;
+            /**
+             * @description Oriyentir (T-015). `null` — ko‘rsatilmagan.
+             * @example Urjuza klinikasi yaqinida
+             */
+            landmark: string | null;
             /** @example 40.3864 */
             latitude: number;
             /** @example 71.7864 */
@@ -5348,6 +5474,8 @@ export interface components {
             workingHours: string;
             phones: string[];
             buildingImageUrl: string | null;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            buildingImageVariants?: components["schemas"]["ImageVariantsDto"] | null;
             telegramUrl: string | null;
             instagramUrl: string | null;
             /** @enum {string} */
@@ -5371,6 +5499,11 @@ export interface components {
             city: string;
             /** @example Mustaqillik ko‘chasi 12, bozor yonida */
             address: string;
+            /**
+             * @description Oriyentir — odam ko‘cha nomidan ko‘ra shunga qarab topadi. Bo‘sh satr yoki `null` — olib tashlash.
+             * @example Urjuza klinikasi yaqinida
+             */
+            landmark?: string | null;
             /** @example 40.3864 */
             latitude: number;
             /** @example 71.7864 */
@@ -5397,6 +5530,11 @@ export interface components {
             city?: string;
             /** @example Mustaqillik ko‘chasi 12, bozor yonida */
             address?: string;
+            /**
+             * @description Oriyentir — odam ko‘cha nomidan ko‘ra shunga qarab topadi. Bo‘sh satr yoki `null` — olib tashlash.
+             * @example Urjuza klinikasi yaqinida
+             */
+            landmark?: string | null;
             /** @example 40.3864 */
             latitude?: number;
             /** @example 71.7864 */
@@ -5432,6 +5570,8 @@ export interface components {
             name: string;
             /** @example /uploads/partners/0b6f1c1e.png */
             logoUrl: string;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            logoVariants?: components["schemas"]["ImageVariantsDto"] | null;
             websiteUrl: string | null;
         };
         PartnerAdminDto: {
@@ -5441,6 +5581,8 @@ export interface components {
             name: string;
             /** @example /uploads/partners/0b6f1c1e.png */
             logoUrl: string;
+            /** @description Kichraytirilgan webp nusxalar (400 / 800 / 1600 px kenglik) — `srcset` uchun. Asl rasm kichikroq bo‘lsa kattalashtirilmaydi (fayl bor, lekin kengligi asliniki). `null` — rasm yo‘q yoki video / tashqi havola. */
+            logoVariants?: components["schemas"]["ImageVariantsDto"] | null;
             websiteUrl: string | null;
             sortOrder: number;
             isActive: boolean;
@@ -5476,6 +5618,91 @@ export interface components {
              * @description Yangi logotip: JPG, PNG yoki WEBP, 10 MB gacha
              */
             file: string;
+        };
+        LeadCreatedDto: {
+            /**
+             * @description Ma’lumotnoma — mehmon qo‘ng‘iroq qilganda aytadi, xodim panelda shu bo‘yicha topadi.
+             * @example VK-7H2K9Q
+             */
+            reference: string;
+        };
+        CreateLeadDto: {
+            /** @example Aziz */
+            name: string;
+            /**
+             * @description Telefon — bo‘shliq, qavs, tire bilan ham bo‘ladi. 9 xonali mahalliy raqamga `+998` o‘zi qo‘shiladi.
+             * @example +998 90 123 45 67
+             */
+            phone: string;
+            /** @example Hammom uchun 20 m² keramogranit kerak, narxini bilsam */
+            message: string;
+            /** @description Mehmon tanlagan do‘kon (`GET /branches` dagi `id`). Berilmasa — murojaatni markaz ko‘radi. */
+            branchId?: string;
+            /** @description Har doim BO‘SH yuboriladi (formada yashirin maydon). To‘ldirilgan so‘rov saqlanmaydi. */
+            website?: string;
+        };
+        LeadBranchDto: {
+            id: string;
+            /** @example Farg‘ona */
+            name: string;
+        };
+        LeadHandlerDto: {
+            id: string;
+            /** @example Aliyev Vali */
+            fullName: string;
+        };
+        LeadAdminDto: {
+            id: string;
+            /** @example VK-7H2K9Q */
+            reference: string;
+            /** @example Aziz */
+            name: string;
+            /** @example +998901234567 */
+            phone: string;
+            message: string;
+            /** @enum {string} */
+            status: "NEW" | "IN_PROGRESS" | "DONE" | "SPAM";
+            note: string | null;
+            /** @description `null` — mehmon do‘kon tanlamagan */
+            branch: components["schemas"]["LeadBranchDto"] | null;
+            /** @description Holatni oxirgi o‘zgartirgan xodim */
+            handledBy: components["schemas"]["LeadHandlerDto"] | null;
+            /** Format: date-time */
+            handledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PaginatedLeadAdminDtoDto: {
+            items: components["schemas"]["LeadAdminDto"][];
+            /**
+             * @description Jami elementlar soni
+             * @example 128
+             */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+            /**
+             * @description Jami sahifalar soni
+             * @example 7
+             */
+            totalPages: number;
+        };
+        LeadNewCountDto: {
+            /**
+             * @description Doiradagi `NEW` murojaatlar
+             * @example 3
+             */
+            count: number;
+        };
+        UpdateLeadDto: {
+            /** @enum {string} */
+            status?: "NEW" | "IN_PROGRESS" | "DONE" | "SPAM";
+            /** @description Ichki izoh (mehmonga ko‘rinmaydi). `null` — o‘chirish. */
+            note?: string | null;
         };
         StaffBranchRefDto: {
             id: string;
@@ -12457,6 +12684,251 @@ export interface operations {
             };
             /** @description Fayl 10 MB dan katta */
             413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    LeadsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLeadDto"];
+            };
+        };
+        responses: {
+            /** @description Qabul qilindi */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LeadCreatedDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Maydon xato yoki do‘kon topilmadi */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Juda ko‘p murojaat — birozdan keyin urinib ko‘ring */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    LeadsAdminController_findAll: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                /** @description Saralanadigan maydon nomi */
+                sortBy?: string;
+                sortOrder?: "asc" | "desc";
+                status?: "NEW" | "IN_PROGRESS" | "DONE" | "SPAM";
+                /** @description Filial bo‘yicha (SUPER_ADMIN / MODERATOR). Filial xodimiga e’tiborsiz — har doim o‘z filiali; boshqasi → 404. */
+                branchId?: string;
+                /** @description Ism, telefon yoki ma’lumotnoma (`VK-…`) bo‘yicha qidiruv */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sahifalangan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PaginatedLeadAdminDtoDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Faqat xodim */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Begona `branchId` so‘raldi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    LeadsAdminController_countNew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Soni */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LeadNewCountDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Faqat xodim */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    LeadsAdminController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Murojaat ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Murojaat */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LeadAdminDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Faqat xodim */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Topilmadi */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    LeadsAdminController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Murojaat ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLeadDto"];
+            };
+        };
+        responses: {
+            /** @description Yangilandi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["LeadAdminDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Maydon xato */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Faqat xodim */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+            /** @description Topilmadi */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

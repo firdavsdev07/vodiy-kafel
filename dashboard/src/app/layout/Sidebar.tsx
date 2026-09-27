@@ -2,6 +2,8 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { APP_NAME, navGroupsForRole } from '@/app/navigation';
 import { useProfile } from '@/features/auth/hooks';
+import { useNewLeadsCount } from '@/features/leads/api';
+import { can } from '@/shared/lib/permissions';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -18,6 +20,9 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle, toggleLabel }: SidebarProps) {
   const role = useProfile().data?.role;
   const groups = role ? navGroupsForRole(role) : [];
+  // Saytdan kelgan, hali hech kim qaramagan murojaatlar (T-013)
+  const newLeads = useNewLeadsCount(can(role, 'leads.manage')).data?.count ?? 0;
+  const badges: Partial<Record<string, number>> = { leads: newLeads };
 
   return (
     <aside
@@ -44,25 +49,51 @@ export function Sidebar({ collapsed, onToggle, toggleLabel }: SidebarProps) {
               </p>
             )}
             <ul className="flex flex-col gap-0.5">
-              {group.sections.map(({ id, path, title, icon: Icon }) => (
-                <li key={id}>
-                  <NavLink
-                    to={path}
-                    end={path === '/'}
-                    title={collapsed ? title : undefined}
-                    className={({ isActive }) =>
-                      `flex h-9 items-center gap-3 rounded-md px-2.5 text-sm transition-colors ${
-                        isActive
-                          ? 'bg-surface-muted font-medium text-fg'
-                          : 'text-muted hover:bg-surface-muted hover:text-fg'
-                      } ${collapsed ? 'justify-center' : ''}`
-                    }
-                  >
-                    <Icon size={17} className="shrink-0" aria-hidden />
-                    {collapsed ? <span className="sr-only">{title}</span> : <span className="truncate">{title}</span>}
-                  </NavLink>
-                </li>
-              ))}
+              {group.sections.map(({ id, path, title, icon: Icon }) => {
+                const badge = badges[id] ?? 0;
+                const label = badge > 0 ? `${title} — ${badge} ta yangi` : title;
+                return (
+                  <li key={id}>
+                    <NavLink
+                      to={path}
+                      end={path === '/'}
+                      title={collapsed ? label : undefined}
+                      className={({ isActive }) =>
+                        `flex h-9 items-center gap-3 rounded-md px-2.5 text-sm transition-colors ${
+                          isActive
+                            ? 'bg-surface-muted font-medium text-fg'
+                            : 'text-muted hover:bg-surface-muted hover:text-fg'
+                        } ${collapsed ? 'justify-center' : ''}`
+                      }
+                    >
+                      <span className="relative shrink-0">
+                        <Icon size={17} aria-hidden />
+                        {collapsed && badge > 0 && (
+                          <span aria-hidden className="absolute -top-1 -right-1 size-2 rounded-full bg-danger" />
+                        )}
+                      </span>
+                      {collapsed ? (
+                        <span className="sr-only">{label}</span>
+                      ) : (
+                        <>
+                          <span className="truncate">{title}</span>
+                          {badge > 0 && (
+                            <>
+                              <span className="sr-only">, {badge} ta yangi</span>
+                              <span
+                                aria-hidden
+                                className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] leading-5 font-semibold text-white tabular-nums"
+                              >
+                                {badge > 99 ? '99+' : badge}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}

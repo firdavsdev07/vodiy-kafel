@@ -97,6 +97,7 @@ function GalleryImage({ item, index }) {
   const picture = (
     <SmartImage
       src={item.image}
+      srcSet={item.imageSrcSet}
       alt={item.title || 'Bajarilgan ish'}
       ratio={index % 4 === 0 ? '4 / 5' : '3 / 4'}
       sizes="(max-width: 767px) 92vw, (max-width: 1023px) 46vw, 30vw"

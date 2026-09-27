@@ -17,6 +17,7 @@ export const AppEvent = {
   PaymentPaid: 'payment.paid',
   ProductActivated: 'product.activated',
   ContractReady: 'contract.ready',
+  LeadCreated: 'lead.created',
 } as const;
 
 export interface OrderCreatedEvent {
@@ -45,4 +46,13 @@ export interface ProductActivatedEvent {
 /** Shartnoma PDF'i generatsiya qilinib, mijozga yuborildi (B-045). */
 export interface ContractReadyEvent {
   contractId: string;
+}
+
+/**
+ * Saytdagi aloqa formasidan yangi murojaat (T-013). Hozircha tinglovchi
+ * yo'q — murojaat admin paneldagi ro'yxatda ko'rinadi; xodimga Telegram /
+ * SMS xabari keyin shu hodisaga yangi tinglovchi bo'lib qo'shiladi.
+ */
+export interface LeadCreatedEvent {
+  leadId: string;
 }

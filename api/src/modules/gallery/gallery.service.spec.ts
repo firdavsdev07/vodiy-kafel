@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PrismaService } from '../../prisma';
-import { STORAGE_SERVICE } from '../../storage';
+import { ImageStorageService, STORAGE_SERVICE } from '../../storage';
 import { GalleryAdminQueryDto } from './dto';
 import { GalleryService } from './gallery.service';
 
@@ -55,6 +55,8 @@ describe('GalleryService (B-024)', () => {
         GalleryService,
         { provide: PrismaService, useValue: prisma },
         { provide: STORAGE_SERVICE, useValue: storage },
+        // Rasm yuklash (T-014) — `save` imzosi bir xil; variantlar alohida spec'da.
+        { provide: ImageStorageService, useValue: storage },
       ],
     }).compile();
 

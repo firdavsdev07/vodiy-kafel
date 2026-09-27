@@ -63,6 +63,10 @@ export default function PartnerLogo({ partner }) {
         <img
           ref={imgRef}
           src={partner.logo}
+          // Backend variantlari (T-014): quti ~88 px baland, keng logotip
+          // ham 400w dan oshmaydi — 3 MB lik asl fayl yuklanmaydi.
+          srcSet={partner.logoSrcSet}
+          sizes="(max-width: 767px) 45vw, 240px"
           alt=""
           aria-hidden="true"
           loading="lazy"

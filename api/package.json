@@ -25,6 +25,7 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "openapi:export": "nest build && node dist/scripts/export-openapi.js",
+    "images:variants": "nest build && node dist/scripts/generate-image-variants.js",
     "db:seed": "ts-node -P tsconfig.seed.json prisma/seed.ts"
   },
   "dependencies": {
@@ -51,6 +52,7 @@
     "prisma": "7.10.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.35.4",
     "zod": "^4.5.4"
   },
   "devDependencies": {

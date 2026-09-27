@@ -26,6 +26,10 @@ async function bootstrap() {
 
   // Request ID — global prefiksdan TASHQARIDAGI so'rovlarga ham qo'llanadi,
   // shunda har bir javobda kuzatuv ID'si bo'ladi.
+  // Proksi ortida `req.ip` — haqiqiy mehmon manzili (rate-limit shunga
+  // tayanadi). Sozlanmasa (0) — Express standarti, o'zgarish yo'q.
+  if (config.trustProxy > 0) app.set('trust proxy', config.trustProxy);
+
   const requestId = new RequestIdMiddleware();
   app.use(requestId.use.bind(requestId));
 

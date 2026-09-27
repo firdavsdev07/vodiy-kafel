@@ -14,6 +14,8 @@ import { Prisma, PrismaService } from '../../prisma';
 import {
   IMAGE_KINDS,
   requireFileKind,
+  ImageStorageService,
+  imageVariants,
   STORAGE_SERVICE,
   type StorageService,
   type UploadedFileData,
@@ -61,6 +63,7 @@ export class GalleryService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly images: ImageStorageService,
   ) {}
 
   /**
@@ -100,6 +103,7 @@ export class GalleryService {
     return paginate(
       rows.map(({ product, ...item }) => ({
         ...item,
+        imageVariants: imageVariants(item.imageUrl),
         product:
           product?.isActive && product.factory.isActive
             ? { id: product.id, name: product.name, slug: product.slug }
@@ -143,7 +147,7 @@ export class GalleryService {
     );
     if (dto.productId) await this.requireProduct(dto.productId);
 
-    const { url } = await this.storage.save({
+    const { url } = await this.images.save({
       buffer,
       folder: 'gallery',
       extension: kind,

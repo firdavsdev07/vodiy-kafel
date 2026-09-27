@@ -1,4 +1,4 @@
-import { assetUrl } from './config.js'
+import { assetUrl, variantSrcSet } from './config.js'
 import { useApiQuery } from './useApiQuery.js'
 
 /**
@@ -33,6 +33,7 @@ export function galleryItemModel(dto) {
     id: dto.id,
     title: dto.title || null,
     image: assetUrl(dto.imageUrl),
+    imageSrcSet: variantSrcSet(dto.imageVariants),
     product: dto.product ? { name: dto.product.name, to: `/catalog/${dto.product.slug}` } : null,
   }
 }

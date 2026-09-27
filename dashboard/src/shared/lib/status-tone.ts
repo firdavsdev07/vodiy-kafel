@@ -16,6 +16,7 @@ export type PaymentMethod = Schema<'AdminOrderPaymentDto'>['method'];
 export type PaymentStatus = Schema<'OrderPaymentDto'>['status'];
 export type StockStatus = Schema<'ProductStockSummaryDto'>['stockStatus'];
 export type TransactionType = Schema<'AccountTransactionAdminDto'>['type'];
+export type LeadStatus = Schema<'LeadAdminDto'>['status'];
 
 export const orderStatusTone = {
   NEW: 'info',
@@ -49,6 +50,14 @@ export const transactionTypeTone = {
   PAYMENT: 'success',
   ADJUSTMENT: 'neutral',
 } as const satisfies Record<TransactionType, Tone>;
+
+/** Saytdan kelgan murojaat (T-013): yangisi ko'zga tashlansin, spam — o'chiq. */
+export const leadStatusTone = {
+  NEW: 'info',
+  IN_PROGRESS: 'warning',
+  DONE: 'success',
+  SPAM: 'neutral',
+} as const satisfies Record<LeadStatus, Tone>;
 
 /** Ohang → Tailwind klasslari (tokenlar styles.css da). */
 export const toneClasses: Record<Tone, { badge: string; dot: string }> = {

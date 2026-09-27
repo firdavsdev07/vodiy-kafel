@@ -52,7 +52,7 @@ export function BranchFormModal({
         branch
           ? fullAccess
             ? 'Filial turi (do‘kon / markaziy ombor) keyin o‘zgarmaydi.'
-            : 'Siz faqat manzil, ish vaqti, telefon va havolalarni o‘zgartira olasiz.'
+            : 'Siz faqat manzil, oriyentir, ish vaqti, telefon va havolalarni o‘zgartira olasiz.'
           : 'Yangi do‘kon filiali narxlari va tariflari kiritilmaguncha mijozlar undan buyurtma bera olmaydi.'
       }
       footer={
@@ -149,6 +149,15 @@ function BranchForm({
         <InputField control={form.control} name="city" label="Shahar" required maxLength={100} disabled={locked} />
         <InputField control={form.control} name="workingHours" label="Ish vaqti" required maxLength={100} placeholder="Du–Sh 09:00–18:00" />
         <InputField control={form.control} name="address" label="Manzil" required maxLength={300} className="sm:col-span-2" />
+        <InputField
+          control={form.control}
+          name="landmark"
+          label="Oriyentir"
+          maxLength={200}
+          placeholder="Masalan: Markaziy bozor yonida"
+          hint="Saytda manzil ostida chiqadi — odam ko‘cha nomidan ko‘ra shunga qarab topadi"
+          className="sm:col-span-2"
+        />
         <InputField control={form.control} name="latitude" label="Kenglik (latitude)" required inputMode="decimal" placeholder="40.3864" />
         <InputField control={form.control} name="longitude" label="Uzunlik (longitude)" required inputMode="decimal" placeholder="71.7864" />
         <TextareaField

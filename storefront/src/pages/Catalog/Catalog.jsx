@@ -291,6 +291,7 @@ export default function Catalog() {
                     >
                       <SmartImage
                         src={product.src}
+                        srcSet={product.srcSet}
                         alt={product.name}
                         ratio={r.ratio}
                         sizes="(max-width: 767px) 92vw, (max-width: 1279px) 50vw, 58vw"

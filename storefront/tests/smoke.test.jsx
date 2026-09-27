@@ -1,5 +1,5 @@
 import { afterEach, test, vi } from 'vitest'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import assert from 'node:assert/strict'
 
@@ -205,7 +205,9 @@ test('Bosh sahifa «Tanlangan kolleksiyalar» — API dan, eng ko‘p ko‘rilga
 test('Bosh sahifa «Tanlangan kolleksiyalar» — bo‘sh katalogda bo‘lim chiqmaydi', async () => {
   stubApi({ '/products': { items: [], total: 0, page: 1, limit: 4, totalPages: 0 } })
   const { container } = draw(<CollectionsSection />)
-  await waitFor(() => assert.equal(container.querySelector('section'), null))
+  // ⚠ DOM elementini `assert.equal` ga BERMA: xato bo'lsa Node uni `util.inspect`
+  //   qiladi, jsdom tugunida bu gigabaytlab xotira yeydi (`waitFor` har urinishda).
+  await waitFor(() => assert.ok(!container.querySelector('section'), 'bo‘lim chiqmasligi kerak'))
 })
 
 const drawCategory = (slug) =>
@@ -268,4 +270,27 @@ test('Toifa sahifasi — mahsulotsiz toifada "hozircha yo‘q"', async () => {
   })
   drawCategory('outdoor')
   await waitFor(() => screen.getByText(/hozircha mahsulot yo‘q/))
+})
+
+test('SmartImage — variant yiqilsa asl rasmga qaytadi (T-014)', async () => {
+  const { default: SmartImage } = await import('../src/components/ui/SmartImage.jsx')
+  const { container } = draw(
+    <SmartImage src="https://api.test/uploads/p/a.jpg" srcSet="https://api.test/uploads/p/a-400w.webp 400w" alt="a" />,
+  )
+  const img = () => container.querySelector('img')
+  assert.equal(img().getAttribute('srcset'), 'https://api.test/uploads/p/a-400w.webp 400w')
+
+  fireEvent.error(img())
+  await waitFor(() => assert.equal(img().getAttribute('srcset'), null))
+  assert.equal(img().getAttribute('src'), 'https://api.test/uploads/p/a.jpg')
+
+  // Asl rasm yuklangach `srcset` QAYTMAYDI — aks holda variant yana
+  // yiqilib, cheksiz so'rov sikli bo'lardi (brauzerda ushlangan).
+  fireEvent.load(img())
+  await new Promise((r) => setTimeout(r, 20))
+  assert.equal(img().getAttribute('srcset'), null)
+
+  // Asl rasm ham yiqilsa — o'rin egallovchi (rasm yo'q)
+  fireEvent.error(img())
+  await waitFor(() => assert.equal(img(), null))
 })

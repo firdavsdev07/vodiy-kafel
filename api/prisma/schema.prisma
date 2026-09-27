@@ -39,6 +39,9 @@ model Branch {
   name         String
   city         String
   address      String
+  /// T-015: oriyentir — "Urjuza klinikasi yaqinida". O'zbekistonda odam
+  /// ko'cha nomidan ko'ra shunga qarab topadi. Ixtiyoriy.
+  landmark     String?
   /// Xarita koordinatasi. Decimal EMAS — koordinata pul emas, o'nlik
   /// arifmetika muammosi yo'q. Float64 ~1 sm aniqlik beradi va frontendga
   /// satr emas, son bo'lib boradi (CLAUDE.md qoida 7 faqat pulga taalluqli).
@@ -65,6 +68,9 @@ model Branch {
   placedOrders Order[] @relation("BranchPlacedOrders")
   /// T-004: shu (CENTRAL) ombordan jo'natilgan buyurtmalar.
   dispatchedOrders Order[] @relation("BranchDispatchedOrders")
+
+  /// T-013: saytdagi aloqa formasidan shu do'konga yozilgan murojaatlar.
+  leads Lead[]
 
   @@index([type, isActive])
   @@index([isActive, sortOrder])
@@ -142,6 +148,9 @@ model User {
 
   /// T-009: shu xodim yuborgan xabarlar (bayram tabrigi, e'lon).
   announcements Announcement[] @relation("Announcements")
+
+  /// T-013: shu xodim holatini o'zgartirgan murojaatlar.
+  handledLeads Lead[] @relation("LeadHandledBy")
 
   @@index([branchId, role])
   @@index([role, isActive])
@@ -1211,3 +1220,53 @@ model Announcement {
   @@map("announcements")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// T-013 · Saytdagi aloqa formasi — murojaatlar (lead)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum LeadStatus {
+  /// Hali hech kim qaramagan
+  NEW
+  /// Xodim bog'lanyapti
+  IN_PROGRESS
+  /// Javob berildi / yopildi
+  DONE
+  /// Reklama, bot, bema'ni yozuv
+  SPAM
+
+  @@map("lead_status")
+}
+
+/// Chakana mehmonning saytdagi aloqa formasi orqali qoldirgan murojaati
+/// (ism, telefon, xabar). Hisob yo'q (CLAUDE.md qoida 4) — bu faqat
+/// "qayta qo'ng'iroq qiling" iltimosi, buyurtma EMAS.
+///
+/// 🔒 Doira: `branchId` bor — o'sha filial xodimi + SUPER_ADMIN/MODERATOR;
+///    `null` (do'kon tanlanmagan) — faqat SUPER_ADMIN/MODERATOR.
+model Lead {
+  id String @id @default(cuid())
+
+  name    String
+  phone   String
+  message String
+
+  /// Mehmon tanlagan do'kon. Ixtiyoriy — tanlanmasa markaz ko'radi.
+  branchId String? @map("branch_id")
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  status LeadStatus @default(NEW)
+  /// Xodimning ichki izohi ("ertaga qayta qo'ng'iroq"). Mehmonga ko'rinmaydi.
+  note   String?
+
+  handledByUserId String?   @map("handled_by_user_id")
+  handledBy       User?     @relation("LeadHandledBy", fields: [handledByUserId], references: [id], onDelete: SetNull)
+  handledAt       DateTime? @map("handled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([branchId, status, createdAt])
+  @@index([phone, createdAt])
+  @@map("leads")
+}

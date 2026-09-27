@@ -1,12 +1,27 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from 'node:path';
 import { NotFoundException } from '@nestjs/common';
-import type {
-  StorageSaveInput,
-  StorageService,
-  StoredFile,
+import {
+  derivedFileUrl,
+  type StorageDerivedInput,
+  type StorageSaveInput,
+  type StorageService,
+  type StoredFile,
 } from './storage.interface';
+
+/** Bog'liq fayl qo'shimchasi va kengaytmasi — faqat shu belgilar. */
+const DERIVED_PART = /^[a-z0-9]{1,16}$/;
+/** Bog'liq fayl nomining asl o'zakdan keyingi qismi: `800w.webp`. */
+const DERIVED_TAIL = /^[a-z0-9]{1,16}\.[a-z0-9]{1,16}$/;
 
 /** Fayllar shu prefiks ostida beriladi (main.ts dagi static bilan bir xil). */
 export const UPLOADS_URL_PREFIX = '/uploads';
@@ -36,6 +51,25 @@ export class LocalDiskStorage implements StorageService {
     return { url: `${UPLOADS_URL_PREFIX}/${folder}/${fileName}` };
   }
 
+  async saveDerived({
+    of,
+    suffix,
+    buffer,
+    extension,
+  }: StorageDerivedInput): Promise<StoredFile> {
+    if (!DERIVED_PART.test(suffix) || !DERIVED_PART.test(extension)) {
+      throw new Error(`Noto‘g‘ri qo‘shimcha: ${suffix}.${extension}`);
+    }
+    const url = derivedFileUrl(of, suffix, extension);
+    const path = this.resolveOwnPath(url);
+    if (!path) throw new NotFoundException('Asl fayl topilmadi');
+
+    // Qayta yasalsa (eski rasmlar uchun skript) — ustidan yoziladi: nom
+    // tasodifiy emas, asl fayldan kelib chiqadi.
+    await writeFile(path, buffer);
+    return { url };
+  }
+
   async read(url: string): Promise<Buffer> {
     const path = this.resolveOwnPath(url);
     if (!path) throw new NotFoundException('Fayl topilmadi');
@@ -54,11 +88,34 @@ export class LocalDiskStorage implements StorageService {
     const path = this.resolveOwnPath(url);
     if (!path) return;
 
+    await unlinkQuietly(path);
+    await Promise.all(
+      (await this.derivedPaths(path)).map((p) => unlinkQuietly(p)),
+    );
+  }
+
+  /**
+   * Asl faylga bog'liq fayllar: `abc.jpg` → `abc-400w.webp`, `abc-800w.webp` …
+   * Nom asl faylning TO'LIQ o'zagi + `-` bilan boshlanadi — o'zak tasodifiy
+   * UUID, boshqa faylga tasodifan mos kelmaydi.
+   */
+  async derivedPaths(originalPath: string): Promise<string[]> {
+    const stem = basename(originalPath, extname(originalPath));
+    const dir = dirname(originalPath);
+    let names: string[];
     try {
-      await unlink(path);
+      names = await readdir(dir);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw error;
     }
+    const prefix = `${stem}-`;
+    return names
+      .filter(
+        (n) =>
+          n.startsWith(prefix) && DERIVED_TAIL.test(n.slice(prefix.length)),
+      )
+      .map((n) => join(dir, n));
   }
 
   /**
@@ -76,5 +133,13 @@ export class LocalDiskStorage implements StorageService {
     if (!rel || rel.startsWith('..') || isAbsolute(rel)) return null;
 
     return path;
+  }
+}
+
+async function unlinkQuietly(path: string): Promise<void> {
+  try {
+    await unlink(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
 }
