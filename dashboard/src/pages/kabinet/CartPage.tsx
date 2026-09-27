@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { MAX_PALLETS, MIN_PALLETS, totalPallets, type CartLine } from '@/features/cabinet/cart';
 import { cartStore, useCart } from '@/features/cabinet/cart-store';
 import { PalletInput } from '@/features/cabinet/PalletInput';
-import { LocationPicker } from '@/features/cabinet/LocationPicker';
+import { LocationPicker } from '@/shared/ui/map/LocationPicker';
 import { EMPTY_ROUTE, useDeliveryOptions, useQuote } from '@/features/cabinet/quote-api';
 import { useCreateOrder, type PaymentMethod } from '@/features/cabinet/orders-api';
 import { errorMessage } from '@/shared/lib/error-message';

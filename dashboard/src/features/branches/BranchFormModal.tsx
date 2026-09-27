@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ImageUp } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { formatBytes, MAX_UPLOAD_BYTES } from '@/features/products/media';
 import { ApiError } from '@/shared/api';
 import { errorMessage } from '@/shared/lib/error-message';
 import { branchTypeLabel } from '@/shared/lib/labels';
 import { Button, InputField, Modal, SelectField, TextareaField, Thumb, toast } from '@/shared/ui';
+import { LocationPicker } from '@/shared/ui/map/LocationPicker';
 import { useCreateBranch, useUpdateBranch, useUploadBranchImage } from './api';
 import {
   branchDefaults,
@@ -158,6 +159,7 @@ function BranchForm({
           hint="Saytda manzil ostida chiqadi — odam ko‘cha nomidan ko‘ra shunga qarab topadi"
           className="sm:col-span-2"
         />
+        <BranchLocation form={form} />
         <InputField control={form.control} name="latitude" label="Kenglik (latitude)" required inputMode="decimal" placeholder="40.3864" />
         <InputField control={form.control} name="longitude" label="Uzunlik (longitude)" required inputMode="decimal" placeholder="71.7864" />
         <TextareaField
@@ -229,3 +231,41 @@ function BranchImage({ branch }: { branch: Branch }) {
     </div>
   );
 }
+
+/**
+ * Do'kon joylashuvi — xaritadan (qidiruv, «Joylashuvim», bosish). Saytdagi
+ * "Xaritada ochish" havolasi shu nuqtadan yasaladi, shuning uchun koordinatani
+ * qo'lda terish o'rniga xaritada ko'rib belgilash xatoni kamaytiradi.
+ * Pastdagi kenglik/uzunlik maydonlari qoladi — aniq qiymatni qo'yish yoki
+ * tekshirish uchun; ular o'zgarsa xarita ham unga suriladi.
+ */
+function BranchLocation({ form }: { form: UseFormReturn<BranchFormInput, unknown, BranchFormValues> }) {
+  const [lat, lng] = form.watch(['latitude', 'longitude']);
+  const invalid = Boolean(form.formState.errors.latitude || form.formState.errors.longitude);
+
+  return (
+    <div className="flex flex-col gap-1.5 sm:col-span-2">
+      <p className="text-sm font-medium">
+        Joylashuv
+        <span className="text-danger" aria-hidden>
+          {' '}
+          *
+        </span>
+      </p>
+      <div className={invalid ? 'rounded-md ring-1 ring-danger' : undefined}>
+        <LocationPicker
+          value={{ lat, lng }}
+          onChange={(point) => {
+            // Birinchi "Saqlash" dan keyingina darhol tekshiriladi — ochilishi bilan qizil bo'lmasin
+            const options = { shouldDirty: true, shouldValidate: form.formState.isSubmitted };
+            form.setValue('latitude', point.lat, options);
+            form.setValue('longitude', point.lng, options);
+          }}
+          heightClass="h-72"
+          emptyText="Do‘kon joyini belgilang: manzilni qidiring, «Joylashuvim» ni bosing (do‘konning o‘zida turgan bo‘lsangiz) yoki xaritani bosing."
+        />
+      </div>
+    </div>
+  );
+}
+

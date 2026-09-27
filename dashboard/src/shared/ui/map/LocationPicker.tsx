@@ -4,10 +4,11 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { LocateFixed, Search } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Circle, MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet';
-import { Button, toast } from '@/shared/ui';
-import { COARSE_ACCURACY_M, locate, locateFailureText } from './geolocation';
+import { Button } from '../Button';
+import { toast } from '../toast';
+import { COARSE_ACCURACY_M, locate, locateFailureText } from '@/shared/lib/geolocation';
 
 // ⚠ Vite'da Leaflet'ning standart marker ikonkasi siniq chiqadi: Vite bergan
 // URL allaqachon to'liq, lekin `Icon.Default._getIconUrl` ustiga yana o'zining
@@ -46,22 +47,52 @@ type LocateState =
 export interface LocationPickerProps {
   value: { lat: string; lng: string };
   onChange: (point: { lat: string; lng: string }) => void;
+  /** Nuqta hali belgilanmaganda xarita ostidagi matn. */
+  emptyText?: string;
+  /** Xarita balandligi (Tailwind klassi). */
+  heightClass?: string;
 }
 
+const DEFAULT_EMPTY_TEXT =
+  'Xaritani bosib, manzilni qidirib yoki «Joylashuvim» ni bosib nuqta belgilang (ixtiyoriy).';
+
 /**
- * Yetkazib berish nuqtasini xaritada belgilash (TZ 3.13, D-064).
+ * Nuqtani xaritada belgilash — umumiy komponent. Ishlatiladi:
+ *   • kabinet savatida yetkazib berish nuqtasi (TZ 3.13, D-064) — narxga
+ *     TA'SIR QILMAYDI, faqat haydovchi manzilni aniq topishi uchun;
+ *   • filial formasida do'kon joylashuvi — saytdagi "Xaritada ochish"
+ *     havolasi shu koordinatadan yasaladi.
  *
- * ⚠ Narxga TA'SIR QILMAYDI — faqat logistika uchun, haydovchi manzilni
- *   aniq topishi uchun (CartPage'dagi eski izoh saqlanib qolgan).
+ * ⚠ Ichida `<form>` YO'Q: komponent boshqa forma (filial formasi) ichida
+ *   turadi — ichma-ich forma HTML'da taqiqlangan va qidiruvda Enter bosilsa
+ *   tashqi forma yuborilib ketardi. Qidiruv Enter'ni o'zi ushlaydi.
+ *
+ * ⚠ Leaflet og'ir — `@/shared/ui` indeksiga QO'SHILMAYDI, to'g'ridan-to'g'ri
+ *   `@/shared/ui/map/LocationPicker` dan import qilinadi.
  *
  * Uch usul: xaritani bosish, manzil qidiruv (OpenStreetMap Nominatim),
  * yoki brauzer geolokatsiyasi ("Joylashuvim", T-003 — `geolocation.ts`).
  * Belgilangan nuqtaning manzili ham ko'rsatiladi (teskari geokodlash) —
  * mijoz nuqta to'g'ri joyga tushganini raqamlardan emas, nomdan ko'rsin.
  */
-export function LocationPicker({ value, onChange }: LocationPickerProps) {
-  const position: [number, number] | null =
-    value.lat && value.lng ? [Number(value.lat), Number(value.lng)] : null;
+export function LocationPicker({
+  value,
+  onChange,
+  emptyText = DEFAULT_EMPTY_TEXT,
+  heightClass = 'h-64',
+}: LocationPickerProps) {
+
+  // Qo'lda kiritilgan qiymat noto'g'ri bo'lishi mumkin ("40,5", "abc") —
+  // bunday holatda marker chizilmaydi, xarita yiqilmaydi.
+  const valueLat = Number(value.lat);
+  const valueLng = Number(value.lng);
+  const valid =
+    Boolean(value.lat && value.lng) &&
+    Number.isFinite(valueLat) &&
+    Number.isFinite(valueLng) &&
+    Math.abs(valueLat) <= 90 &&
+    Math.abs(valueLng) <= 180;
+  const position: [number, number] | null = valid ? [valueLat, valueLng] : null;
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<NominatimResult[]>([]);
@@ -73,6 +104,28 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   const mapRef = useRef<L.Map | null>(null);
   // Eski teskari-geokodlash javobi yangisining ustiga yozilmasin
   const addressRequest = useRef(0);
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  // Modal ichida xarita YASHIRIN quti ichida yaratiladi va Leaflet o'lchamni
+  // 0×0 deb eslab qoladi — plitkalar kulrang, bosish noto'g'ri nuqtaga
+  // tushadi. Quti o'lchami o'zgarganda o'lcham qayta hisoblanadi.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => mapRef.current?.invalidateSize());
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
+  // Koordinata tashqaridan o'zgarsa (qo'lda kiritildi) — nuqta ko'rinmay
+  // qolmasin: ko'rinish doirasidan tashqarida bo'lsa xarita unga suriladi.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !valid) return;
+    if (!map.getBounds().contains([valueLat, valueLng])) {
+      map.setView([valueLat, valueLng], Math.max(map.getZoom(), DEFAULT_ZOOM));
+    }
+  }, [valueLat, valueLng, valid]);
 
   const setPoint = (lat: number, lng: number, pointAccuracy: number | null = null) => {
     onChange({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
@@ -96,16 +149,15 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
     }
   };
 
-  const search = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!query.trim()) return;
+  const search = async () => {
+    if (!query.trim() || searching) return;
     setSearching(true);
     setResults([]);
     try {
       // ⚠ Nominatim bepul, lekin yuqori trafikda cheklaydi (1 so'rov/soniya
       // siyosati) — B2B checkout uchun yetarli. Trafik oshsa alohida
       // geokodlash xizmatiga o'tish kerak bo'ladi.
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=uz&q=${encodeURIComponent(query)}`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=uz&accept-language=uz&q=${encodeURIComponent(query)}`;
       const response = await fetch(url);
       const data = (await response.json()) as NominatimResult[];
       setResults(data);
@@ -131,22 +183,30 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <form onSubmit={(event) => void search(event)} className="flex gap-2">
+      <div role="search" className="flex flex-wrap gap-2">
         <input
-          type="text"
+          type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            // Tashqi formani yubormasin — faqat qidiruv
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void search();
+            }
+          }}
+          aria-label="Manzil qidirish"
           placeholder="Manzil qidirish (masalan: Farg‘ona, Mustaqillik ko‘chasi)"
-          className="h-9 flex-1 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
+          className="h-9 min-w-0 flex-1 basis-56 rounded-md border border-line-strong bg-surface px-2 text-sm text-fg"
         />
-        <Button type="submit" size="sm" pending={searching}>
+        <Button type="button" size="sm" onClick={() => void search()} pending={searching} aria-label="Qidirish">
           <Search size={15} aria-hidden />
         </Button>
         <Button type="button" size="sm" onClick={() => void locateMe()} pending={locating.kind === 'pending'}>
           <LocateFixed size={15} aria-hidden />
           {locating.kind === 'pending' ? 'Aniqlanmoqda…' : 'Joylashuvim'}
         </Button>
-      </form>
+      </div>
 
       {locating.kind === 'error' && (
         <p role="alert" className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
@@ -181,7 +241,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         </ul>
       )}
 
-      <div className="h-64 overflow-hidden rounded-md border border-line-strong">
+      <div ref={frameRef} className={`${heightClass} overflow-hidden rounded-md border border-line-strong`}>
         <MapContainer
           center={center}
           zoom={position ? PIN_ZOOM : DEFAULT_ZOOM}
@@ -203,7 +263,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
       <p className="text-xs text-muted">
         {position
           ? `Belgilangan nuqta: ${address ?? `${value.lat}, ${value.lng}`}`
-          : 'Xaritani bosib, manzilni qidirib yoki «Joylashuvim» ni bosib nuqta belgilang (ixtiyoriy).'}
+          : emptyText}
       </p>
     </div>
   );

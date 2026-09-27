@@ -1035,11 +1035,56 @@
           • `pnpm db:seed` bilan baza tozalandi.
 
 
+  ── Mijoz so'rovi (2026-09-27) ──────────────────────────────────────────────
+
+[x] T-016  Filial joylashuvini XARITADAN kiritish (qidiruv + «Joylashuvim»)
+      Paket : dashboard/
+      Manba : mijoz, 2026-09-27 — "qo'shimcha filial qo'shganida location
+        qismini to'g'irlash kerak: kartadan kiritadigan qilish, search va
+        hozirgi joylashuvim tugmasi"
+      Muammo: filial formasida kenglik/uzunlik QO'LDA teriladigan ikki
+        matn maydoni edi — saytdagi "Xaritada ochish" shu koordinatadan
+        yasaladi, xato raqam do'konni boshqa joyga qo'yardi.
+
+      ✅ BAJARILDI (2026-09-27):
+        • Kabinet savatidagi tayyor `LocationPicker` (Leaflet + OSM,
+          Nominatim qidiruv, «Joylashuvim», xaritani bosish, teskari
+          geokodlash) UMUMIY qilindi: `src/shared/ui/map/LocationPicker.tsx`,
+          `src/shared/lib/geolocation.ts`. ⚠ `@/shared/ui` indeksiga
+          QO'SHILMADI — Leaflet (~53 KB gzip) faqat Filiallar va Savat
+          sahifalari chunk'ida qoladi.
+        • Filial formasida «Joylashuv *» — xarita (qidiruv, «Joylashuvim»,
+          bosish); kenglik/uzunlik maydonlari ostida qoldi (aniq qiymat /
+          tekshirish), ular o'zgarsa xarita ham suriladi. Filial admini
+          ham ishlatadi (koordinata — kontakt maydoni).
+        • Komponentga tuzatishlar:
+          – ichidagi `<form>` olib tashlandi: filial formasi ICHIDA
+            ichma-ich forma bo'lardi va qidiruvda Enter butun filialni
+            yuborib yuborardi; endi Enter faqat qidiradi;
+          – modal ichida xarita 0×0 bo'lib qolmasligi uchun
+            `ResizeObserver` → `invalidateSize()`;
+          – noto'g'ri qo'lda kiritilgan qiymatda marker chizilmaydi;
+          – qidiruv natijalari o'zbekcha (`accept-language=uz`).
+        • 🐞 `dashboard/vercel.json`: `Permissions-Policy: geolocation=()`
+          brauzerda geolokatsiyani BUTUNLAY o'chirib qo'ygan edi —
+          Vercel'dagi saytda «Joylashuvim» (kabinetdagisi ham) hech qachon
+          ishlamasdi va "ruxsat berilmagan" deb yozardi. Endi
+          `geolocation=(self)`. ⚠ Deploy'dan keyin kuchga kiradi.
+        Tekshirildi: typecheck, lint, test (353/353 — yangi
+          `LocationPicker.test.tsx`: Enter tashqi formani yubormaydi,
+          natija tanlash, noto'g'ri qiymat), build. Brauzerda (SUPER_ADMIN,
+          1280 va 390 px): xarita modalda to'liq o'lchamda, qidiruv →
+          nuqta + manzil, «Joylashuvim» (taqlid qilingan GPS) → ±25 m,
+          xaritani bosish → koordinata, saqlash → ochiq API'da o'sha nuqta;
+          390 px da gorizontal skroll yo'q. `pnpm db:seed` bilan baza
+          tozalandi.
+
+
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  HOLAT                                                                       ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami: 23    Tugadi: 17    Jarayonda: 0    Bloklangan: 2
+  Jami: 24    Tugadi: 18    Jarayonda: 0    Bloklangan: 2
 
     Yangi (T-001 … T-011) ........ 11 / 11
     Ko'chirilgan api/ ............ 0 / 2    (B-044, B-050 — mijoz javobini kutadi)
@@ -1047,10 +1092,12 @@
                                              S-033/S-034/S-035/S-038 —
                                              mijoz qarori yoki kontenti)
     Tavsiyalar (T-012 … T-015) ... 4 / 4
+    Mijoz so'rovi (T-016) ........ 1 / 1
 
   KEYINGI TASK:  Kod bilan qilinadigan ochiq task QOLMADI.
                  Qolgan 6 tasi mijoz qarori yoki kontentini kutadi:
                  B-044 (Didox), B-050 (Payme), S-033 (Marazzi rasmlari),
                  S-034 (audio litsenziyasi), S-035 (matnlar), S-038.
                  Deploy eslatmalari: `TRUST_PROXY=1` (T-013),
-                 `pnpm images:variants` bir marta (T-014).
+                 `pnpm images:variants` bir marta (T-014), dashboard
+                 qayta deploy — geolokatsiya ruxsati (T-016).
