@@ -2597,6 +2597,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Zaxira nusxa holati
+         * @description Qaysi provayder, qayerga, oxirgi urinish natijasi va har jadvaldagi qatorlar soni.
+         */
+        get: operations["BackupAdminController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/backup/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hozir nusxa olish
+         * @description Jadvalni kutmasdan barcha jadvallarni darhol yuboradi (o‘zgarmagan bo‘lsa ham). Nusxa allaqachon olinayotgan bo‘lsa — o‘shaning tugashini kutadi. Xato bo‘lsa ham 200: natija `lastResult` / `lastError` da. Provayder `off` bo‘lsa hech narsa qilmaydi.
+         */
+        post: operations["BackupAdminController_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dev/payments/{id}/simulate": {
         parameters: {
             query?: never;
@@ -5947,6 +5987,54 @@ export interface components {
             days: components["schemas"]["DailyStatsDayDto"][];
             /** @description Butun davr jami */
             totals: components["schemas"]["DailyStatsValuesDto"];
+        };
+        BackupTableStatusDto: {
+            /** @example orders */
+            name: string;
+            /** @example 128 */
+            rows: number;
+        };
+        BackupStatusDto: {
+            /**
+             * @description `off` — o‘chiq, `file` — mahalliy CSV, `google` — Google Sheets
+             * @example google
+             * @enum {string}
+             */
+            provider: "off" | "file" | "google";
+            /** @example true */
+            enabled: boolean;
+            /**
+             * @description Necha daqiqada bir nusxa olinadi
+             * @example 15
+             */
+            intervalMinutes: number;
+            /**
+             * @description Spreadsheet havolasi yoki serverdagi papka
+             * @example https://docs.google.com/spreadsheets/d/1AbC…
+             */
+            target?: string | null;
+            /**
+             * @description Hozir nusxa olinmoqda
+             * @example false
+             */
+            running: boolean;
+            /** Format: date-time */
+            lastRunAt?: string | null;
+            /**
+             * Format: date-time
+             * @description Oxirgi xatosiz tugagan urinish
+             */
+            lastSuccessAt?: string | null;
+            /**
+             * @description `SENT` — yuborildi, `UNCHANGED` — ma’lumot o‘zgarmagan, yuborish shart emas edi, `FAILED` — xato
+             * @enum {string|null}
+             */
+            lastResult?: "SENT" | "UNCHANGED" | "FAILED" | null;
+            lastError?: string | null;
+            /** Format: date-time */
+            nextRunAt?: string | null;
+            /** @description Oxirgi nusxadagi jadvallar */
+            tables: components["schemas"]["BackupTableStatusDto"][];
         };
         SimulatePaymentResponseDto: {
             /** @example cmtz0a1b2c3d4e5f6g7h8i9j */
@@ -13554,6 +13642,76 @@ export interface operations {
                 };
             };
             /** @description Xodim tokeni emas */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    BackupAdminController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Holat */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BackupStatusDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Faqat SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorDto"];
+                };
+            };
+        };
+    };
+    BackupAdminController_run: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Urinishdan keyingi holat */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BackupStatusDto"];
+                        /** @description Qo‘shimcha ma’lumot (masalan sahifalash) */
+                        meta?: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Faqat SUPER_ADMIN */
             403: {
                 headers: {
                     [name: string]: unknown;

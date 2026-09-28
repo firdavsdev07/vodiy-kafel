@@ -5,6 +5,7 @@ import { AppConfigModule } from './config';
 import { PrismaModule } from './prisma';
 import { AuthModule } from './auth/auth.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { BackupModule } from './modules/backup/backup.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { CalculatorModule } from './modules/calculator/calculator.module';
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -57,6 +58,8 @@ import { AppService } from './app.service';
     LeadsModule,
     StaffModule,
     StatsModule,
+    // Barcha jadvallarning davriy zaxira nusxasi (T-018).
+    BackupModule,
     // 🧪 /dev/* — faqat development. `validateEnv` standart qiymatlarni
     // process.env ga yozgani uchun NODE_ENV bu yerda doim aniqlangan.
     ConditionalModule.registerWhen(

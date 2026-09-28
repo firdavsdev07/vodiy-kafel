@@ -14,6 +14,7 @@ describe('permissions (D-007)', () => {
       ['moderators.manage', ['SUPER_ADMIN']],
       ['settings.view', ['BRANCH_ADMIN', 'SUPER_ADMIN']],
       ['settings.write', ['SUPER_ADMIN']],
+      ['backup.manage', ['SUPER_ADMIN']],
       ['orders.assign', ['BRANCH_ADMIN', 'MODERATOR', 'SUPER_ADMIN']],
       // T-001: moderator optom mijozlarni barcha filial bo'yicha boshqaradi
       ['customers.manage', ['BRANCH_ADMIN', 'MANAGER', 'MODERATOR', 'SUPER_ADMIN']],

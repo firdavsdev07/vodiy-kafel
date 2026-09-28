@@ -115,6 +115,8 @@ export const PERMISSIONS = {
   'settings.view': ['SUPER_ADMIN', 'BRANCH_ADMIN'],
   /** PATCH /admin/settings */
   'settings.write': ['SUPER_ADMIN'],
+  /** GET /admin/backup, POST /admin/backup/run (T-018) */
+  'backup.manage': ['SUPER_ADMIN'],
 } as const satisfies Record<string, readonly StaffRole[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

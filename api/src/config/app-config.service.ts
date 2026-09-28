@@ -89,6 +89,28 @@ export class AppConfigService {
     };
   }
 
+  // — Zaxira nusxa (T-018) —
+  get backup(): {
+    provider: Env['BACKUP_PROVIDER'];
+    intervalMinutes: number;
+    fileDir: string;
+    google: { spreadsheetId: string; clientEmail: string; privateKey: string };
+  } {
+    return {
+      provider: this.get('BACKUP_PROVIDER'),
+      intervalMinutes: this.get('BACKUP_INTERVAL_MINUTES'),
+      fileDir: this.get('BACKUP_FILE_DIR'),
+      google: {
+        spreadsheetId: this.get('GOOGLE_SHEETS_SPREADSHEET_ID') ?? '',
+        clientEmail: this.get('GOOGLE_SERVICE_ACCOUNT_EMAIL') ?? '',
+        // `.env` da bir qatorga sig'ishi uchun `\n` bilan yoziladi.
+        privateKey: (
+          this.get('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY') ?? ''
+        ).replace(/\\n/g, '\n'),
+      },
+    };
+  }
+
   // — Proksi —
   /** Ishonchli proksi soni (Express `trust proxy`). 0 — proksi yo'q. */
   get trustProxy(): number {

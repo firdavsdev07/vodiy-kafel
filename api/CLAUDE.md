@@ -310,6 +310,13 @@ u 400 / 800 / 1600 px webp variantlarini ham yasaydi (T-014), javobga
 `imageVariants(url)` bilan `…Variants` maydoni qo'shiladi. T-014 dan oldingi
 rasmlar uchun: `pnpm images:variants` (deploy'dan keyin bir marta).
 
+Zaxira nusxa (T-018, `src/modules/backup`): `BACKUP_PROVIDER=off|file|google`
+— har `BACKUP_INTERVAL_MINUTES` da BARCHA jadvallar (ro'yxat `Prisma.dmmf`
+dan) Google Sheets'ga (har jadval — varaq) yoki CSV'ga to'liq ko'chiriladi.
+Nomi `hash`/`secret`/`token` bilan tugagan/uchragan ustun (parol xeshi)
+hech qachon chiqmaydi. Yangi sirli ustun qo'shsangiz — nomi shu naqshga
+tushishini tekshiring (`table-snapshot.ts`, `SECRET_FIELD`).
+
 `/dev/*` endpointlar (mock to'lovni simulyatsiya qilish) faqat
 `NODE_ENV=development` da ro'yxatdan o'tadi.
 Mock to'lov: `POST /dev/payments/:id/simulate { status: PAID|FAILED }`;

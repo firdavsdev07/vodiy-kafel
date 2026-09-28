@@ -20,9 +20,30 @@
         document.documentElement.dataset.theme = theme;
       })();
     </script>
+    <!-- T-017: JS kelguncha ko'rinadigan ochilish ekrani. U `#root` ICHIDA —
+         React birinchi chizishda uni o'zi almashtiradi, olib tashlash kodi
+         kerak emas. Ranglar styles.css dagi --bg / --text / --line bilan bir xil
+         (bu yerga Tailwind hali yetib kelmagan). 200 ms kechikish — tez
+         internetda chaqnab ketmasin. -->
+    <style>
+      .boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: #f5f4ef; color: #71685e; font: 500 13px/1.4 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: .12em; text-transform: uppercase; opacity: 0; animation: boot-in .3s ease-out .2s forwards; }
+      .boot img { width: 56px; height: 56px; border-radius: 12px; }
+      .boot-ring { width: 22px; height: 22px; border: 2px solid #d8d3c8; border-top-color: #232321; border-radius: 50%; animation: boot-spin .8s linear infinite; }
+      [data-theme='dark'] .boot { background: #0b0b0a; color: #c2b9ac; }
+      [data-theme='dark'] .boot-ring { border-color: #34332f; border-top-color: #eeece5; }
+      @keyframes boot-in { to { opacity: 1; } }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .boot { animation: none; opacity: 1; } .boot-ring { animation-duration: 2.4s; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status" aria-live="polite">
+        <img src="/favicon-192.png" alt="" />
+        <div class="boot-ring" aria-hidden="true"></div>
+        <span>Vodiy Kafel · yuklanmoqda</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

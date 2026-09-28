@@ -19,7 +19,7 @@ const TOKEN_LIFETIME_PATTERN = /^\d+(ms|s|m|h|d|w|y)?$/;
 const TOKEN_LIFETIME_MESSAGE =
   'Muddat `15m`, `30d`, `900s` yoki sekundlar soni ko‘rinishida bo‘lishi kerak';
 
-export const envSchema = z.object({
+const envObject = z.object({
   // — Umumiy —
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -86,6 +86,39 @@ export const envSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+
+  // — Zaxira nusxa (T-018) —
+  // Bazadagi BARCHA jadvallarning davriy nusxasi (DB ishlamay qolsa ham
+  // ma'lumot topilsin). `off` — o'chiq; `file` — mahalliy CSV (sinash va
+  // qo'shimcha nusxa); `google` — Google Sheets (service account).
+  BACKUP_PROVIDER: z.enum(['off', 'file', 'google']).default('off'),
+  BACKUP_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+  // `file` uchun papka (loyiha ildiziga nisbatan yoki absolyut yo'l).
+  BACKUP_FILE_DIR: z.string().min(1).default('backups'),
+  // `google` uchun — uchalasi ham majburiy (pastdagi `superRefine`).
+  GOOGLE_SHEETS_SPREADSHEET_ID: z.string().trim().optional(),
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().trim().optional(),
+  // JSON kalitdagi `private_key`. `.env` da bir qatorda `\n` bilan yoziladi.
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().optional(),
+});
+
+const GOOGLE_KEYS = [
+  'GOOGLE_SHEETS_SPREADSHEET_ID',
+  'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+  'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY',
+] as const;
+
+export const envSchema = envObject.superRefine((env, ctx) => {
+  if (env.BACKUP_PROVIDER !== 'google') return;
+  for (const key of GOOGLE_KEYS) {
+    if (!env[key]) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [key],
+        message: 'BACKUP_PROVIDER=google bo‘lsa majburiy',
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

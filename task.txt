@@ -1080,11 +1080,166 @@
           tozalandi.
 
 
+
+  ── Mijoz so'rovi (2026-09-28) ──────────────────────────────────────────────
+
+[x] T-017  Loader (yuklanish ko'rsatkichi) — dashboard va sayt
+      Paket : dashboard/, storefront/
+      Manba : mijoz, 2026-09-28 — "loyihaga loader ham qo'shib qo'y,
+        loader yo'q ekan"
+      Muammo:
+        • Ikkala ilovada ham `index.html` ichida `#root` bo'sh — JS
+          yuklanib, React ishga tushguncha (sekin internetda bir necha
+          soniya) foydalanuvchi OQ/QORA bo'sh ekranni ko'radi.
+        • Dashboard'da ma'lumot fonda qayta yuklanayotganda (filtr,
+          sahifalash, saqlash tugmasidan keyingi yangilanish) hech
+          qanday umumiy belgi yo'q — "bosdim, hech narsa bo'lmadi".
+      Talab :
+        • Ilova ochilishida brend loader (logotip + aylanuvchi belgi),
+          React ishga tushishi bilan o'zi yo'qoladi. Dashboard'da
+          yorug'/qorong'i rejimga mos.
+        • Dashboard: ekran tepasida ingichka progress-chiziq — har qanday
+          so'rov/saqlash davom etayotganda (qisqa so'rovda miltillamasin).
+        • Umumiy `Spinner` komponenti.
+      Qabul :
+        • Sekinlashtirilgan tarmoqda (Slow 3G) oq ekran ko'rinmaydi.
+        • Ro'yxatda filtr almashtirilganda tepada chiziq yuradi.
+        • `prefers-reduced-motion` da animatsiya yumshatiladi.
+
+      ✅ BAJARILDI (2026-09-28):
+        Oldin nima bor edi: sayt — birinchi tashrif `Preloader` i va
+        `RouteSkeleton`; dashboard — `PageLoading` skeleti va tugmadagi
+        spinner. Yetishmagani: JS kelguncha bo'sh ekran va fondagi
+        so'rovlar uchun umumiy belgi.
+        Ikkala ilova (`index.html`):
+          • `#root` ICHIGA ochilish ekrani: logotip + aylanuvchi halqa
+            (dashboard) / yuguruvchi chiziq (sayt). React birinchi
+            chizishda uni o'zi almashtiradi — o'chirish kodi yo'q.
+          • Inline CSS (Tailwind hali kelmagan), 200 ms kechikish bilan
+            paydo bo'ladi — tez internetda ko'rinmaydi.
+          • Dashboard: `data-theme` ga qarab yorug'/qorong'i (tema
+            skripti splash'dan oldin ishlaydi). Sayt: body foni (bone) —
+            keyingi `Preloader` ga chaqnashsiz o'tadi.
+        dashboard/:
+          • `TopProgress` (`RootLayout` da, login ham, panel ham) — ekran
+            tepasida 2px noaniq chiziq. Sanaladi: ma'lumoti hali YO'Q
+            so'rov (yangi sahifa, filtr, qidiruv, sahifalash) va har
+            qanday mutatsiya. Polling / oyna fokusidagi fon yangilanishi
+            SANALMAYDI — aks holda chiziq har 30 s da sababsiz yurardi.
+          • `useDelayedFlag`: 150 ms dan qisqa ish ko'rinmaydi, ko'ringani
+            kamida 400 ms turadi (miltillash yo'q).
+          • Umumiy `Spinner` (`@/shared/ui`); `Button` shuni ishlatadi.
+          • Reduced motion: chiziq harakatsiz, halqa sekin.
+      Tekshirildi: dashboard typecheck, lint, test (359/359 — yangi
+        `use-delayed-flag.test.tsx`, `TopProgress.test.tsx`: yangi so'rov
+        → chiziq, fon yangilanishi → yo'q, mutatsiya → chiziq), build.
+        Storefront lint, test (71/71), build (150 KB byudjet
+        ogohlantirishi — avvaldan bor, splash inline HTML, JS emas).
+        Brauzerda (headless Chrome, JS sun'iy 2.5 s ushlab turilgan):
+        splash dashboard'da yorug' (#f5f4ef) va qorong'i (#0b0b0a) rejimda,
+        saytda bone fonda ko'rinadi, ilova yuklangach yo'qoladi. Mahsulotlar
+        ro'yxatida qidiruv (API 1.5 s sekinlashtirilgan): chiziq so'rov
+        davomida ko'rinadi, javobdan keyin o'chadi, bo'sh turganda yo'q.
+
+[x] T-018  🔒 Barcha ma'lumotlarning Google Sheets'dagi zaxira nusxasi
+      Paket : api/, dashboard/
+      Manba : mijoz, 2026-09-28 — "barcha databazaga tushayotgan
+        ma'lumotlarni google sheets ga ham ulab qo'y — ertaga databaza
+        ishlamay qolsa ham google sheets orqali topa olishimiz uchun"
+      Yechim:
+        • Har N daqiqada (standart 15) bazadagi BARCHA jadvallar bitta
+          Google Spreadsheet'ga to'liq ko'chiriladi: har jadval — alohida
+          varaq (tab), 1-qator — ustun nomlari, `_holat` varag'ida oxirgi
+          sinxronlash vaqti va qatorlar soni. Jadvallar ro'yxati Prisma
+          sxemasidan olinadi — yangi jadval qo'shilsa o'zi tushadi.
+        • Hech narsa o'zgarmagan bo'lsa Google'ga yuborilmaydi.
+        • 🔒 Parol xeshlari (`passwordHash`) hech qachon yuborilmaydi.
+        • Tashqi xizmat interfeys ortida (CLAUDE.md qoida 3):
+          `BACKUP_PROVIDER=off | file | google` — `file` Google'siz
+          mahalliy CSV yozadi (sinash va qo'shimcha zaxira uchun).
+        • Kutubxonasiz: service account JWT'si Node `crypto` bilan
+          imzolanadi, Sheets v4 REST `fetch` bilan chaqiriladi.
+        • `GET /admin/backup/status`, `POST /admin/backup/run` —
+          faqat SUPER_ADMIN. Dashboard «Sozlamalar»da holat va «Hozir
+          yuborish» tugmasi.
+      Qabul :
+        • Bazaga yozilgan yangi yozuv keyingi sinxronlashda jadvalda.
+        • Google ishlamasa/kalit xato bo'lsa API yiqilmaydi — holatda
+          xato matni ko'rinadi, keyingi urinish jadval bo'yicha.
+      ⚠ Mijoz tomonida qilinadigan ish: Google Cloud'da service account
+        yaratish, JSON kalit, bo'sh Spreadsheet'ni shu service account
+        email'iga "Editor" qilib ulash (ko'rsatma `.env.example` da).
+        Jadvalda mijozlarning telefon/INN/balansi bo'ladi — Spreadsheet
+        FAQAT ishonchli odamlar bilan ulashilsin.
+
+      ✅ BAJARILDI (2026-09-28):
+        api/ — yangi `src/modules/backup/`:
+          • `collectTables` — jadvallar ro'yxati `Prisma.dmmf` dan (hozir
+            29 ta), 5 000 qatorlik bo'laklarda o'qiladi, tartib barqaror
+            (`createdAt`, keyin kalit). Pul (`Decimal`) va BigInt — aniq
+            SATR (float emas), vaqt — ISO/UTC, JSON — matn.
+          • 🔒 `SECRET_FIELD` (/hash$|secret|token/i): `passwordHash`
+            (User, Customer) hech qayerga chiqmaydi.
+          • `BackupMirror` interfeysi + ikki provayder:
+            – `FileBackupMirror` — `<papka>/<jadval>.csv` (BOM, atomik
+              yozish);
+            – `GoogleSheetsMirror` — kutubxonasiz: `GoogleServiceAccount`
+              JWT'ni Node `crypto` (RS256) bilan imzolaydi, token
+              keshlanadi; Sheets v4 REST: yo'q varaqni qo'shadi, varaq
+              o'lchamini ma'lumotga moslaydi (o'chirilgan qator qolmaydi),
+              1-qatorni qotiradi, tozalab `RAW` yozadi (telefon `+998…`
+              formula/son bo'lib ketmaydi). Katta jadval ~4 MB li
+              so'rovlarga bo'linadi. 403/404 da "Editor qilib ulashing"
+              maslahati.
+          • `BackupService` — start'dan 10 s keyin birinchi nusxa, keyin
+            har `BACKUP_INTERVAL_MINUTES`. sha256 bilan o'zgarish yo'q
+            bo'lsa yubormaydi (`UNCHANGED`). Xato ilovani yiqitmaydi —
+            `lastError` ga yoziladi. Bir vaqtda bitta yozish. `_holat`
+            varag'i: jadval → qatorlar soni → vaqt.
+          • `GET /admin/backup`, `POST /admin/backup/run` (majburan
+            yuboradi) — faqat SUPER_ADMIN.
+          • env: `BACKUP_PROVIDER` (standart `off`),
+            `BACKUP_INTERVAL_MINUTES` (15), `BACKUP_FILE_DIR`,
+            `GOOGLE_SHEETS_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`,
+            `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`. `google` da uchalasi
+            majburiy, kalit o'qilmasa API ishga tushmaydi (aniq xabar).
+            Google Cloud'da sozlash ko'rsatmasi — `.env.example`.
+          • `/backups` — `.gitignore` da. `api/CLAUDE.md` ga eslatma.
+        dashboard/:
+          • «Sozlamalar» → «Zaxira nusxa» kartasi (faqat SUPER_ADMIN,
+            yangi ruxsat `backup.manage`): holat belgisi, qayerga
+            (Google'da — «Jadvalni ochish» havolasi), oxirgi/keyingi
+            nusxa, hajm, xato matni, «Hozir yuborish». Yoqilmagan bo'lsa —
+            nima qilish kerakligi yoziladi.
+      Tekshirildi:
+        api: lint, `tsc`, build, `openapi:export` (115 yo'l). Jest (Node 22,
+          `@nestjs/config` stub bilan): yangi 4 suite / 19 test o'tadi
+          (Decimal/BigInt/Date, passwordHash chiqmasligi — haqiqiy sxemada
+          ham, bo'laklab o'qish, CSV qochirish, JWT imzosi ochiq kalit bilan
+          tekshiriladi, Sheets so'rovlari ketma-ketligi va tanasi, 403
+          maslahati, UNCHANGED/force, xatodan keyin tiklanish, parallel
+          chaqiruv). Umumiy natija HEAD bilan bir xil: 9 suite avvaldan
+          yiqiladi (`@nestjs/jwt` ESM, eskirgan mock'lar) — yangi yiqilish yo'q.
+        Jonli (curl, `BACKUP_PROVIDER=file`, interval 1 daqiqa): 10 s dan
+          keyin 29 jadval / 217 qator CSV; bcrypt xeshi fayllarda YO'Q;
+          `POST /leads` → `POST /admin/backup/run` → yangi murojaat
+          `leads.csv` da; keyingi jadval bo'yicha urinishlar yubormadi
+          (o'zgarish yo'q); MODERATOR → 403, tokensiz → 401;
+          `google` da kalit yetishmasa aniq env xatosi.
+        Brauzerda (SUPER_ADMIN, 1280 va 390 px): karta, «Hozir yuborish»
+          → «Zaxira nusxa yangilandi»; 390 px da gorizontal skroll yo'q;
+          BRANCH_ADMIN kartani ko'rmaydi. Dashboard typecheck, lint,
+          test (359/359). `pnpm db:seed` bilan baza tozalandi.
+        ⚠ HAQIQIY Google Sheets bilan sinalmadi — service account kaliti
+          yo'q. So'rovlar Sheets v4 hujjatiga mos va soxta server bilan
+          tekshirilgan; birinchi ulashdan keyin «Hozir yuborish» bilan
+          tekshirib ko'rish kerak.
+
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  HOLAT                                                                       ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-  Jami: 24    Tugadi: 18    Jarayonda: 0    Bloklangan: 2
+  Jami: 26    Tugadi: 20    Jarayonda: 0    Bloklangan: 2
 
     Yangi (T-001 … T-011) ........ 11 / 11
     Ko'chirilgan api/ ............ 0 / 2    (B-044, B-050 — mijoz javobini kutadi)
@@ -1093,6 +1248,7 @@
                                              mijoz qarori yoki kontenti)
     Tavsiyalar (T-012 … T-015) ... 4 / 4
     Mijoz so'rovi (T-016) ........ 1 / 1
+    Mijoz so'rovi (T-017, T-018) . 2 / 2
 
   KEYINGI TASK:  Kod bilan qilinadigan ochiq task QOLMADI.
                  Qolgan 6 tasi mijoz qarori yoki kontentini kutadi:
@@ -1101,3 +1257,6 @@
                  Deploy eslatmalari: `TRUST_PROXY=1` (T-013),
                  `pnpm images:variants` bir marta (T-014), dashboard
                  qayta deploy — geolokatsiya ruxsati (T-016).
+                 T-018: serverda Google service account + Spreadsheet
+                 ulash va `.env` ga `BACKUP_PROVIDER=google` + 3 kalit
+                 (`api/.env.example` dagi ko'rsatma).

@@ -20,14 +20,17 @@ import {
 import { ApiError } from '@/shared/api';
 import { errorMessage } from '@/shared/lib/error-message';
 import { Badge, Button, ConfirmDialog, DateText, ErrorState, InputField, PageLoading, toast } from '@/shared/ui';
+import { BackupSection } from './BackupSection';
 
 /**
  * Sozlamalar (D-040). Backend taniydigan UCHTA kalit — har biri o'z maydoni
  * bilan. `isDefault: true` — bazada hali yozuv yo'q, tizim standarti ishlaydi.
  * 🔒 Ko'rish — SUPER_ADMIN, BRANCH_ADMIN; o'zgartirish — faqat SUPER_ADMIN.
+ * «Zaxira nusxa» (T-018) — faqat SUPER_ADMIN.
  */
 export default function SettingsPage() {
   const canWrite = useCan('settings.write');
+  const canBackup = useCan('backup.manage');
   const settings = useSettings();
 
   if (settings.isPending) return <PageLoading />;
@@ -58,6 +61,7 @@ export default function SettingsPage() {
         canWrite={canWrite}
       />
       <RequisitesSetting setting={get('payment.requisites')} canWrite={canWrite} />
+      {canBackup && <BackupSection />}
     </div>
   );
 }

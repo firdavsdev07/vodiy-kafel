@@ -184,3 +184,15 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* T-017: tepadagi yuklanish chizig'i — noaniq (indeterminate) harakat. */
+@keyframes top-progress-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+.top-progress-bar {
+  animation: top-progress-slide 1.1s var(--ease-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .top-progress-bar { animation: none; }
+}

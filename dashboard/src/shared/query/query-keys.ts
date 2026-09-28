@@ -109,6 +109,8 @@ export const queryKeys = {
   transportTypes: domainKeys('transport-types'),
   tariffs: domainKeys('tariffs'),
   settings: domainKeys('settings'),
+  /** Zaxira nusxa holati — GET /admin/backup (T-018) */
+  backup: domainKeys('backup'),
 } as const;
 
 export type AppQueryKey = readonly unknown[];

@@ -12181,6 +12181,108 @@
         ]
       }
     },
+    "/api/v1/admin/backup": {
+      "get": {
+        "description": "Qaysi provayder, qayerga, oxirgi urinish natijasi va har jadvaldagi qatorlar soni.",
+        "operationId": "BackupAdminController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Holat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BackupStatusDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat SUPER_ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Zaxira nusxa holati",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/api/v1/admin/backup/run": {
+      "post": {
+        "description": "Jadvalni kutmasdan barcha jadvallarni darhol yuboradi (o‘zgarmagan bo‘lsa ham). Nusxa allaqachon olinayotgan bo‘lsa — o‘shaning tugashini kutadi. Xato bo‘lsa ham 200: natija `lastResult` / `lastError` da. Provayder `off` bo‘lsa hech narsa qilmaydi.",
+        "operationId": "BackupAdminController_run",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Urinishdan keyingi holat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BackupStatusDto"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Qo‘shimcha ma’lumot (masalan sahifalash)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Faqat SUPER_ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hozir nusxa olish",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/api/v1/dev/payments/{id}/simulate": {
       "post": {
         "description": "Provayder webhook yuborgandek ishlaydi — to‘lov AYNAN haqiqiy webhook yo‘lidan o‘tadi.\n\n⚠ Faqat development muhitida mavjud. Faqat provayder orqali ochilgan (karta) to‘lov uchun — naqd/o‘tkazmani admin tasdiqlaydi.",
@@ -19759,6 +19861,102 @@
           "timezone",
           "days",
           "totals"
+        ]
+      },
+      "BackupTableStatusDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "orders"
+          },
+          "rows": {
+            "type": "number",
+            "example": 128
+          }
+        },
+        "required": [
+          "name",
+          "rows"
+        ]
+      },
+      "BackupStatusDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "off",
+              "file",
+              "google"
+            ],
+            "description": "`off` — o‘chiq, `file` — mahalliy CSV, `google` — Google Sheets",
+            "example": "google"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "intervalMinutes": {
+            "type": "number",
+            "example": 15,
+            "description": "Necha daqiqada bir nusxa olinadi"
+          },
+          "target": {
+            "type": "string",
+            "nullable": true,
+            "description": "Spreadsheet havolasi yoki serverdagi papka",
+            "example": "https://docs.google.com/spreadsheets/d/1AbC…"
+          },
+          "running": {
+            "type": "boolean",
+            "description": "Hozir nusxa olinmoqda",
+            "example": false
+          },
+          "lastRunAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "lastSuccessAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Oxirgi xatosiz tugagan urinish"
+          },
+          "lastResult": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "SENT",
+              "UNCHANGED",
+              "FAILED"
+            ],
+            "description": "`SENT` — yuborildi, `UNCHANGED` — ma’lumot o‘zgarmagan, yuborish shart emas edi, `FAILED` — xato"
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "nextRunAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "tables": {
+            "description": "Oxirgi nusxadagi jadvallar",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupTableStatusDto"
+            }
+          }
+        },
+        "required": [
+          "provider",
+          "enabled",
+          "intervalMinutes",
+          "running",
+          "tables"
         ]
       },
       "SimulatePaymentResponseDto": {

@@ -60,6 +60,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /generated
 /uploads
 /uploads-e2e
+/backups
 
 # TypeScript incremental build keshi
 *.tsbuildinfo
