@@ -1,10 +1,20 @@
 import type { BackupTable } from '../backup-table';
 import type { BackupMirror } from './backup-mirror.interface';
-import type { GoogleServiceAccount } from './google-service-account';
+import {
+  fetchGoogle,
+  type GoogleServiceAccount,
+} from './google-service-account';
 
 const API = 'https://sheets.googleapis.com/v4/spreadsheets';
 /** Bitta `values:batchUpdate` so'rovining taxminiy chegarasi (Google ~10 MB qabul qiladi). */
 const MAX_PAYLOAD_CHARS = 4_000_000;
+
+// Storefront palitrasi: ink / bone / stone. Sheets ham mahsulotning bir
+// qismidek ko'rinadi, ko'zga og'ir standart kataklar to'ri bo'lib qolmaydi.
+const INK = { red: 0.137, green: 0.137, blue: 0.129 };
+const BONE = { red: 0.933, green: 0.925, blue: 0.898 };
+const PAPER = { red: 0.98, green: 0.976, blue: 0.961 };
+const STONE = { red: 0.847, green: 0.827, blue: 0.784 };
 
 interface SheetProperties {
   sheetId: number;
@@ -40,21 +50,14 @@ export class GoogleSheetsMirror implements BackupMirror {
     const sheets = await this.ensureSheets(tables.map((t) => t.name));
 
     await this.call(':batchUpdate', {
-      requests: tables.map((table) => ({
-        updateSheetProperties: {
-          properties: {
-            sheetId: sheets.get(table.name),
-            gridProperties: {
-              // +2: sarlavha va bitta bo'sh qator — qotirilgan qator bilan
-              // bo'sh jadvalda ham "barcha qator qotirilgan" xatosi bo'lmasin.
-              rowCount: table.rows.length + 2,
-              columnCount: Math.max(table.columns.length, 1),
-              frozenRowCount: 1,
-            },
-          },
-          fields: 'gridProperties(rowCount,columnCount,frozenRowCount)',
-        },
-      })),
+      requests: tables.flatMap((table) =>
+        this.layoutRequests(
+          sheets.get(table.name)!,
+          table.rows.length,
+          Math.max(table.columns.length, 1),
+          table.name === '_holat',
+        ),
+      ),
     });
 
     await this.call('/values:batchClear', {
@@ -137,13 +140,162 @@ export class GoogleSheetsMirror implements BackupMirror {
     if (data.length > 0) yield flush();
   }
 
+  /**
+   * O'qishga qulay, brendga mos jadval: qora sarlavha, iliq fon, filtr,
+   * ixcham qatorlar va bir xil ustun kengligi. Har backupda idempotent
+   * qayta qo'llanadi — qo'lda yaratilgan takroriy style obyektlari yig'ilmaydi.
+   */
+  private layoutRequests(
+    sheetId: number,
+    rows: number,
+    columns: number,
+    isStatus: boolean,
+  ) {
+    const rowCount = rows + 2;
+    const requests = [
+      {
+        updateSheetProperties: {
+          properties: {
+            sheetId,
+            ...(isStatus ? { index: 0 } : {}),
+            gridProperties: {
+              // +2: sarlavha va bitta bo'sh qator — qotirilgan qator bilan
+              // bo'sh jadvalda ham "barcha qator qotirilgan" xatosi bo'lmasin.
+              rowCount,
+              columnCount: columns,
+              frozenRowCount: 1,
+              hideGridlines: true,
+            },
+          },
+          fields:
+            `${isStatus ? 'index,' : ''}gridProperties(rowCount,columnCount,frozenRowCount,hideGridlines)`,
+        },
+      },
+      {
+        repeatCell: {
+          range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+          cell: {
+            userEnteredFormat: {
+              backgroundColor: INK,
+              textFormat: {
+                foregroundColor: BONE,
+                bold: true,
+                fontSize: 11,
+              },
+              verticalAlignment: 'MIDDLE',
+              wrapStrategy: 'WRAP',
+              borders: {
+                bottom: { style: 'SOLID_MEDIUM', color: STONE },
+                right: { style: 'SOLID', color: STONE },
+              },
+            },
+          },
+          fields: 'userEnteredFormat',
+        },
+      },
+      {
+        repeatCell: {
+          range: { sheetId, startRowIndex: 1, endRowIndex: rowCount },
+          cell: {
+            userEnteredFormat: {
+              backgroundColor: PAPER,
+              textFormat: { foregroundColor: INK, fontSize: 10 },
+              verticalAlignment: 'MIDDLE',
+              wrapStrategy: 'WRAP',
+              borders: {
+                bottom: { style: 'SOLID', color: STONE },
+                right: { style: 'SOLID', color: STONE },
+              },
+            },
+          },
+          fields: 'userEnteredFormat',
+        },
+      },
+      {
+        updateDimensionProperties: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: 0,
+            endIndex: 1,
+          },
+          properties: { pixelSize: 36 },
+          fields: 'pixelSize',
+        },
+      },
+      {
+        autoResizeDimensions: {
+          dimensions: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: 1,
+            endIndex: rowCount,
+          },
+        },
+      },
+      {
+        updateDimensionProperties: {
+          range: {
+            sheetId,
+            dimension: 'COLUMNS',
+            startIndex: 0,
+            endIndex: columns,
+          },
+          properties: { pixelSize: 160 },
+          fields: 'pixelSize',
+        },
+      },
+      {
+        updateDimensionProperties: {
+          range: {
+            sheetId,
+            dimension: 'COLUMNS',
+            startIndex: 0,
+            endIndex: 1,
+          },
+          properties: { pixelSize: 210 },
+          fields: 'pixelSize',
+        },
+      },
+      {
+        setBasicFilter: {
+          filter: {
+            range: {
+              sheetId,
+              startRowIndex: 0,
+              endRowIndex: Math.max(rows + 1, 2),
+              startColumnIndex: 0,
+              endColumnIndex: columns,
+            },
+          },
+        },
+      },
+    ];
+    if (isStatus && columns >= 3) {
+      requests.push({
+        updateDimensionProperties: {
+          range: {
+            sheetId,
+            dimension: 'COLUMNS',
+            startIndex: 2,
+            endIndex: 3,
+          },
+          properties: { pixelSize: 230 },
+          fields: 'pixelSize',
+        },
+      });
+    }
+    return requests;
+  }
+
   private async call(
     path: string,
     body: unknown,
     method: 'GET' | 'POST' = 'POST',
   ): Promise<unknown> {
     const token = await this.account.token();
-    const response = await this.fetchImpl(
+    const response = await fetchGoogle(
+      this.fetchImpl,
       `${API}/${this.spreadsheetId}${path}`,
       {
         method,

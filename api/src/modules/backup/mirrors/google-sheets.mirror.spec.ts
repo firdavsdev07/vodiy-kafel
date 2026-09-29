@@ -138,15 +138,36 @@ describe('GoogleSheetsMirror', () => {
     expect(api[1].body).toEqual({
       requests: [{ addSheet: { properties: { title: "o'rders" } } }],
     });
-    const resize = (
+    const layout = (
       api[2].body as {
-        requests: { updateSheetProperties: { properties: unknown } }[];
+        requests: {
+          updateSheetProperties?: { properties: unknown };
+          repeatCell?: unknown;
+          autoResizeDimensions?: { dimensions: unknown };
+          setBasicFilter?: unknown;
+        }[];
       }
     ).requests;
-    expect(resize[1].updateSheetProperties.properties).toEqual({
+    expect(layout[8].updateSheetProperties?.properties).toEqual({
       sheetId: 100,
-      gridProperties: { rowCount: 3, columnCount: 3, frozenRowCount: 1 },
+      gridProperties: {
+        rowCount: 3,
+        columnCount: 3,
+        frozenRowCount: 1,
+        hideGridlines: true,
+      },
     });
+    expect(layout.filter((request) => request.repeatCell)).toHaveLength(4);
+    expect(
+      layout.filter((request) => request.autoResizeDimensions),
+    ).toHaveLength(2);
+    expect(layout[4].autoResizeDimensions?.dimensions).toEqual({
+      sheetId: 0,
+      dimension: 'ROWS',
+      startIndex: 1,
+      endIndex: 3,
+    });
+    expect(layout.filter((request) => request.setBasicFilter)).toHaveLength(2);
     expect(api[3].body).toEqual({ ranges: ["'_holat'", "'o''rders'"] });
     expect(api[4].body).toEqual({
       valueInputOption: 'RAW',

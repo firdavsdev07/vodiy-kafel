@@ -3,6 +3,25 @@ import { createPrivateKey, createSign, type KeyObject } from 'node:crypto';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 
+/** Qisqa DNS/tarmoq uzilishi 15 daqiqalik backupni bekor qilmasin. */
+export async function fetchGoogle(
+  fetchImpl: typeof fetch,
+  input: string | URL | Request,
+  init?: RequestInit,
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await fetchImpl(input, init);
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2)
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 const base64url = (input: string | Buffer) =>
   Buffer.from(input).toString('base64url');
 
@@ -57,7 +76,7 @@ export class GoogleServiceAccount {
     if (this.cached && this.cached.expiresAt - 60_000 > this.now())
       return this.cached.token;
 
-    const response = await this.fetchImpl(TOKEN_URL, {
+    const response = await fetchGoogle(this.fetchImpl, TOKEN_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({

@@ -12,7 +12,7 @@ import { PrismaService } from '../../prisma';
 import type { BackupTable } from './backup-table';
 import type { BackupStatusDto } from './dto';
 import { BACKUP_MIRROR, type BackupMirror } from './mirrors';
-import { collectTables } from './table-snapshot';
+import { collectTables, formatBackupDate } from './table-snapshot';
 
 /** Ilova ishga tushgach birinchi nusxa — startni sekinlashtirmasin. */
 const FIRST_RUN_DELAY_MS = 10_000;
@@ -146,10 +146,10 @@ export class BackupService implements OnApplicationBootstrap, OnModuleDestroy {
 
 /** `_holat` varag'i: qaysi jadvalda nechta qator va qachon yangilangan. */
 export function statusTable(tables: BackupTable[], at: Date): BackupTable {
-  const when = at.toISOString();
+  const when = formatBackupDate(at);
   return {
     name: STATUS_SHEET,
-    columns: ['Jadval', 'Qatorlar soni', 'Yangilangan (UTC)'],
+    columns: ['Jadval', 'Qatorlar soni', 'Yangilangan (Toshkent)'],
     rows: tables.map((t) => [t.name, t.rows.length, when]),
   };
 }

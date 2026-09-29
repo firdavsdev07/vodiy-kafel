@@ -11,6 +11,24 @@ const SECRET_FIELD = /hash$|secret|token/i;
 /** Sheets bitta katakchaga 50 000 belgidan ko'pini qabul qilmaydi. */
 const MAX_CELL_LENGTH = 50_000;
 const BATCH_SIZE = 5_000;
+const TASHKENT_DATE_TIME = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Tashkent',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
+/** ISO o'rniga odam tez o'qiydigan Toshkent vaqti: `DD.MM.YYYY HH:mm:ss`. */
+export function formatBackupDate(value: Date): string {
+  const parts = Object.fromEntries(
+    TASHKENT_DATE_TIME.formatToParts(value).map((part) => [part.type, part.value]),
+  );
+  return `${parts.day}.${parts.month}.${parts.year} ${parts.hour}:${parts.minute}:${parts.second}`;
+}
 
 type FindMany = (args: {
   select: Record<string, true>;
@@ -34,7 +52,7 @@ export function toCell(value: unknown): BackupCell {
   let text: string;
   if (typeof value === 'string') text = value;
   else if (typeof value === 'bigint') text = value.toString();
-  else if (value instanceof Date) text = value.toISOString();
+  else if (value instanceof Date) text = formatBackupDate(value);
   else if (Prisma.Decimal.isDecimal(value)) text = value.toString();
   else text = JSON.stringify(value);
   return text.length > MAX_CELL_LENGTH ? text.slice(0, MAX_CELL_LENGTH) : text;

@@ -20,13 +20,13 @@ const userModel = {
 } as unknown as Prisma.DMMF.Model;
 
 describe('toCell', () => {
-  it('pul (Decimal) va BigInt — aniq satr, vaqt — ISO', () => {
+  it('pul (Decimal) va BigInt — aniq satr, vaqt — Toshkent formatida', () => {
     expect(toCell(new Prisma.Decimal('12345678901234567.25'))).toBe(
       '12345678901234567.25',
     );
     expect(toCell(10n ** 20n)).toBe('100000000000000000000');
     expect(toCell(new Date('2026-09-28T10:00:00Z'))).toBe(
-      '2026-09-28T10:00:00.000Z',
+      '28.09.2026 15:00:00',
     );
   });
 
@@ -57,7 +57,7 @@ describe('collectTables', () => {
     expect(table).toEqual({
       name: 'users',
       columns: ['id', 'phone', 'createdAt'],
-      rows: [['u1', '+998900000001', '2026-01-01T00:00:00.000Z']],
+      rows: [['u1', '+998900000001', '01.01.2026 05:00:00']],
     });
     const args = (findMany.mock.calls as FindManyArgs[][])[0][0];
     expect(args.select).toEqual({ id: true, phone: true, createdAt: true });
